@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/go-kit/kit/endpoint"
 	"github.com/DoNewsCode/std/pkg/srverr"
+	"github.com/go-kit/kit/endpoint"
 	"github.com/pkg/errors"
 )
 
 func TestMakeErrorMarshallerMiddleware(t *testing.T) {
-	mw := MakeErrorMarshallerMiddleware()
+	mw := MakeErrorMarshallerMiddleware(false)
 	e1 := func(ctx context.Context, request interface{}) (interface{}, error) {
 		return nil, errors.New("foo")
 	}
@@ -24,6 +24,23 @@ func TestMakeErrorMarshallerMiddleware(t *testing.T) {
 		return nil, errors.Wrap(srverr.NotFoundErr(errors.New("foo"), ""), "bar")
 	}
 	cases := []endpoint.Endpoint{e1, e2, e3, e4}
+	for _, c := range cases {
+		cc := c
+		t.Run("", func(t *testing.T) {
+			_, err := mw(cc)(nil, nil)
+			if _, ok := err.(srverr.ServerError); !ok {
+				t.Fail()
+			}
+		})
+	}
+}
+
+func TestPanicRecover(t *testing.T) {
+	mw := MakeErrorMarshallerMiddleware(true)
+	e1 := func(ctx context.Context, request interface{}) (interface{}, error) {
+		panic("test")
+	}
+	cases := []endpoint.Endpoint{e1}
 	for _, c := range cases {
 		cc := c
 		t.Run("", func(t *testing.T) {

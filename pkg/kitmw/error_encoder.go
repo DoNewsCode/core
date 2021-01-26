@@ -1,12 +1,18 @@
-package srverr
+package kitmw
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
-
-	httptransport "github.com/go-kit/kit/transport/http"
 )
+
+type Headerer interface {
+	Headers() http.Header
+}
+
+type StatusCoder interface {
+	StatusCode() int
+}
 
 // ErrorEncoder writes the error to the ResponseWriter, by default a content
 // type of application/json, a body of json with key "error" and the value
@@ -17,26 +23,18 @@ import (
 // provided StatusCode will be used instead of 500.
 func ErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 	const contentType = "application/json; charset=utf-8"
-	type errorWrapper struct {
-		Code    uint   `json:"code"`
-		Message string `json:"message"`
-	}
-	body, _ := json.Marshal(errorWrapper{Message: err.Error(), Code: 2})
-	if marshaler, ok := err.(json.Marshaler); ok {
-		if jsonBody, marshalErr := marshaler.MarshalJSON(); marshalErr == nil {
-			body = jsonBody
-		}
-	}
 	w.Header().Set("Content-Type", contentType)
-	if headerer, ok := err.(httptransport.Headerer); ok {
+
+	if headerer, ok := err.(Headerer); ok {
 		for k := range headerer.Headers() {
 			w.Header().Set(k, headerer.Headers().Get(k))
 		}
 	}
 	code := http.StatusInternalServerError
-	if sc, ok := err.(httptransport.StatusCoder); ok {
+	if sc, ok := err.(StatusCoder); ok {
 		code = sc.StatusCode()
 	}
 	w.WriteHeader(code)
-	w.Write(body)
+	encoder := json.NewEncoder(w)
+	_ = encoder.Encode(err)
 }

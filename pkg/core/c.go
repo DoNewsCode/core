@@ -5,11 +5,13 @@ import (
 
 	"errors"
 
-	"github.com/go-kit/kit/log"
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/container"
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/event"
 	"github.com/DoNewsCode/std/pkg/logging"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 )
 
 type C struct {
@@ -17,6 +19,7 @@ type C struct {
 	contract.ConfigAccessor
 	contract.LevelLogger
 	container.Container
+	contract.Dispatcher
 }
 
 func New(env contract.Env) *C {
@@ -24,8 +27,9 @@ func New(env contract.Env) *C {
 	return &C{
 		ConfigRouter:   nil,
 		ConfigAccessor: nil,
-		LevelLogger: logging.WithLevel(logger),
-		Container: container.Container{},
+		LevelLogger:    logging.WithLevel(logger),
+		Container:      container.Container{},
+		Dispatcher:     &event.Dispatcher{},
 	}
 }
 
@@ -39,12 +43,13 @@ func NewWithConf(cfgFile string) *C {
 	return &C{
 		ConfigRouter:   conf,
 		ConfigAccessor: conf,
-		LevelLogger: logging.WithLevel(logger),
-		Container: container.Container{},
+		LevelLogger:    logging.WithLevel(logger),
+		Container:      container.Container{},
+		Dispatcher:     &event.Dispatcher{},
 	}
 }
 
-func ProvideConfig(cfgFile string) (interface{
+func ProvideConfig(cfgFile string) (interface {
 	contract.ConfigRouter
 	contract.ConfigAccessor
 }, error) {
@@ -55,11 +60,20 @@ func ProvideConfig(cfgFile string) (interface{
 }
 
 func ProvideLogger(conf contract.ConfigAccessor) log.Logger {
-	var env config.Env
-	err := conf.Unmarshal("env", &env)
+	var (
+		env config.Env
+		lvl string
+		err error
+	)
+	err = conf.Unmarshal("env", &env)
 	if err != nil {
 		env = config.NewEnv("local")
 	}
+	err = conf.Unmarshal("level", &lvl)
+	if err != nil {
+		lvl = "debug"
+	}
 	logger := logging.NewLogger(env)
-	return logger
+	logger = level.NewInjector(logger, level.DebugValue())
+	return level.NewFilter(logger, logging.LevelFilter(lvl))
 }
