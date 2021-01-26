@@ -29,5 +29,5 @@ require (
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gorm.io/driver/mysql v1.0.3
 	gorm.io/driver/sqlite v1.1.4
-	gorm.io/gorm v1.20.9
+	gorm.io/gorm v1.20.12
 )
