@@ -27,7 +27,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	google.golang.org/grpc v1.35.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
-	gorm.io/driver/mysql v1.0.3
+	gorm.io/driver/mysql v1.0.4
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.20.9
 )
