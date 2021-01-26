@@ -13,7 +13,7 @@ import (
 
 func ProvideOpentracing(log jaeger.Logger, conf contract.ConfigAccessor) (opentracing.Tracer, func(), error) {
 	cfg := jaegercfg.Configuration{
-		ServiceName: conf.String("name"),
+		ServiceName: fmt.Sprintf("%s.%s", conf.String("name"), conf.String("env")),
 		Sampler: &jaegercfg.SamplerConfig{
 			Type:  conf.String("jaeger.sampler.type"),
 			Param: conf.Float64("jaeger.sampler.param"),

@@ -4,22 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-kit/kit/endpoint"
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/go-kit/kit/endpoint"
 	stdtracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-func MakeLabeledTraceServerMiddleware(tracer stdtracing.Tracer, service string) LabeledMiddleware {
+func MakeLabeledTraceServerMiddleware(tracer stdtracing.Tracer, module, service string) LabeledMiddleware {
 	return func(method string, endpoint endpoint.Endpoint) endpoint.Endpoint {
-		name := fmt.Sprintf("%s.%s", service, method)
+		name := fmt.Sprintf("%s.%s.%s.%s", module, service, method)
 		return TraceConsumer(tracer, name, ext.SpanKindRPCServerEnum)(endpoint)
 	}
 }
 
-func MakeTraceServerMiddleware(tracer stdtracing.Tracer, env string, service, method string) endpoint.Middleware {
+func MakeTraceServerMiddleware(tracer stdtracing.Tracer, module, service, method string) endpoint.Middleware {
 	return func(endpoint endpoint.Endpoint) endpoint.Endpoint {
-		name := fmt.Sprintf("%s.%s", service, method)
+		name := fmt.Sprintf("%s.%s.%s.%s", module, service, method)
 		return TraceConsumer(tracer, name, ext.SpanKindRPCServerEnum)(endpoint)
 	}
 }
