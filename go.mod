@@ -8,7 +8,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/go-kit/kit v0.10.0
-	github.com/go-redis/redis/v8 v8.4.9
+	github.com/go-redis/redis/v8 v8.4.11
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3
 	github.com/gorilla/handlers v1.5.1
