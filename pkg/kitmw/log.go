@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/pkg/errors"
 )
 
-func MakeLoggingMiddleware(logger log.Logger, service, method string, printTrace bool) endpoint.Middleware {
+func MakeLoggingMiddleware(logger log.Logger, module, service, method string, printTrace bool) endpoint.Middleware {
 	return func(endpoint endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			l := logging.WithContext(level.Debug(logger), ctx)
@@ -23,6 +23,8 @@ func MakeLoggingMiddleware(logger log.Logger, service, method string, printTrace
 				}
 			}
 			_ = l.Log(
+				"module",
+				module,
 				"service",
 				service,
 				"method",
@@ -37,8 +39,8 @@ func MakeLoggingMiddleware(logger log.Logger, service, method string, printTrace
 	}
 }
 
-func MakeLabeledLoggingMiddleware(logger log.Logger, module string, printTrace bool) LabeledMiddleware {
+func MakeLabeledLoggingMiddleware(logger log.Logger, module, service string, printTrace bool) LabeledMiddleware {
 	return func(method string, endpoint endpoint.Endpoint) endpoint.Endpoint {
-		return MakeLoggingMiddleware(logger, module, method, printTrace)(endpoint)
+		return MakeLoggingMiddleware(logger, module, service, method, printTrace)(endpoint)
 	}
 }

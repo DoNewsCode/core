@@ -7,12 +7,12 @@ import (
 	"github.com/DoNewsCode/std/pkg/contract"
 )
 
-type Dispatcher struct {
+type SyncDispatcher struct {
 	registry map[string][]contract.Listener
 	rwLock   sync.RWMutex
 }
 
-func (d *Dispatcher) Dispatch(ctx context.Context, event contract.Event) error {
+func (d *SyncDispatcher) Dispatch(ctx context.Context, event contract.Event) error {
 	d.rwLock.RLock()
 	listeners, ok := d.registry[event.Type()]
 	d.rwLock.RUnlock()
@@ -28,7 +28,7 @@ func (d *Dispatcher) Dispatch(ctx context.Context, event contract.Event) error {
 	return nil
 }
 
-func (d *Dispatcher) Subscribe(listener contract.Listener) {
+func (d *SyncDispatcher) Subscribe(listener contract.Listener) {
 	d.rwLock.Lock()
 	defer d.rwLock.Unlock()
 

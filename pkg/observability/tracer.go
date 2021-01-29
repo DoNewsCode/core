@@ -11,9 +11,14 @@ import (
 	jaegermetric "github.com/uber/jaeger-lib/metrics"
 )
 
-func ProvideOpentracing(log jaeger.Logger, conf contract.ConfigAccessor) (opentracing.Tracer, func(), error) {
+func ProvideOpentracing(
+	appName contract.AppName,
+	env contract.Env,
+	log jaeger.Logger,
+	conf contract.ConfigAccessor,
+) (opentracing.Tracer, func(), error) {
 	cfg := jaegercfg.Configuration{
-		ServiceName: fmt.Sprintf("%s.%s", conf.String("name"), conf.String("env")),
+		ServiceName: fmt.Sprintf("%s.%s", appName, env),
 		Sampler: &jaegercfg.SamplerConfig{
 			Type:  conf.String("jaeger.sampler.type"),
 			Param: conf.Float64("jaeger.sampler.param"),

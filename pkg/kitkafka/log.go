@@ -1,4 +1,4 @@
-package logging
+package kitkafka
 
 import (
 	"fmt"
@@ -13,4 +13,3 @@ type KafkaLogAdapter struct {
 func (k KafkaLogAdapter) Printf(s string, i ...interface{}) {
 	k.Logging.Log("msg", fmt.Sprintf(s, i...))
 }
-

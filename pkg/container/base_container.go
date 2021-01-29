@@ -35,17 +35,17 @@ func (h HttpFunc) ProvideHttp(router *mux.Router) {
 	h(router)
 }
 
-func (s *BaseContainer) Register(app interface{}) {
-	if p, ok := app.(HttpProvider); ok {
+func (s *BaseContainer) Register(module interface{}) {
+	if p, ok := module.(HttpProvider); ok {
 		s.HttpProviders = append(s.HttpProviders, p.ProvideHttp)
 	}
-	if p, ok := app.(GrpcProvider); ok {
+	if p, ok := module.(GrpcProvider); ok {
 		s.GrpcProviders = append(s.GrpcProviders, p.ProvideGrpc)
 	}
-	if p, ok := app.(RunProvider); ok {
+	if p, ok := module.(RunProvider); ok {
 		s.RunProviders = append(s.RunProviders, p.ProvideRunGroup)
 	}
-	if p, ok := app.(CloserProvider); ok {
+	if p, ok := module.(CloserProvider); ok {
 		s.CloserProviders = append(s.CloserProviders, p.ProvideCloser)
 	}
 }

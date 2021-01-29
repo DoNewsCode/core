@@ -17,12 +17,12 @@ type TL struct {
 	test   func(event contract.Event) error
 }
 
-func (l TL) Listen() []contract.Event {
-	return l.events
+func (T TL) Listen() []contract.Event {
+	return T.events
 }
 
-func (l TL) Process(ctx context.Context, event contract.Event) error {
-	return l.test(event)
+func (T TL) Process(ctx context.Context, event contract.Event) error {
+	return T.test(event)
 }
 
 func TestDispatcher(t *testing.T) {
@@ -113,7 +113,7 @@ func TestDispatcher(t *testing.T) {
 		c := cc
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			dispacher := Dispatcher{}
+			dispacher := SyncDispatcher{}
 			for _, listener := range c.listeners {
 				dispacher.Subscribe(listener)
 			}

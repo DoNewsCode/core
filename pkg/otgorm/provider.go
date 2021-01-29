@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/go-kit/kit/log"
-	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/opentracing/opentracing-go"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
@@ -13,24 +12,24 @@ import (
 )
 
 type DatabaseConf struct {
-	DatabaseType    string
+	Database    string
 	Dsn         string
 	TablePrefix string
 }
 
 func ProvideDialector(conf *DatabaseConf) (gorm.Dialector, error) {
-	if conf.DatabaseType == "mysql" {
+	if conf.Database == "mysql" {
 		return mysql.Open(conf.Dsn), nil
 	}
-	if conf.DatabaseType == "sqlite" {
+	if conf.Database == "sqlite" {
 		return sqlite.Open(conf.Dsn), nil
 	}
-	return nil, fmt.Errorf("unknow database type %s", conf.DatabaseType)
+	return nil, fmt.Errorf("unknow database type %s", conf.Database)
 }
 
 func ProvideGormConfig(l log.Logger, conf *DatabaseConf) *gorm.Config {
 	return &gorm.Config{
-		Logger:                                   &logging.GormLogAdapter{Logging: l},
+		Logger:                                   &GormLogAdapter{Logging: l},
 		DisableForeignKeyConstraintWhenMigrating: true,
 		NamingStrategy: schema.NamingStrategy{
 			TablePrefix: conf.TablePrefix,

@@ -29,15 +29,15 @@ type CronProvider interface {
 	ProvideCron(crontab *cron.Cron)
 }
 
-func (s *Container) Register(app interface{}) {
-	s.BaseContainer.Register(app)
-	if p, ok := app.(MigrationProvider); ok {
+func (s *Container) Register(module interface{}) {
+	s.BaseContainer.Register(module)
+	if p, ok := module.(MigrationProvider); ok {
 		s.MigrationProviders = append(s.MigrationProviders, Migrations{p.ProvideMigration, p.ProvideRollback})
 	}
-	if p, ok := app.(SeedProvider); ok {
+	if p, ok := module.(SeedProvider); ok {
 		s.SeedProviders = append(s.SeedProviders, p.ProvideSeed)
 	}
-	if p, ok := app.(CronProvider); ok {
+	if p, ok := module.(CronProvider); ok {
 		s.CronProviders = append(s.CronProviders, p.ProvideCron)
 	}
 }

@@ -1,10 +1,11 @@
-package logging
+package observability
 
 import (
 	"fmt"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/uber/jaeger-client-go"
 )
 
 type JaegerLogAdapter struct {
@@ -17,4 +18,8 @@ func (l JaegerLogAdapter) Infof(msg string, args ...interface{}) {
 
 func (l JaegerLogAdapter) Error(msg string) {
 	level.Error(l.Logging).Log("msg", msg)
+}
+
+func ProvideJaegerLogAdapter(l log.Logger) jaeger.Logger {
+	return &JaegerLogAdapter{Logging: l}
 }

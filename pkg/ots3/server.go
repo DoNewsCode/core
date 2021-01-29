@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/kitmw"
+	"github.com/DoNewsCode/std/pkg/srverr"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	httptransport "github.com/go-kit/kit/transport/http"
-	"github.com/DoNewsCode/std/pkg/contract"
-	"github.com/DoNewsCode/std/pkg/kitmw"
-	"github.com/DoNewsCode/std/pkg/srverr"
 
 	"io"
 	"net/http"
@@ -53,8 +53,8 @@ func MakeUploadEndpoint(uploader Uploader) endpoint.Endpoint {
 }
 
 func Middleware(logger log.Logger, env contract.Env) endpoint.Middleware {
-	l := kitmw.MakeLoggingMiddleware(logger, "s3", "upload", env.IsLocal())
-	e := kitmw.MakeErrorMarshallerMiddleware()
+	l := kitmw.MakeLoggingMiddleware(logger, "s3", "upload", "upload", env.IsLocal())
+	e := kitmw.MakeErrorMarshallerMiddleware(env.IsProduction())
 	return endpoint.Chain(e, l)
 }
 
@@ -75,5 +75,5 @@ func decodeRequest(_ context.Context, request2 *http.Request) (request interface
 	return &Request{
 		name: header.Filename,
 		data: file,
-	},nil
+	}, nil
 }
