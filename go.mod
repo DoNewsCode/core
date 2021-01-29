@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
-	github.com/knadh/koanf v0.14.0
+	github.com/knadh/koanf v0.15.0
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/oklog/run v1.1.0
 	github.com/opentracing-contrib/go-stdlib v1.0.0
