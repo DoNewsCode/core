@@ -2,14 +2,15 @@ package config
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	gotesting "testing"
 	"time"
 
+	"github.com/DoNewsCode/std/pkg/config/watcher"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,21 +31,24 @@ func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
 }
 
 func TestKoanfAdapter_Watch(t *gotesting.T) {
-	ka, err := NewConfig(WithFilePath("mock/watch.yaml"))
+	ioutil.WriteFile("mock/watch.yaml", []byte("foo: baz"), 0644)
+
+	ka, err := NewConfig(
+		WithProviderLayer(file.Provider("mock/watch.yaml"), yaml.Parser()),
+		WithWatcher(watcher.File{Path: "mock/watch.yaml"}),
+	)
 	assert.NoError(t, err)
 
-	var reach = false
-
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
-		time.Sleep(10 * time.Millisecond)
-		err = ioutil.WriteFile("mock/watch.yaml", []byte("foo: bar"), 0644)
+	_:
+		ka.Watch(ctx)
 	}()
-	e := ka.Watch(context.Background(), func() error {
-		reach = true
-		return errors.New("test")
-	})
-	assert.NotNil(t, e)
-	assert.True(t, reach)
+	time.Sleep(10 * time.Millisecond)
+	err = ioutil.WriteFile("mock/watch.yaml", []byte("foo: bar"), 0644)
+	time.Sleep(10 * time.Millisecond)
+	assert.Equal(t, "bar", ka.String("foo"))
 }
 
 func prepareTestSubject(t *gotesting.T) KoanfAdapter {

@@ -17,6 +17,23 @@ type DatabaseParams struct {
 	Tracer opentracing.Tracer `optional:"true"`
 }
 
+func Database(p DatabaseParams) (*gorm.DB, func(), error) {
+	var dbConf otgorm.DatabaseConf
+	_ = p.Conf.Unmarshal("gorm.database", &dbConf.Database)
+	_ = p.Conf.Unmarshal("gorm.dsn", &dbConf.Dsn)
+	_ = p.Conf.Unmarshal("gorm.tablePrefix", &dbConf.TablePrefix)
+	dialector, err := otgorm.ProvideDialector(&dbConf)
+	if err != nil {
+		return nil, nil, err
+	}
+	logger := log.With(p.Logger, "component", "database")
+	gormConfig := otgorm.ProvideGormConfig(logger, &dbConf)
+	if p.Tracer == nil {
+		p.Tracer = opentracing.NoopTracer{}
+	}
+	return otgorm.ProvideGormDB(dialector, gormConfig, p.Tracer)
+}
+
 func ProvideDatabase(c *C) {
 	c.Provide(func(p DatabaseParams) (*gorm.DB, error) {
 		var dbConf otgorm.DatabaseConf

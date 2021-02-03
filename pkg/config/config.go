@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/DoNewsCode/std/pkg/config/watcher"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -15,90 +14,75 @@ import (
 )
 
 type KoanfAdapter struct {
-	contract.ConfigWatcher
-	K *koanf.Koanf
+	layers    []ProviderSet
+	watcher   contract.ConfigWatcher
+	delimiter string
+	K         *koanf.Koanf
 }
 
-type configOption struct {
-	filePath string
-	parser koanf.Parser
-	provider koanf.Provider
-	watcher Watcher
-	delim string
+type ProviderSet struct {
+	Parser   koanf.Parser
+	Provider koanf.Provider
 }
 
-type Option func(option *configOption)
+type Option func(option *KoanfAdapter)
 
-func WithDelimiter(delim string) Option {
-	return func(option *configOption) {
-		option.delim = delim
+func WithYamlFile(filePath string) Option {
+	return WithProviderLayer(file.Provider(filePath), yaml.Parser())
+}
+
+func WithProviderLayer(provider koanf.Provider, parser koanf.Parser) Option {
+	return func(option *KoanfAdapter) {
+		option.layers = append(option.layers, ProviderSet{Provider: provider, Parser: parser})
 	}
 }
 
-func WithParser(parser koanf.Parser) Option {
-	return func(option *configOption) {
-		option.parser = parser
-	}
-}
-
-func WithProvider(provider koanf.Provider) Option {
-	return func(option *configOption) {
-		option.provider = provider
-	}
-}
-
-func WithFilePath(path string) Option {
-	return func(option *configOption) {
-		option.filePath = path
-	}
-}
-
-func WithWatcher(watcher Watcher) Option {
-	return func(option *configOption) {
+func WithWatcher(watcher contract.ConfigWatcher) Option {
+	return func(option *KoanfAdapter) {
 		option.watcher = watcher
 	}
 }
 
-func NewConfig(options ...Option) (*KoanfAdapter, error) {
-	defaults := configOption{
-		filePath: "./config/config.yaml",
-		parser: yaml.Parser(),
-		delim: ".",
+func WithDelimiter(delimiter string) Option {
+	return func(option *KoanfAdapter) {
+		option.delimiter = delimiter
 	}
+}
+
+func NewConfig(options ...Option) (*KoanfAdapter, error) {
+	adapter := KoanfAdapter{delimiter: "."}
 
 	for _, f := range options {
-		f(&defaults)
+		f(&adapter)
 	}
 
-	if defaults.provider == nil {
-		defaults.provider = file.Provider(defaults.filePath)
+	adapter.K = koanf.New(adapter.delimiter)
+
+	if err := adapter.Reload(); err != nil {
+		return nil, err
 	}
-	if defaults.watcher == nil {
-		switch defaults.provider.(type) {
-		case *file.File:
-			defaults.watcher = watcher.File{
-				Path: defaults.filePath,
-			}
-		default:
+
+	return &adapter, nil
+}
+
+func (k KoanfAdapter) Reload() error {
+	for i := len(k.layers) - 1; i >= 0; i-- {
+		err := k.K.Load(k.layers[i].Provider, k.layers[i].Parser)
+		if err != nil {
+			return fmt.Errorf("unable to load config %w", err)
 		}
 	}
+	return nil
+}
 
-	k := koanf.New(defaults.delim)
-	err := k.Load(defaults.provider, defaults.parser)
-	if err != nil {
-		return nil, fmt.Errorf("unable to load config %w", err)
-	}
-	
-	return &KoanfAdapter{
-		ConfigWatcher: defaults.watcher,
-		K:             k,
-	}, nil
+func (k KoanfAdapter) Watch(ctx context.Context) error {
+	return k.watcher.Watch(ctx, k.Reload)
 }
 
 func (k KoanfAdapter) Unmarshal(path string, o interface{}) error {
 	return k.K.UnmarshalWithConf(path, o, koanf.UnmarshalConf{
 		DecoderConfig: &mapstructure.DecoderConfig{
-			Result: o,
+			Result:           o,
 			ErrorUnused:      true,
 			WeaklyTypedInput: true,
 		},
@@ -175,7 +159,7 @@ func (m MapAdapter) Unmarshal(path string, o interface{}) (err error) {
 		out = m[path]
 	}
 	val := reflect.ValueOf(o)
-	if ! val.Elem().CanSet() {
+	if !val.Elem().CanSet() {
 		return errors.New("target cannot be set")
 	}
 	val.Elem().Set(reflect.ValueOf(out))
@@ -197,8 +181,4 @@ func (m MapAdapter) Route(s string) contract.ConfigAccessor {
 	default:
 		panic(fmt.Sprintf("value at path %s is not a valid Router", s))
 	}
-}
-
-type Watcher interface {
-	Watch(ctx context.Context, reload func() error) error
 }

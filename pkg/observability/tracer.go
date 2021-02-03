@@ -24,7 +24,8 @@ func ProvideOpentracing(
 			Param: conf.Float64("jaeger.sampler.param"),
 		},
 		Reporter: &jaegercfg.ReporterConfig{
-			LogSpans: conf.Bool("jaeger.log.enable"),
+			LogSpans:           conf.Bool("jaeger.reporter.log"),
+			LocalAgentHostPort: conf.String("jaeger.reporter.addr"),
 		},
 	}
 	// Example logger and metrics factory. Use github.com/uber/jaeger-client-go/log

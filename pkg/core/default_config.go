@@ -3,13 +3,14 @@ package core
 var defaultConfig = `
 name: skeleton
 version: 0.1.0
-env: local
+Env: local
 http:
   addr: :8080
 grpc:
   addr: :9090
 log:
   level: debug
+  format: logfmt
 redis:
   addrs:
     - 127.0.0.1:6379

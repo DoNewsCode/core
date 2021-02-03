@@ -1,6 +1,7 @@
 package container
 
 import (
+	"github.com/Reasno/ifilter"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
 	"google.golang.org/grpc"
@@ -11,6 +12,7 @@ type BaseContainer struct {
 	GrpcProviders   []func(server *grpc.Server)
 	CloserProviders []func()
 	RunProviders    []func(g *run.Group)
+	Modules         ifilter.Collection
 }
 
 type HttpProvider interface {
@@ -48,4 +50,5 @@ func (s *BaseContainer) Register(module interface{}) {
 	if p, ok := module.(CloserProvider); ok {
 		s.CloserProviders = append(s.CloserProviders, p.ProvideCloser)
 	}
+	s.Modules = append(s.Modules, module)
 }
