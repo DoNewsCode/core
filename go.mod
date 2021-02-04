@@ -10,7 +10,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-kit/kit v0.10.0
-	github.com/go-redis/redis/v8 v8.4.9
+	github.com/go-redis/redis/v8 v8.5.0
 	github.com/gogo/protobuf v1.2.1
 	github.com/golang/protobuf v1.4.3
 	github.com/gorilla/handlers v1.5.1
