@@ -32,6 +32,7 @@ type ObservabilityOut struct {
 }
 
 func Observability(in ObservabilityIn) (ObservabilityOut, func(), error) {
+	in.Logger = log.With(in.Logger, "component", "observability")
 	jlogger := observability.ProvideJaegerLogAdapter(in.Logger)
 	tracer, cleanup, err := observability.ProvideOpentracing(in.AppName, in.Env, jlogger, in.Conf)
 	hist := observability.ProvideHistogramMetrics(in.AppName, in.Env)

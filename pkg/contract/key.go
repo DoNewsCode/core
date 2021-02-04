@@ -1,5 +1,6 @@
 package contract
 
 type Keyer interface {
-	Key(args ...string) string
+	Key(delimiter string, args ...string) string
+	Spread() []string
 }

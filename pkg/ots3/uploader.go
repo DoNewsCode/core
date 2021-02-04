@@ -9,14 +9,14 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/key"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/DoNewsCode/std/pkg/contract"
-	"github.com/DoNewsCode/std/pkg/key"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
@@ -80,8 +80,8 @@ func WithLocationFunc(f func(location string) (url string)) Option {
 
 func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts ...Option) *Manager {
 	c := &Config{
-		doer: http.DefaultClient,
-		keyer: key.NewKeyManager("/"),
+		doer:  http.DefaultClient,
+		keyer: key.NewKeyManager(),
 		locationFunc: func(location string) (url string) {
 			return location
 		},
@@ -98,7 +98,7 @@ func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts .
 		S3ForcePathStyle: aws.Bool(true),
 	}
 	sess := session.Must(session.NewSession(s3Config))
-	c.keyer.Key("")
+	c.keyer.Key("/")
 	m := &Manager{
 		bucket:       bucket,
 		sess:         sess,

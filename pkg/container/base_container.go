@@ -37,7 +37,7 @@ func (h HttpFunc) ProvideHttp(router *mux.Router) {
 	h(router)
 }
 
-func (s *BaseContainer) Register(module interface{}) {
+func (s *BaseContainer) AddModule(module interface{}) {
 	if p, ok := module.(HttpProvider); ok {
 		s.HttpProviders = append(s.HttpProviders, p.ProvideHttp)
 	}

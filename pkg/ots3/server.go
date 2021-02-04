@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/key"
 	"github.com/DoNewsCode/std/pkg/kitmw"
 	"github.com/DoNewsCode/std/pkg/srverr"
 	"github.com/go-kit/kit/endpoint"
@@ -53,7 +54,8 @@ func MakeUploadEndpoint(uploader Uploader) endpoint.Endpoint {
 }
 
 func Middleware(logger log.Logger, env contract.Env) endpoint.Middleware {
-	l := kitmw.MakeLoggingMiddleware(logger, "s3", "upload", "upload", env.IsLocal())
+	keyer := key.NewKeyManager("module", "s3", "service", "upload")
+	l := kitmw.MakeLoggingMiddleware(logger, keyer, env.IsLocal())
 	e := kitmw.MakeErrorMarshallerMiddleware(env.IsProduction())
 	return endpoint.Chain(e, l)
 }

@@ -43,7 +43,7 @@ func NewLogger(format string) (logger log.Logger) {
 			return term.FgBgColor{}
 		}
 		logger = term.NewLogger(os.Stdout, log.NewLogfmtLogger, colorFn)
-		return log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
+		return log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.Caller(7))
 	}
 }
 
@@ -66,11 +66,12 @@ func WithContext(logger log.Logger, ctx context.Context) log.Logger {
 
 	transport, _ := ctx.Value(contract.TransportKey).(string)
 	requestUrl, _ := ctx.Value(contract.RequestUrlKey).(string)
+	ip, _ := ctx.Value(contract.IpKey).(string)
 	tenant, ok := ctx.Value(contract.TenantKey).(contract.Tenant)
 	if !ok {
 		tenant = contract.MapTenant{}
 	}
-	args := []interface{}{"transport", transport, "requestUrl", requestUrl}
+	args := []interface{}{"transport", transport, "requestUrl", requestUrl, "clientIp", ip}
 	for k, v := range tenant.KV() {
 		args = append(args, k, v)
 	}

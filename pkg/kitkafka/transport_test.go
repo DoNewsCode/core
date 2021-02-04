@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/DoNewsCode/std/pkg/config"
-	"github.com/DoNewsCode/std/pkg/logging"
+	"github.com/go-kit/kit/log"
 	"github.com/segmentio/kafka-go"
 	jaeger "github.com/uber/jaeger-client-go/config"
 )
@@ -23,7 +22,7 @@ func TestTransport(t *testing.T) {
 		t.Skip("requires kafka")
 	}
 
-	factory := NewKafkaFactory([]string{"127.0.0.1:9092"}, logging.NewLogger(config.Env("testing")))
+	factory := NewKafkaFactory([]string{"127.0.0.1:9092"}, log.NewNopLogger())
 	h := factory.MakeHandler("test")
 	_ = h.Handle(context.Background(), kafka.Message{
 		Value: []byte("hello"),
@@ -47,7 +46,7 @@ func TestTransportTracing(t *testing.T) {
 	}.NewTracer()
 	defer closer.Close()
 
-	factory := NewKafkaFactory([]string{"127.0.0.1:9092"}, logging.NewLogger(config.Env("testing")))
+	factory := NewKafkaFactory([]string{"127.0.0.1:9092"}, log.NewNopLogger())
 	h := factory.MakeHandler("test-tracing")
 	h = MakeTracingProducerMiddleware(tracer, "test")(h)
 

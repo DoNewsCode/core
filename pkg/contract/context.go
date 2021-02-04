@@ -2,11 +2,13 @@ package contract
 
 import "fmt"
 
-var (
-	IpKey = struct{}{}
-	TenantKey = struct{}{}
-	TransportKey = struct {}{}
-	RequestUrlKey = struct{}{}
+type contextKey string
+
+const (
+	IpKey         contextKey = "ip"
+	TenantKey     contextKey = "tenant"
+	TransportKey  contextKey = "transport"
+	RequestUrlKey contextKey = "requestUrl"
 )
 
 type Tenant interface {
@@ -23,4 +25,3 @@ func (d MapTenant) KV() map[string]interface{} {
 func (d MapTenant) String() string {
 	return fmt.Sprintf("%+v", map[string]interface{}(d))
 }
-

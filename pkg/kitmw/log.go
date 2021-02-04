@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/key"
 	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
@@ -11,10 +13,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-func MakeLoggingMiddleware(logger log.Logger, module, service, method string, printTrace bool) endpoint.Middleware {
+func MakeLoggingMiddleware(logger log.Logger, keyer contract.Keyer, printTrace bool) endpoint.Middleware {
 	return func(endpoint endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			l := logging.WithContext(level.Debug(logger), ctx)
+			l = log.With(logger, key.SpreadInterface(keyer)...)
 			response, err = endpoint(ctx, request)
 			if err != nil {
 				_ = l.Log("err", err.Error())
@@ -23,24 +26,16 @@ func MakeLoggingMiddleware(logger log.Logger, module, service, method string, pr
 				}
 			}
 			_ = l.Log(
-				"module",
-				module,
-				"service",
-				service,
-				"method",
-				method,
-				"request",
-				fmt.Sprintf("%+v", request),
-				"response",
-				fmt.Sprintf("%+v", response),
+				"request", fmt.Sprintf("%+v", request),
+				"response", fmt.Sprintf("%+v", response),
 			)
 			return response, err
 		}
 	}
 }
 
-func MakeLabeledLoggingMiddleware(logger log.Logger, module, service string, printTrace bool) LabeledMiddleware {
+func MakeLabeledLoggingMiddleware(logger log.Logger, keyer contract.Keyer, printTrace bool) LabeledMiddleware {
 	return func(method string, endpoint endpoint.Endpoint) endpoint.Endpoint {
-		return MakeLoggingMiddleware(logger, module, service, method, printTrace)(endpoint)
+		return MakeLoggingMiddleware(logger, key.With(keyer, "method", method), printTrace)(endpoint)
 	}
 }

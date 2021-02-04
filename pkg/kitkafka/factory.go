@@ -6,7 +6,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/segmentio/kafka-go"
-	"github.com/DoNewsCode/std/pkg/logging"
 )
 
 type KafkaFactory struct {
@@ -32,8 +31,8 @@ func (k *KafkaFactory) MakeHandler(topic string) Handler {
 		Addr:        kafka.TCP(k.brokers...),
 		Topic:       topic,
 		Balancer:    &kafka.LeastBytes{},
-		Logger:      logging.KafkaLogAdapter{Logging: log.NewNopLogger()},
-		ErrorLogger: logging.KafkaLogAdapter{Logging: level.Warn(k.logger)},
+		Logger:      KafkaLogAdapter{Logging: level.Debug(k.logger)},
+		ErrorLogger: KafkaLogAdapter{Logging: level.Warn(k.logger)},
 		BatchSize:   1,
 	}
 
@@ -77,8 +76,8 @@ func (k *KafkaFactory) MakeKafkaServer(topic string, handler Handler, opt ...rea
 		Brokers:     k.brokers,
 		Topic:       topic,
 		GroupID:     config.groupId,
-		Logger:      logging.KafkaLogAdapter{Logging: level.Debug(k.logger)},
-		ErrorLogger: logging.KafkaLogAdapter{Logging: level.Warn(k.logger)},
+		Logger:      KafkaLogAdapter{Logging: level.Debug(k.logger)},
+		ErrorLogger: KafkaLogAdapter{Logging: level.Warn(k.logger)},
 		MinBytes:    1,
 		MaxBytes:    10 * 1024 * 1024,
 	})

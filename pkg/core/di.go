@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+
+	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/go-kit/kit/log"
 )
 
 var _errType = reflect.TypeOf((*error)(nil)).Elem()
@@ -29,7 +32,7 @@ func (c *C) Provide(constructor interface{}) {
 		outVs := reflect.ValueOf(constructor).Call(args)
 		for _, v := range outVs {
 			if isCleanup(v.Type()) {
-				c.Register(v.Interface())
+				c.AddModule(v.Interface())
 				continue
 			}
 			filteredOuts = append(filteredOuts, v)
@@ -43,7 +46,37 @@ func (c *C) Provide(constructor interface{}) {
 	}
 }
 
-func (c *C) RegisterFunc(function interface{}) {
+func (c *C) ProvideItself() {
+	c.Provide(func() contract.Env {
+		return c.Env
+	})
+	c.Provide(func() contract.AppName {
+		return c.AppName
+	})
+	c.Provide(func() contract.ConfigAccessor {
+		return c
+	})
+	c.Provide(func() contract.ConfigRouter {
+		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {
+			return cc
+		}
+		return nil
+	})
+	c.Provide(func() contract.ConfigWatcher {
+		if cc, ok := c.ConfigAccessor.(contract.ConfigWatcher); ok {
+			return cc
+		}
+		return nil
+	})
+	c.Provide(func() log.Logger {
+		return c.LevelLogger
+	})
+	c.Provide(func() contract.Dispatcher {
+		return c.Dispatcher
+	})
+}
+
+func (c *C) AddModuleViaFunc(function interface{}) {
 	c.Provide(function)
 
 	ftype := reflect.TypeOf(function)
@@ -61,7 +94,7 @@ func (c *C) RegisterFunc(function interface{}) {
 	fnType := reflect.FuncOf(targetTypes, nil, false /* variadic */)
 	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
 		for _, arg := range args {
-			c.Register(arg.Interface())
+			c.AddModule(arg.Interface())
 		}
 		return nil
 	})

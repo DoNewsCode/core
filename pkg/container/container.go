@@ -2,6 +2,7 @@ package container
 
 import (
 	"github.com/robfig/cron/v3"
+	"github.com/spf13/cobra"
 )
 
 type Container struct {
@@ -9,6 +10,7 @@ type Container struct {
 	MigrationProviders []Migrations
 	SeedProviders      []func() error
 	CronProviders      []func(crontab *cron.Cron)
+	CommandProviders   []func(command *cobra.Command)
 }
 
 type Migrations struct {
@@ -29,8 +31,12 @@ type CronProvider interface {
 	ProvideCron(crontab *cron.Cron)
 }
 
-func (s *Container) Register(module interface{}) {
-	s.BaseContainer.Register(module)
+type CommandProvider interface {
+	ProvideCommand(command *cobra.Command)
+}
+
+func (s *Container) AddModule(module interface{}) {
+	s.BaseContainer.AddModule(module)
 	if p, ok := module.(MigrationProvider); ok {
 		s.MigrationProviders = append(s.MigrationProviders, Migrations{p.ProvideMigration, p.ProvideRollback})
 	}
@@ -39,5 +45,8 @@ func (s *Container) Register(module interface{}) {
 	}
 	if p, ok := module.(CronProvider); ok {
 		s.CronProviders = append(s.CronProviders, p.ProvideCron)
+	}
+	if p, ok := module.(CommandProvider); ok {
+		s.CommandProviders = append(s.CommandProviders, p.ProvideCommand)
 	}
 }

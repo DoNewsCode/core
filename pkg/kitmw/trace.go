@@ -2,24 +2,24 @@ package kitmw
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/key"
 	"github.com/go-kit/kit/endpoint"
 	stdtracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-func MakeLabeledTraceServerMiddleware(tracer stdtracing.Tracer, module, service string) LabeledMiddleware {
+func MakeLabeledTraceServerMiddleware(tracer stdtracing.Tracer, keyer contract.Keyer) LabeledMiddleware {
 	return func(method string, endpoint endpoint.Endpoint) endpoint.Endpoint {
-		name := fmt.Sprintf("%s.%s.%s.%s", module, service, method)
+		name := key.KeepOdd(keyer).Key(".", "method", method)
 		return TraceConsumer(tracer, name, ext.SpanKindRPCServerEnum)(endpoint)
 	}
 }
 
-func MakeTraceServerMiddleware(tracer stdtracing.Tracer, module, service, method string) endpoint.Middleware {
+func MakeTraceServerMiddleware(tracer stdtracing.Tracer, keyer contract.Keyer) endpoint.Middleware {
 	return func(endpoint endpoint.Endpoint) endpoint.Endpoint {
-		name := fmt.Sprintf("%s.%s.%s.%s", module, service, method)
+		name := key.KeepOdd(keyer).Key(".")
 		return TraceConsumer(tracer, name, ext.SpanKindRPCServerEnum)(endpoint)
 	}
 }
