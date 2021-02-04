@@ -4,11 +4,14 @@ go 1.14
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
-	github.com/aws/aws-sdk-go v1.37.2
+	github.com/Reasno/ifilter v0.1.1
+	github.com/aws/aws-sdk-go v1.37.3
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/go-kit/kit v0.10.0
 	github.com/go-redis/redis/v8 v8.4.9
+	github.com/gogo/protobuf v1.2.1
+	github.com/golang/protobuf v1.4.3
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
@@ -24,7 +27,6 @@ require (
 	github.com/segmentio/kafka-go v0.4.9
 	github.com/stretchr/testify v1.7.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
-	github.com/uber/jaeger-lib v2.4.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
 	go.uber.org/dig v1.10.0
 	google.golang.org/grpc v1.35.0
