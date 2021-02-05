@@ -3,10 +3,10 @@ package ots3
 import (
 	"net/http"
 
-	"github.com/go-kit/kit/log"
-	"github.com/gorilla/mux"
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/go-kit/kit/log"
+	"github.com/gorilla/mux"
 )
 
 type Module struct {
@@ -22,7 +22,7 @@ func New(conf contract.ConfigAccessor, logger log.Logger) *Module {
 }
 
 func injectModule(conf contract.ConfigAccessor, logger log.Logger) *Module {
-	manager := ProvideUploadManager(conf)
+	manager := ProvideUploadManager(UploadManagerParam{Conf: conf})
 	uploadService := &UploadService{
 		logger: logger,
 		s3:     manager,

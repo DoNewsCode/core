@@ -3,10 +3,8 @@ package ots3
 import (
 	"bytes"
 	"context"
-	"math/rand"
-	"time"
-
 	"io"
+	"math/rand"
 	"net/http"
 
 	"github.com/DoNewsCode/std/pkg/contract"
@@ -200,10 +198,9 @@ func inject(tracer opentracing.Tracer, span opentracing.Span, header http.Header
 
 func randStringRunes(n int) string {
 	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]rune, n)
 	for i := range b {
-		b[i] = letterRunes[r.Intn(len(letterRunes))]
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
 }

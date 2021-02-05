@@ -28,7 +28,7 @@ func (m *monitor) Started(ctx context.Context, evt *event.CommandStartedEvent) {
 	hostname, port := peerInfo(evt)
 	statement := evt.Command.String()
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "mongodb.query")
+	span, _ := opentracing.StartSpanFromContextWithTracer(ctx, m.tracer, "mongodb.query")
 	ext.DBType.Set(span, "mongo")
 	ext.DBInstance.Set(span, evt.DatabaseName)
 	ext.PeerHostname.Set(span, hostname)
@@ -74,9 +74,10 @@ func (m *monitor) Finished(evt *event.CommandFinishedEvent, err error) {
 }
 
 // NewMonitor creates a new mongodb event CommandMonitor.
-func NewMonitor() *event.CommandMonitor {
+func NewMonitor(tracer opentracing.Tracer) *event.CommandMonitor {
 	m := &monitor{
-		spans: make(map[spanKey]opentracing.Span),
+		spans:  make(map[spanKey]opentracing.Span),
+		tracer: tracer,
 	}
 	return &event.CommandMonitor{
 		Started:   m.Started,

@@ -1,8 +1,6 @@
 package core
 
 import (
-	"os"
-
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/container"
 	"github.com/DoNewsCode/std/pkg/contract"
@@ -144,10 +142,7 @@ func (c *C) AddModule(modules ...interface{}) {
 	for i := range modules {
 		switch modules[i].(type) {
 		case error:
-			if modules[i].(error) != nil {
-				c.Err(modules[i].(error))
-				os.Exit(1)
-			}
+			c.CheckErr(modules[i].(error))
 		case func():
 			c.CloserProviders = append(c.CloserProviders, modules[i].(func()))
 		default:
