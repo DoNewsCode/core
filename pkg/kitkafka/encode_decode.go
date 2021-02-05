@@ -3,6 +3,7 @@ package kitkafka
 import (
 	"context"
 
+	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -21,3 +22,12 @@ type EncodeResponseFunc func(context.Context, *kafka.Message, interface{}) error
 // DecodeResponseFunc extracts a user-domain response object from
 // an AMQP Delivery object. It is designed to be used in AMQP Publishers.
 type DecodeResponseFunc func(context.Context, *kafka.Message) (response interface{}, err error)
+
+func EncodeMarshaller(ctx context.Context, msg *kafka.Message, request interface{}) error {
+	byt, err := request.(contract.Marshaller).Marshal()
+	if err != nil {
+		return err
+	}
+	msg.Value = byt
+	return nil
+}

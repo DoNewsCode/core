@@ -3,6 +3,7 @@ package kitkafka
 import (
 	"context"
 
+	"github.com/go-kit/kit/endpoint"
 	"github.com/oklog/run"
 	"github.com/segmentio/kafka-go"
 )
@@ -21,13 +22,13 @@ type Server interface {
 	Serve(ctx context.Context) error
 }
 
-type sub struct {
+type SubscriberClient struct {
 	reader      *kafka.Reader
 	handler     Handler
 	parallelism int
 }
 
-func (s *sub) ServeOnce(ctx context.Context) error {
+func (s *SubscriberClient) ServeOnce(ctx context.Context) error {
 	msg, err := s.reader.ReadMessage(ctx)
 	if err != nil {
 		return err
@@ -37,7 +38,7 @@ func (s *sub) ServeOnce(ctx context.Context) error {
 	return nil
 }
 
-func (s *sub) Serve(ctx context.Context) error {
+func (s *SubscriberClient) Serve(ctx context.Context) error {
 	var (
 		g  run.Group
 		ch chan kafka.Message
@@ -74,15 +75,15 @@ func (s *sub) Serve(ctx context.Context) error {
 	return g.Run()
 }
 
-type Mux struct {
+type SubscriberClientMux struct {
 	servers []Server
 }
 
-func NewMux(servers ...Server) Mux {
-	return Mux{servers}
+func NewMux(servers ...Server) SubscriberClientMux {
+	return SubscriberClientMux{servers}
 }
 
-func (m Mux) Serve(ctx context.Context) error {
+func (m SubscriberClientMux) Serve(ctx context.Context) error {
 	var g run.Group
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -97,10 +98,19 @@ func (m Mux) Serve(ctx context.Context) error {
 	return g.Run()
 }
 
-type pub struct {
+type PublisherClient struct {
+	endpoint endpoint.Endpoint
+}
+
+func (p PublisherClient) Publish(ctx context.Context, request interface{}) error {
+	_, err := p.endpoint(ctx, request)
+	return err
+}
+
+type writerHandle struct {
 	*kafka.Writer
 }
 
-func (p *pub) Handle(ctx context.Context, msg kafka.Message) error {
+func (p *writerHandle) Handle(ctx context.Context, msg kafka.Message) error {
 	return p.Writer.WriteMessages(ctx, msg)
 }

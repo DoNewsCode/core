@@ -8,7 +8,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-func ProvideRedis(logging log.Logger, conf contract.ConfigAccessor, tracer opentracing.Tracer) (redis.UniversalClient, func()) {
+func Redis(logging log.Logger, conf contract.ConfigAccessor, tracer opentracing.Tracer) (redis.UniversalClient, func()) {
 	client := redis.NewUniversalClient(
 		&redis.UniversalOptions{
 			Addrs:    conf.Strings("redis.addrs"),

@@ -3,6 +3,7 @@ package kitkafka
 import (
 	"sync"
 
+	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/segmentio/kafka-go"
@@ -16,6 +17,7 @@ type KafkaFactory struct {
 }
 
 func NewKafkaFactory(brokers []string, logger log.Logger) *KafkaFactory {
+	logger = log.With(logger, "component", "kafka")
 	return &KafkaFactory{
 		brokers: brokers,
 		closers: []func() error{},
@@ -23,7 +25,7 @@ func NewKafkaFactory(brokers []string, logger log.Logger) *KafkaFactory {
 	}
 }
 
-func (k *KafkaFactory) MakeHandler(topic string) Handler {
+func (k *KafkaFactory) MakeWriterHandle(topic string) *writerHandle {
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
 
@@ -37,7 +39,7 @@ func (k *KafkaFactory) MakeHandler(topic string) Handler {
 	}
 
 	k.closers = append(k.closers, writer.Close)
-	return &pub{
+	return &writerHandle{
 		Writer: writer,
 	}
 }
@@ -61,7 +63,7 @@ func WithParallelism(parallelism int) readerOpt {
 	}
 }
 
-func (k *KafkaFactory) MakeKafkaServer(topic string, handler Handler, opt ...readerOpt) *sub {
+func (k *KafkaFactory) MakeSubscriberClient(topic string, subscriber *Subscriber, opt ...readerOpt) *SubscriberClient {
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
 
@@ -84,11 +86,19 @@ func (k *KafkaFactory) MakeKafkaServer(topic string, handler Handler, opt ...rea
 
 	k.closers = append(k.closers, reader.Close)
 
-	return &sub{
+	return &SubscriberClient{
 		reader:      reader,
-		handler:     handler,
+		handler:     subscriber,
 		parallelism: config.parallelism,
 	}
+}
+
+type writerConfig struct{}
+
+type writerOpt func(config *writerConfig)
+
+func (k *KafkaFactory) MakePublisherClient(endpoint endpoint.Endpoint, opt ...writerOpt) *PublisherClient {
+	return &PublisherClient{endpoint: endpoint}
 }
 
 func (k *KafkaFactory) Close() error {
