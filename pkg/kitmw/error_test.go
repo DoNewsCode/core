@@ -10,7 +10,11 @@ import (
 )
 
 func TestMakeErrorMarshallerMiddleware(t *testing.T) {
-	mw := MakeErrorMarshallerMiddleware(false)
+	mw := MakeErrorMarshallerMiddleware(ErrorOption{
+		AlwaysHTTP200: false,
+		AlwaysGRPCOk:  false,
+		ShouldRecover: false,
+	})
 	e1 := func(ctx context.Context, request interface{}) (interface{}, error) {
 		return nil, errors.New("foo")
 	}
@@ -36,7 +40,11 @@ func TestMakeErrorMarshallerMiddleware(t *testing.T) {
 }
 
 func TestPanicRecover(t *testing.T) {
-	mw := MakeErrorMarshallerMiddleware(true)
+	mw := MakeErrorMarshallerMiddleware(ErrorOption{
+		AlwaysHTTP200: false,
+		AlwaysGRPCOk:  false,
+		ShouldRecover: true,
+	})
 	e1 := func(ctx context.Context, request interface{}) (interface{}, error) {
 		panic("test")
 	}
