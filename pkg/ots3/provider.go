@@ -8,17 +8,17 @@ import (
 )
 
 type S3Config struct {
-	AccessKey string
+	AccessKey    string
 	AccessSecret string
-	Endpoint string
-	Region string
-	Bucket string
-	CdnUrl string
+	Endpoint     string
+	Region       string
+	Bucket       string
+	CdnUrl       string
 }
 
 func ProvideUploadManager(conf contract.ConfigAccessor) *Manager {
 	var s3config S3Config
-	_ = conf.Unmarshal("s3", &s3config)
+	_ = conf.Unmarshal("s3.default", &s3config)
 	return NewManager(
 		s3config.AccessKey,
 		s3config.AccessSecret,

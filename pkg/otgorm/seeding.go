@@ -13,16 +13,16 @@ type Seed struct {
 }
 
 type Seeds struct {
-	logger log.Logger
-	Db    *gorm.DB
-	Seeds []Seed
+	Logger     log.Logger
+	Db         *gorm.DB
+	Collection []*Seed
 }
 
 func (s *Seeds) Seed() error {
-	for _, ss := range s.Seeds {
-		_ = level.Info(s.logger).Log("msg", "seeding "+ss.Name)
+	for _, ss := range s.Collection {
+		_ = level.Info(s.Logger).Log("msg", "seeding "+ss.Name)
 		if err := ss.Run(s.Db); err != nil {
-			return errors.Wrapf(err, "failed to run %s", ss.Name)
+			return errors.Wrapf(err, "failed to seed %s", ss.Name)
 		}
 	}
 	return nil

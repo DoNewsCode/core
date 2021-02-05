@@ -9,11 +9,17 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func MakeErrorMarshallerMiddleware(shouldRecover bool) endpoint.Middleware {
+type ErrorOption struct {
+	AlwaysHTTP200 bool
+	AlwaysGRPCOk  bool
+	ShouldRecover bool
+}
+
+func MakeErrorMarshallerMiddleware(opt ErrorOption) endpoint.Middleware {
 	return func(e endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func() {
-				if !shouldRecover {
+				if !opt.ShouldRecover {
 					return
 				}
 				if er := recover(); er != nil {
@@ -25,6 +31,12 @@ func MakeErrorMarshallerMiddleware(shouldRecover bool) endpoint.Middleware {
 				var serverError srverr.ServerError
 				if !errors.As(err, &serverError) {
 					serverError = srverr.UnknownErr(err)
+				}
+				if opt.AlwaysHTTP200 {
+					serverError.HttpStatusCode = 200
+				}
+				if opt.AlwaysGRPCOk {
+					serverError.GrpcStatusCode = 0
 				}
 				// Brings kerr.SeverError to the uppermost level
 				return response, serverError

@@ -9,7 +9,7 @@ import (
 )
 
 func Mongo(conf contract.ConfigAccessor) (*mongo.Client, error) {
-	uri := conf.String("uri")
+	uri := conf.String("mongo.default.uri")
 	opts := options.Client()
 	opts.ApplyURI(uri)
 	opts.Monitor = NewMonitor()

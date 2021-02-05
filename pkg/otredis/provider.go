@@ -11,9 +11,9 @@ import (
 func Redis(logging log.Logger, conf contract.ConfigAccessor, tracer opentracing.Tracer) (redis.UniversalClient, func()) {
 	client := redis.NewUniversalClient(
 		&redis.UniversalOptions{
-			Addrs:    conf.Strings("redis.addrs"),
-			DB:       conf.Int("redis.database"),
-			Password: conf.String("redis.password"),
+			Addrs:    conf.Strings("redis.default.addrs"),
+			DB:       conf.Int("redis.default.database"),
+			Password: conf.String("redis.default.password"),
 		})
 	client.AddHook(
 		NewHook(tracer, conf.Strings("redis.addrs"),

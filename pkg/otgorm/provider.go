@@ -62,9 +62,9 @@ type DatabaseParams struct {
 
 func Database(p DatabaseParams) (*gorm.DB, func(), error) {
 	var dbConf DatabaseConf
-	_ = p.Conf.Unmarshal("gorm.database", &dbConf.Database)
-	_ = p.Conf.Unmarshal("gorm.dsn", &dbConf.Dsn)
-	_ = p.Conf.Unmarshal("gorm.tablePrefix", &dbConf.TablePrefix)
+	_ = p.Conf.Unmarshal("gorm.default.database", &dbConf.Database)
+	_ = p.Conf.Unmarshal("gorm.default.dsn", &dbConf.Dsn)
+	_ = p.Conf.Unmarshal("gorm.default.tablePrefix", &dbConf.TablePrefix)
 	dialector, err := ProvideDialector(&dbConf)
 	if err != nil {
 		return nil, nil, err

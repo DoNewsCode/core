@@ -56,7 +56,11 @@ func MakeUploadEndpoint(uploader Uploader) endpoint.Endpoint {
 func Middleware(logger log.Logger, env contract.Env) endpoint.Middleware {
 	keyer := key.NewKeyManager("module", "s3", "service", "upload")
 	l := kitmw.MakeLoggingMiddleware(logger, keyer, env.IsLocal())
-	e := kitmw.MakeErrorMarshallerMiddleware(env.IsProduction())
+	e := kitmw.MakeErrorMarshallerMiddleware(kitmw.ErrorOption{
+		AlwaysHTTP200: false,
+		AlwaysGRPCOk:  false,
+		ShouldRecover: env.IsProduction(),
+	})
 	return endpoint.Chain(e, l)
 }
 

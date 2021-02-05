@@ -1,30 +1,25 @@
 package container
 
 import (
+	"github.com/DoNewsCode/std/pkg/otgorm"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 )
 
 type Container struct {
 	BaseContainer
-	MigrationProviders []Migrations
-	SeedProviders      []func() error
+	MigrationProviders []func() []*otgorm.Migration
+	SeedProviders      []func() []*otgorm.Seed
 	CronProviders      []func(crontab *cron.Cron)
 	CommandProviders   []func(command *cobra.Command)
 }
 
-type Migrations struct {
-	Migrate  func() error
-	Rollback func(flag string) error
-}
-
 type MigrationProvider interface {
-	ProvideMigration() error
-	ProvideRollback(flag string) error
+	ProvideMigration() []*otgorm.Migration
 }
 
 type SeedProvider interface {
-	ProvideSeed() error
+	ProvideSeed() []*otgorm.Seed
 }
 
 type CronProvider interface {
@@ -38,7 +33,7 @@ type CommandProvider interface {
 func (s *Container) AddModule(module interface{}) {
 	s.BaseContainer.AddModule(module)
 	if p, ok := module.(MigrationProvider); ok {
-		s.MigrationProviders = append(s.MigrationProviders, Migrations{p.ProvideMigration, p.ProvideRollback})
+		s.MigrationProviders = append(s.MigrationProviders, p.ProvideMigration)
 	}
 	if p, ok := module.(SeedProvider); ok {
 		s.SeedProviders = append(s.SeedProviders, p.ProvideSeed)

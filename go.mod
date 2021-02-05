@@ -9,6 +9,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/gin-gonic/gin v1.6.3
+	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-kit/kit v0.10.0
 	github.com/go-redis/redis/v8 v8.4.9
 	github.com/gogo/protobuf v1.2.1

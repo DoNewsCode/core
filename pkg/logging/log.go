@@ -11,6 +11,8 @@ import (
 	"github.com/go-kit/kit/log/term"
 )
 
+var _ contract.LevelLogger = (*levelLogger)(nil)
+
 func NewLogger(format string) (logger log.Logger) {
 	switch strings.ToLower(format) {
 	case "json":
@@ -102,6 +104,14 @@ func (l levelLogger) Err(err error) {
 	_ = level.Error(l).Log("err", err)
 }
 
-func WithLevel(logger log.Logger) contract.LevelLogger {
+func (l levelLogger) CheckErr(err error) {
+	if err == nil {
+		return
+	}
+	l.Err(err)
+	os.Exit(1)
+}
+
+func WithLevel(logger log.Logger) levelLogger {
 	return levelLogger{logger}
 }

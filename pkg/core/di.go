@@ -54,7 +54,7 @@ func (c *C) ProvideItself() {
 		return c.AppName
 	})
 	c.Provide(func() contract.ConfigAccessor {
-		return c
+		return c.ConfigAccessor
 	})
 	c.Provide(func() contract.ConfigRouter {
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {
@@ -102,12 +102,8 @@ func (c *C) AddModuleViaFunc(function interface{}) {
 	c.Invoke(fn.Interface())
 }
 
-func (c *C) Invoke(function interface{}) {
-	err := c.di.Invoke(function)
-	if err != nil {
-		c.Err(err)
-		os.Exit(1)
-	}
+func (c *C) Invoke(function interface{}) error {
+	return c.di.Invoke(function)
 }
 
 func (c *C) Populate(targets ...interface{}) error {
