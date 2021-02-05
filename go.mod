@@ -31,6 +31,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
+	go.mongodb.org/mongo-driver v1.4.6
 	go.uber.org/dig v1.10.0
 	google.golang.org/grpc v1.35.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect

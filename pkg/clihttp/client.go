@@ -9,6 +9,8 @@ import (
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 )
 
@@ -42,9 +44,9 @@ func WithResponseLogThreshold(num int) option {
 func NewClient(tracer opentracing.Tracer, options ...option) *Client {
 	baseClient := &http.Client{Transport: &nethttp.Transport{}}
 	c := &Client{
-		tracer: tracer,
-		underlying: baseClient,
-		requestLogThreshold: 5000,
+		tracer:               tracer,
+		underlying:           baseClient,
+		requestLogThreshold:  5000,
 		responseLogThreshold: 5000,
 	}
 	for _, f := range options {
@@ -75,16 +77,19 @@ func (c *Client) logRequest(req *http.Request, tracer *nethttp.Tracer) {
 	}
 	body, err := req.GetBody()
 	if err != nil {
+		ext.Error.Set(tracer.Span(), true)
 		tracer.Span().LogKV("error", errors.Wrap(err, "cannot get request body"))
 		return
 	}
 	length, _ := strconv.Atoi(req.Header.Get(http.CanonicalHeaderKey("Content-Length")))
 	if length > c.requestLogThreshold {
+		ext.Error.Set(tracer.Span(), true)
 		tracer.Span().LogKV("request", "elided: Content-Length too large")
 		return
 	}
 	byt, err := ioutil.ReadAll(body)
 	if err != nil {
+		ext.Error.Set(tracer.Span(), true)
 		tracer.Span().LogKV("error", errors.Wrap(err, "cannot read request body"))
 		return
 	}
@@ -100,7 +105,8 @@ func (c *Client) logResponse(response *http.Response, tracer *nethttp.Tracer) {
 	var buf bytes.Buffer
 	byt, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		tracer.Span().LogKV("error", errors.Wrap(err, "cannot read response body"))
+		ext.Error.Set(tracer.Span(), true)
+		tracer.Span().LogFields(log.Error(err))
 	}
 	tracer.Span().LogKV("response", string(byt))
 	buf.Write(byt)
