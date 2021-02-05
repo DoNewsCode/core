@@ -119,6 +119,17 @@ func NewDatabaseFactory(p DatabaseParams) (*DatabaseFactory, func(), error) {
 	if p.Tracer == nil {
 		p.Tracer = opentracing.NoopTracer{}
 	}
+	cleanup := func() {
+		var wg sync.WaitGroup
+		for i := range cleanups {
+			wg.Add(1)
+			go func(i int) {
+				cleanups[i]()
+				wg.Done()
+			}(i)
+		}
+		wg.Wait()
+	}
 
 	var dbConfs map[string]databaseConf
 	err = p.Conf.Unmarshal("gorm", &dbConfs)
@@ -131,27 +142,17 @@ func NewDatabaseFactory(p DatabaseParams) (*DatabaseFactory, func(), error) {
 	for name, value := range dbConfs {
 		dialector, err = ProvideDialector(&value)
 		if err != nil {
-			return nil, nil, err
+			return nil, cleanup, err
 		}
 		gormConfig := ProvideGormConfig(logger, &value)
 		g, c, err = ProvideGormDB(dialector, gormConfig, p.Tracer)
 		if err != nil {
-			return nil, nil, err
+			return nil, cleanup, err
 		}
 		databaseFactory.db[name] = g
 		cleanups = append(cleanups, c)
 	}
-	return databaseFactory, func() {
-		var wg sync.WaitGroup
-		for i := range cleanups {
-			wg.Add(1)
-			go func(i int) {
-				cleanups[i]()
-				wg.Done()
-			}(i)
-		}
-		wg.Wait()
-	}, nil
+	return databaseFactory, cleanup, nil
 }
 
 func (d *DatabaseFactory) Connection(name string) *gorm.DB {
