@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
-	github.com/Reasno/ifilter v0.1.1
+	github.com/Reasno/ifilter v0.1.2
 	github.com/aws/aws-sdk-go v1.37.2
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.2
