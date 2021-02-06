@@ -1,27 +1,35 @@
 package example
 
 import (
-	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/kitkafka"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
 )
 
-func Publisher(conf contract.ConfigAccessor, logger log.Logger) *kitkafka.PublisherClient {
-	brokers := conf.Strings("bootstrapServer")
-	factory := kitkafka.NewKafkaFactory(brokers, logger)
-	topic := conf.String("topic")
-	publisher := kitkafka.NewPublisher(factory.MakeWriterHandle(topic), kitkafka.EncodeMarshaller)
+func Publisher(writerFactory kitkafka.KafkaWriterFactory) (*kitkafka.PublisherClient, error) {
+	// make a handler
+	handler, err := writerFactory.MakeWriterHandle("default")
+	if err != nil {
+		return nil, err
+	}
+
+	// convert a handler to endpoint
+	publisher := kitkafka.NewPublisher(handler, kitkafka.EncodeMarshaller)
 	ep := publisher.Endpoint()
 
 	// TODO: add middleware to endpoint
 
-	return factory.MakePublisherClient(ep)
+	// convert an endpoint to a service
+	return kitkafka.MakePublisherClient(ep), nil
 }
 
-func Subscriber(conf contract.ConfigAccessor, logger log.Logger, ep endpoint.Endpoint, dec kitkafka.DecodeRequestFunc) *kitkafka.SubscriberClient {
-	brokers := conf.Strings("bootstrapServer")
-	factory := kitkafka.NewKafkaFactory(brokers, logger)
+func Subscriber(readerFactory kitkafka.KafkaReaderFactory, ep endpoint.Endpoint, dec kitkafka.DecodeRequestFunc) (*kitkafka.SubscriberClient, error) {
+	// first convert service to endpoint
+
+	// TODO: add middleware to endpoint
+
+	// convert endpoint to handler
 	subscriber := kitkafka.NewSubscriber(ep, dec)
-	return factory.MakeSubscriberClient("topic", subscriber)
+
+	// connect handler to a server
+	return readerFactory.MakeSubscriberClient("default", subscriber)
 }

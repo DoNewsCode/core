@@ -14,7 +14,7 @@ import (
 	"go.uber.org/dig"
 )
 
-var defaultConfig = `
+const defaultConfig = `
 name: skeleton
 version: 0.1.0
 Env: local

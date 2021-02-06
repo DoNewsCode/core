@@ -3,6 +3,8 @@ package kitkafka
 import (
 	"context"
 	"flag"
+	"github.com/DoNewsCode/std/pkg/config"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/DoNewsCode/std/pkg/logging"
@@ -20,16 +22,38 @@ func TestTransport(t *testing.T) {
 		t.Skip("requires kafka")
 	}
 
-	factory := NewKafkaFactory([]string{"localhost:9092"}, logging.NewLogger("logfmt"))
+	kafka.DialLeader(context.Background(), "tcp", "localhost:9092", "Test", 0)
+
+	writerFactory, cleanupWriter := ProvideKafkaWriterFactory(KafkaParam{
+		Conf: config.MapAdapter{"kafka.writer": map[string]kafka.Writer{
+			"default": {
+				Addr:  kafka.TCP("127.0.0.1:9092"),
+				Topic: "Test",
+			},
+		}},
+		Logger: logging.NewLogger("logfmt"),
+	})
+	defer cleanupWriter()
+
+	readerFactory, cleanupReader := ProvideKafkaReaderFactory(KafkaParam{
+		Conf: config.MapAdapter{"kafka.reader": map[string]kafka.ReaderConfig{
+			"default": {
+				Brokers: []string{"127.0.0.1:9092"},
+				Topic:   "Test",
+			},
+		}},
+		Logger: logging.NewLogger("logfmt"),
+	})
+	defer cleanupReader()
 
 	// write test data
-	h := factory.MakeWriterHandle("test")
-	err := h.Handle(context.Background(), kafka.Message{
+	h, err := writerFactory.MakeWriterHandle("default")
+	assert.NoError(t, err)
+
+	err = h.Handle(context.Background(), kafka.Message{
 		Value: []byte("hello"),
 	})
-	if err != nil {
-		t.Fatalf("received expected err %s", err)
-	}
+	assert.NoError(t, err)
 
 	// consume test data
 	var consumed = false
@@ -41,13 +65,15 @@ func TestTransport(t *testing.T) {
 		consumed = true
 		return nil, nil
 	}
-	err = factory.MakeSubscriberClient("test", NewSubscriber(endpoint, func(ctx context.Context, message *kafka.Message) (request interface{}, err error) {
+	sub, err := readerFactory.MakeSubscriberClient("default", NewSubscriber(endpoint, func(ctx context.Context, message *kafka.Message) (request interface{}, err error) {
 		return string(message.Value), nil
-	})).ServeOnce(context.Background())
+	}))
 
-	if err != nil {
-		t.Fatalf("received expected err %s", err)
-	}
+	assert.NoError(t, err)
+
+	err = sub.ServeOnce(context.Background())
+
+	assert.NoError(t, err)
 
 	if !consumed {
 		t.Fatal("failed to consume the message")

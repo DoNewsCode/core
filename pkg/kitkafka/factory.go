@@ -1,7 +1,11 @@
 package kitkafka
 
 import (
-	"sync"
+	"fmt"
+	"github.com/DoNewsCode/std/pkg/async"
+	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/pkg/errors"
+	"go.uber.org/dig"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
@@ -9,53 +13,108 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type KafkaFactory struct {
-	mutex   sync.Mutex
-	brokers []string
-	closers []func() error
-	logger  log.Logger
+type KafkaReaderFactory struct {
+	*async.Factory
 }
 
-func NewKafkaFactory(brokers []string, logger log.Logger) *KafkaFactory {
-	logger = log.With(logger, "component", "kafka")
-	return &KafkaFactory{
-		brokers: brokers,
-		closers: []func() error{},
-		logger:  logger,
+func (k KafkaReaderFactory) Make(name string) (*kafka.Reader, error) {
+	client, err := k.Factory.Make(name)
+	if err != nil {
+		return nil, err
 	}
+	return client.(*kafka.Reader), nil
 }
 
-func (k *KafkaFactory) MakeWriterHandle(topic string) *writerHandle {
-	k.mutex.Lock()
-	defer k.mutex.Unlock()
+type KafkaParam struct {
+	dig.In
 
-	writer := &kafka.Writer{
-		Addr:        kafka.TCP(k.brokers...),
-		Topic:       topic,
-		Balancer:    &kafka.LeastBytes{},
-		Logger:      KafkaLogAdapter{Logging: level.Debug(k.logger)},
-		ErrorLogger: KafkaLogAdapter{Logging: level.Warn(k.logger)},
-		BatchSize:   1,
+	Conf   contract.ConfigAccessor
+	Logger log.Logger
+}
+
+func ProvideKafkaReaderFactory(p KafkaParam) (KafkaReaderFactory, func()) {
+	var err error
+	var dbConfs map[string]kafka.ReaderConfig
+	err = p.Conf.Unmarshal("kafka.reader", &dbConfs)
+	if err != nil {
+		_ = level.Warn(p.Logger).Log("err", err)
 	}
+	factory := async.NewFactory(func(name string) (async.Pair, error) {
+		var (
+			ok   bool
+			conf kafka.ReaderConfig
+		)
+		if conf, ok = dbConfs[name]; !ok {
+			return async.Pair{}, fmt.Errorf("kafka reader configuration %s not valid", name)
+		}
+		conf.Logger = KafkaLogAdapter{Logging: level.Debug(p.Logger)}
+		conf.ErrorLogger = KafkaLogAdapter{Logging: level.Warn(p.Logger)}
+		client := kafka.NewReader(conf)
+		return async.Pair{
+			Conn: client,
+			Closer: func() {
+				_ = client.Close()
+			},
+		}, nil
+	})
+	return KafkaReaderFactory{factory}, factory.Close
+}
 
-	k.closers = append(k.closers, writer.Close)
+type KafkaWriterFactory struct {
+	*async.Factory
+}
+
+func (k KafkaWriterFactory) Make(name string) (*kafka.Writer, error) {
+	client, err := k.Factory.Make(name)
+	if err != nil {
+		return nil, err
+	}
+	return client.(*kafka.Writer), nil
+}
+
+func ProvideKafkaWriterFactory(p KafkaParam) (KafkaWriterFactory, func()) {
+	var err error
+	var dbConfs map[string]kafka.Writer
+	err = p.Conf.Unmarshal("kafka.writer", &dbConfs)
+	if err != nil {
+		_ = level.Warn(p.Logger).Log("err", err)
+	}
+	factory := async.NewFactory(func(name string) (async.Pair, error) {
+		var (
+			ok     bool
+			writer kafka.Writer
+		)
+		if writer, ok = dbConfs[name]; !ok {
+			return async.Pair{}, fmt.Errorf("kafka writer configuration %s not valid", name)
+		}
+		writer.Logger = KafkaLogAdapter{Logging: level.Debug(p.Logger)}
+		writer.ErrorLogger = KafkaLogAdapter{Logging: level.Warn(p.Logger)}
+
+		return async.Pair{
+			Conn: &writer,
+			Closer: func() {
+				_ = writer.Close()
+			},
+		}, nil
+	})
+	return KafkaWriterFactory{factory}, factory.Close
+}
+
+func (k KafkaWriterFactory) MakeWriterHandle(name string) (*writerHandle, error) {
+	writer, err := k.Make(name)
+	if err != nil {
+		return nil, err
+	}
 	return &writerHandle{
 		Writer: writer,
-	}
+	}, nil
 }
 
 type readerConfig struct {
-	groupId     string
 	parallelism int
 }
 
 type readerOpt func(config *readerConfig)
-
-func WithGroup(group string) readerOpt {
-	return func(config *readerConfig) {
-		config.groupId = group
-	}
-}
 
 func WithParallelism(parallelism int) readerOpt {
 	return func(config *readerConfig) {
@@ -63,52 +122,28 @@ func WithParallelism(parallelism int) readerOpt {
 	}
 }
 
-func (k *KafkaFactory) MakeSubscriberClient(topic string, subscriber *Subscriber, opt ...readerOpt) *SubscriberClient {
-	k.mutex.Lock()
-	defer k.mutex.Unlock()
-
+func (k KafkaReaderFactory) MakeSubscriberClient(name string, subscriber Handler, opt ...readerOpt) (*SubscriberClient, error) {
 	var config = readerConfig{
-		groupId:     "",
 		parallelism: 1,
 	}
 	for _, o := range opt {
 		o(&config)
 	}
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:     k.brokers,
-		Topic:       topic,
-		GroupID:     config.groupId,
-		Logger:      KafkaLogAdapter{Logging: level.Debug(k.logger)},
-		ErrorLogger: KafkaLogAdapter{Logging: level.Warn(k.logger)},
-		MinBytes:    1,
-		MaxBytes:    10 * 1024 * 1024,
-	})
-
-	k.closers = append(k.closers, reader.Close)
-
+	reader, err := k.Make(name)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to make subscriber")
+	}
 	return &SubscriberClient{
 		reader:      reader,
 		handler:     subscriber,
 		parallelism: config.parallelism,
-	}
+	}, nil
 }
 
 type writerConfig struct{}
 
 type writerOpt func(config *writerConfig)
 
-func (k *KafkaFactory) MakePublisherClient(endpoint endpoint.Endpoint, opt ...writerOpt) *PublisherClient {
+func MakePublisherClient(endpoint endpoint.Endpoint, opt ...writerOpt) *PublisherClient {
 	return &PublisherClient{endpoint: endpoint}
-}
-
-func (k *KafkaFactory) Close() error {
-	k.mutex.Lock()
-	defer k.mutex.Unlock()
-	for _, v := range k.closers {
-		err := v()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -3,6 +3,7 @@ package otgorm
 import (
 	"fmt"
 	"github.com/DoNewsCode/std/pkg/async"
+	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -106,6 +107,23 @@ func (d DBFactory) Make(name string) (*gorm.DB, error) {
 	return db.(*gorm.DB), nil
 }
 
+// ProvideMemoryDatabase provides a sqlite database in memory mode. This is useful for testing.
+func ProvideMemoryDatabase() *gorm.DB {
+	factory, _ := ProvideDBFactory(DatabaseParams{
+		In: dig.In{},
+		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
+			"memory": {
+				Database: "sqlite",
+				Dsn:      "file::memory:?cache=shared",
+			},
+		}},
+		Logger: log.NewNopLogger(),
+		Tracer: nil,
+	})
+	memoryDatabase, _ := factory.Make("memory")
+	return memoryDatabase
+}
+
 func ProvideDBFactory(p DatabaseParams) (DBFactory, func()) {
 	logger := log.With(p.Logger, "component", "database")
 
@@ -119,8 +137,8 @@ func ProvideDBFactory(p DatabaseParams) (DBFactory, func()) {
 			dialector gorm.Dialector
 			conf      databaseConf
 			ok        bool
-			g         *gorm.DB
-			c         func()
+			conn      *gorm.DB
+			cleanup   func()
 		)
 		if conf, ok = dbConfs[name]; !ok {
 			return async.Pair{}, fmt.Errorf("database configuration %s not found", name)
@@ -130,13 +148,13 @@ func ProvideDBFactory(p DatabaseParams) (DBFactory, func()) {
 			return async.Pair{}, err
 		}
 		gormConfig := ProvideGormConfig(logger, &conf)
-		g, c, err = ProvideGormDB(dialector, gormConfig, p.Tracer)
+		conn, cleanup, err = ProvideGormDB(dialector, gormConfig, p.Tracer)
 		if err != nil {
 			return async.Pair{}, err
 		}
 		return async.Pair{
-			Conn:   g,
-			Closer: c,
+			Conn:   conn,
+			Closer: cleanup,
 		}, err
 	})
 	dbFactory := DBFactory{factory}
