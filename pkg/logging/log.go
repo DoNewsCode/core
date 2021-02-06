@@ -2,6 +2,7 @@ package logging
 
 import (
 	"context"
+	"github.com/opentracing/opentracing-go"
 	"os"
 	"strings"
 
@@ -64,8 +65,25 @@ func LevelFilter(levelCfg string) level.Option {
 	}
 }
 
-func WithContext(logger log.Logger, ctx context.Context) log.Logger {
+type spanLogger struct {
+	span opentracing.Span
+	base log.Logger
+}
 
+func (s spanLogger) Log(keyvals ...interface{}) error {
+	s.span.LogKV(keyvals...)
+	return s.base.Log(keyvals...)
+}
+
+func WithContext(logger log.Logger, ctx context.Context) log.Logger {
+	span := opentracing.SpanFromContext(ctx)
+	if span == nil {
+		return withContext(logger, ctx)
+	}
+	return spanLogger{span: span, base: withContext(logger, ctx)}
+}
+
+func withContext(logger log.Logger, ctx context.Context) log.Logger {
 	transport, _ := ctx.Value(contract.TransportKey).(string)
 	requestUrl, _ := ctx.Value(contract.RequestUrlKey).(string)
 	ip, _ := ctx.Value(contract.IpKey).(string)
