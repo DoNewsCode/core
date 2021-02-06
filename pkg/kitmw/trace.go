@@ -41,7 +41,6 @@ func TraceConsumer(tracer stdtracing.Tracer, operationName string, kind ext.Span
 			}
 			defer serverSpan.Finish()
 			ext.SpanKind.Set(serverSpan, kind)
-			serverSpan.LogKV("request", request)
 			if tenant, ok := ctx.Value(contract.TenantKey).(contract.Tenant); ok {
 				for k, v := range tenant.KV() {
 					serverSpan.SetTag(k, v)
@@ -57,10 +56,8 @@ func TraceConsumer(tracer stdtracing.Tracer, operationName string, kind ext.Span
 			resp, err := next(ctx, request)
 			if err != nil {
 				ext.Error.Set(serverSpan, true)
-				serverSpan.LogKV("error", err.Error())
 			}
 
-			serverSpan.LogKV("response", resp)
 			return resp, err
 		}
 	}
@@ -82,14 +79,11 @@ func TraceProducer(tracer stdtracing.Tracer, operationName string, kind ext.Span
 			}
 			defer clientSpan.Finish()
 			ext.SpanKind.Set(clientSpan, kind)
-			clientSpan.LogKV("message", request)
 			ctx = stdtracing.ContextWithSpan(ctx, clientSpan)
 			resp, err := next(ctx, request)
 			if err != nil {
 				ext.Error.Set(clientSpan, true)
-				clientSpan.LogKV("error", err.Error())
 			}
-			clientSpan.LogKV("response", resp)
 			return resp, err
 		}
 	}
