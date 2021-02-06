@@ -2,72 +2,75 @@ package otmongo
 
 import (
 	"context"
-	"github.com/opentracing/opentracing-go"
-	"github.com/pkg/errors"
-	"go.uber.org/dig"
-	"sync"
-
+	"fmt"
+	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
+	"github.com/opentracing/opentracing-go"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/dig"
 )
 
 type MongoParam struct {
 	dig.In
 
+	Logger log.Logger
 	Conf   contract.ConfigAccessor
 	Tracer opentracing.Tracer `optional:"true"`
 }
 
 func Mongo(p MongoParam) (*mongo.Client, func(), error) {
-	uri := p.Conf.String("mongo.default.uri")
-	opts := options.Client()
-	opts.ApplyURI(uri)
-	if p.Tracer != nil {
-		opts.Monitor = NewMonitor(p.Tracer)
-	}
-	client, err := mongo.Connect(context.Background(), opts)
-	return client, func() {
-		_ = client.Disconnect(context.Background())
+	factory, _ := ProvideMongoFactory(p)
+	conn, err := factory.Make("default")
+	return conn, func() {
+		factory.CloseConn("default")
 	}, err
 }
 
 type MongoFactory struct {
-	db map[string]*mongo.Client
+	*async.Factory
 }
 
-func NewMongoFactory(p MongoParam) (*MongoFactory, func(), error) {
-	var (
-		uris map[string]struct {
-			Uri string
-		}
-	)
-	factory := &MongoFactory{
-		db: make(map[string]*mongo.Client),
+func (r MongoFactory) Make(name string) (*mongo.Client, error) {
+	client, err := r.Factory.Make(name)
+	if err != nil {
+		return nil, err
 	}
-	cleanup := func() {
-		var wg sync.WaitGroup
-		for i := range factory.db {
-			wg.Add(1)
-			go func(i string) {
-				_ = factory.db[i].Disconnect(context.Background())
-				wg.Done()
-			}(i)
-		}
-		wg.Wait()
+	return client.(*mongo.Client), nil
+}
+
+func ProvideMongoFactory(p MongoParam) (MongoFactory, func()) {
+	var err error
+	var dbConfs map[string]struct{ Uri string }
+	err = p.Conf.Unmarshal("mongo", &dbConfs)
+	if err != nil {
+		level.Warn(p.Logger).Log("err", err)
 	}
-	p.Conf.Unmarshal("mongo", &uris)
-	for name, value := range uris {
+	factory := async.NewFactory(func(name string) (async.Pair, error) {
+		var (
+			ok   bool
+			conf struct{ Uri string }
+		)
+		if conf, ok = dbConfs[name]; !ok {
+			return async.Pair{}, fmt.Errorf("mongo configuration %s not valid", name)
+		}
 		opts := options.Client()
-		opts.ApplyURI(value.Uri)
+		opts.ApplyURI(conf.Uri)
 		if p.Tracer != nil {
 			opts.Monitor = NewMonitor(p.Tracer)
 		}
 		client, err := mongo.Connect(context.Background(), opts)
 		if err != nil {
-			return nil, cleanup, errors.Wrap(err, "failed to connect")
+			return async.Pair{}, err
 		}
-		factory.db[name] = client
-	}
-	return factory, cleanup, nil
+		return async.Pair{
+			Conn: client,
+			Closer: func() {
+				_ = client.Disconnect(context.Background())
+			},
+		}, nil
+	})
+	return MongoFactory{factory}, factory.Close
 }

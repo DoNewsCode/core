@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewRedisFactory(t *testing.T) {
-	factory, cleanup, err := NewRedisFactory(RedisParam{
+	factory, cleanup := ProvideRedisFactory(RedisParam{
 		In: dig.In{},
 		Conf: config.MapAdapter{"redis": map[string]redis.UniversalOptions{
 			"default":     {},
@@ -19,7 +19,12 @@ func TestNewRedisFactory(t *testing.T) {
 		Logger: log.NewNopLogger(),
 		Tracer: nil,
 	})
+	def, err := factory.Make("default")
 	assert.NoError(t, err)
-	assert.Len(t, factory.db, 2)
+	assert.NotNil(t, def)
+	alt, err := factory.Make("alternative")
+	assert.NoError(t, err)
+	assert.NotNil(t, alt)
 	assert.NotNil(t, cleanup)
+	cleanup()
 }

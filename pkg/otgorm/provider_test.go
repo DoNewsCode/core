@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-func TestNewDatabaseFactory(t *testing.T) {
-	factory, cleanup, err := NewDatabaseFactory(DatabaseParams{
+func TestProvideDBFactory(t *testing.T) {
+	factory, cleanup := ProvideDBFactory(DatabaseParams{
 		In: dig.In{},
 		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
 			"default": {
@@ -24,7 +24,11 @@ func TestNewDatabaseFactory(t *testing.T) {
 		Logger: log.NewNopLogger(),
 		Tracer: nil,
 	})
+	alt, err := factory.Make("alternative")
 	assert.NoError(t, err)
-	assert.Len(t, factory.db, 2)
-	assert.NotNil(t, cleanup)
+	assert.NotNil(t, alt)
+	def, err := factory.Make("default")
+	assert.NoError(t, err)
+	assert.NotNil(t, def)
+	cleanup()
 }

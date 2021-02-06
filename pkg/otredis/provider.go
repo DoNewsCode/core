@@ -1,13 +1,14 @@
 package otredis
 
 import (
+	"fmt"
+	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/dig"
-	"sync"
 )
 
 type RedisParam struct {
@@ -18,60 +19,53 @@ type RedisParam struct {
 	Tracer opentracing.Tracer `optional:"true"`
 }
 
-func Redis(param RedisParam) (redis.UniversalClient, func()) {
-	var conf redis.UniversalOptions
-	_ = param.Conf.Unmarshal("redis.default", &conf)
-	client := redis.NewUniversalClient(&conf)
-	if param.Tracer != nil {
-		client.AddHook(
-			NewHook(param.Tracer, param.Conf.Strings("redis.default.addrs"), param.Conf.Int("redis.default.database")),
-		)
-	}
-
-	return client, func() {
-		if err := client.Close(); err != nil {
-			level.Error(param.Logger).Log("err", err.Error())
-		}
-	}
+func ProvideDefaultRedis(p RedisParam) (redis.UniversalClient, func(), error) {
+	factory, _ := ProvideRedisFactory(p)
+	conn, err := factory.Make("default")
+	return conn, func() {
+		factory.CloseConn("default")
+	}, err
 }
 
 type RedisFactory struct {
-	db map[string]redis.UniversalClient
+	*async.Factory
 }
 
-func NewRedisFactory(p RedisParam) (*RedisFactory, func(), error) {
-	var err error
+func (r RedisFactory) Make(name string) (redis.UniversalClient, error) {
+	client, err := r.Factory.Make(name)
+	if err != nil {
+		return nil, err
+	}
+	return client.(redis.UniversalClient), nil
+}
 
+func ProvideRedisFactory(p RedisParam) (RedisFactory, func()) {
+	var err error
 	var dbConfs map[string]redis.UniversalOptions
 	err = p.Conf.Unmarshal("redis", &dbConfs)
 	if err != nil {
-		return nil, nil, err
+		level.Warn(p.Logger).Log("err", err)
 	}
-	redisFactory := &RedisFactory{
-		db: make(map[string]redis.UniversalClient),
-	}
-	for name, value := range dbConfs {
-		client := redis.NewUniversalClient(&value)
+	factory := async.NewFactory(func(name string) (async.Pair, error) {
+		var (
+			ok   bool
+			conf redis.UniversalOptions
+		)
+		if conf, ok = dbConfs[name]; !ok {
+			return async.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
+		}
+		client := redis.NewUniversalClient(&conf)
 		if p.Tracer != nil {
 			client.AddHook(
-				NewHook(p.Tracer, value.Addrs, value.DB),
+				NewHook(p.Tracer, conf.Addrs, conf.DB),
 			)
 		}
-		redisFactory.db[name] = client
-	}
-	return redisFactory, func() {
-		var wg sync.WaitGroup
-		for i := range redisFactory.db {
-			wg.Add(1)
-			go func(i string) {
-				_ = redisFactory.db[i].Close()
-				wg.Done()
-			}(i)
-		}
-		wg.Wait()
-	}, nil
-}
-
-func (r *RedisFactory) Connection(name string) redis.UniversalClient {
-	return r.db[name]
+		return async.Pair{
+			Conn: client,
+			Closer: func() {
+				_ = client.Close()
+			},
+		}, nil
+	})
+	return RedisFactory{factory}, factory.Close
 }

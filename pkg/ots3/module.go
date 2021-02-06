@@ -22,7 +22,7 @@ func New(conf contract.ConfigAccessor, logger log.Logger) *Module {
 }
 
 func injectModule(conf contract.ConfigAccessor, logger log.Logger) *Module {
-	manager := ProvideUploadManager(UploadManagerParam{Conf: conf})
+	manager, _, _ := ProvideUploadManager(S3Param{Conf: conf})
 	uploadService := &UploadService{
 		logger: logger,
 		s3:     manager,

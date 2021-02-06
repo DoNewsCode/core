@@ -2,16 +2,16 @@ package otgorm
 
 import (
 	"fmt"
+	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
-	"github.com/pkg/errors"
 	"go.uber.org/dig"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"sync"
 )
 
 type databaseConf struct {
@@ -68,7 +68,9 @@ func ProvideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 	if err != nil {
 		return nil, nil, err
 	}
-	AddGormCallbacks(db, tracer)
+	if tracer != nil {
+		AddGormCallbacks(db, tracer)
+	}
 	return db, func() {
 		if sqlDb, err := db.DB(); err == nil {
 			sqlDb.Close()
@@ -84,77 +86,59 @@ type DatabaseParams struct {
 	Tracer opentracing.Tracer `optional:"true"`
 }
 
-func Database(p DatabaseParams) (*gorm.DB, func(), error) {
-	var dbConf databaseConf
-	err := p.Conf.Unmarshal("gorm.default", &dbConf)
+func ProvideDefaultDatabase(p DatabaseParams) (*gorm.DB, func(), error) {
+	factory, _ := ProvideDBFactory(p)
+	conn, err := factory.Make("default")
+	return conn, func() {
+		factory.CloseConn("default")
+	}, err
+}
+
+type DBFactory struct {
+	*async.Factory
+}
+
+func (d DBFactory) Make(name string) (*gorm.DB, error) {
+	db, err := d.Factory.Make(name)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "unable to parse default config")
+		return nil, err
 	}
-	dialector, err := ProvideDialector(&dbConf)
-	if err != nil {
-		return nil, nil, err
-	}
+	return db.(*gorm.DB), nil
+}
+
+func ProvideDBFactory(p DatabaseParams) (DBFactory, func()) {
 	logger := log.With(p.Logger, "component", "database")
-	gormConfig := ProvideGormConfig(logger, &dbConf)
-	if p.Tracer == nil {
-		p.Tracer = opentracing.NoopTracer{}
-	}
-	return ProvideGormDB(dialector, gormConfig, p.Tracer)
-}
-
-type DatabaseFactory struct {
-	db map[string]*gorm.DB
-}
-
-func NewDatabaseFactory(p DatabaseParams) (*DatabaseFactory, func(), error) {
-	var (
-		logger    = log.With(p.Logger, "component", "database")
-		cleanups  []func()
-		err       error
-		dialector gorm.Dialector
-		g         *gorm.DB
-		c         func()
-	)
-
-	if p.Tracer == nil {
-		p.Tracer = opentracing.NoopTracer{}
-	}
-	cleanup := func() {
-		var wg sync.WaitGroup
-		for i := range cleanups {
-			wg.Add(1)
-			go func(i int) {
-				cleanups[i]()
-				wg.Done()
-			}(i)
-		}
-		wg.Wait()
-	}
 
 	var dbConfs map[string]databaseConf
-	err = p.Conf.Unmarshal("gorm", &dbConfs)
+	err := p.Conf.Unmarshal("gorm", &dbConfs)
 	if err != nil {
-		return nil, nil, err
+		level.Warn(logger).Log("err", err)
 	}
-	databaseFactory := &DatabaseFactory{
-		db: make(map[string]*gorm.DB),
-	}
-	for name, value := range dbConfs {
-		dialector, err = ProvideDialector(&value)
-		if err != nil {
-			return nil, cleanup, err
+	factory := async.NewFactory(func(name string) (async.Pair, error) {
+		var (
+			dialector gorm.Dialector
+			conf      databaseConf
+			ok        bool
+			g         *gorm.DB
+			c         func()
+		)
+		if conf, ok = dbConfs[name]; !ok {
+			return async.Pair{}, fmt.Errorf("database configuration %s not found", name)
 		}
-		gormConfig := ProvideGormConfig(logger, &value)
+		dialector, err = ProvideDialector(&conf)
+		if err != nil {
+			return async.Pair{}, err
+		}
+		gormConfig := ProvideGormConfig(logger, &conf)
 		g, c, err = ProvideGormDB(dialector, gormConfig, p.Tracer)
 		if err != nil {
-			return nil, cleanup, err
+			return async.Pair{}, err
 		}
-		databaseFactory.db[name] = g
-		cleanups = append(cleanups, c)
-	}
-	return databaseFactory, cleanup, nil
-}
-
-func (d *DatabaseFactory) Connection(name string) *gorm.DB {
-	return d.db[name]
+		return async.Pair{
+			Conn:   g,
+			Closer: c,
+		}, err
+	})
+	dbFactory := DBFactory{factory}
+	return dbFactory, dbFactory.Close
 }

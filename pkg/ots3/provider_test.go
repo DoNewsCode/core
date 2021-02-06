@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewUploadManagerFactory(t *testing.T) {
-	factory := NewUploadManagerFactory(UploadManagerParam{
+	factory, cleanup := ProvideS3Factory(S3Param{
 		In: dig.In{},
 		Conf: config.MapAdapter{"s3": map[string]S3Config{
 			"default":     {},
@@ -16,5 +16,12 @@ func TestNewUploadManagerFactory(t *testing.T) {
 		}},
 		Tracer: nil,
 	})
-	assert.Len(t, factory.managers, 2)
+	def, err := factory.Make("default")
+	assert.NoError(t, err)
+	assert.NotNil(t, def)
+	alt, err := factory.Make("alternative")
+	assert.NoError(t, err)
+	assert.NotNil(t, alt)
+	assert.NotNil(t, cleanup)
+	cleanup()
 }
