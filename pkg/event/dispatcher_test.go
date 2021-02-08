@@ -9,54 +9,54 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type TE struct {
+type MockEvent struct {
 	value int
 }
-type TL struct {
+type MockListener struct {
 	events []contract.Event
 	test   func(event contract.Event) error
 }
 
-func (T TL) Listen() []contract.Event {
+func (T MockListener) Listen() []contract.Event {
 	return T.events
 }
 
-func (T TL) Process(ctx context.Context, event contract.Event) error {
+func (T MockListener) Process(ctx context.Context, event contract.Event) error {
 	return T.test(event)
 }
 
 func TestDispatcher(t *testing.T) {
 	cases := []struct {
 		name      string
-		event     TE
-		listeners []TL
+		event     MockEvent
+		listeners []MockListener
 	}{
 		{
 			"one listener",
-			TE{},
-			[]TL{{
-				Of(TE{}),
+			MockEvent{},
+			[]MockListener{{
+				Of(MockEvent{}),
 				func(event contract.Event) error {
-					assert.Equal(t, 0, event.Data().(TE).value)
+					assert.Equal(t, 0, event.Data().(MockEvent).value)
 					return nil
 				},
 			}},
 		},
 		{
 			"two listener",
-			TE{value: 2},
-			[]TL{
+			MockEvent{value: 2},
+			[]MockListener{
 				{
-					Of(TE{}),
+					Of(MockEvent{}),
 					func(event contract.Event) error {
-						assert.Equal(t, 2, event.Data().(TE).value)
+						assert.Equal(t, 2, event.Data().(MockEvent).value)
 						return nil
 					},
 				},
 				{
-					Of(TE{}),
+					Of(MockEvent{}),
 					func(event contract.Event) error {
-						assert.Equal(t, 2, event.Data().(TE).value)
+						assert.Equal(t, 2, event.Data().(MockEvent).value)
 						return nil
 					},
 				},
@@ -64,8 +64,8 @@ func TestDispatcher(t *testing.T) {
 		},
 		{
 			"no listener",
-			TE{value: 2},
-			[]TL{
+			MockEvent{value: 2},
+			[]MockListener{
 				{
 					Of(struct{}{}),
 					func(event contract.Event) error {
@@ -77,12 +77,12 @@ func TestDispatcher(t *testing.T) {
 		},
 		{
 			"multiple events",
-			TE{value: 1},
-			[]TL{
+			MockEvent{value: 1},
+			[]MockListener{
 				{
-					Of(struct{}{}, TE{}),
+					Of(struct{}{}, MockEvent{}),
 					func(event contract.Event) error {
-						assert.Equal(t, 1, event.Data().(TE).value)
+						assert.Equal(t, 1, event.Data().(MockEvent).value)
 						return nil
 					},
 				},
@@ -90,16 +90,16 @@ func TestDispatcher(t *testing.T) {
 		},
 		{
 			"stop propagation",
-			TE{value: 2},
-			[]TL{
+			MockEvent{value: 2},
+			[]MockListener{
 				{
-					Of(TE{}),
+					Of(MockEvent{}),
 					func(event contract.Event) error {
 						return fmt.Errorf("err!")
 					},
 				},
 				{
-					Of(TE{}),
+					Of(MockEvent{}),
 					func(event contract.Event) error {
 						assert.Equal(t, 2, 1)
 						return nil

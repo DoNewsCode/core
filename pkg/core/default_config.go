@@ -26,12 +26,14 @@ log:
   level: debug
   format: logfmt
 redis:
-  addrs:
-    - 127.0.0.1:6379
-  database: 0
+  default:
+    addrs:
+      - 127.0.0.1:6379
+    DB: 0
 gorm:
-  database: mysql
-  dsn: root@tcp(127.0.0.1:3306)/skeleton?charset=utf8mb4&parseTime=True&loc=Local
+  default:
+    database: mysql
+    dsn: root@tcp(127.0.0.1:3306)/skeleton?charset=utf8mb4&parseTime=True&loc=Local
 `
 
 func ProvideConfig(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor {

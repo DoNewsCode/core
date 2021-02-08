@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
 	github.com/Reasno/ifilter v0.1.2
+	github.com/alicebob/miniredis/v2 v2.14.2
 	github.com/aws/aws-sdk-go v1.37.2
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.2
@@ -34,6 +35,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.0+incompatible
 	go.mongodb.org/mongo-driver v1.4.6
 	go.uber.org/dig v1.10.0
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	google.golang.org/grpc v1.35.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gorm.io/driver/mysql v1.0.4

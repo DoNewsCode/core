@@ -2,10 +2,12 @@ package event
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/DoNewsCode/std/pkg/contract"
 )
 
+// Evt is a thin wrapper for events. It implements contract.Event for any interface.
 type Evt struct {
 	body interface{}
 }
@@ -15,19 +17,23 @@ func (e Evt) Data() interface{} {
 }
 
 func (e Evt) Type() string {
-	return fmt.Sprintf("%T", e.body)
+	bType := reflect.TypeOf(e.body)
+	return fmt.Sprintf("%s.%s", bType.PkgPath(), bType.Name())
 }
 
-func NewEvent(i interface{}) Evt {
+// NewEvent implements contract.Event for any interface.
+func NewEvent(evt interface{}) Evt {
 	return Evt{
-		body: i,
+		body: evt,
 	}
 }
 
-func Of(i ...interface{}) []contract.Event {
+// Of implements contract.Event for a number of events. It is particularly useful
+// when constructing contract.Listener's Listen function.
+func Of(events ...interface{}) []contract.Event {
 	var out []contract.Event
-	for _, ii := range i {
-		out = append(out, NewEvent(ii))
+	for _, evt := range events {
+		out = append(out, NewEvent(evt))
 	}
 	return out
 }

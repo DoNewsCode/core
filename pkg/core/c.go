@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/DoNewsCode/std/pkg/config"
+	"github.com/DoNewsCode/std/pkg/config/watcher"
 	"github.com/DoNewsCode/std/pkg/container"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/logging"
@@ -53,8 +54,9 @@ type coreValues struct {
 
 type CoreOption func(*coreValues)
 
-func WithYamlFile(path string) CoreOption {
-	return WithConfigStack(file.Provider(path), yaml.Parser())
+func WithYamlFile(path string) (CoreOption, CoreOption) {
+	return WithConfigStack(file.Provider(path), yaml.Parser()),
+		WithConfigWatcher(watcher.File{Path: path})
 }
 
 func WithConfigStack(provider Provider, parser Parser) CoreOption {
