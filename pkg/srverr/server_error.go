@@ -91,28 +91,37 @@ func redact(err error) string {
 }
 
 type ServerError struct {
-	err        error
-	msg        string
-	args       []interface{}
-	customCode uint32
-	Printer    contract.Printer
+	err            error
+	msg            string
+	args           []interface{}
+	customCode     uint32
+	Printer        contract.Printer
 	HttpStatusCode int
 	GrpcStatusCode int
 }
 
-func (e ServerError) MarshalJSON() ([]byte, error) {
-	type jsonRep struct {
-		Code    uint32 `json:"code"`
-		Msg     string `json:"msg"`
+func (e ServerError) MarshalJSON() (result []byte, err error) {
+	if e.err == nil {
+		return []byte(`{}`), nil
 	}
+	jsonRepresentation := struct {
+		Code  int    `json:"code"`
+		Error string `json:"error"`
+	}{
+		Code:  -1,
+		Error: e.err.Error(),
+	}
+	code, message := e.PresentableError()
+	jsonRepresentation.Code = code
+	jsonRepresentation.Error = message
+	return json.Marshal(jsonRepresentation)
+}
+
+func (e ServerError) PresentableError() (int, string) {
 	if e.Printer == nil {
 		e.Printer = text.BasePrinter{}
 	}
-	r := jsonRep{
-		e.customCode,
-		e.Printer.Sprintf(e.msg, e.args...),
-	}
-	return json.Marshal(r)
+	return int(e.customCode), e.Printer.Sprintf(e.msg, e.args...)
 }
 
 func (e ServerError) Error() string {
@@ -189,4 +198,3 @@ func (e ServerError) StackTrace() errors.StackTrace {
 type stackTracer interface {
 	StackTrace() errors.StackTrace
 }
-

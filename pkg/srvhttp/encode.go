@@ -16,31 +16,31 @@ type StatusCoder interface {
 	StatusCode() int
 }
 
-type ServiceEncoder struct {
+type ResponseEncoder struct {
 	w http.ResponseWriter
 }
 
-func NewEncoder(w http.ResponseWriter) ServiceEncoder {
-	return ServiceEncoder{w: w}
+func NewResponseEncoder(w http.ResponseWriter) *ResponseEncoder {
+	return &ResponseEncoder{w: w}
 }
 
-func (s ServiceEncoder) Encode(response interface{}, err error) {
+func (s *ResponseEncoder) Encode(response interface{}, err error) {
 	if err != nil {
-		EncodeError(s.w, err)
+		s.EncodeError(err)
 		return
 	}
-	EncodeResponse(s.w, response)
+	s.EncodeResponse(response)
 }
 
-func EncodeResponse(w http.ResponseWriter, response interface{}) {
-	encodeGeneric(w, response, http.StatusOK)
+func (s *ResponseEncoder) EncodeError(err error) {
+	encode(s.w, err, http.StatusInternalServerError)
 }
 
-func EncodeError(w http.ResponseWriter, err error) {
-	encodeGeneric(w, err, http.StatusInternalServerError)
+func (s *ResponseEncoder) EncodeResponse(response interface{}) {
+	encode(s.w, response, http.StatusOK)
 }
 
-func encodeGeneric(w http.ResponseWriter, any interface{}, code int) {
+func encode(w http.ResponseWriter, any interface{}, code int) {
 	const contentType = "application/json; charset=utf-8"
 	w.Header().Set("Content-Type", contentType)
 
@@ -54,14 +54,21 @@ func encodeGeneric(w http.ResponseWriter, any interface{}, code int) {
 	}
 	w.WriteHeader(code)
 
-	// Pick the right encoder
 	switch any.(type) {
-	case proto.Message:
+	case proto.Message: // gogoproto proto.Error
 		marshaller := jsonpb.Marshaler{
 			EmitDefaults: true,
 			OrigName:     true,
 		}
 		_ = marshaller.Marshal(w, any.(proto.Message))
+	case error:
+		if _, ok := any.(json.Marshaler); !ok {
+			any = map[string]string{
+				"error": any.(error).Error(),
+			}
+		}
+		encoder := json.NewEncoder(w)
+		_ = encoder.Encode(any)
 	default:
 		encoder := json.NewEncoder(w)
 		_ = encoder.Encode(any)
