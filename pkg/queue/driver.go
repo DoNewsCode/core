@@ -132,29 +132,31 @@ func (r RedisDriver) Flush(ctx context.Context, channel string) error {
 	return nil
 }
 
+type attempt struct {
+	err error
+}
+
+func (a attempt) try(cmd *redis.IntCmd, value *int64) {
+	if a.err != nil && !errors.Is(a.err, redis.Nil) {
+		return
+	}
+	*value, a.err = cmd.Result()
+}
+
 func (r RedisDriver) Info(ctx context.Context) (QueueInfo, error) {
-	waiting, err := r.redisClient.LLen(ctx, r.channelConfig.Waiting).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		return QueueInfo{}, errors.Wrap(err, "failed to collect waiting queue length")
+	var (
+		oneByOne attempt
+		info     QueueInfo
+	)
+	oneByOne.try(r.redisClient.LLen(ctx, r.channelConfig.Waiting), &info.Waiting)
+	oneByOne.try(r.redisClient.LLen(ctx, r.channelConfig.Failed), &info.Failed)
+	oneByOne.try(r.redisClient.LLen(ctx, r.channelConfig.Timeout), &info.Timeout)
+	oneByOne.try(r.redisClient.ZCard(ctx, r.channelConfig.Delayed), &info.Delayed)
+
+	if oneByOne.err != nil {
+		return info, errors.Wrap(oneByOne.err, "failed to collect queue info")
 	}
-	failed, err := r.redisClient.LLen(ctx, r.channelConfig.Failed).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		return QueueInfo{}, errors.Wrap(err, "failed to collect failed queue length")
-	}
-	timeout, err := r.redisClient.LLen(ctx, r.channelConfig.Timeout).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		return QueueInfo{}, errors.Wrap(err, "failed to collect after queue length")
-	}
-	delayed, err := r.redisClient.ZCard(ctx, r.channelConfig.Delayed).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		return QueueInfo{}, errors.Wrap(err, "failed to collect delayed queue length")
-	}
-	return QueueInfo{
-		Waiting: waiting,
-		Delayed: delayed,
-		Timeout: timeout,
-		Failed:  failed,
-	}, nil
+	return info, nil
 }
 
 func (r RedisDriver) remove(ctx context.Context, channel string, data []byte) error {

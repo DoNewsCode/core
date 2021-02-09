@@ -22,68 +22,140 @@ func err(code codes.Code, e error, msgAndArgs ...interface{}) ServerError {
 	return ServerError{err: e, msg: "%+v", args: msgAndArgs, customCode: uint32(code)}
 }
 
+func is(err error, code codes.Code) bool {
+	var serverError ServerError
+	if errors.As(err, &serverError) {
+		return serverError.customCode == uint32(code)
+	}
+	return false
+}
+
 func UnknownErr(e error) ServerError {
 	return err(codes.Unknown, e, redact(e))
+}
+
+func IsUnknownErr(e error) bool {
+	return is(e, codes.Unknown)
 }
 
 func CanceledErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.Canceled, e, msgAndArgs...)
 }
 
+func IsCanceledErr(e error) bool {
+	return is(e, codes.Canceled)
+}
+
 func DeadlineExceededErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.DeadlineExceeded, e, msgAndArgs...)
+}
+
+func IsDeadlineExceededErr(e error) bool {
+	return is(e, codes.DeadlineExceeded)
 }
 
 func AlreadyExistsErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.AlreadyExists, e, msgAndArgs...)
 }
 
+func IsAlreadyExistsErr(e error) bool {
+	return is(e, codes.AlreadyExists)
+}
+
 func AbortedErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.Aborted, e, msgAndArgs...)
+}
+
+func IsAbortedErr(e error) bool {
+	return is(e, codes.Aborted)
 }
 
 func OutOfRangeErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.OutOfRange, e, msgAndArgs...)
 }
 
+func IsOutOfRangeErr(e error) bool {
+	return is(e, codes.OutOfRange)
+}
+
 func UnimplementedErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.Unimplemented, e, msgAndArgs...)
 }
 
+func IsUnimplementedErr(e error) bool {
+	return is(e, codes.Unimplemented)
+}
+
 func InternalErr(e error, msgAndArgs ...interface{}) ServerError {
-	return err(codes.Unimplemented, e, msgAndArgs...)
+	return err(codes.Internal, e, msgAndArgs...)
+}
+
+func IsInternalErr(e error) bool {
+	return is(e, codes.Internal)
 }
 
 func PermissionDeniedErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.PermissionDenied, e, msgAndArgs...)
 }
 
+func IsPermissionDeniedErr(e error) bool {
+	return is(e, codes.PermissionDenied)
+}
+
 func InvalidArgumentErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.InvalidArgument, e, msgAndArgs...)
+}
+
+func IsInvalidArgumentErr(e error) bool {
+	return is(e, codes.InvalidArgument)
 }
 
 func NotFoundErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.NotFound, e, msgAndArgs...)
 }
 
+func IsNotFoundErr(e error) bool {
+	return is(e, codes.NotFound)
+}
+
 func UnavailableErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.Unavailable, e, msgAndArgs...)
+}
+
+func IsUnavailableErr(e error) bool {
+	return is(e, codes.Unavailable)
 }
 
 func DataLossErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.DataLoss, e, msgAndArgs...)
 }
 
+func IsDataLossErr(e error) bool {
+	return is(e, codes.DataLoss)
+}
+
 func UnauthenticatedErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.Unauthenticated, e, msgAndArgs...)
+}
+
+func IsUnauthenticatedErr(e error) bool {
+	return is(e, codes.Unauthenticated)
 }
 
 func ResourceExhaustedErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.ResourceExhausted, e, msgAndArgs...)
 }
 
+func IsResourceExhaustedErr(e error) bool {
+	return is(e, codes.ResourceExhausted)
+}
+
 func FailedPreconditionErr(e error, msgAndArgs ...interface{}) ServerError {
 	return err(codes.FailedPrecondition, e, msgAndArgs...)
+}
+
+func IsFailedPreconditionErr(e error) bool {
+	return is(e, codes.FailedPrecondition)
 }
 
 func redact(err error) string {
@@ -100,19 +172,33 @@ type ServerError struct {
 	GrpcStatusCode int
 }
 
+func (e *ServerError) UnmarshalJSON(bytes []byte) error {
+	var jsonRepresentation struct {
+		Code  uint32 `json:"code"`
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(bytes, &jsonRepresentation); err != nil {
+		return err
+	}
+	e.customCode = jsonRepresentation.Code
+	e.msg = jsonRepresentation.Error
+	e.err = errors.New(e.msg)
+	return nil
+}
+
 func (e ServerError) MarshalJSON() (result []byte, err error) {
 	if e.err == nil {
 		return []byte(`{}`), nil
 	}
-	jsonRepresentation := struct {
-		Code  int    `json:"code"`
+	var jsonRepresentation = struct {
+		Code  uint32 `json:"code,omitempty"`
 		Error string `json:"error"`
 	}{
-		Code:  -1,
+		Code:  0,
 		Error: e.err.Error(),
 	}
 	code, message := e.PresentableError()
-	jsonRepresentation.Code = code
+	jsonRepresentation.Code = uint32(code)
 	jsonRepresentation.Error = message
 	return json.Marshal(jsonRepresentation)
 }
