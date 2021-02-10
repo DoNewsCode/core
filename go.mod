@@ -12,7 +12,7 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-kit/kit v0.10.0
-	github.com/go-redis/redis/v8 v8.4.9
+	github.com/go-redis/redis/v8 v8.5.0
 	github.com/gogo/protobuf v1.2.1
 	github.com/golang/protobuf v1.4.3
 	github.com/gorilla/handlers v1.5.1
@@ -35,7 +35,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.0+incompatible
 	go.mongodb.org/mongo-driver v1.4.6
 	go.uber.org/dig v1.10.0
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	google.golang.org/grpc v1.35.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gorm.io/driver/mysql v1.0.4
