@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/DoNewsCode/std/pkg/srverr"
+	"github.com/DoNewsCode/std/pkg/unierr"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -23,14 +23,14 @@ func MakeErrorMarshallerMiddleware(opt ErrorOption) endpoint.Middleware {
 					return
 				}
 				if er := recover(); er != nil {
-					err = srverr.InternalErr(fmt.Errorf("panic: %s", er))
+					err = unierr.InternalErr(fmt.Errorf("panic: %s", er))
 				}
 			}()
 			response, err = e(ctx, request)
 			if err != nil {
-				var serverError srverr.ServerError
+				var serverError *unierr.Error
 				if !errors.As(err, &serverError) {
-					serverError = srverr.UnknownErr(err)
+					serverError = unierr.UnknownErr(err)
 				}
 				if opt.AlwaysHTTP200 {
 					serverError.HttpStatusCode = 200

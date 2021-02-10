@@ -7,7 +7,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func Debug(router *mux.Router) {
+// DebugModule defines a http provider for container.Container. It calls pprof underneath. For instance,
+// `/debug/pprof/cmdline` invokes pprof.Cmdline
+type DebugModule struct{}
+
+// ProvideHttp implements container.HttpProvider
+func (d DebugModule) ProvideHttp(router *mux.Router) {
 	m := mux.NewRouter()
 	m.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 	m.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))

@@ -7,7 +7,7 @@ import (
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/key"
 	"github.com/DoNewsCode/std/pkg/kitmw"
-	"github.com/DoNewsCode/std/pkg/srverr"
+	"github.com/DoNewsCode/std/pkg/unierr"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -42,7 +42,7 @@ func MakeUploadEndpoint(uploader Uploader) endpoint.Endpoint {
 		req := request.(*Request)
 		resp, err := uploader.Upload(ctx, req.name, req.data)
 		if err != nil {
-			return nil, srverr.InternalErr(err, "failed to upload")
+			return nil, unierr.InternalErr(err, "failed to upload")
 		}
 		return &Response{
 			Code: 0,

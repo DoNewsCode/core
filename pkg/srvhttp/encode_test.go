@@ -2,7 +2,7 @@ package srvhttp
 
 import (
 	"bytes"
-	"github.com/DoNewsCode/std/pkg/srverr"
+	"github.com/DoNewsCode/std/pkg/unierr"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -63,17 +63,17 @@ func TestEncoder(t *testing.T) {
 			&MockWriter{
 				code:   500,
 				header: make(http.Header),
-				buffer: *bytes.NewBufferString(`{"error":"foo"}` + "\n"),
+				buffer: *bytes.NewBufferString(`{"message":"foo"}` + "\n"),
 			},
 		},
 		{
-			"ServerError response",
+			"Error response",
 			nil,
-			srverr.NotFoundErr(errors.New("foo"), "bar"),
+			unierr.NotFoundErr(errors.New("foo"), "bar"),
 			&MockWriter{
 				code:   404,
 				header: make(http.Header),
-				buffer: *bytes.NewBufferString(`{"code":5,"error":"bar"}` + "\n"),
+				buffer: *bytes.NewBufferString(`{"code":5,"message":"bar"}` + "\n"),
 			},
 		},
 	}

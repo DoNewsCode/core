@@ -1,17 +1,27 @@
-package srvhttp
+package kitmw
 
 import (
 	"context"
+	grpctransport "github.com/go-kit/kit/transport/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"net/http"
 	"strings"
 
-	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/DoNewsCode/std/pkg/contract"
+	httptransport "github.com/go-kit/kit/transport/http"
 )
 
-func IpToContext() httptransport.RequestFunc {
+func IpToHTTPContext() httptransport.RequestFunc {
 	return func(ctx context.Context, r *http.Request) context.Context {
 		return context.WithValue(ctx, contract.IpKey, realIP(r))
+	}
+}
+
+func IpToGRPCContext() grpctransport.ServerRequestFunc {
+	return func(ctx context.Context, md metadata.MD) context.Context {
+		remote, _ := peer.FromContext(ctx)
+		return context.WithValue(ctx, contract.IpKey, remote.Addr.String())
 	}
 }
 

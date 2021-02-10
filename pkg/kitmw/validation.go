@@ -3,8 +3,8 @@ package kitmw
 import (
 	"context"
 
+	"github.com/DoNewsCode/std/pkg/unierr"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/DoNewsCode/std/pkg/srverr"
 )
 
 type validator interface {
@@ -17,7 +17,7 @@ func NewValidationMiddleware() endpoint.Middleware {
 			if t, ok := req.(validator); ok {
 				err = t.Validate()
 				if err != nil {
-					return nil, srverr.InvalidArgumentErr(err)
+					return nil, unierr.InvalidArgumentErr(err)
 				}
 			}
 			resp, err = in(ctx, req)

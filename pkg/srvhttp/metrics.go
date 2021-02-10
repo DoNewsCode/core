@@ -1,21 +1,15 @@
 package srvhttp
 
 import (
-	"net/http"
-
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func Metrics(router *mux.Router) {
-	router.PathPrefix("/metrics").Handler(promhttp.Handler())
-}
+// MetricsModule exposes prometheus metrics to `/metrics`. This is the standard route
+// for prometheus metrics scrappers.
+type MetricsModule struct{}
 
-func MakeMetricsMiddleware() func(handler http.Handler) http.Handler {
-	return func(handler http.Handler) http.Handler {
-		router := mux.NewRouter()
-		router.PathPrefix("/metrics").Handler(promhttp.Handler())
-		router.PathPrefix("/").Handler(handler)
-		return router
-	}
+// ProvideHttp implements container.HttpProvider
+func (m MetricsModule) ProvideHttp(router *mux.Router) {
+	router.PathPrefix("/metrics").Handler(promhttp.Handler())
 }

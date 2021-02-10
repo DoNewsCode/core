@@ -9,21 +9,38 @@ import (
 )
 
 type Headerer interface {
+	// Headers provides the header map that will be sent by WriteHeader.
 	Headers() http.Header
 }
 
 type StatusCoder interface {
+	// StatusCode provides the status code for the http response.
 	StatusCode() int
 }
 
+// ResponseEncoder encodes either a successful http response or errors to the JSON format,
+// and pipe the serialized json data to the http.ResponseWriter.
+//
+// It asserts the type of input in following order and figures out the matching encoder:
+//
+//  json.Marshaler: use encoding/json encoder.
+//  proto.Message: use the jsonpb encoder
+//  error: {"message": err.Error()}
+//  by default: encoding/json encoder.
+//
+// It also populates http status code and headers if necessary.
 type ResponseEncoder struct {
 	w http.ResponseWriter
 }
 
+// NewResponseEncoder wraps the http.ResponseWriter and returns a reference to ResponseEncoder
 func NewResponseEncoder(w http.ResponseWriter) *ResponseEncoder {
 	return &ResponseEncoder{w: w}
 }
 
+// Encode serialize response and error to the corresponding json format and write then to the output buffer.
+//
+// See ResponseEncoder for details.
 func (s *ResponseEncoder) Encode(response interface{}, err error) {
 	if err != nil {
 		s.EncodeError(err)
@@ -32,10 +49,13 @@ func (s *ResponseEncoder) Encode(response interface{}, err error) {
 	s.EncodeResponse(response)
 }
 
+// EncodeError encodes an Error. If the error is not a StatusCoder, the http.StatusInternalServerError will be used.
 func (s *ResponseEncoder) EncodeError(err error) {
 	encode(s.w, err, http.StatusInternalServerError)
 }
 
+// EncodeResponse encodes an response value.
+// If the response is not a StatusCoder, the http.StatusInternalServerError will be used.
 func (s *ResponseEncoder) EncodeResponse(response interface{}) {
 	encode(s.w, response, http.StatusOK)
 }
@@ -54,23 +74,23 @@ func encode(w http.ResponseWriter, any interface{}, code int) {
 	}
 	w.WriteHeader(code)
 
-	switch any.(type) {
-	case proto.Message: // gogoproto proto.Error
+	switch x := any.(type) {
+	case json.Marshaler:
+		encoder := json.NewEncoder(w)
+		_ = encoder.Encode(x)
+	case proto.Message:
 		marshaller := jsonpb.Marshaler{
 			EmitDefaults: true,
 			OrigName:     true,
 		}
-		_ = marshaller.Marshal(w, any.(proto.Message))
+		_ = marshaller.Marshal(w, x)
 	case error:
-		if _, ok := any.(json.Marshaler); !ok {
-			any = map[string]string{
-				"error": any.(error).Error(),
-			}
-		}
 		encoder := json.NewEncoder(w)
-		_ = encoder.Encode(any)
+		_ = encoder.Encode(map[string]string{
+			"message": x.Error(),
+		})
 	default:
 		encoder := json.NewEncoder(w)
-		_ = encoder.Encode(any)
+		_ = encoder.Encode(x)
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DoNewsCode/std/pkg/srverr"
+	"github.com/DoNewsCode/std/pkg/unierr"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/pkg/errors"
 )
@@ -19,20 +19,20 @@ func TestMakeErrorMarshallerMiddleware(t *testing.T) {
 		return nil, errors.New("foo")
 	}
 	e2 := func(ctx context.Context, request interface{}) (interface{}, error) {
-		return nil, srverr.NotFoundErr(errors.New("bar"), "")
+		return nil, unierr.NotFoundErr(errors.New("bar"), "")
 	}
 	e3 := func(ctx context.Context, request interface{}) (interface{}, error) {
-		return nil, srverr.NotFoundErr(srverr.InvalidArgumentErr(errors.New("bar"), ""), "")
+		return nil, unierr.NotFoundErr(unierr.InvalidArgumentErr(errors.New("bar"), ""), "")
 	}
 	e4 := func(ctx context.Context, request interface{}) (interface{}, error) {
-		return nil, errors.Wrap(srverr.NotFoundErr(errors.New("foo"), ""), "bar")
+		return nil, errors.Wrap(unierr.NotFoundErr(errors.New("foo"), ""), "bar")
 	}
 	cases := []endpoint.Endpoint{e1, e2, e3, e4}
 	for _, c := range cases {
 		cc := c
 		t.Run("", func(t *testing.T) {
 			_, err := mw(cc)(nil, nil)
-			if _, ok := err.(srverr.ServerError); !ok {
+			if _, ok := err.(unierr.Error); !ok {
 				t.Fail()
 			}
 		})
@@ -53,7 +53,7 @@ func TestPanicRecover(t *testing.T) {
 		cc := c
 		t.Run("", func(t *testing.T) {
 			_, err := mw(cc)(nil, nil)
-			if _, ok := err.(srverr.ServerError); !ok {
+			if _, ok := err.(unierr.Error); !ok {
 				t.Fail()
 			}
 		})
