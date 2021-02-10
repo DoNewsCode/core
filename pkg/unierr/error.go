@@ -52,7 +52,8 @@ func Wrapf(err error, code codes.Code, format string, args ...interface{}) *Erro
 // In grpc transports, Error can not only be constructed from a grpc status but also producing a native grpc status.
 // In HTTP transports, Error can be encoded and decoded in json format. It also infers HTTP status code.
 //
-// The back and forth conversion makes Error suitable as a unification error model, on both client side and server side.
+// The roundtrip conversion makes Error suitable as a unification error model, on both client side and server side.
+// Note the json format follows the JSONRPC standard.
 type Error struct {
 	err  error
 	msg  string
@@ -60,8 +61,8 @@ type Error struct {
 	code codes.Code
 	// Printer can ben used to achieve i18n. By default it is a text.BasePrinter.
 	Printer contract.Printer
-	// HttpStatusCode overwrites the inferred HTTP status code from gRPC status.
-	HttpStatusCode int
+	// HttpStatusCodeFunc can overwrites the inferred HTTP status code from gRPC status.
+	HttpStatusCodeFunc func(code codes.Code) int
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -118,10 +119,10 @@ func FromStatus(s *status.Status) *Error {
 // StatusCode infers the correct http status corresponding to Error's internal code.
 // If a HttpStatusCode is set in Error, that status code will be used instead.
 func (e *Error) StatusCode() int {
-	if e.HttpStatusCode != 0 {
-		return e.HttpStatusCode
+	if e.HttpStatusCodeFunc != nil {
+		return e.HttpStatusCodeFunc(e.code)
 	}
-	switch codes.Code(e.code) {
+	switch e.code {
 	case codes.OK:
 		return http.StatusOK
 	case codes.Canceled:
@@ -179,7 +180,6 @@ func UnknownErr(e error) *Error {
 	return err(codes.Unknown, e)
 }
 
-// IsUnknownErr checks if an Error has codes.Unknown.
 // IsUnknownErr checks if an Error has codes.Unknown
 func IsUnknownErr(e error) bool {
 	return is(e, codes.Unknown)
