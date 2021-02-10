@@ -37,6 +37,7 @@ func TestServerError_FromStatus(t *testing.T) {
 	result := FromStatus(status)
 	assert.Equal(t, codes.Aborted, result.code)
 	assert.Equal(t, "foo", result.msg)
+	assert.True(t, IsAbortedErr(result))
 }
 
 type testPrinter struct {
@@ -56,4 +57,7 @@ func TestServerError_CustomPrinter(t *testing.T) {
 	status := testError.GRPCStatus()
 	assert.Equal(t, codes.Aborted, status.Code())
 	assert.Equal(t, "FOO", status.Message())
+	bytes, err := testError.MarshalJSON()
+	assert.NoError(t, err)
+	assert.Equal(t, []byte(`{"code":10,"message":"FOO"}`), bytes)
 }
