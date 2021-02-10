@@ -7,11 +7,7 @@ import (
 	"github.com/DoNewsCode/std/pkg/contract"
 )
 
-type Persistent interface {
-	Defer() time.Duration
-	Decorate(s *SerializedMessage)
-}
-
+// DeferrablePersistentEvent is a persisted event.
 type DeferrablePersistentEvent struct {
 	contract.Event
 	after         time.Duration
@@ -20,10 +16,13 @@ type DeferrablePersistentEvent struct {
 	uniqueId      string
 }
 
+// Defer defers the execution of the job for the period of time returned.
 func (d DeferrablePersistentEvent) Defer() time.Duration {
 	return d.after
 }
 
+// Decorate decorates the SerializedMessage of this event by adding some meta info. it is called in the dispatcher,
+// after the Packer compresses the event.
 func (d DeferrablePersistentEvent) Decorate(s *SerializedMessage) {
 	s.UniqueId = d.uniqueId
 	s.HandleTimeout = d.handleTimeout
@@ -31,8 +30,10 @@ func (d DeferrablePersistentEvent) Decorate(s *SerializedMessage) {
 	s.Key = d.Type()
 }
 
+// PersistOption defines some options for Persist
 type PersistOption func(event *DeferrablePersistentEvent)
 
+// Persist converts any contract.Event to DeferrablePersistentEvent. Namely, store them in external storage.
 func Persist(event contract.Event, opts ...PersistOption) DeferrablePersistentEvent {
 	e := DeferrablePersistentEvent{Event: event, maxAttempts: 1, handleTimeout: time.Hour, uniqueId: randomId()}
 	for _, f := range opts {
@@ -41,30 +42,36 @@ func Persist(event contract.Event, opts ...PersistOption) DeferrablePersistentEv
 	return e
 }
 
+// Defer is a PersistOption that defers the execution of DeferrablePersistentEvent for the period of time given.
 func Defer(duration time.Duration) PersistOption {
 	return func(event *DeferrablePersistentEvent) {
 		event.after = duration
 	}
 }
 
+// ScheduleAt is a PersistOption that defers the execution of DeferrablePersistentEvent until the time given.
 func ScheduleAt(t time.Time) PersistOption {
 	return func(event *DeferrablePersistentEvent) {
 		event.after = t.Sub(time.Now())
 	}
 }
 
+// Timeout is a PersistOption that defines the maximum time the event can be processed until timeout. Note: this timeout
+// is shared among all listeners.
 func Timeout(timeout time.Duration) PersistOption {
 	return func(event *DeferrablePersistentEvent) {
 		event.handleTimeout = timeout
 	}
 }
 
+// MaxAttempts is a PersistOption that defines how many times the event handler can be retried.
 func MaxAttempts(attempts int) PersistOption {
 	return func(event *DeferrablePersistentEvent) {
 		event.maxAttempts = attempts
 	}
 }
 
+// UniqueId is a PersistOption that outsources the generation of uniqueId to the caller.
 func UniqueId(id string) PersistOption {
 	return func(event *DeferrablePersistentEvent) {
 		event.uniqueId = id

@@ -11,11 +11,15 @@ import (
 	"github.com/pkg/errors"
 )
 
+// The Packer interface describes how to save the message in wire format
 type Packer interface {
+	// Compress serializes the message to bytes
 	Compress(message interface{}) ([]byte, error)
+	// Decompress reverses the bytes to message
 	Decompress(data []byte, message interface{}) error
 }
 
+// RedisDriver is a queue driver backed by redis. It is easy to setup, and offers at least once semantic.
 type RedisDriver struct {
 	logger        log.Logger
 	redisClient   redis.UniversalClient
@@ -24,6 +28,8 @@ type RedisDriver struct {
 	packer        Packer
 }
 
+// Push pushes the message onto the queue. It is possible to specify a time delay. If so the message
+// will be read after the delay. Use zero value if a delay is not needed.
 func (r RedisDriver) Push(ctx context.Context, message *SerializedMessage, delay time.Duration) error {
 	data, err := r.packer.Compress(message)
 	if err != nil {
@@ -46,6 +52,8 @@ func (r RedisDriver) Push(ctx context.Context, message *SerializedMessage, delay
 	return nil
 }
 
+// Pop pops the message out of the queue. It uses BRPOP underneath, so effectively it blocks until a
+// message is available or a timeout is reached.
 func (r RedisDriver) Pop(ctx context.Context) (*SerializedMessage, error) {
 	if err := r.move(ctx, r.channelConfig.Delayed, r.channelConfig.Waiting); err != nil {
 		return nil, err
@@ -78,6 +86,7 @@ func (r RedisDriver) Pop(ctx context.Context) (*SerializedMessage, error) {
 
 }
 
+// Ack acknowledges a message has been processed.
 func (r RedisDriver) Ack(ctx context.Context, message *SerializedMessage) error {
 	data, err := r.packer.Compress(message)
 	if err != nil {
@@ -86,6 +95,7 @@ func (r RedisDriver) Ack(ctx context.Context, message *SerializedMessage) error 
 	return r.remove(ctx, r.channelConfig.Reserved, data)
 }
 
+// Fail marks a message has failed.
 func (r RedisDriver) Fail(ctx context.Context, message *SerializedMessage) error {
 	p := r.redisClient.TxPipeline()
 	data, err := r.packer.Compress(message)
@@ -106,6 +116,10 @@ func (r RedisDriver) Fail(ctx context.Context, message *SerializedMessage) error
 	return nil
 }
 
+// Reload put failed/timeout message back to the Waiting queue. If the temporary outage have been cleared,
+// messages can be tried again via Reload. Reload is not a normal retry.
+// It similarly gives otherwise dead messages one more chance,
+// but this chance is not subject to the limit of MaxAttempts, nor does it reset the number of time attempted.
 func (r RedisDriver) Reload(ctx context.Context, channel string) (int64, error) {
 	if channel != r.channelConfig.Failed && channel != r.channelConfig.Timeout {
 		return 0, fmt.Errorf("reloading %s is not allowed", channel)
@@ -124,6 +138,7 @@ func (r RedisDriver) Reload(ctx context.Context, channel string) (int64, error) 
 	return count, nil
 }
 
+// Flush flushes a queue of choice by deleting all its data. Use with caution.
 func (r RedisDriver) Flush(ctx context.Context, channel string) error {
 	_, err := r.redisClient.Del(ctx, channel).Result()
 	if err != nil {
@@ -143,6 +158,7 @@ func (a attempt) try(cmd *redis.IntCmd, value *int64) {
 	*value, a.err = cmd.Result()
 }
 
+// Info lists QueueInfo by inspecting queues one by one. Useful for metrics and monitor.
 func (r RedisDriver) Info(ctx context.Context) (QueueInfo, error) {
 	var (
 		oneByOne attempt
@@ -167,6 +183,9 @@ func (r RedisDriver) remove(ctx context.Context, channel string, data []byte) er
 	return nil
 }
 
+// Retry put the message back onto the delayed queue. The message will be tried after a period of time specified
+// by Backoff. Note: if one listener failed, all listeners for this event will have to be retried. Make sure
+// your listeners are idempotent as always.
 func (r RedisDriver) Retry(ctx context.Context, message *SerializedMessage) error {
 	p := r.redisClient.TxPipeline()
 	data, err := r.packer.Compress(message)

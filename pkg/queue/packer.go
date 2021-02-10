@@ -9,6 +9,7 @@ import (
 type packer struct {
 }
 
+// Compress serializes the message to bytes
 func (p packer) Compress(message interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(message); err != nil {
@@ -17,6 +18,7 @@ func (p packer) Compress(message interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Decompress reverses the bytes to message
 func (p packer) Decompress(data []byte, message interface{}) error {
 	buf := bytes.NewBuffer(data)
 	if rvalue, ok := message.(reflect.Value); ok {
