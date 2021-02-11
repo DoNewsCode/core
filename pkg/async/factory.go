@@ -38,6 +38,12 @@ func (f *Factory) Make(name string) (interface{}, error) {
 	return f.cache[name].Conn, nil
 }
 
+func (f *Factory) List() map[string]Pair {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+	return f.cache
+}
+
 func (f *Factory) Close() {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()

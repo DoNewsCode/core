@@ -2,8 +2,8 @@ package queue
 
 import "time"
 
-// SerializedMessage represents a persisted event.
-type SerializedMessage struct {
+// PersistedEvent represents a persisted event.
+type PersistedEvent struct {
 	// The UniqueId identifies each individual message. Sometimes the message can have exact same content and even
 	// exact same Key. UniqueId is used to differentiate them.
 	UniqueId string
@@ -25,11 +25,11 @@ type SerializedMessage struct {
 }
 
 // Type implements contract.event. It returns the Key.
-func (s *SerializedMessage) Type() string {
+func (s *PersistedEvent) Type() string {
 	return s.Key
 }
 
 // Data implements contract.event. It returns the Value.
-func (s *SerializedMessage) Data() interface{} {
+func (s *PersistedEvent) Data() interface{} {
 	return s.Value
 }

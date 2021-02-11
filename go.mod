@@ -5,7 +5,6 @@ go 1.14
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
 	github.com/Reasno/ifilter v0.1.2
-	github.com/alicebob/miniredis/v2 v2.14.2
 	github.com/aws/aws-sdk-go v1.37.2
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.2
@@ -27,7 +26,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.9.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/rs/cors v1.7.0
 	github.com/segmentio/kafka-go v0.4.9
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0

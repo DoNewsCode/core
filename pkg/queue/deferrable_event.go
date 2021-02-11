@@ -21,9 +21,9 @@ func (d DeferrablePersistentEvent) Defer() time.Duration {
 	return d.after
 }
 
-// Decorate decorates the SerializedMessage of this event by adding some meta info. it is called in the dispatcher,
+// Decorate decorates the PersistedEvent of this event by adding some meta info. it is called in the dispatcher,
 // after the Packer compresses the event.
-func (d DeferrablePersistentEvent) Decorate(s *SerializedMessage) {
+func (d DeferrablePersistentEvent) Decorate(s *PersistedEvent) {
 	s.UniqueId = d.uniqueId
 	s.HandleTimeout = d.handleTimeout
 	s.MaxAttempts = d.maxAttempts

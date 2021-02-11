@@ -33,37 +33,31 @@ type MockEvent struct {
 
 var useRedis = flag.Bool("redis", false, "use real redis for testing")
 
-func setUp() *Consumer {
+func setUp() *dispatcher {
 	s := redis.NewUniversalClient(&redis.UniversalOptions{})
 	s.FlushAll(context.Background())
 	driver := RedisDriver{
-		logger:      logging.NewLogger("logfmt"),
-		redisClient: s,
-		channelConfig: ChannelConfig{
+		Logger:      logging.NewLogger("logfmt"),
+		RedisClient: s,
+		ChannelConfig: ChannelConfig{
 			Delayed:  "delayed",
 			Failed:   "failed",
 			Reserved: "reserved",
 			Waiting:  "waiting",
 			Timeout:  "timeout",
 		},
-		popTimeout: time.Second,
-		packer:     packer{},
+		PopTimeout: time.Second,
+		Packer:     packer{},
 	}
-	dispatcher := WithQueue(&event.SyncDispatcher{}, driver)
-	consumer := Consumer{
-		packer:      packer{},
-		logger:      logging.NewLogger("logfmt"),
-		driver:      driver,
-		dispatcher:  dispatcher,
-		parallelism: 1,
-	}
-	return &consumer
+	dispatcher := WithQueue(&event.SyncDispatcher{}, &driver, UseLogger(logging.NewLogger("logfmt")))
+	return dispatcher
 }
 
 func TestConsumer_work(t *testing.T) {
 	if !*useRedis {
 		t.Skip("this test needs redis")
 	}
+	rand.Seed(int64(time.Now().Unix()))
 	cases := []struct {
 		name  string
 		value contract.Event
@@ -82,11 +76,11 @@ func TestConsumer_work(t *testing.T) {
 	for _, cc := range cases {
 		c := cc
 		t.Run(c.name, func(t *testing.T) {
-			consumer := setUp()
-			consumer.dispatcher.Subscribe(c.ln)
-			msg, err := consumer.packer.Compress(c.value.Data())
+			dispatcher := setUp()
+			dispatcher.Subscribe(c.ln)
+			msg, err := dispatcher.packer.Compress(c.value.Data())
 			assert.NoError(t, err)
-			consumer.work(context.Background(), &SerializedMessage{
+			dispatcher.work(context.Background(), &PersistedEvent{
 				Key:         c.value.Type(),
 				Value:       msg,
 				MaxAttempts: 1,
@@ -99,7 +93,6 @@ func TestConsumer_Consume(t *testing.T) {
 	if !*useRedis {
 		t.Skip("this test needs redis")
 	}
-	rand.Seed(int64(time.Now().Unix()))
 	consumer := setUp()
 
 	var called string
@@ -218,12 +211,12 @@ func TestConsumer_Consume(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			consumer = setUp()
+			dispatcher := setUp()
 			ctx, cancel := context.WithCancel(context.Background())
-			go consumer.Consume(ctx)
+			go dispatcher.Consume(ctx)
 			defer cancel()
-			consumer.dispatcher.Subscribe(c.ln)
-			err := consumer.dispatcher.Dispatch(context.Background(), c.evt)
+			dispatcher.Subscribe(c.ln)
+			err := dispatcher.Dispatch(context.Background(), c.evt)
 			assert.NoError(t, err)
 			c.called()
 		})
