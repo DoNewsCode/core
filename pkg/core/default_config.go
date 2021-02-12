@@ -11,7 +11,6 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
-	"go.uber.org/dig"
 )
 
 const defaultConfig = `
@@ -82,11 +81,11 @@ func ProvideLogger(conf contract.ConfigAccessor, appName contract.AppName, env c
 		format string
 		err    error
 	)
-	err = conf.Unmarshal("level", &lvl)
+	err = conf.Unmarshal("log.level", &lvl)
 	if err != nil {
 		lvl = "debug"
 	}
-	err = conf.Unmarshal("format", &format)
+	err = conf.Unmarshal("log.format", &format)
 	if err != nil {
 		format = "logfmt"
 	}
@@ -95,8 +94,8 @@ func ProvideLogger(conf contract.ConfigAccessor, appName contract.AppName, env c
 	return level.NewFilter(logger, logging.LevelFilter(lvl))
 }
 
-func ProvideDi(conf contract.ConfigAccessor) *dig.Container {
-	return dig.New()
+func ProvideDi(conf contract.ConfigAccessor) contract.DiContainer {
+	return NewGraph()
 }
 
 func ProvideEventDispatcher(conf contract.ConfigAccessor) contract.Dispatcher {

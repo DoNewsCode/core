@@ -5,24 +5,32 @@ import (
 	"fmt"
 	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/core"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-redis/redis/v8"
 	"github.com/oklog/run"
-	"go.uber.org/dig"
 	"time"
 )
 
-// QueuedDispatcher is an alias of contract.Dispatcher. Inject it if persistent event feature is needed.
-type QueuedDispatcher interface {
+// Dispatcher is the key of *QueueableDispatcher in the dependencies graph. Used as a type hint for injection.
+type Dispatcher interface {
 	contract.Dispatcher
 	Consume(ctx context.Context) error
 }
 
-// QueuedDispatcherParam is the injection parameters for ProvideQueuedDispatcher
-type QueuedDispatcherParam struct {
-	dig.In
+// DispatcherMaker is the key of *DispatcherFactory in the dependencies graph. Used as a type hint for injection.
+type DispatcherMaker interface {
+	Make(string) (*QueueableDispatcher, error)
+}
+
+var _ Dispatcher = (*QueueableDispatcher)(nil)
+var _ DispatcherMaker = (*DispatcherFactory)(nil)
+
+// DispatcherIn is the injection parameters for ProvideDispatcher
+type DispatcherIn struct {
+	core.In
 
 	Conf        contract.ConfigAccessor
 	Dispatcher  contract.Dispatcher
@@ -33,35 +41,42 @@ type QueuedDispatcherParam struct {
 	Gauge       metrics.Gauge `optional:"true"`
 }
 
-// ProvideQueuedDispatcher is a provider for QueuedDispatcher
-func ProvideQueuedDispatcher(p QueuedDispatcherParam) (QueuedDispatcher, error) {
-	factory := ProvideQueuedDispatcherFactory(p)
-	conn, err := factory.Make("default")
-	return conn, err
+// DispatcherOut is the dig output of ProvideDispatcher
+type DispatcherOut struct {
+	core.Out
+	core.Module
+
+	Dispatcher          Dispatcher
+	DispatcherMaker     DispatcherMaker
+	QueueableDispatcher *QueueableDispatcher
+	DispatcherFactory   *DispatcherFactory
 }
 
-// QueuedDispatcherFactory is a factory for ProvideQueuedDispatcher
-type QueuedDispatcherFactory struct {
-	contract.Module
+// DispatcherFactory is a factory for *QueueableDispatcher
+type DispatcherFactory struct {
+	core.Module
 	*async.Factory
 }
 
-// Make returns a QueuedDispatcher by the given name. If it has already been created under the same name,
+// Make returns a QueueableDispatcher by the given name. If it has already been created under the same name,
 // the that one will be returned.
-func (s QueuedDispatcherFactory) Make(name string) (QueuedDispatcher, error) {
+func (s *DispatcherFactory) Make(name string) (*QueueableDispatcher, error) {
 	client, err := s.Factory.Make(name)
 	if err != nil {
 		return nil, err
 	}
-	return client.(QueuedDispatcher), nil
+	return client.(*QueueableDispatcher), nil
 }
 
-// ProvideQueuedDispatcherFactory is a provider for QueuedDispatcherFactory
-func ProvideQueuedDispatcherFactory(p QueuedDispatcherParam) QueuedDispatcherFactory {
-	type queueConf struct {
-		Parallelism                    int
-		CheckQueueLengthIntervalSecond int
-	}
+type queueConf struct {
+	Parallelism                    int
+	CheckQueueLengthIntervalSecond int
+}
+
+// ProvideDispatcher is a provider for *DispatcherFactory and *QueueableDispatcher.
+// It also provides an interface binding for both.
+func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
+
 	var (
 		err        error
 		queueConfs map[string]queueConf
@@ -89,25 +104,37 @@ func ProvideQueuedDispatcherFactory(p QueuedDispatcherParam) QueuedDispatcherFac
 				Timeout:  fmt.Sprintf("{%s:%s:%s}:timeout", p.AppName.String(), p.Env.String(), name),
 			},
 		}, UseLogger(p.Logger), UseParallelism(conf.Parallelism))
-		queuedDispatcher.queueLengthGauge = p.Gauge.With("queue", name)
-		queuedDispatcher.checkQueueLengthInterval = time.Duration(conf.CheckQueueLengthIntervalSecond) * time.Second
+		if p.Gauge != nil {
+			queuedDispatcher.queueLengthGauge = p.Gauge.With("queue", name)
+			queuedDispatcher.checkQueueLengthInterval = time.Duration(conf.CheckQueueLengthIntervalSecond) * time.Second
+		}
 		return async.Pair{
 			Closer: nil,
 			Conn:   queuedDispatcher,
 		}, nil
 	})
+
+	// QueueableDispatcher must be created eagerly, so that the consumer goroutines can start on boot up.
 	for name := range queueConfs {
 		factory.Make(name)
 	}
-	return QueuedDispatcherFactory{Factory: factory}
+
+	dispatcherFactory := &DispatcherFactory{Factory: factory}
+	defaultQueueableDispatcher, err := dispatcherFactory.Make("default")
+	return DispatcherOut{
+		QueueableDispatcher: defaultQueueableDispatcher,
+		Dispatcher:          defaultQueueableDispatcher,
+		DispatcherFactory:   dispatcherFactory,
+		DispatcherMaker:     dispatcherFactory,
+	}, nil
 }
 
 // ProvideRunGroup implements RunProvider.
-func (s *QueuedDispatcherFactory) ProvideRunGroup(group *run.Group) {
-	for name := range s.List() {
+func (s DispatcherOut) ProvideRunGroup(group *run.Group) {
+	for name := range s.DispatcherFactory.List() {
 		ctx, cancel := context.WithCancel(context.Background())
 		group.Add(func() error {
-			consumer, err := s.Make(name)
+			consumer, err := s.DispatcherFactory.Make(name)
 			if err != nil {
 				return err
 			}

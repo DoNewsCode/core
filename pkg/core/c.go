@@ -21,7 +21,7 @@ type C struct {
 	contract.LevelLogger
 	container.Container
 	contract.Dispatcher
-	di *dig.Container
+	di contract.DiContainer
 
 	dig.In
 }
@@ -38,7 +38,7 @@ type Provider interface {
 
 type ConfigProvider func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor
 type EventDispatcherProvider func(conf contract.ConfigAccessor) contract.Dispatcher
-type DiProvider func(conf contract.ConfigAccessor) *dig.Container
+type DiProvider func(conf contract.ConfigAccessor) contract.DiContainer
 type AppNameProvider func(conf contract.ConfigAccessor) contract.AppName
 type EnvProvider func(conf contract.ConfigAccessor) contract.Env
 type LoggerProvider func(conf contract.ConfigAccessor, appName contract.AppName, env contract.Env) log.Logger
@@ -99,7 +99,7 @@ func SetLoggerProvider(provider LoggerProvider) CoreOption {
 	}
 }
 
-func SetDiProvider(provider func(conf contract.ConfigAccessor) *dig.Container) CoreOption {
+func SetDiProvider(provider func(conf contract.ConfigAccessor) contract.DiContainer) CoreOption {
 	return func(values *coreValues) {
 		values.diProvider = provider
 	}
@@ -294,7 +294,7 @@ func isErr(v reflect.Type) bool {
 	return v.Implements(_errType)
 }
 
-var _moduleType = reflect.TypeOf((*contract.Module)(nil)).Elem()
+var _moduleType = reflect.TypeOf((*Module)(nil)).Elem()
 
 func isModule(v reflect.Type) bool {
 	return v.Implements(_moduleType)

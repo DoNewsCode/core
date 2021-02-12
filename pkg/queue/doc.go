@@ -1,4 +1,4 @@
-// Package queue provides a persistent queue implementation that interplays with the event dispatcher in the contract
+// Package queue provides a persistent queue implementation that interplays with the event QueueableDispatcher in the contract
 // package.
 //
 // Queues in go is not as prominent as in some other languages, since go excels at concurrency. However,

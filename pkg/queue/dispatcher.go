@@ -2,11 +2,11 @@ package queue
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-redis/redis/v8"
-	"github.com/oklog/run"
 	"golang.org/x/sync/errgroup"
 	"reflect"
 	"runtime"
@@ -24,10 +24,8 @@ type persistent interface {
 	Decorate(s *PersistedEvent)
 }
 
-// dispatcher is an extension of event.dispatcher. It adds the persistent event feature to event.dispatcher.
-type dispatcher struct {
-	contract.Module
-
+// QueueableDispatcher is an extension of the embed dispatcher. It adds the persistent event feature.
+type QueueableDispatcher struct {
 	logger                   log.Logger
 	driver                   Driver
 	packer                   Packer
@@ -39,9 +37,13 @@ type dispatcher struct {
 	checkQueueLengthInterval time.Duration
 }
 
-func (d *dispatcher) Dispatch(ctx context.Context, e contract.Event) error {
+// Dispatch dispatches an event. See contract.Dispatcher.
+func (d *QueueableDispatcher) Dispatch(ctx context.Context, e contract.Event) error {
 	if _, ok := e.(*PersistedEvent); ok {
 		rType := d.reflectType(e.Type())
+		if rType == nil {
+			return fmt.Errorf("unable to reverse engineer the event %s", e.Type())
+		}
 		ptr := reflect.New(rType)
 		err := d.packer.Decompress(e.Data().([]byte), ptr)
 		if err != nil {
@@ -64,7 +66,8 @@ func (d *dispatcher) Dispatch(ctx context.Context, e contract.Event) error {
 	return d.base.Dispatch(ctx, e)
 }
 
-func (d *dispatcher) Subscribe(listener contract.Listener) {
+// Subscribe subscribes an event. See contract.Dispatcher.
+func (d *QueueableDispatcher) Subscribe(listener contract.Listener) {
 	d.rwLock.Lock()
 	for _, e := range listener.Listen() {
 		d.reflectTypes[e.Type()] = reflect.TypeOf(e.Data())
@@ -74,7 +77,7 @@ func (d *dispatcher) Subscribe(listener contract.Listener) {
 }
 
 // Consume starts the runner and blocks until context canceled or error occurred.
-func (d *dispatcher) Consume(ctx context.Context) error {
+func (d *QueueableDispatcher) Consume(ctx context.Context) error {
 	var jobChan = make(chan *PersistedEvent)
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -121,17 +124,7 @@ func (d *dispatcher) Consume(ctx context.Context) error {
 	return g.Wait()
 }
 
-// ProvideRunGroup implements RunProvider.
-func (d *dispatcher) ProvideRunGroup(group *run.Group) {
-	ctx, cancel := context.WithCancel(context.Background())
-	group.Add(func() error {
-		return d.Consume(ctx)
-	}, func(err error) {
-		cancel()
-	})
-}
-
-func (d *dispatcher) work(ctx context.Context, msg *PersistedEvent) {
+func (d *QueueableDispatcher) work(ctx context.Context, msg *PersistedEvent) {
 	ctx, cancel := context.WithTimeout(ctx, msg.HandleTimeout)
 	defer cancel()
 	err := d.Dispatch(ctx, msg)
@@ -150,57 +143,57 @@ func (d *dispatcher) work(ctx context.Context, msg *PersistedEvent) {
 	_ = d.driver.Ack(context.Background(), msg)
 }
 
-func (d *dispatcher) reflectType(typeName string) reflect.Type {
+func (d *QueueableDispatcher) reflectType(typeName string) reflect.Type {
 	d.rwLock.RLock()
 	defer d.rwLock.RUnlock()
 	return d.reflectTypes[typeName]
 }
 
-func (d *dispatcher) gauge(ctx context.Context) {
+func (d *QueueableDispatcher) gauge(ctx context.Context) {
 	queueInfo, err := d.driver.Info(ctx)
 	if err != nil {
 		_ = level.Warn(d.logger).Log("err", err)
 	}
-	d.queueLengthGauge.With("queue", "failed").Set(float64(queueInfo.Failed))
-	d.queueLengthGauge.With("queue", "delayed").Set(float64(queueInfo.Delayed))
-	d.queueLengthGauge.With("queue", "timeout").Set(float64(queueInfo.Timeout))
-	d.queueLengthGauge.With("queue", "waiting").Set(float64(queueInfo.Waiting))
+	d.queueLengthGauge.With("channel", "failed").Set(float64(queueInfo.Failed))
+	d.queueLengthGauge.With("channel", "delayed").Set(float64(queueInfo.Delayed))
+	d.queueLengthGauge.With("channel", "timeout").Set(float64(queueInfo.Timeout))
+	d.queueLengthGauge.With("channel", "waiting").Set(float64(queueInfo.Waiting))
 }
 
 // UsePacker allows consumer to replace the default Packer with a custom one. UsePacker is an option for WithQueue.
-func UsePacker(packer Packer) func(*dispatcher) {
-	return func(dispatcher *dispatcher) {
+func UsePacker(packer Packer) func(*QueueableDispatcher) {
+	return func(dispatcher *QueueableDispatcher) {
 		dispatcher.packer = packer
 	}
 }
 
 // UseLogger is an option for WithQueue that feeds the queue with a Logger of choice.
-func UseLogger(logger log.Logger) func(*dispatcher) {
-	return func(dispatcher *dispatcher) {
+func UseLogger(logger log.Logger) func(*QueueableDispatcher) {
+	return func(dispatcher *QueueableDispatcher) {
 		dispatcher.logger = logger
 	}
 }
 
 // UseParallelism is an option for WithQueue that sets the parallelism for queue consumption
-func UseParallelism(parallelism int) func(*dispatcher) {
-	return func(dispatcher *dispatcher) {
+func UseParallelism(parallelism int) func(*QueueableDispatcher) {
+	return func(dispatcher *QueueableDispatcher) {
 		dispatcher.parallelism = parallelism
 	}
 }
 
 // UseGauge is an option for WithQueue that collects a gauge metrics
-func UseGauge(gauge metrics.Gauge, interval time.Duration) func(*dispatcher) {
-	return func(dispatcher *dispatcher) {
+func UseGauge(gauge metrics.Gauge, interval time.Duration) func(*QueueableDispatcher) {
+	return func(dispatcher *QueueableDispatcher) {
 		dispatcher.queueLengthGauge = gauge
 		dispatcher.checkQueueLengthInterval = interval
 	}
 }
 
-// WithQueue wraps a dispatcher and returns a decorated dispatcher. The latter dispatcher now can send and
+// WithQueue wraps a QueueableDispatcher and returns a decorated QueueableDispatcher. The latter QueueableDispatcher now can send and
 // listen to "persisted" events. Those persisted events will guarantee at least one execution, as they are stored in an
-// external storage and won't be released until the dispatcher acknowledges the end of execution.
-func WithQueue(baseDispatcher contract.Dispatcher, driver Driver, opts ...func(*dispatcher)) *dispatcher {
-	qd := dispatcher{
+// external storage and won't be released until the QueueableDispatcher acknowledges the end of execution.
+func WithQueue(baseDispatcher contract.Dispatcher, driver Driver, opts ...func(*QueueableDispatcher)) *QueueableDispatcher {
+	qd := QueueableDispatcher{
 		driver:       driver,
 		packer:       packer{},
 		rwLock:       sync.RWMutex{},

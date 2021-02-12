@@ -26,6 +26,26 @@ func (m MockListener) Process(ctx context.Context, event contract.Event) error {
 	return m(ctx, event)
 }
 
+type RetryingListener func(ctx context.Context, event contract.Event) error
+
+func (m RetryingListener) Listen() []contract.Event {
+	return event.Of(RetryingEvent{})
+}
+
+func (m RetryingListener) Process(ctx context.Context, event contract.Event) error {
+	return m(ctx, event)
+}
+
+type AbortedListener func(ctx context.Context, event contract.Event) error
+
+func (m AbortedListener) Listen() []contract.Event {
+	return event.Of(AbortedEvent{})
+}
+
+func (m AbortedListener) Process(ctx context.Context, event contract.Event) error {
+	return m(ctx, event)
+}
+
 type MockEvent struct {
 	Value  string
 	Called *bool
@@ -33,7 +53,7 @@ type MockEvent struct {
 
 var useRedis = flag.Bool("redis", false, "use real redis for testing")
 
-func setUp() *dispatcher {
+func setUp() *QueueableDispatcher {
 	s := redis.NewUniversalClient(&redis.UniversalOptions{})
 	s.FlushAll(context.Background())
 	driver := RedisDriver{
@@ -53,15 +73,14 @@ func setUp() *dispatcher {
 	return dispatcher
 }
 
-func TestConsumer_work(t *testing.T) {
-	if !*useRedis {
-		t.Skip("this test needs redis")
-	}
+func TestDispatcher_work(t *testing.T) {
 	rand.Seed(int64(time.Now().Unix()))
 	cases := []struct {
-		name  string
-		value contract.Event
-		ln    MockListener
+		name        string
+		value       contract.Event
+		ln          MockListener
+		maxAttempts int
+		check       func(int, int)
 	}{
 		{
 			"simple message",
@@ -71,25 +90,70 @@ func TestConsumer_work(t *testing.T) {
 				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
 				return nil
 			},
+			1,
+			func(retries, failed int) {
+				assert.Equal(t, 0, retries)
+				assert.Equal(t, 0, failed)
+			},
+		},
+		{
+			"retry message",
+			event.NewEvent(MockEvent{Value: "hello"}),
+			func(ctx context.Context, event contract.Event) error {
+				assert.IsType(t, MockEvent{}, event.Data())
+				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
+				return errors.New("foo")
+			},
+			2,
+			func(retries, failed int) {
+				assert.Equal(t, 1, retries)
+				assert.Equal(t, 0, failed)
+			},
+		},
+		{
+			"fail message",
+			event.NewEvent(MockEvent{Value: "hello"}),
+			func(ctx context.Context, event contract.Event) error {
+				assert.IsType(t, MockEvent{}, event.Data())
+				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
+				return errors.New("foo")
+			},
+			1,
+			func(retries, failed int) {
+				assert.Equal(t, 0, retries)
+				assert.Equal(t, 1, failed)
+			},
 		},
 	}
 	for _, cc := range cases {
 		c := cc
 		t.Run(c.name, func(t *testing.T) {
+			retries := 0
+			failed := 0
 			dispatcher := setUp()
 			dispatcher.Subscribe(c.ln)
+			dispatcher.Subscribe(RetryingListener(func(ctx context.Context, event contract.Event) error {
+				retries++
+				return nil
+			}))
+			dispatcher.Subscribe(AbortedListener(func(ctx context.Context, event contract.Event) error {
+				failed++
+				return nil
+			}))
 			msg, err := dispatcher.packer.Compress(c.value.Data())
 			assert.NoError(t, err)
 			dispatcher.work(context.Background(), &PersistedEvent{
 				Key:         c.value.Type(),
 				Value:       msg,
-				MaxAttempts: 1,
+				MaxAttempts: c.maxAttempts,
+				Attempts:    1,
 			})
+			c.check(retries, failed)
 		})
 	}
 }
 
-func TestConsumer_Consume(t *testing.T) {
+func TestDispatcher_Consume(t *testing.T) {
 	if !*useRedis {
 		t.Skip("this test needs redis")
 	}
