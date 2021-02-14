@@ -1,4 +1,4 @@
-package event
+package events
 
 import (
 	"fmt"
@@ -9,6 +9,6 @@ type TestE struct {
 }
 
 func TestEvent(t *testing.T) {
-	testE := NewEvent(TestE{})
+	testE := Of(TestE{})
 	fmt.Println(testE.Type())
 }

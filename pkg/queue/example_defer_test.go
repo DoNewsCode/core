@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/core"
-	"github.com/DoNewsCode/std/pkg/event"
+	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/DoNewsCode/std/pkg/queue"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
@@ -21,7 +21,7 @@ type DeferMockData struct {
 type DeferMockListener struct{}
 
 func (m DeferMockListener) Listen() []contract.Event {
-	return event.Of(DeferMockData{})
+	return events.From(DeferMockData{})
 }
 
 func (m DeferMockListener) Process(_ context.Context, event contract.Event) error {
@@ -38,9 +38,9 @@ func bootstrapDefer() *core.C {
 	)
 
 	// Add Provider
-	c.ProvideItself()
-	c.Provide(queue.ProvideDispatcher)
-	c.Provide(func() redis.UniversalClient {
+	c.AddCoreDependencies()
+	c.AddDependency(queue.ProvideDispatcher)
+	c.AddDependency(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()
 		return client
@@ -56,7 +56,7 @@ func serveDefer(c *core.C, duration time.Duration) {
 		r(&g)
 	}
 
-	// cancel the run group after 1 second, so that the program ends. In real project, this is not necessary.
+	// cancel the run group after some time, so that the program ends. In real project, this is not necessary.
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
 	g.Add(func() error {
@@ -80,7 +80,7 @@ func Example_defer() {
 		dispatcher.Subscribe(DeferMockListener{})
 
 		// Trigger an event
-		evt := event.NewEvent(DeferMockData{Value: "hello world"})
+		evt := events.Of(DeferMockData{Value: "hello world"})
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt, queue.Defer(time.Second)))
 	})
 	if err != nil {

@@ -3,7 +3,7 @@ package queue
 import (
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/core"
-	"github.com/DoNewsCode/std/pkg/event"
+	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ func TestProvideDispatcher(t *testing.T) {
 				5,
 			},
 		}},
-		Dispatcher:  &event.SyncDispatcher{},
+		Dispatcher:  &events.SyncDispatcher{},
 		RedisClient: redis.NewUniversalClient(&redis.UniversalOptions{}),
 		Logger:      log.NewNopLogger(),
 		AppName:     config.AppName("test"),

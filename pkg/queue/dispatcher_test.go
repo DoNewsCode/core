@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/std/pkg/contract"
-	"github.com/DoNewsCode/std/pkg/event"
+	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ import (
 type MockListener func(ctx context.Context, event contract.Event) error
 
 func (m MockListener) Listen() []contract.Event {
-	return event.Of(MockEvent{})
+	return events.From(MockEvent{})
 }
 
 func (m MockListener) Process(ctx context.Context, event contract.Event) error {
@@ -29,7 +29,7 @@ func (m MockListener) Process(ctx context.Context, event contract.Event) error {
 type RetryingListener func(ctx context.Context, event contract.Event) error
 
 func (m RetryingListener) Listen() []contract.Event {
-	return event.Of(RetryingEvent{})
+	return events.From(RetryingEvent{})
 }
 
 func (m RetryingListener) Process(ctx context.Context, event contract.Event) error {
@@ -39,7 +39,7 @@ func (m RetryingListener) Process(ctx context.Context, event contract.Event) err
 type AbortedListener func(ctx context.Context, event contract.Event) error
 
 func (m AbortedListener) Listen() []contract.Event {
-	return event.Of(AbortedEvent{})
+	return events.From(AbortedEvent{})
 }
 
 func (m AbortedListener) Process(ctx context.Context, event contract.Event) error {
@@ -69,7 +69,7 @@ func setUp() *QueueableDispatcher {
 		PopTimeout: time.Second,
 		Packer:     packer{},
 	}
-	dispatcher := WithQueue(&event.SyncDispatcher{}, &driver, UseLogger(logging.NewLogger("logfmt")))
+	dispatcher := WithQueue(&events.SyncDispatcher{}, &driver, UseLogger(logging.NewLogger("logfmt")))
 	return dispatcher
 }
 
@@ -84,7 +84,7 @@ func TestDispatcher_work(t *testing.T) {
 	}{
 		{
 			"simple message",
-			event.NewEvent(MockEvent{Value: "hello"}),
+			events.Of(MockEvent{Value: "hello"}),
 			func(ctx context.Context, event contract.Event) error {
 				assert.IsType(t, MockEvent{}, event.Data())
 				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
@@ -98,7 +98,7 @@ func TestDispatcher_work(t *testing.T) {
 		},
 		{
 			"retry message",
-			event.NewEvent(MockEvent{Value: "hello"}),
+			events.Of(MockEvent{Value: "hello"}),
 			func(ctx context.Context, event contract.Event) error {
 				assert.IsType(t, MockEvent{}, event.Data())
 				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
@@ -112,7 +112,7 @@ func TestDispatcher_work(t *testing.T) {
 		},
 		{
 			"fail message",
-			event.NewEvent(MockEvent{Value: "hello"}),
+			events.Of(MockEvent{Value: "hello"}),
 			func(ctx context.Context, event contract.Event) error {
 				assert.IsType(t, MockEvent{}, event.Data())
 				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
@@ -168,7 +168,7 @@ func TestDispatcher_Consume(t *testing.T) {
 	}{
 		{
 			"ordinary message",
-			event.NewEvent(MockEvent{Value: "hello"}),
+			events.Of(MockEvent{Value: "hello"}),
 			func(ctx context.Context, event contract.Event) error {
 				assert.IsType(t, MockEvent{}, event.Data())
 				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
@@ -182,7 +182,7 @@ func TestDispatcher_Consume(t *testing.T) {
 		},
 		{
 			"persist message",
-			Persist(event.NewEvent(MockEvent{Value: "hello"})),
+			Persist(events.Of(MockEvent{Value: "hello"})),
 			func(ctx context.Context, event contract.Event) error {
 				assert.IsType(t, MockEvent{}, event.Data())
 				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
@@ -197,7 +197,7 @@ func TestDispatcher_Consume(t *testing.T) {
 		},
 		{
 			"deferred message",
-			Persist(event.NewEvent(MockEvent{Value: "hello", Called: new(bool)}), Defer(2*time.Second)),
+			Persist(events.Of(MockEvent{Value: "hello", Called: new(bool)}), Defer(2*time.Second)),
 			func(ctx context.Context, event contract.Event) error {
 				called = "deferred message"
 				return nil
@@ -211,7 +211,7 @@ func TestDispatcher_Consume(t *testing.T) {
 		},
 		{
 			"deferred message but called",
-			Persist(event.NewEvent(MockEvent{Value: "hello", Called: new(bool)}), Defer(time.Second)),
+			Persist(events.Of(MockEvent{Value: "hello", Called: new(bool)}), Defer(time.Second)),
 			func(ctx context.Context, event contract.Event) error {
 				called = "deferred message but called"
 				return nil
@@ -224,7 +224,7 @@ func TestDispatcher_Consume(t *testing.T) {
 		},
 		{
 			"failed message",
-			Persist(event.NewEvent(MockEvent{Value: "hello"})),
+			Persist(events.Of(MockEvent{Value: "hello"})),
 			func(ctx context.Context, event contract.Event) error {
 				return errors.New("some err")
 			},
@@ -238,7 +238,7 @@ func TestDispatcher_Consume(t *testing.T) {
 		},
 		{
 			"retry message",
-			Persist(event.NewEvent(MockEvent{Value: "hello"}), MaxAttempts(2)),
+			Persist(events.Of(MockEvent{Value: "hello"}), MaxAttempts(2)),
 			func(ctx context.Context, event contract.Event) error {
 				if called != "retry message" {
 					called = "retry message"
@@ -254,7 +254,7 @@ func TestDispatcher_Consume(t *testing.T) {
 		},
 		{
 			"reload message",
-			Persist(event.NewEvent(MockEvent{Value: "hello"}), Timeout(time.Second)),
+			Persist(events.Of(MockEvent{Value: "hello"}), Timeout(time.Second)),
 			func(ctx context.Context, event contract.Event) error {
 				if called != "reload message" {
 					return errors.New("some err")

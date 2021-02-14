@@ -1,4 +1,4 @@
-package event
+package events
 
 import (
 	"context"
@@ -35,7 +35,7 @@ func TestDispatcher(t *testing.T) {
 			"one listener",
 			MockEvent{},
 			[]MockListener{{
-				Of(MockEvent{}),
+				From(MockEvent{}),
 				func(event contract.Event) error {
 					assert.Equal(t, 0, event.Data().(MockEvent).value)
 					return nil
@@ -47,14 +47,14 @@ func TestDispatcher(t *testing.T) {
 			MockEvent{value: 2},
 			[]MockListener{
 				{
-					Of(MockEvent{}),
+					From(MockEvent{}),
 					func(event contract.Event) error {
 						assert.Equal(t, 2, event.Data().(MockEvent).value)
 						return nil
 					},
 				},
 				{
-					Of(MockEvent{}),
+					From(MockEvent{}),
 					func(event contract.Event) error {
 						assert.Equal(t, 2, event.Data().(MockEvent).value)
 						return nil
@@ -67,7 +67,7 @@ func TestDispatcher(t *testing.T) {
 			MockEvent{value: 2},
 			[]MockListener{
 				{
-					Of(struct{}{}),
+					From(struct{}{}),
 					func(event contract.Event) error {
 						assert.Equal(t, 1, 2)
 						return nil
@@ -80,7 +80,7 @@ func TestDispatcher(t *testing.T) {
 			MockEvent{value: 1},
 			[]MockListener{
 				{
-					Of(struct{}{}, MockEvent{}),
+					From(struct{}{}, MockEvent{}),
 					func(event contract.Event) error {
 						assert.Equal(t, 1, event.Data().(MockEvent).value)
 						return nil
@@ -93,13 +93,13 @@ func TestDispatcher(t *testing.T) {
 			MockEvent{value: 2},
 			[]MockListener{
 				{
-					Of(MockEvent{}),
+					From(MockEvent{}),
 					func(event contract.Event) error {
 						return fmt.Errorf("err!")
 					},
 				},
 				{
-					Of(MockEvent{}),
+					From(MockEvent{}),
 					func(event contract.Event) error {
 						assert.Equal(t, 2, 1)
 						return nil
@@ -117,7 +117,7 @@ func TestDispatcher(t *testing.T) {
 			for _, listener := range c.listeners {
 				dispacher.Subscribe(listener)
 			}
-			_ = dispacher.Dispatch(context.Background(), NewEvent(c.event))
+			_ = dispacher.Dispatch(context.Background(), Of(c.event))
 		})
 	}
 }

@@ -163,7 +163,7 @@ func (c *C) Shutdown() {
 	}
 }
 
-func (c *C) Provide(constructor interface{}) {
+func (c *C) AddDependency(constructor interface{}) {
 	ftype := reflect.TypeOf(constructor)
 	inTypes := make([]reflect.Type, 0)
 	outTypes := make([]reflect.Type, 0)
@@ -198,32 +198,32 @@ func (c *C) Provide(constructor interface{}) {
 	c.CheckErr(err)
 }
 
-func (c *C) ProvideItself() {
-	c.Provide(func() contract.Env {
+func (c *C) AddCoreDependencies() {
+	c.AddDependency(func() contract.Env {
 		return c.Env
 	})
-	c.Provide(func() contract.AppName {
+	c.AddDependency(func() contract.AppName {
 		return c.AppName
 	})
-	c.Provide(func() contract.ConfigAccessor {
+	c.AddDependency(func() contract.ConfigAccessor {
 		return c.ConfigAccessor
 	})
-	c.Provide(func() contract.ConfigRouter {
+	c.AddDependency(func() contract.ConfigRouter {
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {
 			return cc
 		}
 		return nil
 	})
-	c.Provide(func() contract.ConfigWatcher {
+	c.AddDependency(func() contract.ConfigWatcher {
 		if cc, ok := c.ConfigAccessor.(contract.ConfigWatcher); ok {
 			return cc
 		}
 		return nil
 	})
-	c.Provide(func() log.Logger {
+	c.AddDependency(func() log.Logger {
 		return c.LevelLogger
 	})
-	c.Provide(func() contract.Dispatcher {
+	c.AddDependency(func() contract.Dispatcher {
 		return c.Dispatcher
 	})
 }

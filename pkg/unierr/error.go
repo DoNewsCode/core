@@ -82,9 +82,6 @@ func (e *Error) UnmarshalJSON(bytes []byte) error {
 
 // MarshalJSON implements json.Marshaler.
 func (e *Error) MarshalJSON() (result []byte, err error) {
-	if e.err == nil {
-		return []byte(`{}`), nil
-	}
 	var jsonRepresentation struct {
 		Code  uint32 `json:"code,omitempty"`
 		Error string `json:"message"`

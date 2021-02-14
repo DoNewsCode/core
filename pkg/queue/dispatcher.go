@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/std/pkg/contract"
-	"github.com/DoNewsCode/std/pkg/event"
+	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/pkg/errors"
 )
 
@@ -49,7 +49,7 @@ func (d *QueueableDispatcher) Dispatch(ctx context.Context, e contract.Event) er
 		if err != nil {
 			return errors.Wrapf(err, "dispatch serialized %s failed", e.Type())
 		}
-		return d.base.Dispatch(ctx, event.NewEvent(ptr.Elem().Interface()))
+		return d.base.Dispatch(ctx, events.Of(ptr.Elem().Interface()))
 	}
 	if _, ok := e.(persistent); ok {
 		data, err := d.packer.Compress(e.Data())
@@ -131,12 +131,12 @@ func (d *QueueableDispatcher) work(ctx context.Context, msg *PersistedEvent) {
 	if err != nil {
 		if msg.Attempts < msg.MaxAttempts {
 			_ = level.Info(d.logger).Log("err", errors.Wrapf(err, "event %s failed %d times, retrying", msg.Key, msg.Attempts))
-			_ = d.Dispatch(context.Background(), event.NewEvent(RetryingEvent{Err: err, Msg: msg}))
+			_ = d.Dispatch(context.Background(), events.Of(RetryingEvent{Err: err, Msg: msg}))
 			_ = d.driver.Retry(context.Background(), msg)
 			return
 		}
 		_ = level.Warn(d.logger).Log("err", errors.Wrapf(err, "event %s failed after %d Attempts, aborted", msg.Key, msg.MaxAttempts))
-		_ = d.Dispatch(context.Background(), event.NewEvent(AbortedEvent{Err: err, Msg: msg}))
+		_ = d.Dispatch(context.Background(), events.Of(AbortedEvent{Err: err, Msg: msg}))
 		_ = d.driver.Fail(context.Background(), msg)
 		return
 	}

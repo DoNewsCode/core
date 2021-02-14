@@ -28,6 +28,8 @@ type DispatcherMaker interface {
 var _ Dispatcher = (*QueueableDispatcher)(nil)
 var _ DispatcherMaker = (*DispatcherFactory)(nil)
 
+type Gauge metrics.Gauge
+
 // DispatcherIn is the injection parameters for ProvideDispatcher
 type DispatcherIn struct {
 	core.In
@@ -38,7 +40,7 @@ type DispatcherIn struct {
 	Logger      log.Logger
 	AppName     contract.AppName
 	Env         contract.Env
-	Gauge       metrics.Gauge `optional:"true"`
+	Gauge       Gauge `optional:"true"`
 }
 
 // DispatcherOut is the dig output of ProvideDispatcher
@@ -74,7 +76,7 @@ type queueConf struct {
 }
 
 // ProvideDispatcher is a provider for *DispatcherFactory and *QueueableDispatcher.
-// It also provides an interface binding for both.
+// It also provides an extracted interface for each.
 func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 
 	var (
@@ -132,9 +134,10 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 // ProvideRunGroup implements RunProvider.
 func (s DispatcherOut) ProvideRunGroup(group *run.Group) {
 	for name := range s.DispatcherFactory.List() {
+		queueName := name
 		ctx, cancel := context.WithCancel(context.Background())
 		group.Add(func() error {
-			consumer, err := s.DispatcherFactory.Make(name)
+			consumer, err := s.DispatcherFactory.Make(queueName)
 			if err != nil {
 				return err
 			}

@@ -5,7 +5,7 @@ import (
 
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
-	"github.com/DoNewsCode/std/pkg/event"
+	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -99,5 +99,5 @@ func ProvideDi(conf contract.ConfigAccessor) contract.DiContainer {
 }
 
 func ProvideEventDispatcher(conf contract.ConfigAccessor) contract.Dispatcher {
-	return &event.SyncDispatcher{}
+	return &events.SyncDispatcher{}
 }
