@@ -20,6 +20,10 @@ func (e Env) IsDevelopment() bool {
 	return e == "development"
 }
 
+func (e Env) IsStaging() bool {
+	return e == "staging"
+}
+
 func (e Env) IsProduction() bool {
 	return e == "production"
 }
@@ -31,6 +35,9 @@ func (e Env) String() string {
 func NewEnv(env string) Env {
 	if strings.EqualFold("prod", env) || strings.EqualFold("production", env) {
 		return "production"
+	}
+	if strings.EqualFold("pre-prod", env) || strings.EqualFold("staging", env) {
+		return "staging"
 	}
 	if strings.EqualFold("development", env) || strings.EqualFold("dev", env) {
 		return "development"

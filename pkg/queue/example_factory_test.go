@@ -53,7 +53,7 @@ func bootstrapFactories() *core.C {
 func serveFactories(c *core.C, duration time.Duration) {
 	var g run.Group
 
-	for _, r := range c.RunProviders {
+	for _, r := range c.GetRunProviders() {
 		r(&g)
 	}
 

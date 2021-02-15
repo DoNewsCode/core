@@ -8,8 +8,6 @@ import (
 
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/knadh/koanf"
-	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/knadh/koanf/providers/file"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -26,10 +24,6 @@ type ProviderSet struct {
 }
 
 type Option func(option *KoanfAdapter)
-
-func WithYamlFile(filePath string) Option {
-	return WithProviderLayer(file.Provider(filePath), yaml.Parser())
-}
 
 func WithProviderLayer(provider koanf.Provider, parser koanf.Parser) Option {
 	return func(option *KoanfAdapter) {

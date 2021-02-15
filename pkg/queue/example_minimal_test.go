@@ -51,8 +51,8 @@ func bootstrap() *core.C {
 	c.AddDependency(func(appName contract.AppName, env contract.Env) queue.Gauge {
 		return prometheus.NewGaugeFrom(
 			stdprometheus.GaugeOpts{
-				Namespace: appName.String(),
-				Name:      env.String(),
+				Namespace: appName.String() + "_" + env.String(),
+				Name:      "queue_length",
 				Help:      "The gauge of queue length",
 			}, []string{"name", "channel"},
 		)
@@ -64,7 +64,7 @@ func bootstrap() *core.C {
 func serve(c *core.C, duration time.Duration) {
 	var g run.Group
 
-	for _, r := range c.RunProviders {
+	for _, r := range c.GetRunProviders() {
 		r(&g)
 	}
 

@@ -6,11 +6,13 @@ import (
 	"github.com/DoNewsCode/std/pkg/config/watcher"
 	"github.com/DoNewsCode/std/pkg/container"
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/go-kit/kit/log"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
-	"go.uber.org/dig"
+	"os"
+	"path/filepath"
 	"reflect"
 )
 
@@ -19,11 +21,9 @@ type C struct {
 	Env     contract.Env
 	contract.ConfigAccessor
 	contract.LevelLogger
-	container.Container
+	contract.Container
 	contract.Dispatcher
 	di contract.DiContainer
-
-	dig.In
 }
 
 type Parser interface {
@@ -61,6 +61,23 @@ type CoreOption func(*coreValues)
 func WithYamlFile(path string) (CoreOption, CoreOption) {
 	return WithConfigStack(file.Provider(path), yaml.Parser()),
 		WithConfigWatcher(watcher.File{Path: path})
+}
+
+func WithYamlDir(dirPath string) []CoreOption {
+	var opts []CoreOption
+	realPath, err := filepath.EvalSymlinks(dirPath)
+	if err != nil {
+		panic(err)
+	}
+	filepath.Walk(realPath, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		opts = append(opts, WithConfigStack(file.Provider(path), yaml.Parser()))
+		return nil
+	})
+	opts = append(opts, WithConfigWatcher(watcher.Dir{Path: realPath}))
+	return opts
 }
 
 func WithConfigStack(provider Provider, parser Parser) CoreOption {
@@ -129,7 +146,7 @@ func New(opts ...CoreOption) *C {
 	env := values.envProvider(conf)
 	appName := values.appNameProvider(conf)
 	logger := values.loggerProvider(conf, appName, env)
-	di := values.diProvider(conf)
+	diContainer := values.diProvider(conf)
 	dispatcher := values.eventDispatcherProvider(conf)
 
 	var c = C{
@@ -137,9 +154,9 @@ func New(opts ...CoreOption) *C {
 		Env:            env,
 		ConfigAccessor: conf,
 		LevelLogger:    logging.WithLevel(logger),
-		Container:      container.Container{},
+		Container:      &container.Container{},
 		Dispatcher:     dispatcher,
-		di:             di,
+		di:             diContainer,
 	}
 	return &c
 }
@@ -149,8 +166,6 @@ func (c *C) AddModule(modules ...interface{}) {
 		switch modules[i].(type) {
 		case error:
 			c.CheckErr(modules[i].(error))
-		case func():
-			c.CloserProviders = append(c.CloserProviders, modules[i].(func()))
 		default:
 			c.Container.AddModule(modules[i])
 		}
@@ -158,7 +173,7 @@ func (c *C) AddModule(modules ...interface{}) {
 }
 
 func (c *C) Shutdown() {
-	for _, f := range c.CloserProviders {
+	for _, f := range c.GetCloserProviders() {
 		f()
 	}
 }
@@ -183,11 +198,12 @@ func (c *C) AddDependency(constructor interface{}) {
 		filteredOuts := make([]reflect.Value, 0)
 		outVs := reflect.ValueOf(constructor).Call(args)
 		for _, v := range outVs {
-			if isCleanup(v.Type()) {
+			vType := v.Type()
+			if isCleanup(vType) {
 				c.AddModule(v.Interface())
 				continue
 			}
-			if isModule(v.Type()) {
+			if isModule(vType) {
 				c.AddModule(v.Interface())
 			}
 			filteredOuts = append(filteredOuts, v)
@@ -226,6 +242,7 @@ func (c *C) AddCoreDependencies() {
 	c.AddDependency(func() contract.Dispatcher {
 		return c.Dispatcher
 	})
+	c.AddModule(config.Module{Container: c.Container})
 }
 
 func (c *C) AddModuleViaFunc(function interface{}) {
@@ -294,7 +311,7 @@ func isErr(v reflect.Type) bool {
 	return v.Implements(_errType)
 }
 
-var _moduleType = reflect.TypeOf((*Module)(nil)).Elem()
+var _moduleType = reflect.TypeOf((*di.Module)(nil)).Elem()
 
 func isModule(v reflect.Type) bool {
 	return v.Implements(_moduleType)

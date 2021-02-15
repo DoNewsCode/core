@@ -19,6 +19,34 @@ type Container struct {
 	CommandProviders []func(command *cobra.Command)
 }
 
+func (c *Container) GetHttpProviders() []func(router *mux.Router) {
+	return c.HttpProviders
+}
+
+func (c *Container) GetGrpcProviders() []func(server *grpc.Server) {
+	return c.GrpcProviders
+}
+
+func (c *Container) GetCloserProviders() []func() {
+	return c.CloserProviders
+}
+
+func (c *Container) GetRunProviders() []func(g *run.Group) {
+	return c.RunProviders
+}
+
+func (c *Container) GetModules() ifilter.Collection {
+	return c.Modules
+}
+
+func (c *Container) GetCronProviders() []func(crontab *cron.Cron) {
+	return c.CronProviders
+}
+
+func (c *Container) GetCommandProviders() []func(command *cobra.Command) {
+	return c.CommandProviders
+}
+
 type CronProvider interface {
 	ProvideCron(crontab *cron.Cron)
 }
@@ -49,24 +77,27 @@ func (h HttpFunc) ProvideHttp(router *mux.Router) {
 	h(router)
 }
 
-func (s *Container) AddModule(module interface{}) {
+func (c *Container) AddModule(module interface{}) {
+	if p, ok := module.(func()); ok {
+		c.CloserProviders = append(c.CloserProviders, p)
+	}
 	if p, ok := module.(HttpProvider); ok {
-		s.HttpProviders = append(s.HttpProviders, p.ProvideHttp)
+		c.HttpProviders = append(c.HttpProviders, p.ProvideHttp)
 	}
 	if p, ok := module.(GrpcProvider); ok {
-		s.GrpcProviders = append(s.GrpcProviders, p.ProvideGrpc)
+		c.GrpcProviders = append(c.GrpcProviders, p.ProvideGrpc)
 	}
 	if p, ok := module.(CronProvider); ok {
-		s.CronProviders = append(s.CronProviders, p.ProvideCron)
+		c.CronProviders = append(c.CronProviders, p.ProvideCron)
 	}
 	if p, ok := module.(RunProvider); ok {
-		s.RunProviders = append(s.RunProviders, p.ProvideRunGroup)
+		c.RunProviders = append(c.RunProviders, p.ProvideRunGroup)
 	}
 	if p, ok := module.(CommandProvider); ok {
-		s.CommandProviders = append(s.CommandProviders, p.ProvideCommand)
+		c.CommandProviders = append(c.CommandProviders, p.ProvideCommand)
 	}
 	if p, ok := module.(CloserProvider); ok {
-		s.CloserProviders = append(s.CloserProviders, p.ProvideCloser)
+		c.CloserProviders = append(c.CloserProviders, p.ProvideCloser)
 	}
-	s.Modules = append(s.Modules, module)
+	c.Modules = append(c.Modules, module)
 }

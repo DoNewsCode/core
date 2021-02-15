@@ -1,0 +1,12 @@
+{
+  "env": "local",
+  "foo": "bar",
+  "grpc": {
+    "addr": ":9090"
+  },
+  "http": {
+    "addr": ":8080"
+  },
+  "name": "skeleton",
+  "version": "0.1.0"
+}

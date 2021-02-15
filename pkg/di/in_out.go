@@ -1,4 +1,4 @@
-package core
+package di
 
 import "go.uber.org/dig"
 

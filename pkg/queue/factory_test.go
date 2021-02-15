@@ -2,7 +2,7 @@ package queue
 
 import (
 	"github.com/DoNewsCode/std/pkg/config"
-	"github.com/DoNewsCode/std/pkg/core"
+	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
@@ -36,5 +36,5 @@ func TestProvideDispatcher(t *testing.T) {
 	def, err := out.DispatcherMaker.Make("alternative")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
-	assert.Implements(t, (*core.Module)(nil), out)
+	assert.Implements(t, (*di.Module)(nil), out)
 }

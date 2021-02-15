@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/DoNewsCode/std/pkg/di"
 	stdlog "log"
 
 	"github.com/DoNewsCode/std/pkg/config"
@@ -16,7 +17,7 @@ import (
 const defaultConfig = `
 name: skeleton
 version: 0.1.0
-Env: local
+env: local
 http:
   addr: :8080
 grpc:
@@ -95,7 +96,7 @@ func ProvideLogger(conf contract.ConfigAccessor, appName contract.AppName, env c
 }
 
 func ProvideDi(conf contract.ConfigAccessor) contract.DiContainer {
-	return NewGraph()
+	return di.NewGraph()
 }
 
 func ProvideEventDispatcher(conf contract.ConfigAccessor) contract.Dispatcher {

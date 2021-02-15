@@ -1,3 +1,5 @@
+// +build !di
+
 package queue
 
 import (
@@ -5,34 +7,22 @@ import (
 	"fmt"
 	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/contract"
-	"github.com/DoNewsCode/std/pkg/core"
+	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-redis/redis/v8"
 	"github.com/oklog/run"
+	"runtime"
 	"time"
 )
 
-// Dispatcher is the key of *QueueableDispatcher in the dependencies graph. Used as a type hint for injection.
-type Dispatcher interface {
-	contract.Dispatcher
-	Consume(ctx context.Context) error
-}
-
-// DispatcherMaker is the key of *DispatcherFactory in the dependencies graph. Used as a type hint for injection.
-type DispatcherMaker interface {
-	Make(string) (*QueueableDispatcher, error)
-}
-
-var _ Dispatcher = (*QueueableDispatcher)(nil)
-var _ DispatcherMaker = (*DispatcherFactory)(nil)
-
+// Gauge is an alias used for dependency injection
 type Gauge metrics.Gauge
 
 // DispatcherIn is the injection parameters for ProvideDispatcher
 type DispatcherIn struct {
-	core.In
+	di.In
 
 	Conf        contract.ConfigAccessor
 	Dispatcher  contract.Dispatcher
@@ -45,34 +35,13 @@ type DispatcherIn struct {
 
 // DispatcherOut is the dig output of ProvideDispatcher
 type DispatcherOut struct {
-	core.Out
-	core.Module
+	di.Out
+	di.Module
 
 	Dispatcher          Dispatcher
 	DispatcherMaker     DispatcherMaker
 	QueueableDispatcher *QueueableDispatcher
 	DispatcherFactory   *DispatcherFactory
-}
-
-// DispatcherFactory is a factory for *QueueableDispatcher
-type DispatcherFactory struct {
-	core.Module
-	*async.Factory
-}
-
-// Make returns a QueueableDispatcher by the given name. If it has already been created under the same name,
-// the that one will be returned.
-func (s *DispatcherFactory) Make(name string) (*QueueableDispatcher, error) {
-	client, err := s.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(*QueueableDispatcher), nil
-}
-
-type queueConf struct {
-	Parallelism                    int
-	CheckQueueLengthIntervalSecond int
 }
 
 // ProvideDispatcher is a provider for *DispatcherFactory and *QueueableDispatcher.
@@ -146,4 +115,19 @@ func (s DispatcherOut) ProvideRunGroup(group *run.Group) {
 			cancel()
 		})
 	}
+}
+
+// ProvideRunGroup implements RunProvider.
+func (s DispatcherOut) ProvideConfig() []contract.ExportedConfig {
+	return []contract.ExportedConfig{{
+		Name: "queue",
+		Data: map[string]interface{}{
+			"queue": map[string]queueConf{
+				"default": {
+					Parallelism:                    runtime.NumCPU(),
+					CheckQueueLengthIntervalSecond: 15,
+				},
+			},
+		},
+	}}
 }

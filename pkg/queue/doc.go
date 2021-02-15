@@ -10,7 +10,7 @@
 // queue can still offer some benefit missing from the native mechanism, say go channels.
 // The queued job won't be lost
 // even if the system shutdown. In other word, it means jobs can be retried until success. Plus, it is also
-// possible to queue the execution of a particular job until a lengthy period of time. Useful when users need to
+// possible to queue the execution of a particular job until a lengthy period of time. Useful when you need to
 // implement "send email after 30 days" type of event handler.
 //
 // Configuration
@@ -28,19 +28,19 @@
 //
 //  pevent := queue.Persist(event)
 //
-// Like the event package, users don't have to use this helper. Manually create a queueable event by implementing this
+// Like the event package, you don't have to use this helper. Manually create a queueable event by implementing this
 // interface on top of the normal event interface:
 //
 //  type persistent interface {
-//	  Defer() time.Duration
-//	  Decorate(s *PersistedEvent)
+//    Defer() time.Duration
+//    Decorate(s *PersistedEvent)
 //  }
 //
 // The PersistentEvent passed to the Decorate method contains the tunable configuration such as maximum retries.
 //
 // No matter how you create a persisted event, to fire it, send it though a dispatcher. The normal dispatcher in the
-// events package won't work, as a queue implementation is needed. Luckily, it is deadly simple to convert a standard
-// dispacher to a queue.Dispatcher.
+// events package won't work, as a queue implementation is required. Luckily, it is deadly simple to convert a standard
+// dispatcher to a queue.Dispatcher.
 //
 //  queueableDispatcher := queue.WithQueue(&events.SyncDispatcher, &queue.RedisDriver{})
 //  queueableDispatcher.dispatch(pevent)
@@ -54,13 +54,13 @@
 //  go dispatcher.Consume(context.Background())
 //
 // There is no difference between listeners for normal event and listeners for persisted event. They can be
-// used interchangeably. But note if a event is retryable, it is user's responsibility to ensure the idempotency.
+// used interchangeably. But note if a event is retryable, it is your responsibility to ensure the idempotency.
 // Also, be aware if a persisted event have many listeners, the event is up to retry when any of the listeners fail.
 //
 // Integrate
 //
-// While manually constructing the queue.Dispatcher is entirely feasible, uses can use the bundled dependency provider
-// to without breaking a sweat. Using this approach, the life cycle of consumer goroutine will be managed
+// While manually constructing the queue.Dispatcher is absolutely feasible, users can use the bundled dependency provider
+// without breaking a sweat. Using this approach, the life cycle of consumer goroutine will be managed
 // automatically by the core.
 //
 //  var c *core.C
@@ -69,14 +69,14 @@
 //
 // Multiple Queues
 //
-// It may be need to use more than one queue. Each dispatcher however is bounded to only one queue.
-// To use multiple queues, multiple dispatchers are needed. Inject
+// Sometimes there are valid reasons to use more than one queue. Each dispatcher however is bounded to only one queue.
+// To use multiple queues, multiple dispatchers are required. Inject
 // queue.DispatcherMaker to factory a dispatcher with a given name.
 //
 //  c.Invoke(function(maker queue.DispatcherMaker) {
-//		dispatcher, err := dispatcherFactory.Make("queueName")
-//		// ...
-// 	})
+//    dispatcher, err := dispatcherFactory.Make("queueName")
+//    // see examples for details
+//  })
 //
 //
 // Events

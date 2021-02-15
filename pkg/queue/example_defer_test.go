@@ -52,7 +52,7 @@ func bootstrapDefer() *core.C {
 func serveDefer(c *core.C, duration time.Duration) {
 	var g run.Group
 
-	for _, r := range c.RunProviders {
+	for _, r := range c.GetRunProviders() {
 		r(&g)
 	}
 
