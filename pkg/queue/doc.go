@@ -64,7 +64,13 @@
 // automatically by the core.
 //
 //  var c *core.C
-//  c.AddDependency(queue.ProvideDispatcher)
+//  c.AddDependency(modqueue.ProvideDispatcher)
+//
+// A module is also bundled, providing the default config and command.
+//
+//  c.AddModuleViaFunc(modqueue.New)
+//
+// Package
 //
 // Multiple Queues
 //
@@ -72,11 +78,10 @@
 // To use multiple queues, multiple dispatchers are required. Inject
 // queue.DispatcherMaker to factory a dispatcher with a given name.
 //
-//  c.Invoke(function(maker queue.DispatcherMaker) {
+//  c.Invoke(function(maker modqueue.DispatcherMaker) {
 //    dispatcher, err := dispatcherFactory.Make("queueName")
 //    // see examples for details
 //  })
-//
 //
 // Events
 //
@@ -88,11 +93,12 @@
 // To gain visibility on how the length of the queue, inject a gauge into the core and alias it to queue.Gauge. The
 // queue length of the all internal queues will be periodically reported to metrics collector (Presumably Prometheus).
 //
-//  c.AddDependency(func(appName contract.AppName, env contract.Env) queue.Gauge {
+//  c.AddDependency(func(appName contract.AppName, env contract.Env) modqueue.Gauge {
 //    return prometheus.NewGaugeFrom(
 //      stdprometheus.GaugeOpts{
 //        Namespace: appName.String(),
-//        Name:      env.String(),
+//        Subsystem: env.String(),
+//        Name:      "queue_length",
 //        Help:      "The gauge of queue length",
 //      }, []string{"name", "channel"},
 //    )

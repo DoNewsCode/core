@@ -51,7 +51,7 @@ func (s *S3Factory) Make(name string) (*ots3.Manager, error) {
 	return client.(*ots3.Manager), nil
 }
 
-// ProvideManager creates S3Factory and *ots3.Manager. It is a valid dependency for package core.
+// ProvideManager creates *S3Factory and *ots3.Manager. It is a valid dependency for package core.
 func ProvideManager(p S3In) S3Out {
 	var (
 		err       error

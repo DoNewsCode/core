@@ -64,7 +64,7 @@ type DispatcherOut struct {
 }
 
 // ProvideDispatcher is a provider for *DispatcherFactory and *QueueableDispatcher.
-// It also provides an extracted interface for each.
+// It also provides an interface for each.
 func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 	var (
 		err        error
