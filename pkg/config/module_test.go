@@ -49,11 +49,11 @@ func TestModule_ProvideCommand(t *testing.T) {
 	}{
 		{
 			"new yaml",
-			[]string{"exportConfig", "--outputFile", "mock/module_test.yaml"},
+			[]string{"exportConfig", "--outputFile", "testdata/module_test.yaml"},
 		},
 		{
 			"old yaml",
-			[]string{"exportConfig", "--outputFile", "mock/module_test.yaml"},
+			[]string{"exportConfig", "--outputFile", "testdata/module_test.yaml"},
 		},
 	}
 	for _, c := range cases {
