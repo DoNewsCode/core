@@ -10,10 +10,19 @@ import (
 	"github.com/pkg/errors"
 )
 
+// File is a watcher implementation to watch the change for a single file.
+// The code of this file is largely borrowed from koanf
+// (https://github.com/knadh/koanf/blob/master/providers/file/file.go)
+// The original implementation doesn't support context, so we have to fork and make changes downstream.
+// License: https://github.com/knadh/koanf/blob/master/LICENSE
 type File struct {
 	Path string
 }
 
+// Watch watches the change to the file. If the file is edited or created, the reload function will be called.
+// note the reload function should not just load the changes made within this file, but rather it should reload
+// the whole config stack. For example, if the flag or env takes precedence over the config file, they should remain
+// to be so after the file changes.
 func (f File) Watch(ctx context.Context, reload func() error) error {
 	// Resolve symlinks and save the original path so that changes to symlinks
 	// can be detected.
@@ -88,7 +97,6 @@ func (f File) Watch(ctx context.Context, reload func() error) error {
 			if err = reload(); err != nil {
 				return err
 			}
-			//f.k.Load(f.f, json.Parser())
 
 		// There's an error.
 		case err, ok := <-w.Errors:

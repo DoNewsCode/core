@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"google.golang.org/grpc/codes"
 
 	"github.com/DoNewsCode/std/pkg/unierr"
 	"github.com/go-kit/kit/endpoint"
@@ -11,7 +12,6 @@ import (
 
 type ErrorOption struct {
 	AlwaysHTTP200 bool
-	AlwaysGRPCOk  bool
 	ShouldRecover bool
 }
 
@@ -33,10 +33,9 @@ func MakeErrorMarshallerMiddleware(opt ErrorOption) endpoint.Middleware {
 					serverError = unierr.UnknownErr(err)
 				}
 				if opt.AlwaysHTTP200 {
-					serverError.HttpStatusCode = 200
-				}
-				if opt.AlwaysGRPCOk {
-					serverError.GrpcStatusCode = 0
+					serverError.HttpStatusCodeFunc = func(code codes.Code) int {
+						return 200
+					}
 				}
 				// Brings kerr.SeverError to the uppermost level
 				return response, serverError

@@ -31,14 +31,14 @@ func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
 }
 
 func TestKoanfAdapter_Watch(t *gotesting.T) {
-	ioutil.WriteFile("mock/watch.yaml", []byte("foo: baz"), 0644)
+	ioutil.WriteFile("testdata/watch.yaml", []byte("foo: baz"), 0644)
 
 	ka, err := NewConfig(
-		WithProviderLayer(file.Provider("mock/watch.yaml"), yaml.Parser()),
-		WithWatcher(watcher.File{Path: "mock/watch.yaml"}),
+		WithProviderLayer(file.Provider("testdata/watch.yaml"), yaml.Parser()),
+		WithWatcher(watcher.File{Path: "testdata/watch.yaml"}),
 	)
 	assert.NoError(t, err)
-
+	assert.Equal(t, "baz", ka.String("foo"))
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
@@ -46,14 +46,14 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 		ka.Watch(ctx)
 	}()
 	time.Sleep(10 * time.Millisecond)
-	err = ioutil.WriteFile("mock/watch.yaml", []byte("foo: bar"), 0644)
+	err = ioutil.WriteFile("testdata/watch.yaml", []byte("foo: bar"), 0644)
 	time.Sleep(10 * time.Millisecond)
 	assert.Equal(t, "bar", ka.String("foo"))
 }
 
 func prepareTestSubject(t *gotesting.T) KoanfAdapter {
 	k := koanf.New(".")
-	if err := k.Load(file.Provider("mock/mock.json"), json.Parser()); err != nil {
+	if err := k.Load(file.Provider("testdata/mock.json"), json.Parser()); err != nil {
 		t.Fatalf("error loading config: %v", err)
 	}
 	ka := KoanfAdapter{K: k}

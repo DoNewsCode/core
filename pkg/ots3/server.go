@@ -58,7 +58,6 @@ func Middleware(logger log.Logger, env contract.Env) endpoint.Middleware {
 	l := kitmw.MakeLoggingMiddleware(logger, keyer, env.IsLocal())
 	e := kitmw.MakeErrorMarshallerMiddleware(kitmw.ErrorOption{
 		AlwaysHTTP200: false,
-		AlwaysGRPCOk:  false,
 		ShouldRecover: env.IsProduction(),
 	})
 	return endpoint.Chain(e, l)

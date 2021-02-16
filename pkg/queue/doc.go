@@ -65,7 +65,6 @@
 //
 //  var c *core.C
 //  c.AddDependency(queue.ProvideDispatcher)
-//  //See examples.
 //
 // Multiple Queues
 //

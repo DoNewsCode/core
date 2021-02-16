@@ -51,7 +51,8 @@ func bootstrap() *core.C {
 	c.AddDependency(func(appName contract.AppName, env contract.Env) queue.Gauge {
 		return prometheus.NewGaugeFrom(
 			stdprometheus.GaugeOpts{
-				Namespace: appName.String() + "_" + env.String(),
+				Namespace: appName.String(),
+				Subsystem: env.String(),
 				Name:      "queue_length",
 				Help:      "The gauge of queue length",
 			}, []string{"name", "channel"},

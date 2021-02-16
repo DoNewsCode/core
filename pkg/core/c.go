@@ -11,8 +11,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
-	"os"
-	"path/filepath"
 	"reflect"
 )
 
@@ -61,23 +59,6 @@ type CoreOption func(*coreValues)
 func WithYamlFile(path string) (CoreOption, CoreOption) {
 	return WithConfigStack(file.Provider(path), yaml.Parser()),
 		WithConfigWatcher(watcher.File{Path: path})
-}
-
-func WithYamlDir(dirPath string) []CoreOption {
-	var opts []CoreOption
-	realPath, err := filepath.EvalSymlinks(dirPath)
-	if err != nil {
-		panic(err)
-	}
-	filepath.Walk(realPath, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		opts = append(opts, WithConfigStack(file.Provider(path), yaml.Parser()))
-		return nil
-	})
-	opts = append(opts, WithConfigWatcher(watcher.Dir{Path: realPath}))
-	return opts
 }
 
 func WithConfigStack(provider Provider, parser Parser) CoreOption {

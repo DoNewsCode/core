@@ -82,7 +82,7 @@ func serveRetry(c *core.C, duration time.Duration) {
 }
 
 func Example_faulty() {
-	c := bootstrap()
+	c := bootstrapRetry()
 
 	err := c.Invoke(func(dispatcher queue.Dispatcher) {
 		// Subscribe
@@ -96,7 +96,7 @@ func Example_faulty() {
 		panic(err)
 	}
 
-	serve(c, 4*time.Second) // retries are made after a random backoff. It may take longer.
+	serveRetry(c, 4*time.Second) // retries are made after a random backoff. It may take longer.
 
 	// Output:
 	// faulty

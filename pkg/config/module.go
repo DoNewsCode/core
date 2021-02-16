@@ -1,10 +1,12 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/ghodss/yaml"
+	"github.com/oklog/run"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"io/ioutil"
@@ -13,7 +15,20 @@ import (
 )
 
 type Module struct {
+	Conf      *KoanfAdapter
 	Container contract.Container
+}
+
+func (m Module) ProvideRunGroup(group *run.Group) {
+	if m.Conf.watcher == nil {
+		return
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	group.Add(func() error {
+		return m.Conf.Watch(ctx)
+	}, func(err error) {
+		cancel()
+	})
 }
 
 func (m Module) ProvideConfig() []contract.ExportedConfig {
@@ -70,9 +85,10 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 		style      string
 	)
 	exportConfigCmd := &cobra.Command{
-		Use:   "exportConfig",
-		Short: "export default config",
-		Long:  "export a copy of default config for every added module in this application",
+		Use:                    "exportConfig",
+		Short:                  "export default config",
+		Long:                   "export a copy of default config for every added module in this application",
+		BashCompletionFunction: "",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var (
 				handler         handler

@@ -12,7 +12,6 @@ import (
 func TestMakeErrorMarshallerMiddleware(t *testing.T) {
 	mw := MakeErrorMarshallerMiddleware(ErrorOption{
 		AlwaysHTTP200: false,
-		AlwaysGRPCOk:  false,
 		ShouldRecover: false,
 	})
 	e1 := func(ctx context.Context, request interface{}) (interface{}, error) {
@@ -32,7 +31,7 @@ func TestMakeErrorMarshallerMiddleware(t *testing.T) {
 		cc := c
 		t.Run("", func(t *testing.T) {
 			_, err := mw(cc)(nil, nil)
-			if _, ok := err.(unierr.Error); !ok {
+			if _, ok := err.(*unierr.Error); !ok {
 				t.Fail()
 			}
 		})
@@ -42,7 +41,6 @@ func TestMakeErrorMarshallerMiddleware(t *testing.T) {
 func TestPanicRecover(t *testing.T) {
 	mw := MakeErrorMarshallerMiddleware(ErrorOption{
 		AlwaysHTTP200: false,
-		AlwaysGRPCOk:  false,
 		ShouldRecover: true,
 	})
 	e1 := func(ctx context.Context, request interface{}) (interface{}, error) {
@@ -53,7 +51,7 @@ func TestPanicRecover(t *testing.T) {
 		cc := c
 		t.Run("", func(t *testing.T) {
 			_, err := mw(cc)(nil, nil)
-			if _, ok := err.(unierr.Error); !ok {
+			if _, ok := err.(*unierr.Error); !ok {
 				t.Fail()
 			}
 		})
