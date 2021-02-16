@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Manager manages S3 uploads.
 type Manager struct {
 	bucket       string
 	sess         *session.Session
@@ -31,6 +32,7 @@ type Manager struct {
 	locationFunc func(location string) (url string)
 }
 
+// Config contains a various of configurations for Manager. It is mean to be modified by Option.
 type Config struct {
 	accessKey    string
 	accessSecret string
@@ -46,36 +48,43 @@ type Config struct {
 
 type Option func(*Config)
 
+// WithTracer is an option that add opentracing.Tracer via the hook of S3 client.
 func WithTracer(tracer opentracing.Tracer) Option {
 	return func(c *Config) {
 		c.tracer = tracer
 	}
 }
 
+// WithPathPrefix is an option that changes the path prefix of uploaded file.
 func WithPathPrefix(pathPrefix string) Option {
 	return func(c *Config) {
 		c.pathPrefix = pathPrefix
 	}
 }
 
+// WithKeyer is an option that changes the path of the uploaded file.
 func WithKeyer(keyer contract.Keyer) Option {
 	return func(c *Config) {
 		c.keyer = keyer
 	}
 }
 
+// WithHttpClient is an option that replaces the default http client. Useful for interceptors like tracing and metrics.
 func WithHttpClient(client contract.HttpDoer) Option {
 	return func(c *Config) {
 		c.doer = client
 	}
 }
 
+// WithLocationFunc is an option that decides the how url is mapped to S3 bucket and path.
+// Useful when not serving file directly from S3, but from a CDN.
 func WithLocationFunc(f func(location string) (url string)) Option {
 	return func(c *Config) {
 		c.locationFunc = f
 	}
 }
 
+// NewManager creates a new S3 manager
 func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts ...Option) *Manager {
 	c := &Config{
 		doer:  http.DefaultClient,
@@ -114,6 +123,8 @@ func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts .
 	return m
 }
 
+// Upload uploads an io.reader to the S3 server, and returns the url on S3. The extension of the uploaded file
+// is auto detected.
 func (m *Manager) Upload(ctx context.Context, name string, reader io.Reader) (newUrl string, err error) {
 
 	// Create an uploader with the session and default options
@@ -142,6 +153,9 @@ func (m *Manager) Upload(ctx context.Context, name string, reader io.Reader) (ne
 	return m.locationFunc(result.Location), nil
 }
 
+// UploadFromUrl fetches a file from an external url, copy them to the S3 server, and generate a new, local url.
+// It uses streams to relay files (instead of buffering the entire file in memory).
+// it gives the file a random name using the global seed.
 func (m *Manager) UploadFromUrl(ctx context.Context, url string) (newUrl string, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -153,7 +167,7 @@ func (m *Manager) UploadFromUrl(ctx context.Context, url string) (newUrl string,
 	}
 	body := resp.Body
 	defer body.Close()
-	return m.Upload(ctx, randStringRunes(16), body)
+	return m.Upload(ctx, randString(16), body)
 }
 
 func (m *Manager) otHandler() func(*request.Request) {
@@ -196,11 +210,11 @@ func inject(tracer opentracing.Tracer, span opentracing.Span, header http.Header
 	return tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(header))
 }
 
-func randStringRunes(n int) string {
-	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	b := make([]rune, n)
+func randString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, n)
 	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
 }

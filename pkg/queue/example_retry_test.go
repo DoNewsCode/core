@@ -85,7 +85,7 @@ func serveRetry(c *core.C, duration time.Duration) {
 func Example_faulty() {
 	c := bootstrapRetry()
 
-	err := c.Invoke(func(dispatcher queue.Dispatcher) {
+	err := c.Invoke(func(dispatcher modqueue.Dispatcher) {
 		// Subscribe
 		dispatcher.Subscribe(&FaultyMockListener{})
 

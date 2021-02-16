@@ -77,7 +77,7 @@ func serveFactories(c *core.C, duration time.Duration) {
 func Example_factory() {
 	c := bootstrapFactories()
 
-	err := c.Invoke(func(maker queue.DispatcherMaker) {
+	err := c.Invoke(func(maker modqueue.DispatcherMaker) {
 		dispatcher, err := maker.Make("MyQueue")
 		if err != nil {
 			panic(err)

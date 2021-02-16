@@ -10,8 +10,17 @@ jobs:
     strategy:
       matrix:
         go-version: [1.14.x, 1.15.x, 1.16.x]
-        redis-version: [4, 5, 6]
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
     - uses: actions/checkout@v2
 
@@ -22,11 +31,6 @@ jobs:
 
     - name: Build
       run: go build -v ./...
-
-    - name: Start Redis
-      uses: supercharge/redis-github-action@1.2.0
-      with:
-        redis-version: ${{ matrix.redis-version }}
 
     - name: Test
       run: go test -v ./...

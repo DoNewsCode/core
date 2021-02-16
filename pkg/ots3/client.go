@@ -14,11 +14,13 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 )
 
+// Request models a go kit request in UploadEndpoint
 type Request struct {
 	name string
 	data io.Reader
 }
 
+// Response models a go kit Response in UploadEndpoint
 type Response struct {
 	Data struct {
 		Url string `json:"url"`
@@ -27,6 +29,7 @@ type Response struct {
 	Message string `json:"message,omitempty"`
 }
 
+// NewClient creates a go kit style http client to *UploadService
 func NewClient(uri *url.URL) *httptransport.Client {
 	return httptransport.NewClient("POST", uri, encodeClientRequest, decodeClientResponse)
 }
@@ -70,10 +73,13 @@ func encodeClientRequest(ctx context.Context, request *http.Request, i interface
 	return nil
 }
 
+// ClientUploader implements the Uploader interface. It uploads files to the remote server.
 type ClientUploader struct {
 	endpoint endpoint.Endpoint
 }
 
+// Upload reads all bytes in reader, and send them to remote server under the given filename. The Url
+// of the uploaded file will be returned.
 func (c ClientUploader) Upload(ctx context.Context, name string, reader io.Reader) (newUrl string, err error) {
 	resp, err := c.endpoint(ctx, Request{data: reader, name: name})
 	if err != nil {
@@ -82,11 +88,13 @@ func (c ClientUploader) Upload(ctx context.Context, name string, reader io.Reade
 	return resp.(Response).Data.Url, err
 }
 
+// NewClientUploader creates a *ClientUploader
 func NewClientUploader(client *httptransport.Client) *ClientUploader {
 	return &ClientUploader{endpoint: client.Endpoint()}
 }
 
-func InjectClientUploader(uri *url.URL) *ClientUploader {
+// NewClientUploaderFromUrl creates a *ClientUploader from the url of the remote *UploadService
+func NewClientUploaderFromUrl(uri *url.URL) *ClientUploader {
 	client := NewClient(uri)
 	clientUploader := NewClientUploader(client)
 	return clientUploader

@@ -11,12 +11,12 @@ import (
 var useS3 bool
 
 func init() {
-	flag.BoolVar(&useS3, "s3", false, "use s3 for testing")
+	flag.BoolVar(&useS3, "S3", false, "use S3 for testing")
 }
 
 func TestUploader(t *testing.T) {
 	if !useS3 {
-		t.Skip("must use s3 for this test")
+		t.Skip("must use S3 for this test")
 	}
 	url := "https://aecpm.alicdn.com/simba/img/TB1jFYch8FR4u4jSZFPSuunzFXa.jpg"
 	orig, err := http.Get(url)

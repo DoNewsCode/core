@@ -126,6 +126,10 @@ func (d *QueueableDispatcher) Consume(ctx context.Context) error {
 	return g.Wait()
 }
 
+func (d *QueueableDispatcher) Driver() Driver {
+	return d.driver
+}
+
 func (d *QueueableDispatcher) work(ctx context.Context, msg *PersistedEvent) {
 	ctx, cancel := context.WithTimeout(ctx, msg.HandleTimeout)
 	defer cancel()

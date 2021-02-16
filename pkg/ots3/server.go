@@ -17,26 +17,31 @@ import (
 	"net/http"
 )
 
+// An UploadService is a go kit service to handle file upload
 type UploadService struct {
-	logger log.Logger
-	s3     *Manager
+	Logger log.Logger
+	S3     *Manager
 }
 
+// Uploader models UploadService
 type Uploader interface {
+	// Upload the bytes from io.Reader with a given filename to a server, and returns the url and error.
 	Upload(ctx context.Context, name string, reader io.Reader) (string, error)
 }
 
+// Upload reads all bytes from reader, and upload then to S3 as the provided name. The url will be returned.
 func (s *UploadService) Upload(ctx context.Context, name string, reader io.Reader) (newUrl string, err error) {
 	defer func() {
 		if closer, ok := reader.(io.ReadCloser); ok {
 			closer.Close()
 		}
 	}()
-	newUrl, err = s.s3.Upload(ctx, name, reader)
-	level.Info(s.logger).Log("msg", fmt.Sprintf("file %s uploaded to %s", name, newUrl))
+	newUrl, err = s.S3.Upload(ctx, name, reader)
+	level.Info(s.Logger).Log("msg", fmt.Sprintf("file %s uploaded to %s", name, newUrl))
 	return newUrl, err
 }
 
+// MakeUploadEndpoint creates a Upload endpoint
 func MakeUploadEndpoint(uploader Uploader) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(*Request)
@@ -53,8 +58,9 @@ func MakeUploadEndpoint(uploader Uploader) endpoint.Endpoint {
 	}
 }
 
+// Middleware adds logging and error handling to the endpoint.
 func Middleware(logger log.Logger, env contract.Env) endpoint.Middleware {
-	keyer := key.NewKeyManager("module", "s3", "service", "upload")
+	keyer := key.NewKeyManager("module", "S3", "service", "upload")
 	l := kitmw.MakeLoggingMiddleware(logger, keyer, env.IsLocal())
 	e := kitmw.MakeErrorMarshallerMiddleware(kitmw.ErrorOption{
 		AlwaysHTTP200: false,
@@ -63,6 +69,7 @@ func Middleware(logger log.Logger, env contract.Env) endpoint.Middleware {
 	return endpoint.Chain(e, l)
 }
 
+// MakeHttpHandler creates a go kit transport in http for *UploadService.
 func MakeHttpHandler(endpoint endpoint.Endpoint, middleware endpoint.Middleware) http.Handler {
 	server := httptransport.NewServer(
 		middleware(endpoint),

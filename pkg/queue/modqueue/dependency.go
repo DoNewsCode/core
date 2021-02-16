@@ -20,6 +20,25 @@ import (
 // Gauge is an alias used for dependency injection
 type Gauge metrics.Gauge
 
+// Dispatcher is the key of *QueueableDispatcher in the dependencies graph. Used as a type hint for injection.
+type Dispatcher interface {
+	contract.Dispatcher
+	Consume(ctx context.Context) error
+}
+
+// DispatcherMaker is the key of *DispatcherFactory in the dependencies graph. Used as a type hint for injection.
+type DispatcherMaker interface {
+	Make(string) (*queue.QueueableDispatcher, error)
+}
+
+var _ Dispatcher = (*queue.QueueableDispatcher)(nil)
+var _ DispatcherMaker = (*DispatcherFactory)(nil)
+
+type configuration struct {
+	Parallelism                    int `yaml:"parallelism" json:"parallelism"`
+	CheckQueueLengthIntervalSecond int `yaml:"checkQueueLengthIntervalSecond" json:"checkQueueLengthIntervalSecond"`
+}
+
 // DispatcherIn is the injection parameters for ProvideDispatcher
 type DispatcherIn struct {
 	di.In
@@ -38,10 +57,10 @@ type DispatcherOut struct {
 	di.Out
 	di.Module
 
-	Dispatcher          queue.Dispatcher
-	DispatcherMaker     queue.DispatcherMaker
+	Dispatcher          Dispatcher
+	DispatcherMaker     DispatcherMaker
 	QueueableDispatcher *queue.QueueableDispatcher
-	DispatcherFactory   *queue.DispatcherFactory
+	DispatcherFactory   *DispatcherFactory
 }
 
 // ProvideDispatcher is a provider for *DispatcherFactory and *QueueableDispatcher.
@@ -49,7 +68,7 @@ type DispatcherOut struct {
 func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 	var (
 		err        error
-		queueConfs map[string]queue.Conf
+		queueConfs map[string]configuration
 	)
 	err = p.Conf.Unmarshal("queue", &queueConfs)
 	if err != nil {
@@ -58,7 +77,7 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 	factory := async.NewFactory(func(name string) (async.Pair, error) {
 		var (
 			ok   bool
-			conf queue.Conf
+			conf configuration
 		)
 		if conf, ok = queueConfs[name]; !ok {
 			return async.Pair{}, fmt.Errorf("queue configuration %s not found", name)
@@ -66,7 +85,7 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 		if p.Gauge != nil {
 			p.Gauge = p.Gauge.With("queue", name)
 		}
-		queuedDispatcher := queue.WithQueue(p.Dispatcher, &queue.RedisDriver{
+		redisDriver := &queue.RedisDriver{
 			Logger:      p.Logger,
 			RedisClient: p.RedisClient,
 			ChannelConfig: queue.ChannelConfig{
@@ -76,10 +95,14 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 				Waiting:  fmt.Sprintf("{%s:%s:%s}:waiting", p.AppName.String(), p.Env.String(), name),
 				Timeout:  fmt.Sprintf("{%s:%s:%s}:timeout", p.AppName.String(), p.Env.String(), name),
 			},
-		}, queue.UseLogger(p.Logger), queue.UseParallelism(conf.Parallelism), queue.UseGauge(
-			p.Gauge,
-			time.Duration(conf.CheckQueueLengthIntervalSecond)*time.Second,
-		))
+		}
+		queuedDispatcher := queue.WithQueue(
+			p.Dispatcher,
+			redisDriver,
+			queue.UseLogger(p.Logger),
+			queue.UseParallelism(conf.Parallelism),
+			queue.UseGauge(p.Gauge, time.Duration(conf.CheckQueueLengthIntervalSecond)*time.Second),
+		)
 		return async.Pair{
 			Closer: nil,
 			Conn:   queuedDispatcher,
@@ -91,7 +114,7 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 		factory.Make(name)
 	}
 
-	dispatcherFactory := &queue.DispatcherFactory{Factory: factory}
+	dispatcherFactory := &DispatcherFactory{Factory: factory}
 	defaultQueueableDispatcher, err := dispatcherFactory.Make("default")
 	return DispatcherOut{
 		QueueableDispatcher: defaultQueueableDispatcher,
@@ -123,7 +146,7 @@ func (s DispatcherOut) ProvideConfig() []contract.ExportedConfig {
 	return []contract.ExportedConfig{{
 		Name: "queue",
 		Data: map[string]interface{}{
-			"queue": map[string]queue.Conf{
+			"queue": map[string]configuration{
 				"default": {
 					Parallelism:                    runtime.NumCPU(),
 					CheckQueueLengthIntervalSecond: 15,
@@ -131,4 +154,33 @@ func (s DispatcherOut) ProvideConfig() []contract.ExportedConfig {
 			},
 		},
 	}}
+}
+
+// DispatcherFactory is a factory for *QueueableDispatcher. Note DispatcherFactory doesn't contain the factory method
+// itself. ie. How to factory a dispatcher left there for users to define. Users then can use this type to create
+// their own dispatcher implementation.
+//
+// Here is an example on how to create a custom DispatcherFactory with an InProcessDriver.
+//
+//		factory := async.NewFactory(func(name string) (async.Pair, error) {
+//			queuedDispatcher := queue.WithQueue(
+//				&events.SyncDispatcher{},
+//				queue.NewInProcessDriver(),
+//			)
+//			return async.Pair{Conn: queuedDispatcher}, nil
+//		})
+//		dispatcherFactory := DispatcherFactory{Factory: factory}
+//
+type DispatcherFactory struct {
+	*async.Factory
+}
+
+// Make returns a QueueableDispatcher by the given name. If it has already been created under the same name,
+// the that one will be returned.
+func (s *DispatcherFactory) Make(name string) (*queue.QueueableDispatcher, error) {
+	client, err := s.Factory.Make(name)
+	if err != nil {
+		return nil, err
+	}
+	return client.(*queue.QueueableDispatcher), nil
 }

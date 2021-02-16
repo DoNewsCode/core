@@ -52,22 +52,38 @@ func (pq *priorityQueue) Pop() interface{} {
 // InProcessDriver is a test replacement for redis driver. It doesn't persist your event in any way,
 // so not suitable for production use.
 type InProcessDriver struct {
-	mutex    sync.Mutex
-	delayed  *priorityQueue
-	waiting  chan *PersistedEvent
-	reserved map[*PersistedEvent]time.Time
-	failed   map[*PersistedEvent]struct{}
-	timeout  map[*PersistedEvent]struct{}
+	popInterval time.Duration
+	mutex       sync.Mutex
+	delayed     *priorityQueue
+	waiting     chan *PersistedEvent
+	reserved    map[*PersistedEvent]time.Time
+	failed      map[*PersistedEvent]struct{}
+	timeout     map[*PersistedEvent]struct{}
 }
 
+// NewInProcessDriverWithPopInterval creates an *InProcessDriver for testing
 func NewInProcessDriver() *InProcessDriver {
 	delayed := make(priorityQueue, 0, 10)
 	return &InProcessDriver{
-		delayed:  &delayed,
-		reserved: make(map[*PersistedEvent]time.Time),
-		waiting:  make(chan *PersistedEvent, 1000),
-		failed:   make(map[*PersistedEvent]struct{}),
-		timeout:  make(map[*PersistedEvent]struct{}),
+		popInterval: time.Second,
+		delayed:     &delayed,
+		reserved:    make(map[*PersistedEvent]time.Time),
+		waiting:     make(chan *PersistedEvent, 1000),
+		failed:      make(map[*PersistedEvent]struct{}),
+		timeout:     make(map[*PersistedEvent]struct{}),
+	}
+}
+
+// NewInProcessDriverWithPopInterval creates an *InProcessDriver with an pop interval.
+func NewInProcessDriverWithPopInterval(duration time.Duration) *InProcessDriver {
+	delayed := make(priorityQueue, 0, 10)
+	return &InProcessDriver{
+		popInterval: duration,
+		delayed:     &delayed,
+		reserved:    make(map[*PersistedEvent]time.Time),
+		waiting:     make(chan *PersistedEvent, 1000),
+		failed:      make(map[*PersistedEvent]struct{}),
+		timeout:     make(map[*PersistedEvent]struct{}),
 	}
 }
 
@@ -111,8 +127,9 @@ func (i *InProcessDriver) Pop(ctx context.Context) (*PersistedEvent, error) {
 	i.mutex.Unlock()
 	select {
 	case message := <-i.waiting:
+		i.reserved[message] = time.Now().Add(message.HandleTimeout)
 		return message, nil
-	case <-time.After(time.Second):
+	case <-time.After(i.popInterval):
 		return nil, Nil
 	case <-ctx.Done():
 		return nil, ctx.Err()

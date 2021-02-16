@@ -76,7 +76,7 @@ func serveDefer(c *core.C, duration time.Duration) {
 func Example_defer() {
 	c := bootstrapDefer()
 
-	err := c.Invoke(func(dispatcher queue.Dispatcher) {
+	err := c.Invoke(func(dispatcher modqueue.Dispatcher) {
 		// Subscribe
 		dispatcher.Subscribe(DeferMockListener{})
 
