@@ -1,5 +1,3 @@
-// +build !di
-
 package queue
 
 import (

@@ -6,7 +6,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/metrics"
-	"github.com/go-redis/redis/v8"
 	"golang.org/x/sync/errgroup"
 	"reflect"
 	"runtime"
@@ -78,6 +77,9 @@ func (d *QueueableDispatcher) Subscribe(listener contract.Listener) {
 
 // Consume starts the runner and blocks until context canceled or error occurred.
 func (d *QueueableDispatcher) Consume(ctx context.Context) error {
+	if d.logger == nil {
+		d.logger = log.NewNopLogger()
+	}
 	var jobChan = make(chan *PersistedEvent)
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -85,7 +87,7 @@ func (d *QueueableDispatcher) Consume(ctx context.Context) error {
 		defer close(jobChan)
 		for {
 			msg, err := d.driver.Pop(ctx)
-			if errors.Is(err, redis.Nil) {
+			if errors.Is(err, Nil) {
 				continue
 			}
 			if err != nil {

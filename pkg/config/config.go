@@ -11,6 +11,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// KoanfAdapter is a implementation of contract.Config based on Koanf (https://github.com/knadh/koanf).
 type KoanfAdapter struct {
 	layers    []ProviderSet
 	watcher   contract.ConfigWatcher
@@ -18,31 +19,39 @@ type KoanfAdapter struct {
 	K         *koanf.Koanf
 }
 
+// ProviderSet is a configuration layer formed by a parser and a provider.
 type ProviderSet struct {
 	Parser   koanf.Parser
 	Provider koanf.Provider
 }
 
+// Option is the functional option type for KoanfAdapter
 type Option func(option *KoanfAdapter)
 
+// WithProviderLayer is an option for *KoanfAdapter that adds a layer to the bottom of the configuration stack.
+// This option can be used multiple times, thus forming the whole stack. The layer on top has higher priority.
 func WithProviderLayer(provider koanf.Provider, parser koanf.Parser) Option {
 	return func(option *KoanfAdapter) {
 		option.layers = append(option.layers, ProviderSet{Provider: provider, Parser: parser})
 	}
 }
 
+// WithWatcher is an option for *KoanfAdapter that adds a config watcher. The watcher should notify the configurations
+// whenever a reload event is triggered.
 func WithWatcher(watcher contract.ConfigWatcher) Option {
 	return func(option *KoanfAdapter) {
 		option.watcher = watcher
 	}
 }
 
+// WithDelimiter changes the default delimiter of Koanf. See Koanf's doc to learn more about delimiters.
 func WithDelimiter(delimiter string) Option {
 	return func(option *KoanfAdapter) {
 		option.delimiter = delimiter
 	}
 }
 
+// NewConfig creates a new *KoanfAdapter.
 func NewConfig(options ...Option) (*KoanfAdapter, error) {
 	adapter := KoanfAdapter{delimiter: "."}
 
@@ -59,6 +68,8 @@ func NewConfig(options ...Option) (*KoanfAdapter, error) {
 	return &adapter, nil
 }
 
+// Reload reloads the whole configuration stack. It reloads layer by layer, so if an error occurred, Reload will
+// return early and abort the rest of the reloading.
 func (k KoanfAdapter) Reload() error {
 	for i := len(k.layers) - 1; i >= 0; i-- {
 		err := k.K.Load(k.layers[i].Provider, k.layers[i].Parser)
@@ -69,10 +80,14 @@ func (k KoanfAdapter) Reload() error {
 	return nil
 }
 
+// Watch uses the internal watcher to watch the configuration reload signals. This function should be registered
+// in the run group.
 func (k KoanfAdapter) Watch(ctx context.Context) error {
 	return k.watcher.Watch(ctx, k.Reload)
 }
 
+// Unmarshal unmarshals a given key path into the given struct using the mapstructure lib.
+// If no path is specified, the whole map is unmarshalled. `koanf` is the struct field tag used to match field names.
 func (k KoanfAdapter) Unmarshal(path string, o interface{}) error {
 	return k.K.UnmarshalWithConf(path, o, koanf.UnmarshalConf{
 		DecoderConfig: &mapstructure.DecoderConfig{
@@ -83,32 +98,44 @@ func (k KoanfAdapter) Unmarshal(path string, o interface{}) error {
 	})
 }
 
+// Route cuts the config map at a given key path into a sub map and returns a new contract.ConfigAccessor instance
+// with the cut config map loaded. For instance, if the loaded config has a path that looks like parent.child.sub.a.b,
+// `Route("parent.child")` returns a new contract.ConfigAccessor instance with the config map `sub.a.b` where
+// everything above `parent.child` are cut out.
 func (k KoanfAdapter) Route(s string) contract.ConfigAccessor {
 	return KoanfAdapter{
 		K: k.K.Cut(s),
 	}
 }
 
+// String returns the string value of a given key path or "" if the path does not exist or if the value is not a valid string
 func (k KoanfAdapter) String(s string) string {
 	return k.K.String(s)
 }
 
+// Int returns the int value of a given key path or 0 if the path does not exist or if the value is not a valid int.
 func (k KoanfAdapter) Int(s string) int {
 	return k.K.Int(s)
 }
 
+// Strings returns the []string slice value of a given key path or an empty []string slice if the path does not exist
+// or if the value is not a valid string slice.
 func (k KoanfAdapter) Strings(s string) []string {
 	return k.K.Strings(s)
 }
 
+// Bool returns the bool value of a given key path or false if the path does not exist or if the value is not a valid bool representation.
+// Accepted string representations of bool are the ones supported by strconv.ParseBool.
 func (k KoanfAdapter) Bool(s string) bool {
 	return k.K.Bool(s)
 }
 
+// Get returns the raw, uncast interface{} value of a given key path in the config map. If the key path does not exist, nil is returned.
 func (k KoanfAdapter) Get(s string) interface{} {
 	return k.K.Get(s)
 }
 
+// Float64 returns the float64 value of a given key path or 0 if the path does not exist or if the value is not a valid float64.
 func (k KoanfAdapter) Float64(s string) float64 {
 	return k.K.Float64(s)
 }

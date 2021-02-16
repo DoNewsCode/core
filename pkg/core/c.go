@@ -223,7 +223,6 @@ func (c *C) AddCoreDependencies() {
 	c.AddDependency(func() contract.Dispatcher {
 		return c.Dispatcher
 	})
-	c.AddModule(config.Module{Container: c.Container})
 }
 
 func (c *C) AddModuleViaFunc(function interface{}) {

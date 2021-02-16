@@ -82,6 +82,7 @@ func Example_defer() {
 		// Trigger an event
 		evt := events.Of(DeferMockData{Value: "hello world"})
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt, queue.Defer(time.Second)))
+		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt, queue.Defer(time.Hour)))
 	})
 	if err != nil {
 		panic(err)

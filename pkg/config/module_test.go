@@ -1,3 +1,5 @@
+// +build core
+
 package config
 
 import (

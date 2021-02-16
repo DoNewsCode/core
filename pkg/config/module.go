@@ -14,11 +14,13 @@ import (
 	"path/filepath"
 )
 
+// Module is the configuration module that bundles the reload watcher and exportConfig commands.
 type Module struct {
 	Conf      *KoanfAdapter
 	Container contract.Container
 }
 
+// ProvideRunGroup runs the configuration watcher.
 func (m Module) ProvideRunGroup(group *run.Group) {
 	if m.Conf.watcher == nil {
 		return
@@ -31,6 +33,7 @@ func (m Module) ProvideRunGroup(group *run.Group) {
 	})
 }
 
+// ProvideConfig exports config for "name", "version", "env", "http", "grpc".
 func (m Module) ProvideConfig() []contract.ExportedConfig {
 	return []contract.ExportedConfig{
 		{
@@ -76,19 +79,21 @@ func (m Module) ProvideConfig() []contract.ExportedConfig {
 }
 
 type Provider interface {
+	// ProvideConfig provides the default config for the module. It is collected by the config.Module and used in
+	// exportConfig command.
 	ProvideConfig() []contract.ExportedConfig
 }
 
+// ProvideCommand provides the exportConfig command.
 func (m Module) ProvideCommand(command *cobra.Command) {
 	var (
 		outputFile string
 		style      string
 	)
 	exportConfigCmd := &cobra.Command{
-		Use:                    "exportConfig",
-		Short:                  "export default config",
-		Long:                   "export a copy of default config for every added module in this application",
-		BashCompletionFunction: "",
+		Use:   "exportConfig [module]...",
+		Short: "export default config",
+		Long:  "export a copy of default config for every added module in this application",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var (
 				handler         handler

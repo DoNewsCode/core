@@ -3,16 +3,15 @@ package config
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	gotesting "testing"
-	"time"
-
 	"github.com/DoNewsCode/std/pkg/config/watcher"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	gotesting "testing"
+	"time"
 )
 
 func TestKoanfAdapter_Route(t *gotesting.T) {
@@ -41,13 +40,18 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	assert.Equal(t, "baz", ka.String("foo"))
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	end := make(chan struct{})
 	go func() {
-	_:
-		ka.Watch(ctx)
+		ka.watcher.Watch(ctx, func() error {
+			defer func() {
+				end <- struct{}{}
+			}()
+			return ka.Reload()
+		})
 	}()
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 	err = ioutil.WriteFile("testdata/watch.yaml", []byte("foo: bar"), 0644)
-	time.Sleep(10 * time.Millisecond)
+	<-end
 	assert.Equal(t, "bar", ka.String("foo"))
 }
 

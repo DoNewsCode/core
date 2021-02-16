@@ -2,8 +2,12 @@ package queue
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"time"
 )
+
+// Nil means the queue is empty.
+var Nil = errors.New("no message available")
 
 // Driver is the interface for queue engines. See RedisDriver for usage.
 type Driver interface {
