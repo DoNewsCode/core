@@ -1,9 +1,10 @@
-package queue
+package modqueue
 
 import (
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/DoNewsCode/std/pkg/events"
+	"github.com/DoNewsCode/std/pkg/queue"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,7 @@ import (
 
 func TestProvideDispatcher(t *testing.T) {
 	out, err := ProvideDispatcher(DispatcherIn{
-		Conf: config.MapAdapter{"queue": map[string]queueConf{
+		Conf: config.MapAdapter{"queue": map[string]queue.Conf{
 			"default": {
 				1,
 				5,

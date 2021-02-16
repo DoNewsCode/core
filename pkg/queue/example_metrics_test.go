@@ -7,6 +7,7 @@ import (
 	"github.com/DoNewsCode/std/pkg/core"
 	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/DoNewsCode/std/pkg/queue"
+	"github.com/DoNewsCode/std/pkg/queue/modqueue"
 	"github.com/go-kit/kit/metrics/prometheus"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
@@ -42,13 +43,13 @@ func bootstrap() *core.C {
 
 	// Add Provider
 	c.AddCoreDependencies()
-	c.AddDependency(queue.ProvideDispatcher)
+	c.AddDependency(modqueue.ProvideDispatcher)
 	c.AddDependency(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()
 		return client
 	})
-	c.AddDependency(func(appName contract.AppName, env contract.Env) queue.Gauge {
+	c.AddDependency(func(appName contract.AppName, env contract.Env) modqueue.Gauge {
 		return prometheus.NewGaugeFrom(
 			stdprometheus.GaugeOpts{
 				Namespace: appName.String(),

@@ -7,6 +7,7 @@ import (
 	"github.com/DoNewsCode/std/pkg/core"
 	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/DoNewsCode/std/pkg/queue"
+	"github.com/DoNewsCode/std/pkg/queue/modqueue"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/rawbytes"
@@ -40,7 +41,7 @@ func bootstrapFactories() *core.C {
 
 	// Add Provider
 	c.AddCoreDependencies()
-	c.AddDependency(queue.ProvideDispatcher)
+	c.AddDependency(modqueue.ProvideDispatcher)
 	c.AddDependency(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()

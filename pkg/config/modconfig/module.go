@@ -1,9 +1,11 @@
-package config
+// Package modconfig provides integration with Package core
+package modconfig
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/ghodss/yaml"
 	"github.com/oklog/run"
@@ -16,15 +18,12 @@ import (
 
 // Module is the configuration module that bundles the reload watcher and exportConfig commands.
 type Module struct {
-	Conf      *KoanfAdapter
+	Conf      *config.KoanfAdapter
 	Container contract.Container
 }
 
 // ProvideRunGroup runs the configuration watcher.
 func (m Module) ProvideRunGroup(group *run.Group) {
-	if m.Conf.watcher == nil {
-		return
-	}
 	ctx, cancel := context.WithCancel(context.Background())
 	group.Add(func() error {
 		return m.Conf.Watch(ctx)
@@ -236,12 +235,12 @@ func (y jsonHandler) write(file *os.File, configs []contract.ExportedConfig, con
 	if confMap == nil {
 		confMap = make(map[string]interface{})
 	}
-	for _, config := range configs {
-		if _, ok := confMap[config.Name]; ok {
+	for _, exportedConfig := range configs {
+		if _, ok := confMap[exportedConfig.Name]; ok {
 			continue
 		}
-		for k := range config.Data {
-			confMap[k] = config.Data[k]
+		for k := range exportedConfig.Data {
+			confMap[k] = exportedConfig.Data[k]
 		}
 	}
 	file.Seek(0, 0)

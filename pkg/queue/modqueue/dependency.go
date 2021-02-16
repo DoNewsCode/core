@@ -1,4 +1,5 @@
-package queue
+// Package modqueue contains integration with package core
+package modqueue
 
 import (
 	"context"
@@ -6,6 +7,7 @@ import (
 	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/di"
+	"github.com/DoNewsCode/std/pkg/queue"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/metrics"
@@ -36,19 +38,18 @@ type DispatcherOut struct {
 	di.Out
 	di.Module
 
-	Dispatcher          Dispatcher
-	DispatcherMaker     DispatcherMaker
-	QueueableDispatcher *QueueableDispatcher
-	DispatcherFactory   *DispatcherFactory
+	Dispatcher          queue.Dispatcher
+	DispatcherMaker     queue.DispatcherMaker
+	QueueableDispatcher *queue.QueueableDispatcher
+	DispatcherFactory   *queue.DispatcherFactory
 }
 
 // ProvideDispatcher is a provider for *DispatcherFactory and *QueueableDispatcher.
 // It also provides an extracted interface for each.
 func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
-
 	var (
 		err        error
-		queueConfs map[string]queueConf
+		queueConfs map[string]queue.Conf
 	)
 	err = p.Conf.Unmarshal("queue", &queueConfs)
 	if err != nil {
@@ -57,26 +58,28 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 	factory := async.NewFactory(func(name string) (async.Pair, error) {
 		var (
 			ok   bool
-			conf queueConf
+			conf queue.Conf
 		)
 		if conf, ok = queueConfs[name]; !ok {
 			return async.Pair{}, fmt.Errorf("queue configuration %s not found", name)
 		}
-		queuedDispatcher := WithQueue(p.Dispatcher, &RedisDriver{
+		if p.Gauge != nil {
+			p.Gauge = p.Gauge.With("queue", name)
+		}
+		queuedDispatcher := queue.WithQueue(p.Dispatcher, &queue.RedisDriver{
 			Logger:      p.Logger,
 			RedisClient: p.RedisClient,
-			ChannelConfig: ChannelConfig{
+			ChannelConfig: queue.ChannelConfig{
 				Delayed:  fmt.Sprintf("{%s:%s:%s}:delayed", p.AppName.String(), p.Env.String(), name),
 				Failed:   fmt.Sprintf("{%s:%s:%s}:failed", p.AppName.String(), p.Env.String(), name),
 				Reserved: fmt.Sprintf("{%s:%s:%s}:reserved", p.AppName.String(), p.Env.String(), name),
 				Waiting:  fmt.Sprintf("{%s:%s:%s}:waiting", p.AppName.String(), p.Env.String(), name),
 				Timeout:  fmt.Sprintf("{%s:%s:%s}:timeout", p.AppName.String(), p.Env.String(), name),
 			},
-		}, UseLogger(p.Logger), UseParallelism(conf.Parallelism))
-		if p.Gauge != nil {
-			queuedDispatcher.queueLengthGauge = p.Gauge.With("queue", name)
-			queuedDispatcher.checkQueueLengthInterval = time.Duration(conf.CheckQueueLengthIntervalSecond) * time.Second
-		}
+		}, queue.UseLogger(p.Logger), queue.UseParallelism(conf.Parallelism), queue.UseGauge(
+			p.Gauge,
+			time.Duration(conf.CheckQueueLengthIntervalSecond)*time.Second,
+		))
 		return async.Pair{
 			Closer: nil,
 			Conn:   queuedDispatcher,
@@ -88,7 +91,7 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 		factory.Make(name)
 	}
 
-	dispatcherFactory := &DispatcherFactory{Factory: factory}
+	dispatcherFactory := &queue.DispatcherFactory{Factory: factory}
 	defaultQueueableDispatcher, err := dispatcherFactory.Make("default")
 	return DispatcherOut{
 		QueueableDispatcher: defaultQueueableDispatcher,
@@ -120,7 +123,7 @@ func (s DispatcherOut) ProvideConfig() []contract.ExportedConfig {
 	return []contract.ExportedConfig{{
 		Name: "queue",
 		Data: map[string]interface{}{
-			"queue": map[string]queueConf{
+			"queue": map[string]queue.Conf{
 				"default": {
 					Parallelism:                    runtime.NumCPU(),
 					CheckQueueLengthIntervalSecond: 15,

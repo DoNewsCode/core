@@ -35,7 +35,7 @@ func (s *DispatcherFactory) Make(name string) (*QueueableDispatcher, error) {
 	return client.(*QueueableDispatcher), nil
 }
 
-type queueConf struct {
+type Conf struct {
 	Parallelism                    int `yaml:"parallelism" json:"parallelism"`
 	CheckQueueLengthIntervalSecond int `yaml:"checkQueueLengthIntervalSecond" json:"checkQueueLengthIntervalSecond"`
 }

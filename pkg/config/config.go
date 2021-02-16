@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/DoNewsCode/std/pkg/config/watcher"
 	"reflect"
 
 	"github.com/DoNewsCode/std/pkg/contract"
@@ -83,6 +84,9 @@ func (k KoanfAdapter) Reload() error {
 // Watch uses the internal watcher to watch the configuration reload signals. This function should be registered
 // in the run group.
 func (k KoanfAdapter) Watch(ctx context.Context) error {
+	if k.watcher == nil {
+		k.watcher = watcher.Signal{}
+	}
 	return k.watcher.Watch(ctx, k.Reload)
 }
 
