@@ -163,6 +163,10 @@ func (c *C) Shutdown() {
 func (c *C) AddDependency(dep interface{}) {
 	inTypes := make([]reflect.Type, 0)
 	outTypes := make([]reflect.Type, 0)
+	depType := reflect.TypeOf(dep)
+	if isModule(depType) {
+		c.AddModule(dep)
+	}
 	outTypes = append(outTypes, reflect.TypeOf(dep))
 	fnType := reflect.FuncOf(inTypes, outTypes, false /* variadic */)
 	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {

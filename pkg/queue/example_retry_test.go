@@ -97,7 +97,7 @@ func Example_faulty() {
 		panic(err)
 	}
 
-	serveRetry(c, 4*time.Second) // retries are made after a random backoff. It may take longer.
+	serveRetry(c, 5*time.Second) // retries are made after a random backoff. It may take longer.
 
 	// Output:
 	// faulty
