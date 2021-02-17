@@ -3,7 +3,6 @@ package queue
 import (
 	"context"
 	"errors"
-	"flag"
 	"math/rand"
 	"time"
 
@@ -50,8 +49,6 @@ type MockEvent struct {
 	Value  string
 	Called *bool
 }
-
-var useRedis = flag.Bool("redis", false, "use real redis for testing")
 
 func setUp() *QueueableDispatcher {
 	s := redis.NewUniversalClient(&redis.UniversalOptions{})
@@ -154,9 +151,6 @@ func TestDispatcher_work(t *testing.T) {
 }
 
 func TestDispatcher_Consume(t *testing.T) {
-	if !*useRedis {
-		t.Skip("this test needs redis")
-	}
 	consumer := setUp()
 
 	var called string
