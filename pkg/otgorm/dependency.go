@@ -1,4 +1,4 @@
-package modgorm
+package otgorm
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/di"
-	"github.com/DoNewsCode/std/pkg/otgorm"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
@@ -58,7 +57,7 @@ func ProvideGormConfig(l log.Logger, conf *databaseConf) *gorm.Config {
 			SingularTable: conf.NamingStrategy.SingularTable,
 		},
 		FullSaveAssociations:                     conf.FullSaveAssociations,
-		Logger:                                   &otgorm.GormLogAdapter{Logging: l},
+		Logger:                                   &GormLogAdapter{Logging: l},
 		DryRun:                                   conf.DryRun,
 		PrepareStmt:                              conf.PrepareStmt,
 		DisableAutomaticPing:                     conf.DisableAutomaticPing,
@@ -78,7 +77,7 @@ func ProvideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 		return nil, nil, err
 	}
 	if tracer != nil {
-		otgorm.AddGormCallbacks(db, tracer)
+		AddGormCallbacks(db, tracer)
 	}
 	return db, func() {
 		if sqlDb, err := db.DB(); err == nil {

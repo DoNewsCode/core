@@ -1,11 +1,10 @@
-package modgorm
+package otgorm
 
 import (
 	"fmt"
 
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/logging"
-	"github.com/DoNewsCode/std/pkg/otgorm"
 	"github.com/go-kit/kit/log"
 	"github.com/spf13/cobra"
 )
@@ -14,14 +13,14 @@ import (
 // implementing this interface are migration providers. migrations will be
 // collected in migrate command.
 type MigrationProvider interface {
-	ProvideMigration() []*otgorm.Migration
+	ProvideMigration() []*Migration
 }
 
 // SeedProvider is an interface for database seeding. Modules
 // implementing this interface are seed providers. seeds will be
 // collected in seed command.
 type SeedProvider interface {
-	ProvideSeed() []*otgorm.Seed
+	ProvideSeed() []*Seed
 }
 
 // Module is the registration unit for Morph. It provides migration and seed command.
@@ -116,11 +115,11 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 	command.AddCommand(seedCmd)
 }
 
-func (m Module) collectMigrations(connection string) otgorm.Migrations {
+func (m Module) collectMigrations(connection string) Migrations {
 	if connection == "" {
 		connection = "default"
 	}
-	var migrations otgorm.Migrations
+	var migrations Migrations
 	m.container.GetModules().Filter(func(p MigrationProvider) {
 		for _, migration := range p.ProvideMigration() {
 			if migration.Connection == connection {
@@ -132,11 +131,11 @@ func (m Module) collectMigrations(connection string) otgorm.Migrations {
 	return migrations
 }
 
-func (m Module) collectSeeds(connection string) otgorm.Seeds {
+func (m Module) collectSeeds(connection string) Seeds {
 	if connection == "" {
 		connection = "default"
 	}
-	var seeds otgorm.Seeds
+	var seeds Seeds
 	m.container.GetModules().Filter(func(p SeedProvider) {
 		for _, seed := range p.ProvideSeed() {
 			if seed.Connection == connection {

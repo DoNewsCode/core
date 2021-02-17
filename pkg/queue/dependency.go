@@ -1,5 +1,4 @@
-// Package modqueue contains integration with package core
-package modqueue
+package queue
 
 import (
 	"context"
@@ -10,7 +9,6 @@ import (
 	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/di"
-	"github.com/DoNewsCode/std/pkg/queue"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/metrics"
@@ -29,7 +27,7 @@ type Dispatcher interface {
 
 // DispatcherMaker is the key of *DispatcherFactory in the dependencies graph. Used as a type hint for injection.
 type DispatcherMaker interface {
-	Make(string) (*queue.QueueableDispatcher, error)
+	Make(string) (*QueueableDispatcher, error)
 }
 
 type configuration struct {
@@ -57,7 +55,7 @@ type DispatcherOut struct {
 
 	Dispatcher          Dispatcher
 	DispatcherMaker     DispatcherMaker
-	QueueableDispatcher *queue.QueueableDispatcher
+	QueueableDispatcher *QueueableDispatcher
 	DispatcherFactory   *DispatcherFactory
 }
 
@@ -83,10 +81,10 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 		if p.Gauge != nil {
 			p.Gauge = p.Gauge.With("queue", name)
 		}
-		redisDriver := &queue.RedisDriver{
+		redisDriver := &RedisDriver{
 			Logger:      p.Logger,
 			RedisClient: p.RedisClient,
-			ChannelConfig: queue.ChannelConfig{
+			ChannelConfig: ChannelConfig{
 				Delayed:  fmt.Sprintf("{%s:%s:%s}:delayed", p.AppName.String(), p.Env.String(), name),
 				Failed:   fmt.Sprintf("{%s:%s:%s}:failed", p.AppName.String(), p.Env.String(), name),
 				Reserved: fmt.Sprintf("{%s:%s:%s}:reserved", p.AppName.String(), p.Env.String(), name),
@@ -94,12 +92,12 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 				Timeout:  fmt.Sprintf("{%s:%s:%s}:timeout", p.AppName.String(), p.Env.String(), name),
 			},
 		}
-		queuedDispatcher := queue.WithQueue(
+		queuedDispatcher := WithQueue(
 			p.Dispatcher,
 			redisDriver,
-			queue.UseLogger(p.Logger),
-			queue.UseParallelism(conf.Parallelism),
-			queue.UseGauge(p.Gauge, time.Duration(conf.CheckQueueLengthIntervalSecond)*time.Second),
+			UseLogger(p.Logger),
+			UseParallelism(conf.Parallelism),
+			UseGauge(p.Gauge, time.Duration(conf.CheckQueueLengthIntervalSecond)*time.Second),
 		)
 		return async.Pair{
 			Closer: nil,
@@ -175,10 +173,10 @@ type DispatcherFactory struct {
 
 // Make returns a QueueableDispatcher by the given name. If it has already been created under the same name,
 // the that one will be returned.
-func (s *DispatcherFactory) Make(name string) (*queue.QueueableDispatcher, error) {
+func (s *DispatcherFactory) Make(name string) (*QueueableDispatcher, error) {
 	client, err := s.Factory.Make(name)
 	if err != nil {
 		return nil, err
 	}
-	return client.(*queue.QueueableDispatcher), nil
+	return client.(*QueueableDispatcher), nil
 }

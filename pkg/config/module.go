@@ -1,11 +1,10 @@
 // Package modconfig provides integration with Package core
-package modconfig
+package config
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/ghodss/yaml"
 	"github.com/oklog/run"
@@ -18,7 +17,7 @@ import (
 
 // Module is the configuration module that bundles the reload watcher and exportConfig commands.
 type Module struct {
-	Conf      *config.KoanfAdapter
+	Conf      *KoanfAdapter
 	Container contract.Container
 }
 
@@ -90,9 +89,19 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 		style      string
 	)
 	exportConfigCmd := &cobra.Command{
-		Use:   "exportConfig [module]...",
+		Use:   "export config [module]...",
 		Short: "export default config",
 		Long:  "export a copy of default config for every added module in this application",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("arguments missing")
+			}
+			if args[0] != "config" {
+				return fmt.Errorf("unknown export target %s", args[0])
+			}
+			return nil
+		},
+		ValidArgs: []string{"config"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var (
 				handler         handler
@@ -108,10 +117,10 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 			_ = m.Container.GetModules().Filter(func(provider Provider) {
 				exportedConfigs = append(exportedConfigs, provider.ProvideConfig()...)
 			})
-			if len(args) >= 1 {
+			if len(args) >= 2 {
 				var copy = make([]contract.ExportedConfig, 0)
 				for i := range exportedConfigs {
-					for j := range args {
+					for j := 1; j < len(args); j++ {
 						if args[j] == exportedConfigs[i].Name {
 							copy = append(copy, exportedConfigs[i])
 							break

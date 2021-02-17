@@ -1,6 +1,8 @@
 package di
 
-import "go.uber.org/dig"
+import (
+	"go.uber.org/dig"
+)
 
 type Graph struct {
 	dig *dig.Container

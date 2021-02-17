@@ -1,4 +1,4 @@
-package mods3
+package ots3
 
 import (
 	"github.com/DoNewsCode/std/pkg/config"

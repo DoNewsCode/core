@@ -1,4 +1,4 @@
-package modqueue
+package queue
 
 import (
 	"github.com/DoNewsCode/std/pkg/config"

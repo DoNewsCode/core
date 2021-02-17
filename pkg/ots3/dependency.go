@@ -1,4 +1,4 @@
-package mods3
+package ots3
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/di"
-	"github.com/DoNewsCode/std/pkg/ots3"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
@@ -26,7 +25,7 @@ type S3Config struct {
 
 // S3Maker is an interface for *S3Factory. Used as a type hint for injection.
 type S3Maker interface {
-	Make(name string) (*ots3.Manager, error)
+	Make(name string) (*Manager, error)
 }
 
 // S3In is the injection parameter for ProvideManager.
@@ -43,10 +42,10 @@ type S3Out struct {
 	di.Out
 	di.Module
 
-	Manager  *ots3.Manager
+	Manager  *Manager
 	Factory  *S3Factory
 	Maker    S3Maker
-	Uploader ots3.Uploader
+	Uploader Uploader
 }
 
 // S3Factory can be used to connect to multiple s3 servers.
@@ -55,12 +54,12 @@ type S3Factory struct {
 }
 
 // Make creates a s3 manager under the given name.
-func (s *S3Factory) Make(name string) (*ots3.Manager, error) {
+func (s *S3Factory) Make(name string) (*Manager, error) {
 	client, err := s.Factory.Make(name)
 	if err != nil {
 		return nil, err
 	}
-	return client.(*ots3.Manager), nil
+	return client.(*Manager), nil
 }
 
 // ProvideManager creates *S3Factory and *ots3.Manager. It is a valid dependency for package core.
@@ -81,20 +80,20 @@ func ProvideManager(p S3In) S3Out {
 		if conf, ok = s3configs[name]; !ok {
 			return async.Pair{}, fmt.Errorf("s3 configuration %s not found", name)
 		}
-		manager := ots3.NewManager(
+		manager := NewManager(
 			conf.AccessKey,
 			conf.AccessSecret,
 			conf.Endpoint,
 			conf.Region,
 			conf.Bucket,
-			ots3.WithLocationFunc(func(location string) (uri string) {
+			WithLocationFunc(func(location string) (uri string) {
 				u, err := url.Parse(location)
 				if err != nil {
 					return location
 				}
 				return fmt.Sprintf(conf.CdnUrl, u.Path[1:])
 			}),
-			ots3.WithTracer(p.Tracer),
+			WithTracer(p.Tracer),
 		)
 		return async.Pair{
 			Closer: nil,
@@ -112,8 +111,8 @@ func ProvideManager(p S3In) S3Out {
 		}
 	}
 	return S3Out{
-		Manager:  manager.(*ots3.Manager),
-		Uploader: manager.(*ots3.Manager),
+		Manager:  manager.(*Manager),
+		Uploader: manager.(*Manager),
 		Factory:  &s3Factory,
 		Maker:    &s3Factory,
 	}
@@ -135,7 +134,7 @@ func (m S3Out) ProvideConfig() []contract.ExportedConfig {
 						CdnUrl:       "",
 					},
 				}},
-			Comment: "the s3 configuration",
+			Comment: "The s3 configuration",
 		},
 	}
 }

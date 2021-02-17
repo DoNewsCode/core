@@ -160,7 +160,7 @@ func (c *C) Shutdown() {
 	}
 }
 
-func (c *C) AddDependency(dep interface{}) {
+func (c *C) addDependency(dep interface{}) {
 	inTypes := make([]reflect.Type, 0)
 	outTypes := make([]reflect.Type, 0)
 	depType := reflect.TypeOf(dep)
@@ -177,6 +177,9 @@ func (c *C) AddDependency(dep interface{}) {
 
 func (c *C) AddDependencyFunc(constructor interface{}) {
 	ftype := reflect.TypeOf(constructor)
+	if ftype.Kind() != reflect.Func {
+		panic("AddDependencyFunc only accepts function as argument")
+	}
 	inTypes := make([]reflect.Type, 0)
 	outTypes := make([]reflect.Type, 0)
 	for i := 0; i < ftype.NumOut(); i++ {
@@ -186,10 +189,22 @@ func (c *C) AddDependencyFunc(constructor interface{}) {
 		}
 		outTypes = append(outTypes, outT)
 	}
+
+	// no cleanup, we can use normal dig.
+	//if len(outTypes) == ftype.NumOut() {
+	//	err := c.di.Provide(constructor)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	return
+	//}
+
+	// has cleanup, use reflection to intercept cleanup.
 	for i := 0; i < ftype.NumIn(); i++ {
 		inT := ftype.In(i)
 		inTypes = append(inTypes, inT)
 	}
+
 	fnType := reflect.FuncOf(inTypes, outTypes, ftype.IsVariadic() /* variadic */)
 	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
 		filteredOuts := make([]reflect.Value, 0)
@@ -200,8 +215,8 @@ func (c *C) AddDependencyFunc(constructor interface{}) {
 				c.AddModule(v.Interface())
 				continue
 			}
-			if isModule(vType) {
-				c.AddModule(v.Interface())
+			if isModule(ftype) {
+				c.AddModule(constructor)
 			}
 			filteredOuts = append(filteredOuts, v)
 		}
@@ -219,6 +234,9 @@ func (c *C) AddCoreDependencies() {
 	})
 	c.AddDependencyFunc(func() contract.AppName {
 		return c.AppName
+	})
+	c.AddDependencyFunc(func() contract.Container {
+		return c.Container
 	})
 	c.AddDependencyFunc(func() contract.ConfigAccessor {
 		return c.ConfigAccessor
@@ -257,6 +275,7 @@ func (c *C) AddModuleFunc(function interface{}) {
 		outT := ftype.Out(i)
 		targetTypes = append(targetTypes, outT)
 	}
+
 	fnType := reflect.FuncOf(targetTypes, nil, false /* variadic */)
 	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
 		for _, arg := range args {
@@ -265,7 +284,7 @@ func (c *C) AddModuleFunc(function interface{}) {
 		return nil
 	})
 
-	err := c.Invoke(fn.Interface())
+	err := c.di.Invoke(fn.Interface())
 	if err != nil {
 		panic(err)
 	}
@@ -275,7 +294,7 @@ func (c *C) Invoke(function interface{}) error {
 	return c.di.Invoke(function)
 }
 
-func (c *C) Populate(targets ...interface{}) error {
+func (c *C) populate(targets ...interface{}) error {
 	// Validate all targets are non-nil pointers.
 	targetTypes := make([]reflect.Type, len(targets))
 	for i, t := range targets {

@@ -1,10 +1,8 @@
 // package mods3 contains integration with package core
-package mods3
+package ots3
 
 import (
 	"net/http"
-
-	"github.com/DoNewsCode/std/pkg/ots3"
 
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/go-kit/kit/log"
@@ -22,14 +20,14 @@ func (m Module) ProvideHttp(router *mux.Router) {
 }
 
 // New creates the s3 module
-func New(manager *ots3.Manager, logger log.Logger, env contract.Env) Module {
-	uploadService := &ots3.UploadService{
+func New(manager *Manager, logger log.Logger, env contract.Env) Module {
+	uploadService := &UploadService{
 		Logger: logger,
 		S3:     manager,
 	}
-	endpoint := ots3.MakeUploadEndpoint(uploadService)
-	middleware := ots3.Middleware(logger, env)
-	handler := ots3.MakeHttpHandler(endpoint, middleware)
+	endpoint := MakeUploadEndpoint(uploadService)
+	middleware := Middleware(logger, env)
+	handler := MakeHttpHandler(endpoint, middleware)
 	module := Module{
 		handler: handler,
 	}

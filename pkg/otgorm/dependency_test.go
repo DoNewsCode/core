@@ -1,4 +1,4 @@
-package modgorm
+package otgorm
 
 import (
 	"testing"

@@ -7,7 +7,6 @@ import (
 	"github.com/DoNewsCode/std/pkg/core"
 	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/DoNewsCode/std/pkg/queue"
-	"github.com/DoNewsCode/std/pkg/queue/modqueue"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/rawbytes"
@@ -41,7 +40,7 @@ func bootstrapFactories() *core.C {
 
 	// Add Provider
 	c.AddCoreDependencies()
-	c.AddDependencyFunc(modqueue.ProvideDispatcher)
+	c.AddDependencyFunc(queue.ProvideDispatcher)
 	c.AddDependencyFunc(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()
@@ -77,7 +76,7 @@ func serveFactories(c *core.C, duration time.Duration) {
 func Example_factory() {
 	c := bootstrapFactories()
 
-	err := c.Invoke(func(maker modqueue.DispatcherMaker) {
+	err := c.Invoke(func(maker queue.DispatcherMaker) {
 		dispatcher, err := maker.Make("MyQueue")
 		if err != nil {
 			panic(err)

@@ -7,7 +7,6 @@ import (
 	"github.com/DoNewsCode/std/pkg/core"
 	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/DoNewsCode/std/pkg/queue"
-	"github.com/DoNewsCode/std/pkg/queue/modqueue"
 	"github.com/go-kit/kit/metrics/prometheus"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
@@ -43,13 +42,13 @@ func bootstrapMetrics() *core.C {
 
 	// Add Provider
 	c.AddCoreDependencies()
-	c.AddDependencyFunc(modqueue.ProvideDispatcher)
+	c.AddDependencyFunc(queue.ProvideDispatcher)
 	c.AddDependencyFunc(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()
 		return client
 	})
-	c.AddDependencyFunc(func(appName contract.AppName, env contract.Env) modqueue.Gauge {
+	c.AddDependencyFunc(func(appName contract.AppName, env contract.Env) queue.Gauge {
 		return prometheus.NewGaugeFrom(
 			stdprometheus.GaugeOpts{
 				Namespace: appName.String(),
@@ -89,7 +88,7 @@ func serveMetrics(c *core.C, duration time.Duration) {
 func Example_metrics() {
 	c := bootstrapMetrics()
 
-	err := c.Invoke(func(dispatcher modqueue.Dispatcher) {
+	err := c.Invoke(func(dispatcher queue.Dispatcher) {
 
 		// Subscribe
 		dispatcher.Subscribe(MockMetricsListener{})

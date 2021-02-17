@@ -1,10 +1,9 @@
-package modqueue
+package queue
 
 import (
 	"context"
 	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/events"
-	"github.com/DoNewsCode/std/pkg/queue"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -12,28 +11,28 @@ import (
 )
 
 func TestModule_ProvideCommand(t *testing.T) {
-	rootCmd, driver := setUp()
+	rootCmd, driver := setUpModule()
 	cases := []struct {
 		name   string
 		args   []string
-		result queue.QueueInfo
+		result QueueInfo
 	}{
 		{
 			"reload",
 			[]string{"queue", "reload"},
-			queue.QueueInfo{
+			QueueInfo{
 				Waiting: 1,
 			},
 		},
 		{
 			"flush",
 			[]string{"queue", "flush"},
-			queue.QueueInfo{},
+			QueueInfo{},
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			message := &queue.PersistedEvent{HandleTimeout: time.Hour}
+			message := &PersistedEvent{HandleTimeout: time.Hour}
 			driver.Push(context.Background(), message, 0)
 			driver.Pop(context.Background())
 			driver.Fail(context.Background(), message)
@@ -46,10 +45,10 @@ func TestModule_ProvideCommand(t *testing.T) {
 	}
 }
 
-func setUp() (*cobra.Command, queue.Driver) {
-	driver := queue.NewInProcessDriverWithPopInterval(time.Millisecond)
+func setUpModule() (*cobra.Command, Driver) {
+	driver := NewInProcessDriverWithPopInterval(time.Millisecond)
 	factory := async.NewFactory(func(name string) (async.Pair, error) {
-		queuedDispatcher := queue.WithQueue(
+		queuedDispatcher := WithQueue(
 			&events.SyncDispatcher{},
 			driver,
 		)

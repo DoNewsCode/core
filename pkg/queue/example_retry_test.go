@@ -8,7 +8,6 @@ import (
 	"github.com/DoNewsCode/std/pkg/core"
 	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/DoNewsCode/std/pkg/queue"
-	"github.com/DoNewsCode/std/pkg/queue/modqueue"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/rawbytes"
@@ -49,7 +48,7 @@ func bootstrapRetry() *core.C {
 
 	// Add Provider
 	c.AddCoreDependencies()
-	c.AddDependencyFunc(modqueue.ProvideDispatcher)
+	c.AddDependencyFunc(queue.ProvideDispatcher)
 	c.AddDependencyFunc(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()
@@ -85,7 +84,7 @@ func serveRetry(c *core.C, duration time.Duration) {
 func Example_faulty() {
 	c := bootstrapRetry()
 
-	err := c.Invoke(func(dispatcher modqueue.Dispatcher) {
+	err := c.Invoke(func(dispatcher queue.Dispatcher) {
 		// Subscribe
 		dispatcher.Subscribe(&FaultyMockListener{})
 
