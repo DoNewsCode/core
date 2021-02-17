@@ -30,7 +30,7 @@ func (m DeferMockListener) Process(_ context.Context, event contract.Event) erro
 	return nil
 }
 
-// bootstrap is normally done when bootstrapping the framework. We mimic it here for demonstration.
+// bootstrapMetrics is normally done when bootstrapping the framework. We mimic it here for demonstration.
 func bootstrapDefer() *core.C {
 	const sampleConfig = "{\"log\":{\"level\":\"error\"},\"queue\":{\"default\":{\"parallelism\":1}}}"
 	// Make sure redis is running at localhost:6379
@@ -40,8 +40,8 @@ func bootstrapDefer() *core.C {
 
 	// Add Provider
 	c.AddCoreDependencies()
-	c.AddDependency(modqueue.ProvideDispatcher)
-	c.AddDependency(func() redis.UniversalClient {
+	c.AddDependencyFunc(modqueue.ProvideDispatcher)
+	c.AddDependencyFunc(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()
 		return client
@@ -49,7 +49,7 @@ func bootstrapDefer() *core.C {
 	return c
 }
 
-// serve normally lives at serve command. We mimic it here for demonstration.
+// serveMetrics normally lives at serveMetrics command. We mimic it here for demonstration.
 func serveDefer(c *core.C, duration time.Duration) {
 	var g run.Group
 

@@ -137,7 +137,7 @@ func (m *Manager) Upload(ctx context.Context, name string, reader io.Reader) (ne
 		extension = mi.Extension()
 	}
 
-	k := m.keyer.Key(name + extension)
+	k := key.KeepOdd(m.keyer).Key("/", name+extension)
 
 	// Efficiently use the buf for mime type reading and continue from the rest of the body
 	result, err := uploader.UploadWithContext(ctx, &s3manager.UploadInput{

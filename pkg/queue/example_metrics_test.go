@@ -17,23 +17,23 @@ import (
 	"time"
 )
 
-type MockData struct {
+type MockMetricsData struct {
 	Value string
 }
 
-type MockListener struct{}
+type MockMetricsListener struct{}
 
-func (m MockListener) Listen() []contract.Event {
-	return events.From(MockData{})
+func (m MockMetricsListener) Listen() []contract.Event {
+	return events.From(MockMetricsData{})
 }
 
-func (m MockListener) Process(_ context.Context, event contract.Event) error {
-	fmt.Println(event.Data().(MockData).Value)
+func (m MockMetricsListener) Process(_ context.Context, event contract.Event) error {
+	fmt.Println(event.Data().(MockMetricsData).Value)
 	return nil
 }
 
-// bootstrap is normally done when bootstrapping the framework. We mimic it here for demonstration.
-func bootstrap() *core.C {
+// bootstrapMetrics is normally done when bootstrapping the framework. We mimic it here for demonstration.
+func bootstrapMetrics() *core.C {
 	const sampleConfig = "{\"log\":{\"level\":\"error\"},\"queue\":{\"default\":{\"parallelism\":1}}}"
 
 	// Make sure redis is running at localhost:6379
@@ -43,13 +43,13 @@ func bootstrap() *core.C {
 
 	// Add Provider
 	c.AddCoreDependencies()
-	c.AddDependency(modqueue.ProvideDispatcher)
-	c.AddDependency(func() redis.UniversalClient {
+	c.AddDependencyFunc(modqueue.ProvideDispatcher)
+	c.AddDependencyFunc(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()
 		return client
 	})
-	c.AddDependency(func(appName contract.AppName, env contract.Env) modqueue.Gauge {
+	c.AddDependencyFunc(func(appName contract.AppName, env contract.Env) modqueue.Gauge {
 		return prometheus.NewGaugeFrom(
 			stdprometheus.GaugeOpts{
 				Namespace: appName.String(),
@@ -62,8 +62,8 @@ func bootstrap() *core.C {
 	return c
 }
 
-// serve normally lives at serve command. We mimic it here for demonstration.
-func serve(c *core.C, duration time.Duration) {
+// serveMetrics normally lives at serveMetrics command. We mimic it here for demonstration.
+func serveMetrics(c *core.C, duration time.Duration) {
 	var g run.Group
 
 	for _, r := range c.GetRunProviders() {
@@ -87,21 +87,22 @@ func serve(c *core.C, duration time.Duration) {
 }
 
 func Example_metrics() {
-	c := bootstrap()
+	c := bootstrapMetrics()
 
 	err := c.Invoke(func(dispatcher modqueue.Dispatcher) {
+
 		// Subscribe
-		dispatcher.Subscribe(MockListener{})
+		dispatcher.Subscribe(MockMetricsListener{})
 
 		// Trigger an event
-		evt := events.Of(MockData{Value: "hello world"})
+		evt := events.Of(MockMetricsData{Value: "hello world"})
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt))
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	serve(c, time.Second)
+	serveMetrics(c, time.Second)
 
 	// Output:
 	// hello world

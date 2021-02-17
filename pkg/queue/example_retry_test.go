@@ -38,7 +38,7 @@ func (m *FaultyMockListener) Process(_ context.Context, event contract.Event) er
 	return nil
 }
 
-// bootstrap is normally done when bootstrapping the framework. We mimic it here for demonstration.
+// bootstrapMetrics is normally done when bootstrapping the framework. We mimic it here for demonstration.
 func bootstrapRetry() *core.C {
 	const sampleConfig = "{\"log\":{\"level\":\"error\"},\"queue\":{\"default\":{\"parallelism\":1}}}"
 
@@ -49,8 +49,8 @@ func bootstrapRetry() *core.C {
 
 	// Add Provider
 	c.AddCoreDependencies()
-	c.AddDependency(modqueue.ProvideDispatcher)
-	c.AddDependency(func() redis.UniversalClient {
+	c.AddDependencyFunc(modqueue.ProvideDispatcher)
+	c.AddDependencyFunc(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()
 		return client
@@ -58,7 +58,7 @@ func bootstrapRetry() *core.C {
 	return c
 }
 
-// serve normally lives at serve command. We mimic it here for demonstration.
+// serveMetrics normally lives at serveMetrics command. We mimic it here for demonstration.
 func serveRetry(c *core.C, duration time.Duration) {
 	var g run.Group
 

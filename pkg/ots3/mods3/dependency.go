@@ -2,26 +2,34 @@ package mods3
 
 import (
 	"fmt"
+	"net/url"
+
 	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/DoNewsCode/std/pkg/ots3"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
-	"net/url"
 
 	"github.com/DoNewsCode/std/pkg/contract"
 )
 
+// S3Config contains credentials of S3 server
 type S3Config struct {
-	AccessKey    string
-	AccessSecret string
-	Endpoint     string
-	Region       string
-	Bucket       string
-	CdnUrl       string
+	AccessKey    string `json:"accessKey" yaml:"accessKey"`
+	AccessSecret string `json:"accessSecret" yaml:"accessSecret"`
+	Endpoint     string `json:"endpoint" yaml:"endpoint"`
+	Region       string `json:"region" yaml:"region"`
+	Bucket       string `json:"bucket" yaml:"bucket"`
+	CdnUrl       string `json:"cdnUrl" yaml:"cdnUrl"`
 }
 
+// S3Maker is an interface for *S3Factory. Used as a type hint for injection.
+type S3Maker interface {
+	Make(name string) (*ots3.Manager, error)
+}
+
+// S3In is the injection parameter for ProvideManager.
 type S3In struct {
 	di.In
 
@@ -30,11 +38,15 @@ type S3In struct {
 	Tracer opentracing.Tracer `optional:"true"`
 }
 
+// S3Out is the di output of ProvideManager.
 type S3Out struct {
 	di.Out
+	di.Module
 
-	Manager *ots3.Manager
-	Factory *S3Factory
+	Manager  *ots3.Manager
+	Factory  *S3Factory
+	Maker    S3Maker
+	Uploader ots3.Uploader
 }
 
 // S3Factory can be used to connect to multiple s3 servers.
@@ -89,15 +101,40 @@ func ProvideManager(p S3In) S3Out {
 			Conn:   manager,
 		}, nil
 	})
+	s3Factory := S3Factory{factory}
 	manager, err := factory.Make("default")
 	if err != nil {
 		return S3Out{
-			Manager: nil,
-			Factory: &S3Factory{factory},
+			Manager:  nil,
+			Uploader: nil,
+			Factory:  &s3Factory,
+			Maker:    &s3Factory,
 		}
 	}
 	return S3Out{
-		Manager: manager.(*ots3.Manager),
-		Factory: &S3Factory{factory},
+		Manager:  manager.(*ots3.Manager),
+		Uploader: manager.(*ots3.Manager),
+		Factory:  &s3Factory,
+		Maker:    &s3Factory,
+	}
+}
+
+func (m S3Out) ProvideConfig() []contract.ExportedConfig {
+	return []contract.ExportedConfig{
+		{
+			Name: "s3",
+			Data: map[string]interface{}{
+				"s3": map[string]S3Config{
+					"default": {
+						AccessKey:    "",
+						AccessSecret: "",
+						Endpoint:     "",
+						Region:       "",
+						Bucket:       "",
+						CdnUrl:       "",
+					},
+				}},
+			Comment: "the s3 configuration",
+		},
 	}
 }

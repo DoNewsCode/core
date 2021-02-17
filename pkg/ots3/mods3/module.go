@@ -1,8 +1,10 @@
+// package mods3 contains integration with package core
 package mods3
 
 import (
-	"github.com/DoNewsCode/std/pkg/ots3"
 	"net/http"
+
+	"github.com/DoNewsCode/std/pkg/ots3"
 
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/go-kit/kit/log"

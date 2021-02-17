@@ -8,5 +8,4 @@ type LevelLogger interface {
 	Info(string)
 	Warn(string)
 	Err(error)
-	CheckErr(error)
 }

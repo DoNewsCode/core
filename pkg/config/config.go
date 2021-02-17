@@ -94,6 +94,7 @@ func (k KoanfAdapter) Watch(ctx context.Context) error {
 // If no path is specified, the whole map is unmarshalled. `koanf` is the struct field tag used to match field names.
 func (k KoanfAdapter) Unmarshal(path string, o interface{}) error {
 	return k.K.UnmarshalWithConf(path, o, koanf.UnmarshalConf{
+		Tag: "json",
 		DecoderConfig: &mapstructure.DecoderConfig{
 			Result:           o,
 			ErrorUnused:      true,

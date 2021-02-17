@@ -2,6 +2,8 @@ package core
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/config/watcher"
 	"github.com/DoNewsCode/std/pkg/container"
@@ -11,7 +13,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
-	"reflect"
 )
 
 type C struct {
@@ -146,7 +147,7 @@ func (c *C) AddModule(modules ...interface{}) {
 	for i := range modules {
 		switch modules[i].(type) {
 		case error:
-			c.CheckErr(modules[i].(error))
+			panic(modules[i].(error))
 		default:
 			c.Container.AddModule(modules[i])
 		}
@@ -159,7 +160,18 @@ func (c *C) Shutdown() {
 	}
 }
 
-func (c *C) AddDependency(constructor interface{}) {
+func (c *C) AddDependency(dep interface{}) {
+	inTypes := make([]reflect.Type, 0)
+	outTypes := make([]reflect.Type, 0)
+	outTypes = append(outTypes, reflect.TypeOf(dep))
+	fnType := reflect.FuncOf(inTypes, outTypes, false /* variadic */)
+	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
+		return []reflect.Value{reflect.ValueOf(dep)}
+	})
+	_ = c.di.Provide(fn.Interface())
+}
+
+func (c *C) AddDependencyFunc(constructor interface{}) {
 	ftype := reflect.TypeOf(constructor)
 	inTypes := make([]reflect.Type, 0)
 	outTypes := make([]reflect.Type, 0)
@@ -192,40 +204,42 @@ func (c *C) AddDependency(constructor interface{}) {
 		return filteredOuts
 	})
 	err := c.di.Provide(fn.Interface())
-	c.CheckErr(err)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (c *C) AddCoreDependencies() {
-	c.AddDependency(func() contract.Env {
+	c.AddDependencyFunc(func() contract.Env {
 		return c.Env
 	})
-	c.AddDependency(func() contract.AppName {
+	c.AddDependencyFunc(func() contract.AppName {
 		return c.AppName
 	})
-	c.AddDependency(func() contract.ConfigAccessor {
+	c.AddDependencyFunc(func() contract.ConfigAccessor {
 		return c.ConfigAccessor
 	})
-	c.AddDependency(func() contract.ConfigRouter {
+	c.AddDependencyFunc(func() contract.ConfigRouter {
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {
 			return cc
 		}
 		return nil
 	})
-	c.AddDependency(func() contract.ConfigWatcher {
+	c.AddDependencyFunc(func() contract.ConfigWatcher {
 		if cc, ok := c.ConfigAccessor.(contract.ConfigWatcher); ok {
 			return cc
 		}
 		return nil
 	})
-	c.AddDependency(func() log.Logger {
+	c.AddDependencyFunc(func() log.Logger {
 		return c.LevelLogger
 	})
-	c.AddDependency(func() contract.Dispatcher {
+	c.AddDependencyFunc(func() contract.Dispatcher {
 		return c.Dispatcher
 	})
 }
 
-func (c *C) AddModuleViaFunc(function interface{}) {
+func (c *C) AddModuleFunc(function interface{}) {
 	ftype := reflect.TypeOf(function)
 	targetTypes := make([]reflect.Type, 0)
 	for i := 0; i < ftype.NumOut(); i++ {
@@ -246,7 +260,7 @@ func (c *C) AddModuleViaFunc(function interface{}) {
 		return nil
 	})
 
-	c.Invoke(fn.Interface())
+	_ = c.Invoke(fn.Interface())
 }
 
 func (c *C) Invoke(function interface{}) error {

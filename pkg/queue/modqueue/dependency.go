@@ -4,6 +4,9 @@ package modqueue
 import (
 	"context"
 	"fmt"
+	"runtime"
+	"time"
+
 	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/di"
@@ -13,8 +16,6 @@ import (
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-redis/redis/v8"
 	"github.com/oklog/run"
-	"runtime"
-	"time"
 )
 
 // Gauge is an alias used for dependency injection
@@ -30,9 +31,6 @@ type Dispatcher interface {
 type DispatcherMaker interface {
 	Make(string) (*queue.QueueableDispatcher, error)
 }
-
-var _ Dispatcher = (*queue.QueueableDispatcher)(nil)
-var _ DispatcherMaker = (*DispatcherFactory)(nil)
 
 type configuration struct {
 	Parallelism                    int `yaml:"parallelism" json:"parallelism"`
@@ -52,7 +50,7 @@ type DispatcherIn struct {
 	Gauge       Gauge `optional:"true"`
 }
 
-// DispatcherOut is the dig output of ProvideDispatcher
+// DispatcherOut is the di output of ProvideDispatcher
 type DispatcherOut struct {
 	di.Out
 	di.Module
@@ -125,12 +123,12 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 }
 
 // ProvideRunGroup implements RunProvider.
-func (s DispatcherOut) ProvideRunGroup(group *run.Group) {
-	for name := range s.DispatcherFactory.List() {
+func (d DispatcherOut) ProvideRunGroup(group *run.Group) {
+	for name := range d.DispatcherFactory.List() {
 		queueName := name
 		ctx, cancel := context.WithCancel(context.Background())
 		group.Add(func() error {
-			consumer, err := s.DispatcherFactory.Make(queueName)
+			consumer, err := d.DispatcherFactory.Make(queueName)
 			if err != nil {
 				return err
 			}
@@ -141,8 +139,8 @@ func (s DispatcherOut) ProvideRunGroup(group *run.Group) {
 	}
 }
 
-// ProvideRunGroup implements RunProvider.
-func (s DispatcherOut) ProvideConfig() []contract.ExportedConfig {
+// ProvideConfig implements config.Provider.
+func (d DispatcherOut) ProvideConfig() []contract.ExportedConfig {
 	return []contract.ExportedConfig{{
 		Name: "queue",
 		Data: map[string]interface{}{

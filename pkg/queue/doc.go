@@ -13,16 +13,7 @@
 // possible to queue the execution of a particular job until a lengthy period of time. Useful when you need to
 // implement "send email after 30 days" type of event handler.
 //
-// Configuration
-//
-// The queue package exports configuration in this format:
-//
-//  queue:
-//    default:
-//      parallelism: 3
-//      checkQueueLengthIntervalSecond: 15
-//
-// Usage
+// Simple Usage
 //
 // To convert any valid event to a persisted event, use:
 //
@@ -59,27 +50,30 @@
 //
 // Integrate
 //
+// The queue package exports configuration in this format:
+//
+//  queue:
+//    default:
+//      parallelism: 3
+//      checkQueueLengthIntervalSecond: 15
+//
 // While manually constructing the queue.Dispatcher is absolutely feasible, users can use the bundled dependency provider
 // without breaking a sweat. Using this approach, the life cycle of consumer goroutine will be managed
 // automatically by the core.
 //
 //  var c *core.C
-//  c.AddDependency(modqueue.ProvideDispatcher)
+//  c.AddDependencyFunc(modqueue.ProvideDispatcher)
 //
-// A module is also bundled, providing the default config and command.
+// A module is also bundled, providing the queue command.
 //
-//  c.AddModuleViaFunc(modqueue.New)
-//
-// Package
-//
-// Multiple Queues
+//  c.AddModuleFunc(modqueue.New)
 //
 // Sometimes there are valid reasons to use more than one queue. Each dispatcher however is bounded to only one queue.
 // To use multiple queues, multiple dispatchers are required. Inject
-// queue.DispatcherMaker to factory a dispatcher with a given name.
+// queue.DispatcherMaker to factory a dispatcher with a specific name.
 //
 //  c.Invoke(function(maker modqueue.DispatcherMaker) {
-//    dispatcher, err := dispatcherFactory.Make("queueName")
+//    dispatcher, err := maker.Make("default")
 //    // see examples for details
 //  })
 //
@@ -93,7 +87,7 @@
 // To gain visibility on how the length of the queue, inject a gauge into the core and alias it to queue.Gauge. The
 // queue length of the all internal queues will be periodically reported to metrics collector (Presumably Prometheus).
 //
-//  c.AddDependency(func(appName contract.AppName, env contract.Env) modqueue.Gauge {
+//  c.AddDependencyFunc(func(appName contract.AppName, env contract.Env) modqueue.Gauge {
 //    return prometheus.NewGaugeFrom(
 //      stdprometheus.GaugeOpts{
 //        Namespace: appName.String(),

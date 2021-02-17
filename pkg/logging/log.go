@@ -122,14 +122,6 @@ func (l levelLogger) Err(err error) {
 	_ = level.Error(l).Log("err", err)
 }
 
-func (l levelLogger) CheckErr(err error) {
-	if err == nil {
-		return
-	}
-	l.Err(err)
-	os.Exit(1)
-}
-
 func WithLevel(logger log.Logger) levelLogger {
 	return levelLogger{logger}
 }
