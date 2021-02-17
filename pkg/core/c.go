@@ -215,8 +215,8 @@ func (c *C) AddDependencyFunc(constructor interface{}) {
 				c.AddModule(v.Interface())
 				continue
 			}
-			if isModule(ftype) {
-				c.AddModule(constructor)
+			if isModule(vType) {
+				c.AddModule(v.Interface())
 			}
 			filteredOuts = append(filteredOuts, v)
 		}

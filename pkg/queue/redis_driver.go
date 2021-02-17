@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -26,6 +27,7 @@ type RedisDriver struct {
 	ChannelConfig ChannelConfig         // ChannelConfig holds the name of redis keys for all queues.
 	PopTimeout    time.Duration         // PopTimeout is the BRPOP timeout. ie. How long the pop action will block at most.
 	Packer        Packer                // Packer describes how to save the message in wire format
+	lock          sync.Mutex
 	defaultLoaded bool
 }
 
@@ -240,6 +242,9 @@ func (r *RedisDriver) move(ctx context.Context, fromKey string, toKey string) er
 }
 
 func (r *RedisDriver) populateDefaults() {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
 	if r.defaultLoaded {
 		return
 	}
