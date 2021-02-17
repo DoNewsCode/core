@@ -240,6 +240,7 @@ func (c *C) AddCoreDependencies() {
 }
 
 func (c *C) AddModuleFunc(function interface{}) {
+	c.AddDependencyFunc(function)
 	ftype := reflect.TypeOf(function)
 	targetTypes := make([]reflect.Type, 0)
 	for i := 0; i < ftype.NumOut(); i++ {
@@ -260,7 +261,10 @@ func (c *C) AddModuleFunc(function interface{}) {
 		return nil
 	})
 
-	_ = c.Invoke(fn.Interface())
+	err := c.Invoke(fn.Interface())
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (c *C) Invoke(function interface{}) error {

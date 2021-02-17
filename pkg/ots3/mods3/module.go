@@ -22,7 +22,7 @@ func (m Module) ProvideHttp(router *mux.Router) {
 }
 
 // New creates the s3 module
-func New(manager *ots3.Manager, logger log.Logger, env contract.Env) *Module {
+func New(manager *ots3.Manager, logger log.Logger, env contract.Env) Module {
 	uploadService := &ots3.UploadService{
 		Logger: logger,
 		S3:     manager,
@@ -30,7 +30,7 @@ func New(manager *ots3.Manager, logger log.Logger, env contract.Env) *Module {
 	endpoint := ots3.MakeUploadEndpoint(uploadService)
 	middleware := ots3.Middleware(logger, env)
 	handler := ots3.MakeHttpHandler(endpoint, middleware)
-	module := &Module{
+	module := Module{
 		handler: handler,
 	}
 	return module
