@@ -1,16 +1,15 @@
-package otgorm
+package modgorm
 
 import (
+	"testing"
+
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/dig"
-	"testing"
 )
 
 func TestProvideDBFactory(t *testing.T) {
-	factory, cleanup := ProvideDBFactory(DatabaseParams{
-		In: dig.In{},
+	factory, cleanup := provideDBFactory(DatabaseIn{
 		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
 			"default": {
 				Database: "sqlite",

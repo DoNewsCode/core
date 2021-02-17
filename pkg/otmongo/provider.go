@@ -73,7 +73,10 @@ func ProvideMongo(p MongoIn) (MongoOut, func()) {
 			conf struct{ Uri string }
 		)
 		if conf, ok = dbConfs[name]; !ok {
-			return async.Pair{}, fmt.Errorf("mongo configuration %s not valid", name)
+			if name != "default" {
+				return async.Pair{}, fmt.Errorf("mongo configuration %s not valid", name)
+			}
+			conf.Uri = "mongodb://127.0.0.1:27017"
 		}
 		opts := options.Client()
 		opts.ApplyURI(conf.Uri)
