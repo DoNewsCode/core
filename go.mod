@@ -35,7 +35,7 @@ require (
 	go.mongodb.org/mongo-driver v1.4.6
 	go.uber.org/atomic v1.7.0
 	go.uber.org/dig v1.10.0
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	google.golang.org/grpc v1.35.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gorm.io/driver/mysql v1.0.4
