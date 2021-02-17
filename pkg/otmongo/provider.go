@@ -3,6 +3,7 @@ package otmongo
 import (
 	"context"
 	"fmt"
+
 	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/go-kit/kit/log"
@@ -13,7 +14,8 @@ import (
 	"go.uber.org/dig"
 )
 
-type MongoParam struct {
+// MongoIn is the injection parameter for ProvideMongo.
+type MongoIn struct {
 	dig.In
 
 	Logger log.Logger
@@ -21,27 +23,44 @@ type MongoParam struct {
 	Tracer opentracing.Tracer `optional:"true"`
 }
 
-func Mongo(p MongoParam) (*mongo.Client, func(), error) {
-	factory, _ := ProvideMongoFactory(p)
-	conn, err := factory.Make("default")
-	return conn, func() {
-		factory.CloseConn("default")
-	}, err
+// Maker models Factory
+type Maker interface {
+	Make(name string) (*mongo.Client, error)
 }
 
-type MongoFactory struct {
-	*async.Factory
+// MongoOut is the result of ProvideMongo. The official mongo package doesn't
+// provide a proper interface type. It is up to the users to define their own
+// mongodb repository interface.
+type MongoOut struct {
+	dig.Out
+
+	Factory Factory
+	Maker   Maker
+	Client  *mongo.Client
 }
 
-func (r MongoFactory) Make(name string) (*mongo.Client, error) {
-	client, err := r.Factory.Make(name)
-	if err != nil {
-		return nil, err
+// ProvideConfig exports the default mongo configuration.
+func (m MongoOut) ProvideConfig() []contract.ExportedConfig {
+	return []contract.ExportedConfig{
+		{
+			Name: "mongo",
+			Data: map[string]interface{}{
+				"mongo": map[string]struct {
+					Uri string `json:"uri" yaml:"uri"`
+				}{
+					"default": {
+						Uri: "",
+					},
+				},
+			},
+			Comment: "The configuration of mongoDB",
+		},
 	}
-	return client.(*mongo.Client), nil
 }
 
-func ProvideMongoFactory(p MongoParam) (MongoFactory, func()) {
+// ProvideMongo creates Factory and *mongo.Client. It is a valid dependency for
+// package core.
+func ProvideMongo(p MongoIn) (MongoOut, func()) {
 	var err error
 	var dbConfs map[string]struct{ Uri string }
 	err = p.Conf.Unmarshal("mongo", &dbConfs)
@@ -72,5 +91,26 @@ func ProvideMongoFactory(p MongoParam) (MongoFactory, func()) {
 			},
 		}, nil
 	})
-	return MongoFactory{factory}, factory.Close
+	f := Factory{factory}
+	client, _ := f.Make("default")
+	return MongoOut{
+		Factory: f,
+		Maker:   f,
+		Client:  client,
+	}, factory.Close
+}
+
+// Factory is a *async.Factory that creates *mongo.Client using a specific
+// configuration entry.
+type Factory struct {
+	*async.Factory
+}
+
+// Make creates *mongo.Client using a specific configuration entry.
+func (r Factory) Make(name string) (*mongo.Client, error) {
+	client, err := r.Factory.Make(name)
+	if err != nil {
+		return nil, err
+	}
+	return client.(*mongo.Client), nil
 }

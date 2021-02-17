@@ -32,6 +32,9 @@ To use package ots3 with package core:
 	var c *core.C = core.New()
 	c.AddDependencyFunc(mods3.ProvideManager)
 	c.AddModuleFunc(mods3.New)
+	c.Invoke(function(manager *ots3.Manager) {
+		// do something with manager
+	})
 
 Adding the module created by mods3.New is optional. This module provides an "/upload" path
 for the http router. If this is not relevant, just leave it out.

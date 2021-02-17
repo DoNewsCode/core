@@ -119,6 +119,7 @@ func ProvideManager(p S3In) S3Out {
 	}
 }
 
+// ProvideConfig exports the default s3 configuration
 func (m S3Out) ProvideConfig() []contract.ExportedConfig {
 	return []contract.ExportedConfig{
 		{

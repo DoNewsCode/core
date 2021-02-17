@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewMongoFactory(t *testing.T) {
-	factory, cleanup := ProvideMongoFactory(MongoParam{
+	factory, cleanup := ProvideMongo(MongoIn{
 		In: dig.In{},
 		Conf: config.MapAdapter{"mongo": map[string]struct{ Uri string }{
 			"default": {
@@ -20,10 +20,10 @@ func TestNewMongoFactory(t *testing.T) {
 		}},
 		Tracer: nil,
 	})
-	def, err := factory.Make("default")
+	def, err := factory.Maker.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
-	alt, err := factory.Make("alternative")
+	alt, err := factory.Maker.Make("alternative")
 	assert.NoError(t, err)
 	assert.NotNil(t, alt)
 	assert.NotNil(t, cleanup)

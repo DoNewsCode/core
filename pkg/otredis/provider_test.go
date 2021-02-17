@@ -1,17 +1,16 @@
 package otredis
 
 import (
+	"testing"
+
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/dig"
-	"testing"
 )
 
 func TestNewRedisFactory(t *testing.T) {
-	factory, cleanup := ProvideRedisFactory(RedisParam{
-		In: dig.In{},
+	redisOut, cleanup, err := ProvideRedis(RedisIn{
 		Conf: config.MapAdapter{"redis": map[string]redis.UniversalOptions{
 			"default":     {},
 			"alternative": {},
@@ -19,10 +18,11 @@ func TestNewRedisFactory(t *testing.T) {
 		Logger: log.NewNopLogger(),
 		Tracer: nil,
 	})
-	def, err := factory.Make("default")
+	assert.NoError(t, err)
+	def, err := redisOut.Maker.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
-	alt, err := factory.Make("alternative")
+	alt, err := redisOut.Maker.Make("alternative")
 	assert.NoError(t, err)
 	assert.NotNil(t, alt)
 	assert.NotNil(t, cleanup)

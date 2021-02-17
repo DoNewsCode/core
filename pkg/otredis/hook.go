@@ -11,20 +11,16 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-// reference: https://github.com/opentracing/specification/blob/master/semantic_conventions.md
-
-type Hook struct {
+// hook is borrowed from https://github.com/gjbae1212/opentracing-go-redis/blob/master/hook.go
+// under MIT license: https://github.com/gjbae1212/opentracing-go-redis/blob/master/LICENSE
+type hook struct {
 	addrs    []string
 	database int
 	tracer   opentracing.Tracer
 }
 
-func NewHook(tracer opentracing.Tracer, addrs []string, database int) Hook {
-	return Hook{addrs: addrs, database: database, tracer: tracer}
-}
-
 // BeforeProcess is a hook before process.
-func (h Hook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
+func (h hook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	span, newCtx := opentracing.StartSpanFromContextWithTracer(ctx, h.tracer, "redis:cmd")
 	ext.DBType.Set(span, "redis")
 	ext.DBInstance.Set(span, strconv.Itoa(h.database))
@@ -36,7 +32,7 @@ func (h Hook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Conte
 }
 
 // AfterProcess is a hook after process.
-func (h Hook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+func (h hook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	span := opentracing.SpanFromContext(ctx)
 	if span != nil {
 		// if context is raised an error.
@@ -50,7 +46,7 @@ func (h Hook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 }
 
 // BeforeProcessPipeline is a hook before pipeline process.
-func (h Hook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
+func (h hook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
 	span, newCtx := opentracing.StartSpanFromContextWithTracer(ctx, h.tracer, "redis:pipeline:cmd")
 	ext.DBType.Set(span, "redis")
 	ext.DBInstance.Set(span, strconv.Itoa(h.database))
@@ -66,7 +62,7 @@ func (h Hook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (co
 }
 
 // BeforeProcessPipeline is a hook after pipeline process.
-func (h Hook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
+func (h hook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
 	span := opentracing.SpanFromContext(ctx)
 	if span != nil {
 		// if context is raised an error.
