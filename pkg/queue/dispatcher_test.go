@@ -224,7 +224,7 @@ func TestDispatcher_Consume(t *testing.T) {
 				return errors.New("some err")
 			},
 			func() {
-				time.Sleep(20 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 				info, _ := consumer.driver.Info(context.Background())
 				assert.Equal(t, int64(1), info.Failed)
 				err := consumer.driver.Flush(context.Background(), "failed")
