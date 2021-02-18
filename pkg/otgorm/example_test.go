@@ -10,7 +10,7 @@ import (
 
 func Example() {
 	// Suppress log output by gorm in this test.
-	c := core.New(core.WithInline("log.level", "error"))
+	c := core.New(core.WithInline("log.level", "warn"))
 	c.AddCoreDependencies()
 	c.AddDependencyFunc(otgorm.ProvideDatabase)
 	c.Invoke(func(db *gorm.DB) {
