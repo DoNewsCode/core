@@ -10,12 +10,14 @@ import (
 	"github.com/go-kit/kit/metrics"
 )
 
+// MakeLabeledMetricsMiddleware returns a LabeledMiddleware that collects histogram metrics.
 func MakeLabeledMetricsMiddleware(his metrics.Histogram, keyer contract.Keyer) LabeledMiddleware {
 	return func(name string, e endpoint.Endpoint) endpoint.Endpoint {
 		return MakeMetricsMiddleware(his, key.With(keyer, "method", name))(e)
 	}
 }
 
+// MakeMetricsMiddleware returns a middleware that collects histogram metrics.
 func MakeMetricsMiddleware(his metrics.Histogram, keyer contract.Keyer) endpoint.Middleware {
 	return func(e endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {

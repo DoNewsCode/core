@@ -13,6 +13,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+// MakeLoggingMiddleware returns a middleware the logs every request and response at debug
+// level.
 func MakeLoggingMiddleware(logger log.Logger, keyer contract.Keyer, printTrace bool) endpoint.Middleware {
 	return func(endpoint endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {

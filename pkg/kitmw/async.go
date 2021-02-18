@@ -9,6 +9,10 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
+// MakeAsyncMiddleware returns a go kit middleware that calls the next handler in
+// a detached goroutine. Timeout and cancellation of the previous context no
+// logger apply to the detached goroutine, the tracing context however is
+// carried over.
 func MakeAsyncMiddleware(logger log.Logger) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {

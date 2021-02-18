@@ -13,12 +13,16 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 )
 
+// IpToHTTPContext is a httptransport.RequestFun that put client ip to context,
+// under contract.IpKey.
 func IpToHTTPContext() httptransport.RequestFunc {
 	return func(ctx context.Context, r *http.Request) context.Context {
 		return context.WithValue(ctx, contract.IpKey, realIP(r))
 	}
 }
 
+// IpToGRPCContext is a grpctransport.ServerRequestFunc that put client ip to
+// context, under contract.IpKey.
 func IpToGRPCContext() grpctransport.ServerRequestFunc {
 	return func(ctx context.Context, md metadata.MD) context.Context {
 		remote, _ := peer.FromContext(ctx)

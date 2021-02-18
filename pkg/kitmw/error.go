@@ -4,18 +4,26 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"google.golang.org/grpc/codes"
 
 	"github.com/DoNewsCode/std/pkg/unierr"
 	"github.com/go-kit/kit/endpoint"
 )
 
+// ErrorOption is an option that tunes the middleware returned by
+// MakeErrorConversionMiddleware
 type ErrorOption struct {
 	AlwaysHTTP200 bool
 	ShouldRecover bool
 }
 
-func MakeErrorMarshallerMiddleware(opt ErrorOption) endpoint.Middleware {
+// MakeErrorConversionMiddleware returns a middleware that wraps the returned
+// error from next handler with a *unierr.Error. if a successful response is
+// returned from the next handler, this is a no op. If the error returned by next
+// handler is already a *unierr.Error, this decorates the *unierr.Error based on
+// ErrorOption.
+func MakeErrorConversionMiddleware(opt ErrorOption) endpoint.Middleware {
 	return func(e endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			defer func() {

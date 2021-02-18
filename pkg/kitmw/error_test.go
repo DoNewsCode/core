@@ -10,7 +10,7 @@ import (
 )
 
 func TestMakeErrorMarshallerMiddleware(t *testing.T) {
-	mw := MakeErrorMarshallerMiddleware(ErrorOption{
+	mw := MakeErrorConversionMiddleware(ErrorOption{
 		AlwaysHTTP200: false,
 		ShouldRecover: false,
 	})
@@ -39,7 +39,7 @@ func TestMakeErrorMarshallerMiddleware(t *testing.T) {
 }
 
 func TestPanicRecover(t *testing.T) {
-	mw := MakeErrorMarshallerMiddleware(ErrorOption{
+	mw := MakeErrorConversionMiddleware(ErrorOption{
 		AlwaysHTTP200: false,
 		ShouldRecover: true,
 	})
