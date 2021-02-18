@@ -19,6 +19,3 @@ type ConfigAccessor interface {
 type ConfigWatcher interface {
 	Watch(ctx context.Context, reload func() error) error
 }
-
-
-

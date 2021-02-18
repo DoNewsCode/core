@@ -111,7 +111,7 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 	}
 
 	dispatcherFactory := &DispatcherFactory{Factory: factory}
-	defaultQueueableDispatcher, err := dispatcherFactory.Make("default")
+	defaultQueueableDispatcher, _ := dispatcherFactory.Make("default")
 	return DispatcherOut{
 		QueueableDispatcher: defaultQueueableDispatcher,
 		Dispatcher:          defaultQueueableDispatcher,
