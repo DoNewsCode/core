@@ -12,6 +12,7 @@ import (
 	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/go-kit/kit/log"
 	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/file"
 )
 
@@ -60,6 +61,13 @@ type CoreOption func(*coreValues)
 func WithYamlFile(path string) (CoreOption, CoreOption) {
 	return WithConfigStack(file.Provider(path), yaml.Parser()),
 		WithConfigWatcher(watcher.File{Path: path})
+}
+
+// WithInline is an coreoption that creates a inline config in the configuration stack.
+func WithInline(key, entry string) CoreOption {
+	return WithConfigStack(confmap.Provider(map[string]interface{}{
+		key: entry,
+	}, "."), nil)
 }
 
 func WithConfigStack(provider Provider, parser Parser) CoreOption {

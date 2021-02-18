@@ -1,13 +1,14 @@
 package config
 
 import (
+	"io/ioutil"
+	"os"
+	"testing"
+
 	"github.com/DoNewsCode/std/pkg/container"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"os"
-	"testing"
 )
 
 func setup() *cobra.Command {
@@ -49,11 +50,11 @@ func TestModule_ProvideCommand(t *testing.T) {
 	}{
 		{
 			"new yaml",
-			[]string{"export", "config", "--outputFile", "./testdata/module_test.yaml"},
+			[]string{"config", "init", "--outputFile", "./testdata/module_test.yaml"},
 		},
 		{
 			"old yaml",
-			[]string{"export", "config", "--outputFile", "./testdata/module_test.yaml"},
+			[]string{"config", "init", "--outputFile", "./testdata/module_test.yaml"},
 		},
 	}
 	for _, c := range cases {
@@ -71,11 +72,11 @@ func TestModule_ProvideCommand(t *testing.T) {
 	}{
 		{
 			"new json",
-			[]string{"export", "config", "--outputFile", "./testdata/module_test.json", "--style", "json"},
+			[]string{"config", "init", "--outputFile", "./testdata/module_test.json", "--style", "json"},
 		},
 		{
 			"old json",
-			[]string{"export", "config", "--outputFile", "./testdata/module_test.json", "--style", "json"},
+			[]string{"config", "init", "--outputFile", "./testdata/module_test.json", "--style", "json"},
 		},
 	}
 	for _, c := range cases {

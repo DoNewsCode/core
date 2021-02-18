@@ -110,6 +110,7 @@ type DatabaseOut struct {
 	Maker    Maker
 }
 
+// ProvideConfig exports the default database configuration.
 func (d DatabaseOut) ProvideConfig() []contract.ExportedConfig {
 	return []contract.ExportedConfig{
 		{
@@ -141,6 +142,8 @@ func (d DatabaseOut) ProvideConfig() []contract.ExportedConfig {
 	}
 }
 
+// ProvideDatabase creates Factory and *gorm.DB. It is a valid dependency for
+// package core.
 func ProvideDatabase(p DatabaseIn) (DatabaseOut, func()) {
 	factory, cleanup := provideDBFactory(p)
 	database, _ := factory.Make("default")
@@ -151,7 +154,8 @@ func ProvideDatabase(p DatabaseIn) (DatabaseOut, func()) {
 	}, cleanup
 }
 
-// Factory is the *async.Factory that creates *gorm.DB under a specific configuration entry.
+// Factory is the *async.Factory that creates *gorm.DB under a specific
+// configuration entry.
 type Factory struct {
 	*async.Factory
 }
@@ -165,7 +169,8 @@ func (d Factory) Make(name string) (*gorm.DB, error) {
 	return db.(*gorm.DB), nil
 }
 
-// ProvideMemoryDatabase provides a sqlite database in memory mode. This is useful for testing.
+// ProvideMemoryDatabase provides a sqlite database in memory mode. This is
+// useful for testing.
 func ProvideMemoryDatabase() *gorm.DB {
 	factory, _ := provideDBFactory(DatabaseIn{
 		Conf: config.MapAdapter{"gorm": map[string]databaseConf{

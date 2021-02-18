@@ -5,14 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/ghodss/yaml"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 )
 
 // Module is the configuration module that bundles the reload watcher and exportConfig commands.
@@ -88,20 +89,10 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 		outputFile string
 		style      string
 	)
-	exportConfigCmd := &cobra.Command{
-		Use:   "export config [module]...",
-		Short: "export default config",
-		Long:  "export a copy of default config for every added module in this application",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return fmt.Errorf("arguments missing")
-			}
-			if args[0] != "config" {
-				return fmt.Errorf("unknown export target %s", args[0])
-			}
-			return nil
-		},
-		ValidArgs: []string{"config"},
+	initCmd := &cobra.Command{
+		Use:   "init",
+		Short: "export a copy of default config.",
+		Long:  "export a default config for currently installed modules.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var (
 				handler         handler
@@ -151,21 +142,27 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 			return nil
 		},
 	}
-	exportConfigCmd.Flags().StringVarP(
+	initCmd.Flags().StringVarP(
 		&outputFile,
 		"outputFile",
 		"o",
 		"./config/config.yaml",
 		"The output file of exported config",
 	)
-	exportConfigCmd.Flags().StringVarP(
+	initCmd.Flags().StringVarP(
 		&style,
 		"style",
 		"s",
 		"yaml",
 		"The output file style",
 	)
-	command.AddCommand(exportConfigCmd)
+	configCmd := &cobra.Command{
+		Use:   "config",
+		Short: "manage configuration",
+		Long:  "manage configuration, such as export a copy of default config.",
+	}
+	configCmd.AddCommand(initCmd)
+	command.AddCommand(configCmd)
 }
 
 func getHandler(style string) (handler, error) {

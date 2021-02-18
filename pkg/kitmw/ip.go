@@ -5,6 +5,7 @@ import (
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
+	"net"
 	"net/http"
 	"strings"
 
@@ -36,11 +37,13 @@ func realIP(r *http.Request) string {
 			i = len(xff)
 		}
 		ip = xff[:i]
-	} else if xrip := r.Header.Get(xRealIP); xrip != "" {
-		ip = xrip
+		return ip
 	}
-	if ip == "" {
-		ip = r.RemoteAddr
+
+	if xrip := r.Header.Get(xRealIP); xrip != "" {
+		return xrip
 	}
+
+	ip, _, _ = net.SplitHostPort(r.RemoteAddr)
 	return ip
 }

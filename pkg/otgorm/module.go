@@ -85,7 +85,6 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 	migrateCmd.Flags().BoolVarP(&force, "force", "f", false, "migrations and rollback in production requires force flag to be set")
 	migrateCmd.Flags().StringVarP(&rollbackId, "rollback", "r", "", "rollback to the given migration id")
 	migrateCmd.Flag("rollback").NoOptDefVal = "-1"
-	command.AddCommand(migrateCmd)
 
 	var seedCmd = &cobra.Command{
 		Use:   "seed [database]",
@@ -112,7 +111,15 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 		},
 	}
 	seedCmd.Flags().BoolVarP(&force, "force", "f", false, "seeding in production requires force flag to be set")
-	command.AddCommand(seedCmd)
+
+	var databaseCmd = &cobra.Command{
+		Use:     "database",
+		Aliases: []string{"db"},
+		Short:   "manage database",
+		Long:    "manage database, such as running migrations",
+	}
+	databaseCmd.AddCommand(migrateCmd, seedCmd)
+	command.AddCommand(databaseCmd)
 }
 
 func (m Module) collectMigrations(connection string) Migrations {
@@ -122,6 +129,9 @@ func (m Module) collectMigrations(connection string) Migrations {
 	var migrations Migrations
 	m.container.GetModules().Filter(func(p MigrationProvider) {
 		for _, migration := range p.ProvideMigration() {
+			if migration.Connection == "" {
+				migration.Connection = "default"
+			}
 			if migration.Connection == connection {
 				migrations.Collection = append(migrations.Collection, migration)
 			}
@@ -138,6 +148,9 @@ func (m Module) collectSeeds(connection string) Seeds {
 	var seeds Seeds
 	m.container.GetModules().Filter(func(p SeedProvider) {
 		for _, seed := range p.ProvideSeed() {
+			if seed.Connection == "" {
+				seed.Connection = "default"
+			}
 			if seed.Connection == connection {
 				seeds.Collection = append(seeds.Collection, seed)
 			}

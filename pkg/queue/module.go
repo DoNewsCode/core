@@ -1,8 +1,6 @@
 package queue
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -18,36 +16,43 @@ func New(factory *DispatcherFactory) Module {
 func (m Module) ProvideCommand(command *cobra.Command) {
 	var queueName string
 	var channels []string
-	queueCmd := &cobra.Command{
-		Use:   "queue reload|flush [-q queue] [-c channels]...",
-		Short: "reload or flush the queue",
-		Long:  "reload or flush the channels provided by the queue driver",
-		Args:  cobra.MinimumNArgs(1),
+	flushCmd := &cobra.Command{
+		Use:   "flush [-q queue] [-c channels]...",
+		Short: "flush the timeout or failed events",
+		Long:  "flush the timeout or failed events stored in the queue.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if args[0] == "reload" {
-				queueDispatcher, _ := m.Factory.Make(queueName)
-				driver := queueDispatcher.Driver()
-				for _, ch := range channels {
-					if _, err := driver.Reload(command.Context(), ch); err != nil {
-						return errors.Wrap(err, "queue reload command")
-					}
+			queueDispatcher, _ := m.Factory.Make(queueName)
+			driver := queueDispatcher.Driver()
+			for _, ch := range channels {
+				if err := driver.Flush(command.Context(), ch); err != nil {
+					return errors.Wrap(err, "queue flush command")
 				}
-				return nil
 			}
-			if args[0] == "flush" {
-				queueDispatcher, _ := m.Factory.Make(queueName)
-				driver := queueDispatcher.Driver()
-				for _, ch := range channels {
-					if err := driver.Flush(command.Context(), ch); err != nil {
-						return errors.Wrap(err, "queue flush command")
-					}
-				}
-				return nil
-			}
-			return fmt.Errorf("invalid argument %s, want flush or reload", args[0])
+			return nil
 		},
 	}
-	queueCmd.Flags().StringVarP(&queueName, "queue", "q", "default", "the queue name")
-	queueCmd.Flags().StringSliceVarP(&channels, "channels", "c", []string{"timeout", "failed"}, "the queue name")
+	reloadCmd := &cobra.Command{
+		Use:   "reload [-q queue] [-c channels]...",
+		Short: "reload the timeout or failed events",
+		Long:  "move the timeout or failed events to the waiting channel, giving them one more chance to be processed.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			queueDispatcher, _ := m.Factory.Make(queueName)
+			driver := queueDispatcher.Driver()
+			for _, ch := range channels {
+				if _, err := driver.Reload(command.Context(), ch); err != nil {
+					return errors.Wrap(err, "queue reload command")
+				}
+			}
+			return nil
+		},
+	}
+	queueCmd := &cobra.Command{
+		Use:   "queue",
+		Short: "manage queues",
+		Long:  "manage queues, such as reloading failed command.",
+	}
+	queueCmd.PersistentFlags().StringVarP(&queueName, "queue", "q", "default", "the queue name")
+	queueCmd.PersistentFlags().StringSliceVarP(&channels, "channels", "c", []string{"timeout", "failed"}, "the queue name")
+	queueCmd.AddCommand(reloadCmd, flushCmd)
 	command.AddCommand(queueCmd)
 }
