@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Doc defines a http provider for container.Container. It serves static files under `./docs`.
+// DocsModule defines a http provider for container.Container. It serves static files under `./docs`.
 // `./docs` is supposed to contain doc serving engines such as Swagger, Docify or plain markdowns.
 type DocsModule struct{}
 

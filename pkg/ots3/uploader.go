@@ -46,6 +46,7 @@ type Config struct {
 	locationFunc func(location string) (url string)
 }
 
+// Option is the type of functional options to alter Config.
 type Option func(*Config)
 
 // WithTracer is an option that add opentracing.Tracer via the hook of S3 client.

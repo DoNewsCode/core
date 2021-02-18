@@ -2,9 +2,11 @@ package logging
 
 import (
 	"context"
-	"github.com/opentracing/opentracing-go"
 	"os"
 	"strings"
+
+	"github.com/DoNewsCode/std/pkg/di"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/go-kit/kit/log"
@@ -14,10 +16,13 @@ import (
 
 var _ contract.LevelLogger = (*levelLogger)(nil)
 
+// NewLogger constructs a log.Logger based on the given format. The support
+// formats are "json" and "logfmt".
 func NewLogger(format string) (logger log.Logger) {
 	switch strings.ToLower(format) {
 	case "json":
 		logger = log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
+		logger = moduleLogger{Logger: logger}
 		return logger
 	default:
 		// Color by level value
@@ -46,10 +51,14 @@ func NewLogger(format string) (logger log.Logger) {
 			return term.FgBgColor{}
 		}
 		logger = term.NewLogger(os.Stdout, log.NewLogfmtLogger, colorFn)
-		return log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.Caller(7))
+		logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.Caller(7))
+		logger = moduleLogger{Logger: logger}
+		return logger
 	}
 }
 
+// LevelFilter filters the log output based on its level.
+// Allowed levels are "debug", "info", "warn", "error", or "none"
 func LevelFilter(levelCfg string) level.Option {
 	switch levelCfg {
 	case "debug":
@@ -60,6 +69,8 @@ func LevelFilter(levelCfg string) level.Option {
 		return level.AllowWarn()
 	case "error":
 		return level.AllowError()
+	case "none":
+		return level.AllowNone()
 	default:
 		return level.AllowAll()
 	}
@@ -75,6 +86,8 @@ func (s spanLogger) Log(keyvals ...interface{}) error {
 	return s.base.Log(keyvals...)
 }
 
+// WithContext decorates the log.Logger with information form context. If there is a opentracing span
+// in the context, the span will receive the logger output as well.
 func WithContext(logger log.Logger, ctx context.Context) log.Logger {
 	span := opentracing.SpanFromContext(ctx)
 	if span == nil {
@@ -122,6 +135,29 @@ func (l levelLogger) Err(err error) {
 	_ = level.Error(l).Log("err", err)
 }
 
+// WithLevel decorates the logger and returns a contract.LevelLogger.
+//
+// Note: Don't inject contract.LevelLogger to dependency consumers directly as
+// this will weakens the powerful abstraction of log.Logger. Only inject
+// log.Logger, and converts log.Logger to contract.LevelLogger within the
+// boundary of dependency consumer if desired.
 func WithLevel(logger log.Logger) levelLogger {
 	return levelLogger{logger}
+}
+
+type moduleLogger struct {
+	di.Module
+	log.Logger
+}
+
+func (m moduleLogger) ProvideConfig() []contract.ExportedConfig {
+	return []contract.ExportedConfig{
+		{
+			Name: "log",
+			Data: map[string]interface{}{
+				"log": map[string]interface{}{"level": "debug", "format": "logfmt"},
+			},
+			Comment: "The global logging level and format",
+		},
+	}
 }

@@ -13,14 +13,17 @@ type JaegerLogAdapter struct {
 	Logging log.Logger
 }
 
+// Infof implements jaeger's logger
 func (l JaegerLogAdapter) Infof(msg string, args ...interface{}) {
 	level.Info(l.Logging).Log("msg", fmt.Sprintf(msg, args...))
 }
 
+// Error implements jaeger's logger
 func (l JaegerLogAdapter) Error(msg string) {
 	level.Error(l.Logging).Log("msg", msg)
 }
 
+// ProvideJaegerLogAdapter returns a valid jaeger.Logger.
 func ProvideJaegerLogAdapter(l log.Logger) jaeger.Logger {
 	return &JaegerLogAdapter{Logging: l}
 }

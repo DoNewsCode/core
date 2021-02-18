@@ -1,4 +1,3 @@
-// Package modconfig provides integration with Package core
 package config
 
 import (

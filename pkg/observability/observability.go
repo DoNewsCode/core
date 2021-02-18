@@ -8,6 +8,7 @@ import (
 	"go.uber.org/dig"
 )
 
+// ObservabilityIn is the injection argument of ProvideObservability.
 type ObservabilityIn struct {
 	dig.In
 
@@ -17,6 +18,7 @@ type ObservabilityIn struct {
 	Env     contract.Env
 }
 
+// ObservabilityOut is the result of ProvideObservability
 type ObservabilityOut struct {
 	dig.Out
 
@@ -24,7 +26,9 @@ type ObservabilityOut struct {
 	Hist   metrics.Histogram
 }
 
-func Observability(in ObservabilityIn) (ObservabilityOut, func(), error) {
+// ProvideObservability provides the observability suite for the system. It contains a tracer and
+// a histogram to measure all incoming request.
+func ProvideObservability(in ObservabilityIn) (ObservabilityOut, func(), error) {
 	in.Logger = log.With(in.Logger, "component", "observability")
 	jlogger := ProvideJaegerLogAdapter(in.Logger)
 	tracer, cleanup, err := ProvideOpentracing(in.AppName, in.Env, jlogger, in.Conf)

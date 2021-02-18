@@ -16,6 +16,9 @@ type histogram struct {
 
 var his histogram
 
+// ProvideHistogramMetrics returns a metrics.Histogram that is designed to measure incoming requests
+// to the system. Note it has three labels: "module", "service", "method". If any label is missing,
+// the system will panic.
 func ProvideHistogramMetrics(appName contract.AppName, env contract.Env) metrics.Histogram {
 	his.once.Do(func() {
 		his.Histogram = prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{

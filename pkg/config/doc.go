@@ -57,5 +57,4 @@
 //
 // Remote configuration store such as zookeeper, consul and ETCD can be adopted in this package in the same manner
 // as the file provider. To avoid dependency bloat, they might live in their own subpackage.
-
 package config

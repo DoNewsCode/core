@@ -11,6 +11,7 @@ import (
 	jaegermetric "github.com/uber/jaeger-lib/metrics"
 )
 
+// ProvideOpentracing provides a opentracing.Tracer.
 func ProvideOpentracing(
 	appName contract.AppName,
 	env contract.Env,

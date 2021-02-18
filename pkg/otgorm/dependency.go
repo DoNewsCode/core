@@ -86,13 +86,18 @@ func ProvideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 	}, nil
 }
 
+// GormConfigInterceptor is a function that allows user to make last minute
+// change to *gorm.Config when constructing *gorm.DB.
+type GormConfigInterceptor func(name string, conf *gorm.Config)
+
 // DatabaseIn is the injection parameter for ProvideDatabase.
 type DatabaseIn struct {
 	di.In
 
-	Conf   contract.ConfigAccessor
-	Logger log.Logger
-	Tracer opentracing.Tracer `optional:"true"`
+	Conf                  contract.ConfigAccessor
+	Logger                log.Logger
+	GormConfigInterceptor GormConfigInterceptor `optional:"true"`
+	Tracer                opentracing.Tracer    `optional:"true"`
 }
 
 // Maker models Factory
@@ -146,7 +151,10 @@ func (d DatabaseOut) ProvideConfig() []contract.ExportedConfig {
 // package core.
 func ProvideDatabase(p DatabaseIn) (DatabaseOut, func()) {
 	factory, cleanup := provideDBFactory(p)
-	database, _ := factory.Make("default")
+	database, err := factory.Make("default")
+	if err != nil {
+		level.Warn(p.Logger).Log("err", err)
+	}
 	return DatabaseOut{
 		Database: database,
 		Factory:  factory,
@@ -210,6 +218,9 @@ func provideDBFactory(p DatabaseIn) (Factory, func()) {
 			return async.Pair{}, err
 		}
 		gormConfig := ProvideGormConfig(logger, &conf)
+		if p.GormConfigInterceptor != nil {
+			p.GormConfigInterceptor(name, gormConfig)
+		}
 		conn, cleanup, err = ProvideGormDB(dialector, gormConfig, p.Tracer)
 		if err != nil {
 			return async.Pair{}, err
