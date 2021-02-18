@@ -32,8 +32,8 @@ redis:
     DB: 0
 gorm:
   default:
-    database: mysql
-    dsn: root@tcp(127.0.0.1:3306)/skeleton?charset=utf8mb4&parseTime=True&loc=Local
+    database: sqlite
+    dsn: file::memory:?cache=shared
 `
 
 func ProvideConfig(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor {
