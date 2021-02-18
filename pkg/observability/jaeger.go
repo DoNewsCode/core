@@ -8,6 +8,7 @@ import (
 	"github.com/uber/jaeger-client-go"
 )
 
+// JaegerLogAdapter is an adapter that bridges kitlog and Jaeger.
 type JaegerLogAdapter struct {
 	Logging log.Logger
 }
