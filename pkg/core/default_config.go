@@ -15,7 +15,7 @@ import (
 )
 
 const defaultConfig = `
-name: skeleton
+name: app
 version: 0.1.0
 env: local
 http:
