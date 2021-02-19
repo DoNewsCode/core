@@ -40,12 +40,12 @@ type S3In struct {
 // S3Out is the di output of ProvideManager.
 type S3Out struct {
 	di.Out
-	di.Module
 
-	Manager  *Manager
-	Factory  *S3Factory
-	Maker    S3Maker
-	Uploader Uploader
+	Manager        *Manager
+	Factory        *S3Factory
+	Maker          S3Maker
+	Uploader       Uploader
+	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
 }
 
 // S3Factory can be used to connect to multiple s3 servers.
@@ -104,25 +104,27 @@ func ProvideManager(p S3In) S3Out {
 	manager, err := factory.Make("default")
 	if err != nil {
 		return S3Out{
-			Manager:  nil,
-			Uploader: nil,
-			Factory:  &s3Factory,
-			Maker:    &s3Factory,
+			Manager:        nil,
+			Uploader:       nil,
+			Factory:        &s3Factory,
+			Maker:          &s3Factory,
+			ExportedConfig: provideConfig(),
 		}
 	}
 	return S3Out{
-		Manager:  manager.(*Manager),
-		Uploader: manager.(*Manager),
-		Factory:  &s3Factory,
-		Maker:    &s3Factory,
+		Manager:        manager.(*Manager),
+		Uploader:       manager.(*Manager),
+		Factory:        &s3Factory,
+		Maker:          &s3Factory,
+		ExportedConfig: provideConfig(),
 	}
 }
 
-// ProvideConfig exports the default s3 configuration
-func (m S3Out) ProvideConfig() []contract.ExportedConfig {
+// provideConfig exports the default s3 configuration
+func provideConfig() []contract.ExportedConfig {
 	return []contract.ExportedConfig{
 		{
-			Name: "s3",
+			Owner: "ots3",
 			Data: map[string]interface{}{
 				"s3": map[string]S3Config{
 					"default": {

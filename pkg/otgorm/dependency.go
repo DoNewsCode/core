@@ -123,38 +123,6 @@ func ProvideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 	}, nil
 }
 
-// ProvideConfig exports the default database configuration.
-func (d DatabaseOut) ProvideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
-		{
-			Name: "database",
-			Data: map[string]interface{}{
-				"database": map[string]databaseConf{
-					"default": {
-						Database:                                 "mysql",
-						Dsn:                                      "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local",
-						SkipDefaultTransaction:                   false,
-						FullSaveAssociations:                     false,
-						DryRun:                                   false,
-						PrepareStmt:                              false,
-						DisableAutomaticPing:                     false,
-						DisableForeignKeyConstraintWhenMigrating: false,
-						DisableNestedTransaction:                 false,
-						AllowGlobalUpdate:                        false,
-						QueryFields:                              false,
-						CreateBatchSize:                          0,
-						NamingStrategy: struct {
-							TablePrefix   string `json:"tablePrefix" yaml:"tablePrefix"`
-							SingularTable bool   `json:"singularTable" yaml:"singularTable"`
-						}{},
-					},
-				},
-			},
-			Comment: "The database configuration",
-		},
-	}
-}
-
 // ProvideDatabase creates Factory and *gorm.DB. It is a valid dependency for
 // package core.
 func ProvideDatabase(p DatabaseIn) (DatabaseOut, func(), error) {
@@ -162,14 +130,15 @@ func ProvideDatabase(p DatabaseIn) (DatabaseOut, func(), error) {
 	database, err := factory.Make("default")
 	var confNotFound confNotFoundErr
 	if err != nil && !errors.As(err, &confNotFound) {
-		return DatabaseOut{Factory: factory, Maker: factory},
+		return DatabaseOut{},
 			func() {},
 			fmt.Errorf("failed to construct default database: %w", err)
 	}
 	return DatabaseOut{
-		Database: database,
-		Factory:  factory,
-		Maker:    factory,
+		Database:       database,
+		Factory:        factory,
+		Maker:          factory,
+		ExportedConfig: provideConfig(),
 	}, cleanup, nil
 }
 
@@ -243,4 +212,36 @@ func provideDBFactory(p DatabaseIn) (Factory, func()) {
 	})
 	dbFactory := Factory{factory}
 	return dbFactory, dbFactory.Close
+}
+
+// ProvideConfig exports the default database configuration.
+func provideConfig() []contract.ExportedConfig {
+	return []contract.ExportedConfig{
+		{
+			Owner: "otgorm",
+			Data: map[string]interface{}{
+				"database": map[string]databaseConf{
+					"default": {
+						Database:                                 "mysql",
+						Dsn:                                      "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local",
+						SkipDefaultTransaction:                   false,
+						FullSaveAssociations:                     false,
+						DryRun:                                   false,
+						PrepareStmt:                              false,
+						DisableAutomaticPing:                     false,
+						DisableForeignKeyConstraintWhenMigrating: false,
+						DisableNestedTransaction:                 false,
+						AllowGlobalUpdate:                        false,
+						QueryFields:                              false,
+						CreateBatchSize:                          0,
+						NamingStrategy: struct {
+							TablePrefix   string `json:"tablePrefix" yaml:"tablePrefix"`
+							SingularTable bool   `json:"singularTable" yaml:"singularTable"`
+						}{},
+					},
+				},
+			},
+			Comment: "The database configuration",
+		},
+	}
 }

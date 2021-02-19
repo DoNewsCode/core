@@ -41,7 +41,7 @@ func (e Env) String() string {
 
 // NewEnv takes in environment string and returns a Env type. It does some "best-effort" normalization internally.
 // For example, prod, PROD, production and PRODUCTION produces the same type. It is recommended to use one of
-// "production", "staging", "development", "local", or "testing" as input to avoid unexpected outcome.
+// "production", "staging", "development", "local", or "testing" as output to avoid unexpected outcome.
 func NewEnv(env string) Env {
 	if strings.EqualFold("prod", env) || strings.EqualFold("production", env) {
 		return "production"

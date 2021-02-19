@@ -32,49 +32,11 @@ type RedisIn struct {
 // RedisOut is the result of ProvideRedis.
 type RedisOut struct {
 	di.Out
-	di.Module
 
-	Maker   Maker
-	Factory Factory
-	Client  redis.UniversalClient
-}
-
-// ProvideConfig exports the default redis configuration
-func (r RedisOut) ProvideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
-		{
-			Name: "redis",
-			Data: map[string]interface{}{
-				"redis": map[string]map[string]interface{}{
-					"default": {
-						"addrs":              []string{"127.0.0.1:6379"},
-						"DB":                 0,
-						"username":           "",
-						"password":           "",
-						"sentinelPassword":   "",
-						"maxRetries":         0,
-						"minRetryBackoff":    0,
-						"maxRetryBackoff":    0,
-						"dialTimeout":        0,
-						"readTimeout":        0,
-						"writeTimeout":       0,
-						"poolSize":           0,
-						"minIdleConns":       0,
-						"maxConnAge":         0,
-						"poolTimeout":        0,
-						"idleTimeout":        0,
-						"idleCheckFrequency": 0,
-						"maxRedirects":       0,
-						"readOnly":           false,
-						"routeByLatency":     false,
-						"routeRandomly":      false,
-						"masterName":         "",
-					},
-				},
-			},
-			Comment: "The configuration of redis clients",
-		},
-	}
+	Maker          Maker
+	Factory        Factory
+	Client         redis.UniversalClient
+	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
 }
 
 // ProvideRedis creates Factory and redis.UniversalClient. It is a valid
@@ -116,9 +78,10 @@ func ProvideRedis(p RedisIn) (RedisOut, func()) {
 	})
 	redisFactory := Factory{factory}
 	redisOut := RedisOut{
-		Maker:   redisFactory,
-		Factory: redisFactory,
-		Client:  nil,
+		Maker:          redisFactory,
+		Factory:        redisFactory,
+		Client:         nil,
+		ExportedConfig: provideConfig(),
 	}
 	defaultRedisClient, _ := redisFactory.Make("default")
 	redisOut.Client = defaultRedisClient
@@ -143,4 +106,42 @@ func (r Factory) Make(name string) (redis.UniversalClient, error) {
 		return nil, err
 	}
 	return client.(redis.UniversalClient), nil
+}
+
+// provideConfig exports the default redis configuration
+func provideConfig() []contract.ExportedConfig {
+	return []contract.ExportedConfig{
+		{
+			Owner: "otredis",
+			Data: map[string]interface{}{
+				"redis": map[string]map[string]interface{}{
+					"default": {
+						"addrs":              []string{"127.0.0.1:6379"},
+						"DB":                 0,
+						"username":           "",
+						"password":           "",
+						"sentinelPassword":   "",
+						"maxRetries":         0,
+						"minRetryBackoff":    0,
+						"maxRetryBackoff":    0,
+						"dialTimeout":        0,
+						"readTimeout":        0,
+						"writeTimeout":       0,
+						"poolSize":           0,
+						"minIdleConns":       0,
+						"maxConnAge":         0,
+						"poolTimeout":        0,
+						"idleTimeout":        0,
+						"idleCheckFrequency": 0,
+						"maxRedirects":       0,
+						"readOnly":           false,
+						"routeByLatency":     false,
+						"routeRandomly":      false,
+						"masterName":         "",
+					},
+				},
+			},
+			Comment: "The configuration of redis clients",
+		},
+	}
 }

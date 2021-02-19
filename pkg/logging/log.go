@@ -153,7 +153,7 @@ type moduleLogger struct {
 func (m moduleLogger) ProvideConfig() []contract.ExportedConfig {
 	return []contract.ExportedConfig{
 		{
-			Name: "log",
+			Owner: "log",
 			Data: map[string]interface{}{
 				"log": map[string]interface{}{"level": "debug", "format": "logfmt"},
 			},

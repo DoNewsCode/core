@@ -102,3 +102,48 @@ func ProvideDi(conf contract.ConfigAccessor) contract.DiContainer {
 func ProvideEventDispatcher(conf contract.ConfigAccessor) contract.Dispatcher {
 	return &events.SyncDispatcher{}
 }
+
+// provideDefaultConfig exports config for "name", "version", "env", "http", "grpc".
+func provideDefaultConfig() []contract.ExportedConfig {
+	return []contract.ExportedConfig{
+		{
+			Owner: "core",
+			Data: map[string]interface{}{
+				"name": "app",
+			},
+			Comment: "The name of the application",
+		},
+		{
+			Owner: "core",
+			Data: map[string]interface{}{
+				"version": "0.1.0",
+			},
+			Comment: "The version of the application",
+		},
+		{
+			Owner: "core",
+			Data: map[string]interface{}{
+				"env": "local",
+			},
+			Comment: "The environment of the application, one of production, development, staging, testing or local",
+		},
+		{
+			Owner: "core",
+			Data: map[string]interface{}{
+				"http": map[string]interface{}{
+					"addr": ":8080",
+				},
+			},
+			Comment: "The http address",
+		},
+		{
+			Owner: "core",
+			Data: map[string]interface{}{
+				"grpc": map[string]interface{}{
+					"addr": ":9090",
+				},
+			},
+			Comment: "The gRPC address",
+		},
+	}
+}

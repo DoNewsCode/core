@@ -1,20 +1,6 @@
 # A mock config
 foo: bar
 
-# The name of the application
-name: app
-
-# The version of the application
-version: 0.1.0
-
-# The environment of the application, one of production, development, staging, testing or local
-env: local
-
-# The http address
-http:
-  addr: :8080
-
-# The gRPC address
-grpc:
-  addr: :9090
+# Other mock config
+baz: qux
 

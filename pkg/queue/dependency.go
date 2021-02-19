@@ -57,6 +57,7 @@ type DispatcherOut struct {
 	DispatcherMaker     DispatcherMaker
 	QueueableDispatcher *QueueableDispatcher
 	DispatcherFactory   *DispatcherFactory
+	ExportedConfig      []contract.ExportedConfig `group:"config,flatten"`
 }
 
 // ProvideDispatcher is a provider for *DispatcherFactory and *QueueableDispatcher.
@@ -117,6 +118,7 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 		Dispatcher:          defaultQueueableDispatcher,
 		DispatcherFactory:   dispatcherFactory,
 		DispatcherMaker:     dispatcherFactory,
+		ExportedConfig:      provideConfig(),
 	}, nil
 }
 
@@ -135,21 +137,6 @@ func (d DispatcherOut) ProvideRunGroup(group *run.Group) {
 			cancel()
 		})
 	}
-}
-
-// ProvideConfig implements config.Provider.
-func (d DispatcherOut) ProvideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{{
-		Name: "queue",
-		Data: map[string]interface{}{
-			"queue": map[string]configuration{
-				"default": {
-					Parallelism:                    runtime.NumCPU(),
-					CheckQueueLengthIntervalSecond: 15,
-				},
-			},
-		},
-	}}
 }
 
 // DispatcherFactory is a factory for *QueueableDispatcher. Note DispatcherFactory doesn't contain the factory method
@@ -179,4 +166,18 @@ func (s *DispatcherFactory) Make(name string) (*QueueableDispatcher, error) {
 		return nil, err
 	}
 	return client.(*QueueableDispatcher), nil
+}
+
+func provideConfig() []contract.ExportedConfig {
+	return []contract.ExportedConfig{{
+		Owner: "queue",
+		Data: map[string]interface{}{
+			"queue": map[string]configuration{
+				"default": {
+					Parallelism:                    runtime.NumCPU(),
+					CheckQueueLengthIntervalSecond: 15,
+				},
+			},
+		},
+	}}
 }

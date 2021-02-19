@@ -92,7 +92,7 @@
 //      stdprometheus.GaugeOpts{
 //        Namespace: appName.String(),
 //        Subsystem: env.String(),
-//        Name:      "queue_length",
+//        Owner:      "queue_length",
 //        Help:      "The gauge of queue length",
 //      }, []string{"name", "channel"},
 //    )

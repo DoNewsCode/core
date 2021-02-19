@@ -245,36 +245,39 @@ func (c *C) AddDependencyFunc(constructor interface{}) {
 	}
 }
 
+type CoreDependencies struct {
+	di.Out
+
+	Env            contract.Env
+	AppName        contract.AppName
+	Container      contract.Container
+	ConfigAccessor contract.ConfigAccessor
+	ConfigRouter   contract.ConfigRouter
+	ConfigWatcher  contract.ConfigWatcher
+	Logger         log.Logger
+	Dispatcher     contract.Dispatcher
+	DefaultConfigs []contract.ExportedConfig `group:"config,flatten"`
+}
+
 func (c *C) AddCoreDependencies() {
-	c.AddDependencyFunc(func() contract.Env {
-		return c.Env
-	})
-	c.AddDependencyFunc(func() contract.AppName {
-		return c.AppName
-	})
-	c.AddDependencyFunc(func() contract.Container {
-		return c.Container
-	})
-	c.AddDependencyFunc(func() contract.ConfigAccessor {
-		return c.ConfigAccessor
-	})
-	c.AddDependencyFunc(func() contract.ConfigRouter {
+	c.AddDependencyFunc(func() CoreDependencies {
+		coreDependencies := CoreDependencies{
+			Env:            c.Env,
+			AppName:        c.AppName,
+			Container:      c.Container,
+			ConfigAccessor: c.ConfigAccessor,
+			Logger:         c.LevelLogger,
+			Dispatcher:     c.Dispatcher,
+			DefaultConfigs: provideDefaultConfig(),
+		}
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {
-			return cc
+			coreDependencies.ConfigRouter = cc
 		}
-		return nil
-	})
-	c.AddDependencyFunc(func() contract.ConfigWatcher {
 		if cc, ok := c.ConfigAccessor.(contract.ConfigWatcher); ok {
-			return cc
+			coreDependencies.ConfigWatcher = cc
 		}
-		return nil
-	})
-	c.AddDependencyFunc(func() log.Logger {
-		return c.LevelLogger
-	})
-	c.AddDependencyFunc(func() contract.Dispatcher {
-		return c.Dispatcher
+
+		return coreDependencies
 	})
 }
 

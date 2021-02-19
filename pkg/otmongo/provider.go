@@ -34,28 +34,10 @@ type Maker interface {
 type MongoOut struct {
 	dig.Out
 
-	Factory Factory
-	Maker   Maker
-	Client  *mongo.Client
-}
-
-// ProvideConfig exports the default mongo configuration.
-func (m MongoOut) ProvideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
-		{
-			Name: "mongo",
-			Data: map[string]interface{}{
-				"mongo": map[string]struct {
-					Uri string `json:"uri" yaml:"uri"`
-				}{
-					"default": {
-						Uri: "",
-					},
-				},
-			},
-			Comment: "The configuration of mongoDB",
-		},
-	}
+	Factory        Factory
+	Maker          Maker
+	Client         *mongo.Client
+	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
 }
 
 // ProvideMongo creates Factory and *mongo.Client. It is a valid dependency for
@@ -97,9 +79,10 @@ func ProvideMongo(p MongoIn) (MongoOut, func()) {
 	f := Factory{factory}
 	client, _ := f.Make("default")
 	return MongoOut{
-		Factory: f,
-		Maker:   f,
-		Client:  client,
+		Factory:        f,
+		Maker:          f,
+		Client:         client,
+		ExportedConfig: provideConfig(),
 	}, factory.Close
 }
 
@@ -116,4 +99,23 @@ func (r Factory) Make(name string) (*mongo.Client, error) {
 		return nil, err
 	}
 	return client.(*mongo.Client), nil
+}
+
+// provideConfig exports the default mongo configuration.
+func provideConfig() []contract.ExportedConfig {
+	return []contract.ExportedConfig{
+		{
+			Owner: "otmongo",
+			Data: map[string]interface{}{
+				"mongo": map[string]struct {
+					Uri string `json:"uri" yaml:"uri"`
+				}{
+					"default": {
+						Uri: "",
+					},
+				},
+			},
+			Comment: "The configuration of mongoDB",
+		},
+	}
 }

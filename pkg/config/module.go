@@ -17,79 +17,47 @@ import (
 
 // Module is the configuration module that bundles the reload watcher and exportConfig commands.
 type Module struct {
-	Conf      *KoanfAdapter
-	Container contract.Container
+	conf            *KoanfAdapter
+	exportedConfigs []contract.ExportedConfig
+}
+
+type ConfigIn struct {
+	Conf            contract.ConfigAccessor
+	ExportedConfigs []contract.ExportedConfig `group:"config"`
+}
+
+func New(p ConfigIn) (Module, error) {
+	var (
+		ok      bool
+		adapter *KoanfAdapter
+	)
+	if p.Conf, ok = p.Conf.(*KoanfAdapter); !ok {
+		return Module{}, fmt.Errorf("expects a *config.KoanfAdapter instance, but %T given", p.Conf)
+	}
+	return Module{
+		conf:            adapter,
+		exportedConfigs: p.ExportedConfigs,
+	}, nil
 }
 
 // ProvideRunGroup runs the configuration watcher.
 func (m Module) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
 	group.Add(func() error {
-		return m.Conf.Watch(ctx)
+		return m.conf.Watch(ctx)
 	}, func(err error) {
 		cancel()
 	})
 }
 
-// ProvideConfig exports config for "name", "version", "env", "http", "grpc".
-func (m Module) ProvideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
-		{
-			Name: "name",
-			Data: map[string]interface{}{
-				"name": "app",
-			},
-			Comment: "The name of the application",
-		},
-		{
-			Name: "version",
-			Data: map[string]interface{}{
-				"version": "0.1.0",
-			},
-			Comment: "The version of the application",
-		},
-		{
-			Name: "env",
-			Data: map[string]interface{}{
-				"env": "local",
-			},
-			Comment: "The environment of the application, one of production, development, staging, testing or local",
-		},
-		{
-			Name: "http",
-			Data: map[string]interface{}{
-				"http": map[string]interface{}{
-					"addr": ":8080",
-				},
-			},
-			Comment: "The http address",
-		},
-		{
-			Name: "grpc",
-			Data: map[string]interface{}{
-				"grpc": map[string]interface{}{
-					"addr": ":9090",
-				},
-			},
-			Comment: "The gRPC address",
-		},
-	}
-}
-
-type Provider interface {
-	// ProvideConfig provides the default config for the module. It is collected by the config.Module and used in
-	// exportConfig command.
-	ProvideConfig() []contract.ExportedConfig
-}
-
-// ProvideCommand provides the exportConfig command.
+// ProvideCommand provides the config related command.
 func (m Module) ProvideCommand(command *cobra.Command) {
 	var (
 		outputFile string
 		style      string
 	)
 	initCmd := &cobra.Command{
-		Use:   "init",
+		Use:   "init [module]",
 		Short: "export a copy of default config.",
 		Long:  "export a default config for currently installed modules.",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -104,15 +72,15 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 			if err != nil {
 				return err
 			}
-			_ = m.Container.GetModules().Filter(func(provider Provider) {
-				exportedConfigs = append(exportedConfigs, provider.ProvideConfig()...)
-			})
-			if len(args) >= 2 {
+			if len(args) == 0 {
+				exportedConfigs = m.exportedConfigs
+			}
+			if len(args) >= 1 {
 				var copy = make([]contract.ExportedConfig, 0)
-				for i := range exportedConfigs {
-					for j := 1; j < len(args); j++ {
-						if args[j] == exportedConfigs[i].Name {
-							copy = append(copy, exportedConfigs[i])
+				for i := range m.exportedConfigs {
+					for j := 0; j < len(args); j++ {
+						if args[j] == m.exportedConfigs[i].Owner {
+							copy = append(copy, m.exportedConfigs[i])
 							break
 						}
 					}
@@ -241,7 +209,7 @@ func (y jsonHandler) write(file *os.File, configs []contract.ExportedConfig, con
 		confMap = make(map[string]interface{})
 	}
 	for _, exportedConfig := range configs {
-		if _, ok := confMap[exportedConfig.Name]; ok {
+		if _, ok := confMap[exportedConfig.Owner]; ok {
 			continue
 		}
 		for k := range exportedConfig.Data {

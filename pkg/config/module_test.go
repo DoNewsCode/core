@@ -5,30 +5,31 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DoNewsCode/std/pkg/container"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
 
 func setup() *cobra.Command {
-	os.Remove("../testdata/module_test.yaml")
-	os.Remove("../testdata/module_test.json")
-	var cont container.Container
+	os.Remove("./testdata/module_test.yaml")
+	os.Remove("./testdata/module_test.json")
 	var config, _ = NewConfig()
-	var mod = Module{Container: &cont}
-	cont.AddModule(MockModule(func() []contract.ExportedConfig {
-		return []contract.ExportedConfig{
-			{
-				"foo",
-				map[string]interface{}{
-					"foo": "bar",
-				},
-				"A mock config",
+	var mod = Module{conf: config, exportedConfigs: []contract.ExportedConfig{
+		{
+			"foo",
+			map[string]interface{}{
+				"foo": "bar",
 			},
-		}
-	}))
-	cont.AddModule(Module{Container: &cont, Conf: config})
+			"A mock config",
+		},
+		{
+			"baz",
+			map[string]interface{}{
+				"baz": "qux",
+			},
+			"Other mock config",
+		},
+	}}
 	rootCmd := &cobra.Command{
 		Use: "root",
 	}
@@ -36,56 +37,58 @@ func setup() *cobra.Command {
 	return rootCmd
 }
 
-type MockModule func() []contract.ExportedConfig
-
-func (m MockModule) ProvideConfig() []contract.ExportedConfig {
-	return m()
-}
-
 func TestModule_ProvideCommand(t *testing.T) {
 	rootCmd := setup()
 	cases := []struct {
-		name string
-		args []string
+		name     string
+		output   string
+		args     []string
+		expected string
 	}{
 		{
-			"new yaml",
-			[]string{"config", "init", "--outputFile", "./testdata/module_test.yaml"},
+			"foo yaml",
+			"./testdata/module_test.yaml",
+			[]string{"config", "init", "foo", "--outputFile", "./testdata/module_test.yaml"},
+			"./testdata/module_test_foo_expected.yaml",
+		},
+		{
+			"baz yaml",
+			"./testdata/module_test.yaml",
+			[]string{"config", "init", "baz", "--outputFile", "./testdata/module_test.yaml"},
+			"./testdata/module_test_baz_expected.yaml",
 		},
 		{
 			"old yaml",
+			"./testdata/module_test.yaml",
 			[]string{"config", "init", "--outputFile", "./testdata/module_test.yaml"},
+			"./testdata/module_test_expected.yaml",
 		},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			rootCmd.SetArgs(c.args)
-			rootCmd.Execute()
-			testTarget, _ := ioutil.ReadFile("./testdata/module_test.yaml")
-			expected, _ := ioutil.ReadFile("./testdata/module_test_expected.yaml")
-			assert.Equal(t, expected, testTarget)
-		})
-	}
-	cases = []struct {
-		name string
-		args []string
-	}{
 		{
-			"new json",
-			[]string{"config", "init", "--outputFile", "./testdata/module_test.json", "--style", "json"},
+			"foo json",
+			"./testdata/module_test.json",
+			[]string{"config", "init", "foo", "--outputFile", "./testdata/module_test.json", "--style", "json"},
+			"./testdata/module_test_foo_expected.json",
+		},
+		{
+			"baz json",
+			"./testdata/module_test.json",
+			[]string{"config", "init", "baz", "--outputFile", "./testdata/module_test.json", "--style", "json"},
+			"./testdata/module_test_baz_expected.json",
 		},
 		{
 			"old json",
+			"./testdata/module_test.json",
 			[]string{"config", "init", "--outputFile", "./testdata/module_test.json", "--style", "json"},
+			"./testdata/module_test_expected.json",
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			rootCmd.SetArgs(c.args)
 			rootCmd.Execute()
-			testTarget, _ := ioutil.ReadFile("./testdata/module_test.json")
-			expected, _ := ioutil.ReadFile("./testdata/module_test_expected.json")
-			assert.Equal(t, expected, testTarget)
+			testTarget, _ := ioutil.ReadFile(c.output)
+			expected, _ := ioutil.ReadFile(c.expected)
+			assert.Equal(t, string(expected), string(testTarget))
 		})
 	}
 }
