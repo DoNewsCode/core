@@ -9,6 +9,8 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+// Subscriber is go kit transport layer that wraps an endpoint. It is a handler
+// for SubscriberServer.
 type Subscriber struct {
 	e            endpoint.Endpoint
 	dec          DecodeRequestFunc
@@ -67,7 +69,7 @@ func SubscriberErrorHandler(errorHandler transport.ErrorHandler) SubscriberOptio
 	return func(s *Subscriber) { s.errorHandler = errorHandler }
 }
 
-// Consume handles kafka Delivery messages
+// Handle handles kafka messages.
 func (s Subscriber) Handle(ctx context.Context, incoming kafka.Message) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

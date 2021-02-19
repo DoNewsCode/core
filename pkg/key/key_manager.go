@@ -10,7 +10,7 @@ type KeyManager struct {
 	Prefixes []string
 }
 
-func NewKeyManager(parts ...string) KeyManager {
+func NewManager(parts ...string) KeyManager {
 	return KeyManager{
 		Prefixes: parts,
 	}

@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/DoNewsCode/std/pkg/key"
 	"github.com/DoNewsCode/std/pkg/kitmw"
+	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -29,4 +32,69 @@ func ExampleMakeErrorConversionMiddleware() {
 	// Output:
 	// *errors.errorString
 	// *unierr.Error
+}
+
+func ExampleMakeLoggingMiddleware() {
+	var (
+		original endpoint.Endpoint
+		wrapped  endpoint.Endpoint
+	)
+	original = func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		return "respData", nil
+	}
+
+	wrapped = kitmw.MakeLoggingMiddleware(
+		logging.NewLogger("json"),
+		key.NewManager(),
+		false,
+	)(original)
+
+	wrapped(context.Background(), "reqData")
+
+	// Output:
+	// {"request":"reqData","response":"respData"}
+}
+
+func ExampleMakeRetryMiddleware() {
+	var (
+		original endpoint.Endpoint
+		wrapped  endpoint.Endpoint
+	)
+	original = func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		fmt.Println("attempt")
+		return nil, errors.New("")
+	}
+
+	wrapped = kitmw.MakeRetryMiddleware(5, time.Hour)(original)
+
+	wrapped(context.Background(), nil)
+
+	// Output:
+	// attempt
+	// attempt
+	// attempt
+	// attempt
+	// attempt
+}
+
+func ExampleMakeTimeoutMiddleware() {
+	var (
+		original endpoint.Endpoint
+		wrapped  endpoint.Endpoint
+	)
+	original = func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		select {
+		case <-ctx.Done():
+			return nil, errors.New("timeout")
+		case <-time.After(2 * time.Microsecond):
+			return nil, nil
+		}
+	}
+
+	wrapped = kitmw.MakeTimeoutMiddleware(time.Microsecond)(original)
+	_, err := wrapped(context.Background(), nil)
+	fmt.Println(err)
+
+	// Output:
+	// timeout
 }

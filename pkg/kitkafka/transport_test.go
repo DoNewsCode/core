@@ -24,7 +24,7 @@ func TestTransport(t *testing.T) {
 
 	kafka.DialLeader(context.Background(), "tcp", "localhost:9092", "Test", 0)
 
-	writerFactory, cleanupWriter := ProvideKafkaWriterFactory(KafkaParam{
+	writerFactory, cleanupWriter := ProvideKafkaWriterFactory(KafkaIn{
 		Conf: config.MapAdapter{"kafka.writer": map[string]kafka.Writer{
 			"default": {
 				Addr:  kafka.TCP("127.0.0.1:9092"),
@@ -35,7 +35,7 @@ func TestTransport(t *testing.T) {
 	})
 	defer cleanupWriter()
 
-	readerFactory, cleanupReader := ProvideKafkaReaderFactory(KafkaParam{
+	readerFactory, cleanupReader := ProvideKafkaReaderFactory(KafkaIn{
 		Conf: config.MapAdapter{"kafka.reader": map[string]kafka.ReaderConfig{
 			"default": {
 				Brokers: []string{"127.0.0.1:9092"},
@@ -47,7 +47,7 @@ func TestTransport(t *testing.T) {
 	defer cleanupReader()
 
 	// write test data
-	h, err := writerFactory.MakeWriterHandle("default")
+	h, err := writerFactory.MakeClient("default")
 	assert.NoError(t, err)
 
 	err = h.Handle(context.Background(), kafka.Message{
@@ -65,13 +65,13 @@ func TestTransport(t *testing.T) {
 		consumed = true
 		return nil, nil
 	}
-	sub, err := readerFactory.MakeSubscriberClient("default", NewSubscriber(endpoint, func(ctx context.Context, message *kafka.Message) (request interface{}, err error) {
+	sub, err := readerFactory.MakeSubscriberServer("default", NewSubscriber(endpoint, func(ctx context.Context, message *kafka.Message) (request interface{}, err error) {
 		return string(message.Value), nil
 	}))
 
 	assert.NoError(t, err)
 
-	err = sub.ServeOnce(context.Background())
+	err = sub.serveOnce(context.Background())
 
 	assert.NoError(t, err)
 

@@ -90,7 +90,7 @@ func WithLocationFunc(f func(location string) (url string)) Option {
 func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts ...Option) *Manager {
 	c := &Config{
 		doer:  http.DefaultClient,
-		keyer: key.NewKeyManager(),
+		keyer: key.NewManager(),
 		locationFunc: func(location string) (url string) {
 			return location
 		},

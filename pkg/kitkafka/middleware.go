@@ -77,6 +77,7 @@ func KafkaToContext(tracer opentracing.Tracer, operationName string, logger log.
 	}
 }
 
+// ErrHandler is a transport handler that logs the kafka error message at warning level.
 func ErrHandler(logger log.Logger) transport.ErrorHandler {
 	return transport.ErrorHandlerFunc(func(ctx context.Context, err error) {
 		level.Warn(logger).Log("err", err.Error())

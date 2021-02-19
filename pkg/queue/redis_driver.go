@@ -278,7 +278,7 @@ func getRetryDuration(d time.Duration) time.Duration {
 	jitter := rand.Float64() + 0.5
 	d = time.Duration(int64(float64(d.Nanoseconds()) * jitter))
 	if d > 10*time.Minute {
-		d = time.Minute
+		d = 10 * time.Minute
 	}
 	if d < time.Second {
 		d = time.Second

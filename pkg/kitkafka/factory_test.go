@@ -1,17 +1,17 @@
 package kitkafka
 
 import (
-	"github.com/DoNewsCode/std/pkg/config"
-	"github.com/segmentio/kafka-go"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/dig"
 	"testing"
+
+	"github.com/DoNewsCode/std/pkg/config"
+	"github.com/DoNewsCode/std/pkg/di"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestProvideKafkaReaderFactory(t *testing.T) {
-	factory, cleanup := ProvideKafkaReaderFactory(KafkaParam{
-		In: dig.In{},
-		Conf: config.MapAdapter{"kafka.reader": map[string]kafka.ReaderConfig{
+	factory, cleanup := ProvideKafkaReaderFactory(KafkaIn{
+		In: di.In{},
+		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
 			"default": {
 				Brokers: []string{"127.0.0.1:9092"},
 				Topic:   "Test",
@@ -33,16 +33,16 @@ func TestProvideKafkaReaderFactory(t *testing.T) {
 }
 
 func TestProvideKafkaWriterFactory(t *testing.T) {
-	factory, cleanup := ProvideKafkaWriterFactory(KafkaParam{
-		In: dig.In{},
-		Conf: config.MapAdapter{"kafka.writer": map[string]kafka.Writer{
+	factory, cleanup := ProvideKafkaWriterFactory(KafkaIn{
+		In: di.In{},
+		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
-				Addr:  kafka.TCP("localhost:9092"),
-				Topic: "Test",
+				Brokers: []string{"127.0.0.1:9092"},
+				Topic:   "Test",
 			},
 			"alternative": {
-				Addr:  kafka.TCP("localhost:9092"),
-				Topic: "Test",
+				Brokers: []string{"127.0.0.1:9092"},
+				Topic:   "Test",
 			},
 		}},
 	})

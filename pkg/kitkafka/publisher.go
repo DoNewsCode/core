@@ -8,7 +8,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// Publisher wraps an AMQP channel and queue, and provides a method that
+// Publisher wraps a kafka client, and provides a method that
 // implements endpoint.Endpoint.
 type Publisher struct {
 	handler Handler
@@ -38,20 +38,20 @@ func NewPublisher(
 // PublisherOption sets an optional parameter for clients.
 type PublisherOption func(*Publisher)
 
-// PublisherBefore sets the RequestFuncs that are applied to the outgoing AMQP
+// PublisherBefore sets the RequestFuncs that are applied to the outgoing kafka
 // request before it's invoked.
 func PublisherBefore(before ...RequestResponseFunc) PublisherOption {
 	return func(p *Publisher) { p.before = append(p.before, before...) }
 }
 
-// PublisherAfter sets the ClientResponseFuncs applied to the incoming AMQP
+// PublisherAfter sets the ClientResponseFuncs applied to the incoming kafka
 // request prior to it being decoded. This is useful for obtaining anything off
 // of the response and adding onto the context prior to decoding.
 func PublisherAfter(after ...RequestResponseFunc) PublisherOption {
 	return func(p *Publisher) { p.after = append(p.after, after...) }
 }
 
-// PublisherTimeout sets the available timeout for an AMQP request.
+// PublisherTimeout sets the available timeout for an kafka request.
 func PublisherTimeout(timeout time.Duration) PublisherOption {
 	return func(p *Publisher) { p.timeout = timeout }
 }
