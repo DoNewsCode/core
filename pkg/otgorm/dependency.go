@@ -1,6 +1,7 @@
 package otgorm
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/DoNewsCode/std/pkg/async"
@@ -15,6 +16,12 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
+
+type confNotFoundErr string
+
+func (c confNotFoundErr) Error() string {
+	return string(c)
+}
 
 type databaseConf struct {
 	Database                                 string `json:"database" yaml:"database"`
@@ -33,6 +40,35 @@ type databaseConf struct {
 		TablePrefix   string `json:"tablePrefix" yaml:"tablePrefix"`
 		SingularTable bool   `json:"singularTable" yaml:"singularTable"`
 	} `json:"namingStrategy" yaml:"namingStrategy"`
+}
+
+// GormConfigInterceptor is a function that allows user to make last minute
+// change to *gorm.Config when constructing *gorm.DB.
+type GormConfigInterceptor func(name string, conf *gorm.Config)
+
+// Maker models Factory
+type Maker interface {
+	Make(name string) (*gorm.DB, error)
+}
+
+// DatabaseIn is the injection parameter for ProvideDatabase.
+type DatabaseIn struct {
+	di.In
+
+	Conf                  contract.ConfigAccessor
+	Logger                log.Logger
+	GormConfigInterceptor GormConfigInterceptor `optional:"true"`
+	Tracer                opentracing.Tracer    `optional:"true"`
+}
+
+// DatabaseOut is the result of ProvideDatabase. *gorm.DB is not a interface
+// type. It is up to the users to define their own database repository interface.
+type DatabaseOut struct {
+	di.Out
+
+	Database *gorm.DB
+	Factory  Factory
+	Maker    Maker
 }
 
 // ProvideDialector provides a gorm.Dialector. Mean to be used as an intermediate
@@ -86,35 +122,6 @@ func ProvideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 	}, nil
 }
 
-// GormConfigInterceptor is a function that allows user to make last minute
-// change to *gorm.Config when constructing *gorm.DB.
-type GormConfigInterceptor func(name string, conf *gorm.Config)
-
-// DatabaseIn is the injection parameter for ProvideDatabase.
-type DatabaseIn struct {
-	di.In
-
-	Conf                  contract.ConfigAccessor
-	Logger                log.Logger
-	GormConfigInterceptor GormConfigInterceptor `optional:"true"`
-	Tracer                opentracing.Tracer    `optional:"true"`
-}
-
-// Maker models Factory
-type Maker interface {
-	Make(name string) (*gorm.DB, error)
-}
-
-// DatabaseOut is the result of ProvideDatabase. *gorm.DB is not a interface
-// type. It is up to the users to define their own database repository interface.
-type DatabaseOut struct {
-	di.Out
-
-	Database *gorm.DB
-	Factory  Factory
-	Maker    Maker
-}
-
 // ProvideConfig exports the default database configuration.
 func (d DatabaseOut) ProvideConfig() []contract.ExportedConfig {
 	return []contract.ExportedConfig{
@@ -149,17 +156,20 @@ func (d DatabaseOut) ProvideConfig() []contract.ExportedConfig {
 
 // ProvideDatabase creates Factory and *gorm.DB. It is a valid dependency for
 // package core.
-func ProvideDatabase(p DatabaseIn) (DatabaseOut, func()) {
+func ProvideDatabase(p DatabaseIn) (DatabaseOut, func(), error) {
 	factory, cleanup := provideDBFactory(p)
 	database, err := factory.Make("default")
-	if err != nil {
-		level.Warn(p.Logger).Log("err", err)
+	var confNotFound confNotFoundErr
+	if err != nil && !errors.As(err, &confNotFound) {
+		return DatabaseOut{Factory: factory, Maker: factory},
+			func() {},
+			fmt.Errorf("failed to construct default database: %w", err)
 	}
 	return DatabaseOut{
 		Database: database,
 		Factory:  factory,
 		Maker:    factory,
-	}, cleanup
+	}, cleanup, nil
 }
 
 // Factory is the *async.Factory that creates *gorm.DB under a specific
@@ -211,7 +221,7 @@ func provideDBFactory(p DatabaseIn) (Factory, func()) {
 			cleanup   func()
 		)
 		if conf, ok = dbConfs[name]; !ok {
-			return async.Pair{}, fmt.Errorf("database configuration %s not found", name)
+			return async.Pair{}, confNotFoundErr(fmt.Sprintf("database configuration %s not found", name))
 		}
 		dialector, err = ProvideDialector(&conf)
 		if err != nil {

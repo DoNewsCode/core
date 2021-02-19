@@ -184,6 +184,8 @@ func (c *C) addDependency(dep interface{}) {
 }
 
 func (c *C) AddDependencyFunc(constructor interface{}) {
+	var shoudMakeFunc bool
+
 	ftype := reflect.TypeOf(constructor)
 	if ftype.Kind() != reflect.Func {
 		panic("AddDependencyFunc only accepts function as argument")
@@ -193,26 +195,42 @@ func (c *C) AddDependencyFunc(constructor interface{}) {
 	for i := 0; i < ftype.NumOut(); i++ {
 		outT := ftype.Out(i)
 		if isCleanup(outT) {
+			shoudMakeFunc = true
 			continue
+		}
+		if isModule(outT) {
+			shoudMakeFunc = true
 		}
 		outTypes = append(outTypes, outT)
 	}
 
 	// no cleanup, we can use normal dig.
-	//if len(outTypes) == ftype.NumOut() {
-	//	err := c.di.Provide(constructor)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	return
-	//}
+	if len(outTypes) == ftype.NumOut() {
+		err := c.di.Provide(constructor)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
 
-	// has cleanup, use reflection to intercept cleanup.
 	for i := 0; i < ftype.NumIn(); i++ {
 		inT := ftype.In(i)
+		if isModule(inT) {
+			shoudMakeFunc = true
+		}
 		inTypes = append(inTypes, inT)
 	}
 
+	// no cleanup or module, we can use normal dig.
+	if !shoudMakeFunc {
+		err := c.di.Provide(constructor)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	// has cleanup or module, use reflect.MakeFunc as interceptor.
 	fnType := reflect.FuncOf(inTypes, outTypes, ftype.IsVariadic() /* variadic */)
 	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
 		filteredOuts := make([]reflect.Value, 0)

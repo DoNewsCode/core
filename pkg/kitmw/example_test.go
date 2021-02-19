@@ -10,12 +10,23 @@ import (
 )
 
 func ExampleMakeErrorConversionMiddleware() {
-	var ep endpoint.Endpoint = func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		return nil, errors.New("f")
+	var (
+		err      error
+		original endpoint.Endpoint
+		wrapped  endpoint.Endpoint
+	)
+	original = func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		return nil, errors.New("error")
 	}
-	wrapped := kitmw.MakeErrorConversionMiddleware(kitmw.ErrorOption{})(ep)
-	_, err := wrapped(context.Background(), nil)
-	fmt.Printf("%T", err)
+	_, err = original(context.Background(), nil)
+	fmt.Printf("%T\n", err)
+
+	wrapped = kitmw.MakeErrorConversionMiddleware(kitmw.ErrorOption{})(original)
+
+	_, err = wrapped(context.Background(), nil)
+	fmt.Printf("%T\n", err)
+
 	// Output:
+	// *errors.errorString
 	// *unierr.Error
 }

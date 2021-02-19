@@ -13,9 +13,11 @@ func Example() {
 	c := core.New(core.WithInline("log.level", "warn"))
 	c.AddCoreDependencies()
 	c.AddDependencyFunc(otgorm.ProvideDatabase)
-	c.Invoke(func(db *gorm.DB) {
+	err := c.Invoke(func(db *gorm.DB) {
 		fmt.Println(db.Name())
 	})
+	fmt.Println(err)
 	// Output:
 	// mysql
+	// <nil>
 }
