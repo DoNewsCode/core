@@ -9,7 +9,7 @@ package otgorm exports the configuration in the following format:
 	gorm:
 	  default:
 		database: mysql
-		dsn: root@tcp(127.0.0.1:3306)/skeleton?charset=utf8mb4&parseTime=True&loc=Local
+		dsn: root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local
 
 Add the gorm dependency to core:
 

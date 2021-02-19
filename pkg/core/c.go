@@ -204,15 +204,6 @@ func (c *C) AddDependencyFunc(constructor interface{}) {
 		outTypes = append(outTypes, outT)
 	}
 
-	// no cleanup, we can use normal dig.
-	if len(outTypes) == ftype.NumOut() {
-		err := c.di.Provide(constructor)
-		if err != nil {
-			panic(err)
-		}
-		return
-	}
-
 	for i := 0; i < ftype.NumIn(); i++ {
 		inT := ftype.In(i)
 		if isModule(inT) {

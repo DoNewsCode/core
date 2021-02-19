@@ -2,7 +2,7 @@
 foo: bar
 
 # The name of the application
-name: skeleton
+name: app
 
 # The version of the application
 version: 0.1.0

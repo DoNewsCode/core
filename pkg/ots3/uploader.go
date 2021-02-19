@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/opentracing/opentracing-go"
@@ -169,6 +170,16 @@ func (m *Manager) UploadFromUrl(ctx context.Context, url string) (newUrl string,
 	body := resp.Body
 	defer body.Close()
 	return m.Upload(ctx, randString(16), body)
+}
+
+// CreateBucket create a buckets in s3 server.
+// TODO: handle acl
+func (m *Manager) CreateBucket(ctx context.Context, name string) error {
+	_, err := s3.New(m.sess).CreateBucket(&s3.CreateBucketInput{
+		Bucket:    aws.String(name),
+		GrantRead: aws.String("GrantRead"),
+	})
+	return err
 }
 
 func (m *Manager) otHandler() func(*request.Request) {

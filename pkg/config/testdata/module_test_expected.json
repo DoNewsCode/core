@@ -7,6 +7,6 @@
   "http": {
     "addr": ":8080"
   },
-  "name": "skeleton",
+  "name": "app",
   "version": "0.1.0"
 }

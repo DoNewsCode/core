@@ -66,9 +66,10 @@ type DatabaseIn struct {
 type DatabaseOut struct {
 	di.Out
 
-	Database *gorm.DB
-	Factory  Factory
-	Maker    Maker
+	Database       *gorm.DB
+	Factory        Factory
+	Maker          Maker
+	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
 }
 
 // ProvideDialector provides a gorm.Dialector. Mean to be used as an intermediate
@@ -131,7 +132,7 @@ func (d DatabaseOut) ProvideConfig() []contract.ExportedConfig {
 				"database": map[string]databaseConf{
 					"default": {
 						Database:                                 "mysql",
-						Dsn:                                      "root@tcp(127.0.0.1:3306)/skeleton?charset=utf8mb4&parseTime=True&loc=Local",
+						Dsn:                                      "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local",
 						SkipDefaultTransaction:                   false,
 						FullSaveAssociations:                     false,
 						DryRun:                                   false,

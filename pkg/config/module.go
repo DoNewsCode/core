@@ -37,7 +37,7 @@ func (m Module) ProvideConfig() []contract.ExportedConfig {
 		{
 			Name: "name",
 			Data: map[string]interface{}{
-				"name": "skeleton",
+				"name": "app",
 			},
 			Comment: "The name of the application",
 		},
