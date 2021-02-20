@@ -2,16 +2,16 @@ package config
 
 import (
 	"context"
-	"fmt"
+	"io/ioutil"
+	gotesting "testing"
+	"time"
+
 	"github.com/DoNewsCode/std/pkg/config/watcher"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	gotesting "testing"
-	"time"
 )
 
 func TestKoanfAdapter_Route(t *gotesting.T) {
@@ -24,7 +24,6 @@ func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
 	ka := prepareTestSubject(t)
 	var target string
 	err := ka.Unmarshal("foo.bar", &target)
-	fmt.Println(err)
 	assert.NoError(t, err)
 	assert.Equal(t, "baz", target)
 }
