@@ -37,6 +37,7 @@ jobs:
         ports:
           - 2181:2181
           - 2888:2888
+        network: "host"
       kafka:
         image: wurstmeister/kafka:latest
         ports:
