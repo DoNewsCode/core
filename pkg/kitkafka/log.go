@@ -6,7 +6,7 @@ import (
 	"github.com/go-kit/kit/log"
 )
 
-// kafkaLogAdapter is an log adapter bridging kitlog and kafka.
+// KafkaLogAdapter is an log adapter bridging kitlog and kafka.
 type KafkaLogAdapter struct {
 	Logging log.Logger
 }

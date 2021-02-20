@@ -69,7 +69,7 @@ func (r *RedisDriver) Pop(ctx context.Context) (*PersistedEvent, error) {
 
 	res, err := r.RedisClient.BRPop(ctx, r.PopTimeout, r.ChannelConfig.Waiting).Result()
 	if err == redis.Nil {
-		return nil, Nil
+		return nil, ErrEmpty
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to brpop while popping")

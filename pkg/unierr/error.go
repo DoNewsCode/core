@@ -52,9 +52,10 @@ func Wrap(err error, code codes.Code) *Error {
 	}
 }
 
-// Wrap annotates an error with a codes.Code, and provides a new error message.
-// The wrapped error hence is mainly kept for tracing and debugging. The message in the wrapped error becomes irrelevant
-// as it is overwritten by the new message.
+// Wrapf annotates an error with a codes.Code, and provides a new error message.
+// The wrapped error hence is mainly kept for tracing and debugging. The message
+// in the wrapped error becomes irrelevant as it is overwritten by the new
+// message.
 func Wrapf(err error, code codes.Code, format string, args ...interface{}) *Error {
 	se := Wrap(err, code)
 	se.msg = format

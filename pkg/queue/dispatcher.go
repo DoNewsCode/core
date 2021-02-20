@@ -87,7 +87,7 @@ func (d *QueueableDispatcher) Consume(ctx context.Context) error {
 		defer close(jobChan)
 		for {
 			msg, err := d.driver.Pop(ctx)
-			if errors.Is(err, Nil) {
+			if errors.Is(err, ErrEmpty) {
 				continue
 			}
 			if err != nil {

@@ -1,4 +1,3 @@
-// package mods3 contains integration with package core
 package ots3
 
 import (

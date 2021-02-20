@@ -130,7 +130,7 @@ func (i *InProcessDriver) Pop(ctx context.Context) (*PersistedEvent, error) {
 		i.reserved[message] = time.Now().Add(message.HandleTimeout)
 		return message, nil
 	case <-time.After(i.popInterval):
-		return nil, Nil
+		return nil, ErrEmpty
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}

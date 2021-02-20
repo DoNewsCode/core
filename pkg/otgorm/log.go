@@ -15,7 +15,7 @@ type GormLogAdapter struct {
 	Logging log.Logger
 }
 
-// LogMod implements logger.Interface
+// LogMode implements logger.Interface
 func (g GormLogAdapter) LogMode(logLevel logger.LogLevel) logger.Interface {
 	panic("Setting GORM LogMode is not allowed for kit log")
 }

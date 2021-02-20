@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// Nil means the queue is empty.
-var Nil = errors.New("no message available")
+// ErrEmpty means the queue is empty.
+var ErrEmpty = errors.New("no message available")
 
 // Driver is the interface for queue engines. See RedisDriver for usage.
 type Driver interface {

@@ -71,6 +71,7 @@ func TestProvideKafka(t *testing.T) {
 			},
 		}},
 	})
+	assert.NoError(t, err)
 	def, err := Out.WriterMaker.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)

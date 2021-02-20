@@ -96,7 +96,7 @@ func ProvideReaderFactory(p KafkaIn) (ReaderFactory, func()) {
 }
 
 // ProvideWriterFactory creates WriterFactory. It is a valid injection
-// option for pacakge core.
+// option for package core.
 func ProvideWriterFactory(p KafkaIn) (WriterFactory, func()) {
 	var err error
 	var dbConfs map[string]WriterConfig
