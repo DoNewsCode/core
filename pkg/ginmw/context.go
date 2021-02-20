@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// WithContext is a gin middleware that adds request context to contract keys.
 func WithContext() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := context.WithValue(c, contract.TransportKey, "HTTPJSON")

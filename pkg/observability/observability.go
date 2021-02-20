@@ -42,15 +42,19 @@ func Provide(in ObservabilityIn) (ObservabilityOut, func(), error) {
 	}, cleanup, err
 }
 
-func exportConfig() []contract.ExportedConfig {
-	const sample = `
+const sample = `
 jaeger:
   sampler:
     type: 'const'
     param: 1
-  log:
-    enable: false
+  reporter:
+    log:
+      enable: false
+    addr:
 `
+
+func exportConfig() []contract.ExportedConfig {
+
 	var conf map[string]interface{}
 	_ = yaml.Unmarshal([]byte(sample), conf)
 	return []contract.ExportedConfig{

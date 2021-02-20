@@ -11,13 +11,15 @@ import (
 	"github.com/go-kit/kit/log/level"
 )
 
-func WithLogger(logger log.Logger, keyer contract.Keyer, notlogged ...string) gin.HandlerFunc {
+// WithLogger is a gin middleware that logs access record via kitlog. The paths
+// defined by "ignore" argument are ignored.
+func WithLogger(logger log.Logger, keyer contract.Keyer, ignore ...string) gin.HandlerFunc {
 	var skip map[string]struct{}
 
-	if length := len(notlogged); length > 0 {
+	if length := len(ignore); length > 0 {
 		skip = make(map[string]struct{}, length)
 
-		for _, path := range notlogged {
+		for _, path := range ignore {
 			skip[path] = struct{}{}
 		}
 	}
