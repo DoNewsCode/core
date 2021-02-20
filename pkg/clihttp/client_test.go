@@ -14,6 +14,7 @@ func (m MockClient) Do(request *http.Request) (*http.Response, error) { return &
 
 func TestClient_Do(t *testing.T) {
 	t.Run("normal", func(t *testing.T) {
+		t.Parallel()
 		tracer := mocktracer.New()
 		client := NewClient(tracer)
 		req, _ := http.NewRequest("GET", "https://baidu.com", nil)
@@ -24,6 +25,7 @@ func TestClient_Do(t *testing.T) {
 	})
 
 	t.Run("large request", func(t *testing.T) {
+		t.Parallel()
 		tracer := mocktracer.New()
 		client := NewClient(tracer)
 		req, _ := http.NewRequest("POST", "https://baidu.com", strings.NewReader(strings.Repeat("f", 10000000)))
