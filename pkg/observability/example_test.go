@@ -12,7 +12,7 @@ import (
 func Example() {
 	c := core.New()
 	c.AddCoreDependencies()
-	c.AddDependencyFunc(observability.ProvideObservability)
+	c.AddDependencyFunc(observability.Provide)
 	c.Invoke(func(tracer opentracing.Tracer, metrics metrics.Histogram) {
 		start := time.Now()
 		span := tracer.StartSpan("test")

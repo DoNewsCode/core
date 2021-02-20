@@ -2,13 +2,14 @@ package observability
 
 import (
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/ghodss/yaml"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/dig"
 )
 
-// ObservabilityIn is the injection argument of ProvideObservability.
+// ObservabilityIn is the injection argument of Provide.
 type ObservabilityIn struct {
 	dig.In
 
@@ -18,23 +19,45 @@ type ObservabilityIn struct {
 	Env     contract.Env
 }
 
-// ObservabilityOut is the result of ProvideObservability
+// ObservabilityOut is the result of Provide
 type ObservabilityOut struct {
 	dig.Out
 
-	Tracer opentracing.Tracer
-	Hist   metrics.Histogram
+	Tracer         opentracing.Tracer
+	Hist           metrics.Histogram
+	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
 }
 
-// ProvideObservability provides the observability suite for the system. It contains a tracer and
+// Provide provides the observability suite for the system. It contains a tracer and
 // a histogram to measure all incoming request.
-func ProvideObservability(in ObservabilityIn) (ObservabilityOut, func(), error) {
+func Provide(in ObservabilityIn) (ObservabilityOut, func(), error) {
 	in.Logger = log.With(in.Logger, "component", "observability")
 	jlogger := ProvideJaegerLogAdapter(in.Logger)
 	tracer, cleanup, err := ProvideOpentracing(in.AppName, in.Env, jlogger, in.Conf)
 	hist := ProvideHistogramMetrics(in.AppName, in.Env)
 	return ObservabilityOut{
-		Tracer: tracer,
-		Hist:   hist,
+		Tracer:         tracer,
+		Hist:           hist,
+		ExportedConfig: exportConfig(),
 	}, cleanup, err
+}
+
+func exportConfig() []contract.ExportedConfig {
+	const sample = `
+jaeger:
+  sampler:
+    type: 'const'
+    param: 1
+  log:
+    enable: false
+`
+	var conf map[string]interface{}
+	_ = yaml.Unmarshal([]byte(sample), conf)
+	return []contract.ExportedConfig{
+		{
+			Owner:   "observability",
+			Data:    conf,
+			Comment: "The observability configuration",
+		},
+	}
 }

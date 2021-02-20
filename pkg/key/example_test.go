@@ -26,3 +26,10 @@ func ExampleKeepOdd() {
 	// Output:
 	// [foo bar]
 }
+
+func ExampleKeyManager_Key() {
+	keyer := key.NewManager("module", "foo", "service", "bar")
+	fmt.Println(keyer.Key("."))
+	// Output:
+	// module.foo.service.bar
+}
