@@ -1,3 +1,6 @@
+/*
+Package clihttp adds opentracing support to http client.
+*/
 package clihttp
 
 import (
@@ -14,6 +17,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+// HttpDoer modules a upstream http client.
+type HttpDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// Client is a http client that traces http requests.
 type Client struct {
 	tracer               opentracing.Tracer
 	underlying           contract.HttpDoer
@@ -21,27 +30,34 @@ type Client struct {
 	responseLogThreshold int
 }
 
-type option func(*Client)
+// Option changes the behavior of Client.
+type Option func(*Client)
 
-func WithDoer(doer contract.HttpDoer) option {
+// WithDoer is an option that accepts a HttpDoer as the underlying client.
+func WithDoer(doer contract.HttpDoer) Option {
 	return func(client *Client) {
 		client.underlying = doer
 	}
 }
 
-func WithRequestLogThreshold(num int) option {
+// WithRequestLogThreshold is options that sets threshold of request logging in number of bytes.
+// If the payload is larger than this threshold, the log will be omit.
+func WithRequestLogThreshold(num int) Option {
 	return func(client *Client) {
 		client.requestLogThreshold = num
 	}
 }
 
-func WithResponseLogThreshold(num int) option {
+// WithResponseLogThreshold is options that sets threshold of response logging in number of bytes.
+// If the response body is larger than this threshold, the log will be omit.
+func WithResponseLogThreshold(num int) Option {
 	return func(client *Client) {
 		client.requestLogThreshold = num
 	}
 }
 
-func NewClient(tracer opentracing.Tracer, options ...option) *Client {
+// NewClient creates a Client with tracing support.
+func NewClient(tracer opentracing.Tracer, options ...Option) *Client {
 	baseClient := &http.Client{Transport: &nethttp.Transport{}}
 	c := &Client{
 		tracer:               tracer,
@@ -55,6 +71,7 @@ func NewClient(tracer opentracing.Tracer, options ...option) *Client {
 	return c
 }
 
+// Do sends the request.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	req, tracer := nethttp.TraceRequest(c.tracer, req)
 	defer tracer.Finish()
@@ -97,6 +114,9 @@ func (c *Client) logRequest(req *http.Request, tracer *nethttp.Tracer) {
 }
 
 func (c *Client) logResponse(response *http.Response, tracer *nethttp.Tracer) {
+	if response.Body == nil {
+		return
+	}
 	length, _ := strconv.Atoi(response.Header.Get(http.CanonicalHeaderKey("Content-Length")))
 	if length > c.responseLogThreshold {
 		tracer.Span().LogKV("response", "elided: Content-Length too large")

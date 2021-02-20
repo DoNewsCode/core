@@ -1,3 +1,6 @@
+/*
+Package container includes the Container type, witch contains a collection of modules.
+*/
 package container
 
 import (
