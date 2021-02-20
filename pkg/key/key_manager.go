@@ -22,7 +22,7 @@ Here is an example from go kit log, go kit metrics and go-redis:
 
 Package key allows it to be rewritten as:
 
-	keyer := key.NewManager("module", "foo")
+	keyer := key.New("module", "foo")
 	logger := log.With(logger, keyer.Spread()...)
 	client.Set(key.KeepOdd(keyer).Key(":", "mykey")).Result()
 	counter.With(key.Spread()...).Add(1)
@@ -31,7 +31,7 @@ You don't need package key if such labels are simple and clustered in one place.
 It is most beneficial if labels are used multiple times and are scattered all
 over the place.
 
-KeyManager is immutable, hence safe for concurrent access.
+manager is immutable, hence safe for concurrent access.
 */
 package key
 
@@ -41,44 +41,44 @@ import (
 	"github.com/DoNewsCode/std/pkg/contract"
 )
 
-// KeyManager is an immutable struct that manages the labels for log, metrics,
+// manager is an immutable struct that manages the labels for log, metrics,
 // tracing, kv store, etc.
-type KeyManager struct {
+type manager struct {
 	Prefixes []string
 }
 
-// NewManager constructs a KeyManager from alternating key values.
+// New constructs a manager from alternating key values.
 //
-//  manager := NewManager("module", "foo", "service", "bar")
-func NewManager(parts ...string) KeyManager {
-	return KeyManager{
+//  manager := New("module", "foo", "service", "bar")
+func New(parts ...string) manager {
+	return manager{
 		Prefixes: parts,
 	}
 }
 
-// Key creates a string key composed by labels stored in KeyManager
-func (k KeyManager) Key(delimiter string, parts ...string) string {
+// Key creates a string key composed by labels stored in manager
+func (k manager) Key(delimiter string, parts ...string) string {
 	parts = append(k.Prefixes, parts...)
 	return strings.Join(parts, delimiter)
 }
 
-// Spread returns all labels in KeyManager as []string.
-func (k KeyManager) Spread() []string {
+// Spread returns all labels in manager as []string.
+func (k manager) Spread() []string {
 	return k.Prefixes
 }
 
-// With returns a new KeyManager with added alternating key values.
-// Note: KeyManager is immutable. With Creates a new instance.
-func (k KeyManager) With(parts ...string) KeyManager {
-	newKeyManager := KeyManager{}
+// With returns a new manager with added alternating key values.
+// Note: manager is immutable. With Creates a new instance.
+func (k manager) With(parts ...string) manager {
+	newKeyManager := manager{}
 	newKeyManager.Prefixes = append(k.Prefixes, parts...)
 	return newKeyManager
 }
 
-// With returns a new KeyManager with added alternating key values.
-// Note: KeyManager is immutable. With Creates a new instance.
-func With(k contract.Keyer, parts ...string) KeyManager {
-	km := KeyManager{}
+// With returns a new manager with added alternating key values.
+// Note: manager is immutable. With Creates a new instance.
+func With(k contract.Keyer, parts ...string) manager {
+	km := manager{}
 	parts = append(k.Spread(), parts...)
 	return km.With(parts...)
 }
@@ -100,7 +100,7 @@ func SpreadInterface(k contract.Keyer) []interface{} {
 func KeepOdd(k contract.Keyer) contract.Keyer {
 	var (
 		spreader = k.Spread()
-		km       = KeyManager{}
+		km       = manager{}
 	)
 	for i := range spreader {
 		if i%2 == 1 {

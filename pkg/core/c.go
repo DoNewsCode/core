@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -272,6 +273,13 @@ func (c *C) AddCoreDependencies() {
 		}
 
 		return coreDependencies
+	})
+}
+
+func (c *C) Serve(ctx context.Context) error {
+	return c.di.Invoke(func(in serveIn) error {
+		cmd := newServeCmd(in)
+		return cmd.ExecuteContext(ctx)
 	})
 }
 

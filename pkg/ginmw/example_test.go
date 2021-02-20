@@ -20,7 +20,7 @@ func ExampleWithContext() {
 
 func ExampleWithTrace() {
 	g := gin.New()
-	g.Use(WithTrace(opentracing.GlobalTracer(), key.NewManager("module", "foo")))
+	g.Use(WithTrace(opentracing.GlobalTracer(), key.New("module", "foo")))
 	g.Handle("GET", "/", func(context *gin.Context) {
 		// Do stuff
 	})
@@ -31,7 +31,7 @@ func ExampleWithMetrics() {
 	g.Use(WithMetrics(prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
 		Name: "request_duration_seconds",
 		Help: "Total time spent serving requests.",
-	}, []string{"module", "method"}), key.NewManager("module", "foo"), false))
+	}, []string{"module", "method"}), key.New("module", "foo"), false))
 	g.Handle("GET", "/", func(context *gin.Context) {
 		// Do stuff
 	})

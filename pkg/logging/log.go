@@ -70,7 +70,7 @@ func NewLogger(format string) (logger log.Logger) {
 			return term.FgBgColor{}
 		}
 		logger = term.NewLogger(os.Stdout, log.NewLogfmtLogger, colorFn)
-		logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.Caller(7))
+		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 		logger = moduleLogger{Logger: logger}
 		return logger
 	}
@@ -135,39 +135,44 @@ func withContext(logger log.Logger, ctx context.Context) log.Logger {
 }
 
 type levelLogger struct {
+	depth int
 	log.Logger
 }
 
 func (l levelLogger) Debugf(s string, i ...interface{}) {
-	l.Debug(fmt.Sprintf(s, i...))
+	s = fmt.Sprintf(s, i...)
+	_ = log.With(level.Debug(l), "caller", log.Caller(l.depth)).Log("msg", s)
 }
 
 func (l levelLogger) Infof(s string, i ...interface{}) {
-	l.Info(fmt.Sprintf(s, i...))
+	s = fmt.Sprintf(s, i...)
+	_ = log.With(level.Info(l), "caller", log.Caller(l.depth)).Log("msg", s)
 }
 
 func (l levelLogger) Warnf(s string, i ...interface{}) {
-	l.Warn(fmt.Sprintf(s, i...))
+	s = fmt.Sprintf(s, i...)
+	_ = log.With(level.Warn(l), "caller", log.Caller(l.depth)).Log("msg", s)
 }
 
 func (l levelLogger) Errf(s string, i ...interface{}) {
-	l.Errf(fmt.Sprintf(s, i...))
+	s = fmt.Sprintf(s, i...)
+	_ = log.With(level.Error(l), "caller", log.Caller(l.depth)).Log("err", s)
 }
 
 func (l levelLogger) Debug(s string) {
-	_ = level.Debug(l).Log("err", s)
+	_ = log.With(level.Debug(l), "caller", log.Caller(l.depth)).Log("err", s)
 }
 
 func (l levelLogger) Info(s string) {
-	_ = level.Info(l).Log("msg", s)
+	_ = log.With(level.Info(l), "caller", log.Caller(l.depth)).Log("msg", s)
 }
 
 func (l levelLogger) Warn(s string) {
-	_ = level.Warn(l).Log("msg", s)
+	_ = log.With(level.Warn(l), "caller", log.Caller(4)).Log("msg", s)
 }
 
 func (l levelLogger) Err(err string) {
-	_ = level.Error(l).Log("err", err)
+	_ = log.With(level.Error(l), "caller", log.Caller(4)).Log("err", err)
 }
 
 // WithLevel decorates the logger and returns a contract.LevelLogger.
@@ -177,7 +182,10 @@ func (l levelLogger) Err(err string) {
 // log.Logger, and converts log.Logger to contract.LevelLogger within the
 // boundary of dependency consumer if desired.
 func WithLevel(logger log.Logger) levelLogger {
-	return levelLogger{logger}
+	if l, ok := logger.(levelLogger); ok {
+		return l
+	}
+	return levelLogger{4, logger}
 }
 
 type moduleLogger struct {

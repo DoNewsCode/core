@@ -45,7 +45,7 @@ func ExampleMakeLoggingMiddleware() {
 
 	wrapped = kitmw.MakeLoggingMiddleware(
 		logging.NewLogger("json"),
-		key.NewManager(),
+		key.New(),
 		false,
 	)(original)
 
