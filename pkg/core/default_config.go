@@ -96,7 +96,7 @@ func ProvideLogger(conf contract.ConfigAccessor, appName contract.AppName, env c
 	return level.NewFilter(logger, logging.LevelFilter(lvl))
 }
 
-func ProvideDi(conf contract.ConfigAccessor) contract.DiContainer {
+func ProvideDi(conf contract.ConfigAccessor) diContainer {
 	return di.NewGraph()
 }
 

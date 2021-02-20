@@ -23,7 +23,7 @@ type C struct {
 	contract.LevelLogger
 	contract.Container
 	contract.Dispatcher
-	di contract.DiContainer
+	di diContainer
 }
 
 type Parser interface {
@@ -38,7 +38,7 @@ type Provider interface {
 
 type ConfigProvider func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor
 type EventDispatcherProvider func(conf contract.ConfigAccessor) contract.Dispatcher
-type DiProvider func(conf contract.ConfigAccessor) contract.DiContainer
+type DiProvider func(conf contract.ConfigAccessor) diContainer
 type AppNameProvider func(conf contract.ConfigAccessor) contract.AppName
 type EnvProvider func(conf contract.ConfigAccessor) contract.Env
 type LoggerProvider func(conf contract.ConfigAccessor, appName contract.AppName, env contract.Env) log.Logger
@@ -106,7 +106,7 @@ func SetLoggerProvider(provider LoggerProvider) CoreOption {
 	}
 }
 
-func SetDiProvider(provider func(conf contract.ConfigAccessor) contract.DiContainer) CoreOption {
+func SetDiProvider(provider func(conf contract.ConfigAccessor) diContainer) CoreOption {
 	return func(values *coreValues) {
 		values.diProvider = provider
 	}
