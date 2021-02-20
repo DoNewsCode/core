@@ -86,7 +86,7 @@ func ExampleMakeTimeoutMiddleware() {
 		select {
 		case <-ctx.Done():
 			return nil, errors.New("timeout")
-		case <-time.After(2 * time.Microsecond):
+		case <-time.After(10 * time.Microsecond):
 			return nil, nil
 		}
 	}
