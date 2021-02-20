@@ -11,7 +11,15 @@ Go kit models the RPCs as:
 
 	func(context.Context, request interface{}) (response interface{}, err error)
 
-Package kitkafka treat messaging as a special case RPC, where the response is always ignored.
-By using the same model, package kafka brings all
+Package kitkafka treat messaging as a special case of RPC, where the response is
+always ignored. By using the same model, package kitkafka brings all go kit
+endpoint into the hood.
+
+See examples for go kit project with kafka as transport.
+
+Integration
+
+
+
 */
 package kitkafka

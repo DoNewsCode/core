@@ -36,7 +36,6 @@ jobs:
         image: wurstmeister/zookeeper:latest
         ports:
           - 2181:2181
-          - 2888:2888
       kafka:
         image: wurstmeister/kafka:latest
         ports:
@@ -53,13 +52,6 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go-version }}
-
-#    - name: start kafka docker
-#      run: |
-#        cd .github
-#        # kafka
-#        docker-compose up -d
-#        docker ps -a && docker ps
 
     - name: Build
       run: go build -v ./...
