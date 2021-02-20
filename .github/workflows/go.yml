@@ -40,7 +40,7 @@ jobs:
       kafka:
         image: wurstmeister/kafka:latest
         ports:
-          - 27017:27017
+          - 9092:9092
         env:
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
           KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
