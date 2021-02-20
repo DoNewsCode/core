@@ -5,7 +5,8 @@ import (
 	"github.com/DoNewsCode/std/pkg/contract"
 )
 
-func Listen(events []contract.Event, callback func(ctx context.Context, event2 contract.Event) error) funcListener {
+// Listen creates a functional listener in one line.
+func Listen(events []contract.Event, callback func(ctx context.Context, event contract.Event) error) funcListener {
 	return funcListener{
 		events:   events,
 		callback: callback,

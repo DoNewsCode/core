@@ -12,10 +12,12 @@ type Event struct {
 	body interface{}
 }
 
+// Data returns the enclosing data in the event.
 func (e Event) Data() interface{} {
 	return e.body
 }
 
+// Type returns the type of the event as string.
 func (e Event) Type() string {
 	bType := reflect.TypeOf(e.body)
 	return fmt.Sprintf("%s.%s", bType.PkgPath(), bType.Name())
