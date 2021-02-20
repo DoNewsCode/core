@@ -149,6 +149,9 @@ func decodeCountRequest(_ context.Context, r *kafka.Message) (interface{}, error
 }
 
 func sendTestData() {
+	// to create topics when auto.create.topics.enable='true'
+	kafka.DialLeader(context.Background(), "tcp", "localhost:9092", "my-topic", 0)
+
 	writer := kafka.Writer{
 		Addr:      kafka.TCP("127.0.0.1:9092"),
 		Topic:     "uppercase",
