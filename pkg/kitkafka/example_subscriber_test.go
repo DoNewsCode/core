@@ -123,7 +123,7 @@ func Example_subscriber() {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	mux := kitkafka.NewMux(uppercaseServer, countServer)
 	mux.Serve(ctx)
