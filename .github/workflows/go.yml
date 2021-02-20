@@ -55,6 +55,13 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
+    - name: start kafka docker
+      run: |
+        cd .github
+        # kafka
+        docker-compose up -d
+        docker ps -a && docker ps
+
     - name: Build
       run: go build -v ./...
 

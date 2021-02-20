@@ -1,0 +1,18 @@
+version: "3.4"
+services:
+  zookeeper:
+    container_name: zookeeper
+    image: zookeeper:latest
+    ports:
+      - "2181:2181"
+  kafka:
+    container_name: kafka
+    image: wurstmeister/kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      HOSTNAME_COMMAND: hostname -i
+    ports:
+      - "9092:9092"
