@@ -2,10 +2,10 @@ package kitkafka
 
 import (
 	"context"
-	"flag"
+	"testing"
+
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/stretchr/testify/assert"
-	"testing"
 
 	"github.com/DoNewsCode/std/pkg/logging"
 	"github.com/segmentio/kafka-go"
@@ -13,22 +13,15 @@ import (
 
 var useKafka bool
 
-func init() {
-	flag.BoolVar(&useKafka, "kafka", false, "use kafka for testing")
-}
-
 func TestTransport(t *testing.T) {
-	if !useKafka {
-		t.Skip("requires kafka")
-	}
 
 	kafka.DialLeader(context.Background(), "tcp", "localhost:9092", "Test", 0)
 
 	writerFactory, cleanupWriter := ProvideKafkaWriterFactory(KafkaIn{
-		Conf: config.MapAdapter{"kafka.writer": map[string]kafka.Writer{
+		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
-				Addr:  kafka.TCP("127.0.0.1:9092"),
-				Topic: "Test",
+				Brokers: []string{"127.0.0.1:9092"},
+				Topic:   "test",
 			},
 		}},
 		Logger: logging.NewLogger("logfmt"),
@@ -36,10 +29,10 @@ func TestTransport(t *testing.T) {
 	defer cleanupWriter()
 
 	readerFactory, cleanupReader := ProvideKafkaReaderFactory(KafkaIn{
-		Conf: config.MapAdapter{"kafka.reader": map[string]kafka.ReaderConfig{
+		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
 			"default": {
 				Brokers: []string{"127.0.0.1:9092"},
-				Topic:   "Test",
+				Topic:   "test",
 			},
 		}},
 		Logger: logging.NewLogger("logfmt"),

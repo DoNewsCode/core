@@ -45,14 +45,14 @@ jobs:
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
           KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
           KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_CREATE_TOPICS: "count:1:1,uppercase:1:1"
+          KAFKA_CREATE_TOPICS: "count:1:1,uppercase:1:1,test:1:1"
     steps:
     - uses: actions/checkout@v2
 
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.15
+        go-version: ${{ matrix.go-version }}
 
     - name: Build
       run: go build -v ./...
