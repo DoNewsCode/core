@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/kitkafka"
@@ -82,17 +81,27 @@ func makeCountEndpoint(svc StringService) endpoint.Endpoint {
 func Example_subscriber() {
 
 	sendTestData()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	svc := stringService{}
 
 	uppercaseHandler := kitkafka.NewSubscriber(
 		makeUppercaseEndpoint(svc),
 		decodeUppercaseRequest,
+		kitkafka.SubscriberAfter(func(ctx context.Context, _ *kafka.Message) context.Context {
+			cancel()
+			return ctx
+		}),
 	)
 
 	countHandler := kitkafka.NewSubscriber(
 		makeCountEndpoint(svc),
 		decodeCountRequest,
+		kitkafka.SubscriberAfter(func(ctx context.Context, _ *kafka.Message) context.Context {
+			cancel()
+			return ctx
+		}),
 	)
 
 	factory, cleanup := kitkafka.ProvideReaderFactory(kitkafka.KafkaIn{
@@ -123,8 +132,6 @@ func Example_subscriber() {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	mux := kitkafka.NewMux(uppercaseServer, countServer)
 	mux.Serve(ctx)
 
