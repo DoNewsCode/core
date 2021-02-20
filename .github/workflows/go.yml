@@ -32,6 +32,20 @@ jobs:
         image: mongo
         ports:
           - 27017:27017
+      zookeeper:
+        image: wurstmeister/zookeeper:latest
+        ports:
+          - 2181:2181
+          - 2888:2888
+      kafka:
+        image: wurstmeister/kafka:latest
+        ports:
+          - 27017:27017
+        env:
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:<ZOOKEEPER_PORT>
+          KAFKA_CREATE_TOPICS: "test-topic:1:1"
     steps:
     - uses: actions/checkout@v2
 
