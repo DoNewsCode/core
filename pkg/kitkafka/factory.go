@@ -8,17 +8,17 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// KafkaReaderFactory is a *async.Factory that creates *kafka.Reader.
+// ReaderFactory is a *async.Factory that creates *kafka.Reader.
 //
 // Unlike other database providers, the kafka factories don't bundle a default
 // kafka reader/writer. It is suggested to use Topic name as the identifier of
 // kafka config rather than an opaque name such as default.
-type KafkaReaderFactory struct {
+type ReaderFactory struct {
 	*async.Factory
 }
 
 // Make returns a *kafka.Reader under the provided configuration entry.
-func (k KafkaReaderFactory) Make(name string) (*kafka.Reader, error) {
+func (k ReaderFactory) Make(name string) (*kafka.Reader, error) {
 	client, err := k.Factory.Make(name)
 	if err != nil {
 		return nil, err
@@ -26,17 +26,17 @@ func (k KafkaReaderFactory) Make(name string) (*kafka.Reader, error) {
 	return client.(*kafka.Reader), nil
 }
 
-// KafkaWriterFactory is a *async.Factory that creates *kafka.Writer.
+// WriterFactory is a *async.Factory that creates *kafka.Writer.
 //
 // Unlike other database providers, the kafka factories don't bundle a default
 // kafka reader/writer. It is suggested to use Topic name as the identifier of
 // kafka config rather than an opaque name such as default.
-type KafkaWriterFactory struct {
+type WriterFactory struct {
 	*async.Factory
 }
 
 // Make returns a *kafka.Writer under the provided configuration entry.
-func (k KafkaWriterFactory) Make(name string) (*kafka.Writer, error) {
+func (k WriterFactory) Make(name string) (*kafka.Writer, error) {
 	client, err := k.Factory.Make(name)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (k KafkaWriterFactory) Make(name string) (*kafka.Writer, error) {
 
 // MakeClient creates an Handler. This handler can write *kafka.Message to
 // kafka broker. The Handler is mean to be consumed by NewPublisher.
-func (k KafkaWriterFactory) MakeClient(name string) (*writerHandle, error) {
+func (k WriterFactory) MakeClient(name string) (*writerHandle, error) {
 	writer, err := k.Make(name)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func WithSyncCommit() ReaderOpt {
 // MakeSubscriberServer creates a *SubscriberServer.
 //     name: the key of the configuration entry.
 //     subscriber: the Handler (go kit transport layer)
-func (k KafkaReaderFactory) MakeSubscriberServer(name string, subscriber Handler, opt ...ReaderOpt) (*SubscriberServer, error) {
+func (k ReaderFactory) MakeSubscriberServer(name string, subscriber Handler, opt ...ReaderOpt) (*SubscriberServer, error) {
 	var config = subscriberConfig{
 		parallelism: 1,
 	}

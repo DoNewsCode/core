@@ -95,7 +95,7 @@ func Example_subscriber() {
 		decodeCountRequest,
 	)
 
-	factory, cleanup := kitkafka.ProvideKafkaReaderFactory(kitkafka.KafkaIn{
+	factory, cleanup := kitkafka.ProvideReaderFactory(kitkafka.KafkaIn{
 		Conf: config.MapAdapter{"kafka.reader": map[string]kitkafka.ReaderConfig{
 			"uppercase": {
 				Brokers: []string{"127.0.0.1:9092"},
@@ -121,7 +121,7 @@ func Example_subscriber() {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	mux := kitkafka.NewMux(uppercaseServer, countServer)
 	mux.Serve(ctx)
@@ -148,10 +148,10 @@ func decodeCountRequest(_ context.Context, r *kafka.Message) (interface{}, error
 
 func sendTestData() {
 	writer := kafka.Writer{
-		Addr:  kafka.TCP("127.0.0.1:9092"),
-		Topic: "uppercase",
+		Addr:      kafka.TCP("127.0.0.1:9092"),
+		Topic:     "uppercase",
+		BatchSize: 1,
 	}
-
 	writer.WriteMessages(context.Background(), kafka.Message{
 		Value: []byte(`{"s":"kitkafka"}`),
 	})

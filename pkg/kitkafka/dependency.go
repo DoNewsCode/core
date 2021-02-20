@@ -11,12 +11,22 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// KafkaIn is a injection parameter for ProvideKafkaReaderFactory.
+// WriterMaker models a WriterFactory
+type WriterMaker interface {
+	Make(name string) (*kafka.Writer, error)
+}
+
+// ReaderMaker models a ReaderFactory
+type ReaderMaker interface {
+	Make(name string) (*kafka.Reader, error)
+}
+
+// KafkaIn is a injection parameter for ProvideReaderFactory.
 type KafkaIn struct {
 	di.In
 
-	ReaderInterceptor ReaderInterceptor
-	WriterInterceptor WriterInterceptor
+	ReaderInterceptor ReaderInterceptor `optional:"true"`
+	WriterInterceptor WriterInterceptor `optional:"true"`
 	Conf              contract.ConfigAccessor
 	Logger            log.Logger
 }
@@ -25,29 +35,33 @@ type KafkaIn struct {
 type KafkaOut struct {
 	di.In
 
-	ReaderFactory   KafkaReaderFactory
-	WriterFactory   KafkaWriterFactory
+	ReaderFactory   ReaderFactory
+	WriterFactory   WriterFactory
+	ReaderMaker     ReaderMaker
+	WriterMaker     WriterMaker
 	ExportedConfigs []contract.ExportedConfig `group:"config,flatten"`
 }
 
-// ProvideKafka creates the KafkaReaderFactory and KafkaWriterFactory. It is
+// ProvideKafka creates the ReaderFactory and WriterFactory. It is
 // valid dependency option for package core. Note: when working with package
-// core's DI container, use ProvideKafka over ProvideKafkaReaderFactory and
-// ProvideKafkaWriterFactory. Not only ProvideKafka provides both reader and
+// core's DI container, use ProvideKafka over ProvideReaderFactory and
+// ProvideWriterFactory. Not only ProvideKafka provides both reader and
 // writer, but also only ProvideKafka exports default Kafka configuration.
 func ProvideKafka(p KafkaIn) (KafkaOut, func(), func(), error) {
-	rf, rc := ProvideKafkaReaderFactory(p)
-	wf, wc := ProvideKafkaWriterFactory(p)
+	rf, rc := ProvideReaderFactory(p)
+	wf, wc := ProvideWriterFactory(p)
 	return KafkaOut{
+		ReaderMaker:     rf,
 		ReaderFactory:   rf,
+		WriterMaker:     wf,
 		WriterFactory:   wf,
 		ExportedConfigs: provideConfig(),
 	}, wc, rc, nil
 }
 
-// ProvideKafkaReaderFactory creates the KafkaReaderFactory. It is valid
+// ProvideReaderFactory creates the ReaderFactory. It is valid
 // dependency option for package core.
-func ProvideKafkaReaderFactory(p KafkaIn) (KafkaReaderFactory, func()) {
+func ProvideReaderFactory(p KafkaIn) (ReaderFactory, func()) {
 	var err error
 	var dbConfs map[string]ReaderConfig
 	err = p.Conf.Unmarshal("kafka.reader", &dbConfs)
@@ -78,12 +92,12 @@ func ProvideKafkaReaderFactory(p KafkaIn) (KafkaReaderFactory, func()) {
 			},
 		}, nil
 	})
-	return KafkaReaderFactory{factory}, factory.Close
+	return ReaderFactory{factory}, factory.Close
 }
 
-// ProvideKafkaWriterFactory creates KafkaWriterFactory. It is a valid injection
+// ProvideWriterFactory creates WriterFactory. It is a valid injection
 // option for pacakge core.
-func ProvideKafkaWriterFactory(p KafkaIn) (KafkaWriterFactory, func()) {
+func ProvideWriterFactory(p KafkaIn) (WriterFactory, func()) {
 	var err error
 	var dbConfs map[string]WriterConfig
 	err = p.Conf.Unmarshal("kafka.writer", &dbConfs)
@@ -112,5 +126,5 @@ func ProvideKafkaWriterFactory(p KafkaIn) (KafkaWriterFactory, func()) {
 			},
 		}, nil
 	})
-	return KafkaWriterFactory{factory}, factory.Close
+	return WriterFactory{factory}, factory.Close
 }

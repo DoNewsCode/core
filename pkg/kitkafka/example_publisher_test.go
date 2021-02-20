@@ -41,7 +41,7 @@ func (s remoteStringService) Count(ctx context.Context, str string) {
 }
 
 func Example_publisher() {
-	factory, cleanup := kitkafka.ProvideKafkaWriterFactory(kitkafka.KafkaIn{
+	factory, cleanup := kitkafka.ProvideWriterFactory(kitkafka.KafkaIn{
 		Conf: config.MapAdapter{"kafka.writer": map[string]kitkafka.WriterConfig{
 			"uppercase": {
 				Brokers: []string{"127.0.0.1:9092"},

@@ -107,7 +107,9 @@ func ProvideGormConfig(l log.Logger, conf *databaseConf) *gorm.Config {
 }
 
 // ProvideGormDB provides a *gorm.DB. It is intended to be used with
-// ProvideDialector and ProvideGormConfig
+// ProvideDialector and ProvideGormConfig. Gorm opens connection to database
+// while building *gorm.db. This means if the database is not available, the system
+// will fail when initializing dependencies.
 func ProvideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentracing.Tracer) (*gorm.DB, func(), error) {
 	db, err := gorm.Open(dialector, config)
 	if err != nil {
@@ -129,6 +131,7 @@ func ProvideDatabase(p DatabaseIn) (DatabaseOut, func(), error) {
 	factory, cleanup := provideDBFactory(p)
 	database, err := factory.Make("default")
 	var confNotFound confNotFoundErr
+	// If the default configuration is not found, don't report error. Just ignore it.
 	if err != nil && !errors.As(err, &confNotFound) {
 		return DatabaseOut{},
 			func() {},
