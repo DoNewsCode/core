@@ -18,23 +18,23 @@ import (
 
 // StringService provides operations on strings.
 type StringService interface {
-	Uppercase(string) (string, error)
-	Count(string) int
+	Uppercase(string) error
+	Count(string)
 }
 
 // stringService is a concrete implementation of StringService
 type stringService struct{}
 
-func (stringService) Uppercase(s string) (string, error) {
+func (stringService) Uppercase(s string) error {
 	if s == "" {
-		return "", ErrEmpty
+		return ErrEmpty
 	}
 	fmt.Println(strings.ToUpper(s))
-	return strings.ToUpper(s), nil
+	return nil
 }
 
-func (stringService) Count(s string) int {
-	return len(s)
+func (stringService) Count(s string) {
+	fmt.Println(len(s))
 }
 
 // ErrEmpty is returned when an input string is empty.
@@ -62,19 +62,20 @@ type countResponse struct {
 func makeUppercaseEndpoint(svc StringService) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(uppercaseRequest)
-		v, err := svc.Uppercase(req.S)
+		err := svc.Uppercase(req.S)
+		// We return error here so that error handler can log/handle this error.
 		if err != nil {
-			return uppercaseResponse{v, err.Error()}, nil
+			return nil, err
 		}
-		return uppercaseResponse{v, ""}, nil
+		return nil, nil
 	}
 }
 
 func makeCountEndpoint(svc StringService) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(countRequest)
-		v := svc.Count(req.S)
-		return countResponse{v}, nil
+		svc.Count(req.S)
+		return nil, nil
 	}
 }
 

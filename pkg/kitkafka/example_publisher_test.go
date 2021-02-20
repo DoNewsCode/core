@@ -18,12 +18,26 @@ type remoteStringService struct {
 	count     endpoint.Endpoint
 }
 
-func (s remoteStringService) Uppercase(ctx context.Context, str string) (string, error) {
-	return s.Uppercase(ctx, str)
+type remoteUppercaseRequest struct {
+	S string `json:"s"`
 }
 
-func (s remoteStringService) Count(ctx context.Context, str string) (string, error) {
-	return s.Uppercase(ctx, str)
+type remoteCountRequest struct {
+	S string `json:"s"`
+}
+
+func (s remoteStringService) Uppercase(ctx context.Context, str string) error {
+	request := remoteUppercaseRequest{S: str}
+	_, err := s.uppercase(ctx, &request)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s remoteStringService) Count(ctx context.Context, str string) {
+	request := remoteCountRequest{S: str}
+	_, _ = s.count(ctx, &request)
 }
 
 func Example_publisher() {
@@ -50,10 +64,13 @@ func Example_publisher() {
 
 	svc := remoteStringService{uppercaseEndpoint, countEndpoint}
 
-	_, err := svc.count(context.Background(), "kitkafka")
-	fmt.Println(err)
+	svc.Count(context.Background(), "kitkafka")
+
+	received := getLastMessage()
+	fmt.Println(received)
+
 	// Output:
-	// <nil>
+	// {"s":"kitkafka"}
 }
 
 func encodeJSONRequest(_ context.Context, message *kafka.Message, i interface{}) error {
@@ -63,4 +80,16 @@ func encodeJSONRequest(_ context.Context, message *kafka.Message, i interface{})
 	}
 	message.Value = bytes
 	return nil
+}
+
+func getLastMessage() string {
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{"127.0.0.1:9092"},
+		GroupID:  "kitkafka",
+		Topic:    "count",
+		MaxBytes: 1,
+	})
+	m, _ := r.FetchMessage(context.Background())
+	_ = r.CommitMessages(context.Background(), m)
+	return string(m.Value)
 }

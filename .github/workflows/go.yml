@@ -44,8 +44,8 @@ jobs:
         env:
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
           KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-          KAFKA_ZOOKEEPER_CONNECT: zookeeper:<ZOOKEEPER_PORT>
-          KAFKA_CREATE_TOPICS: "test-topic:1:1"
+          KAFKA_ZOOKEEPER_CONNECT: localhost:2888
+          KAFKA_CREATE_TOPICS: "count:1:1,uppercase:1:1"
     steps:
     - uses: actions/checkout@v2
 
