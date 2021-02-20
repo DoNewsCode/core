@@ -3,7 +3,7 @@ package otredis
 import (
 	"fmt"
 
-	"github.com/DoNewsCode/std/pkg/async"
+	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/go-kit/kit/log"
@@ -36,7 +36,7 @@ type RedisOut struct {
 	Maker          Maker
 	Factory        Factory
 	Client         redis.UniversalClient
-	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
+	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
 }
 
 // ProvideRedis creates Factory and redis.UniversalClient. It is a valid
@@ -48,13 +48,13 @@ func ProvideRedis(p RedisIn) (RedisOut, func()) {
 	if err != nil {
 		level.Warn(p.Logger).Log("err", err)
 	}
-	factory := async.NewFactory(func(name string) (async.Pair, error) {
+	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			ok   bool
 			conf redis.UniversalOptions
 		)
 		if conf, ok = dbConfs[name]; !ok {
-			return async.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
+			return di.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
 		}
 		if p.Interceptor != nil {
 			p.Interceptor(name, &conf)
@@ -69,7 +69,7 @@ func ProvideRedis(p RedisIn) (RedisOut, func()) {
 				},
 			)
 		}
-		return async.Pair{
+		return di.Pair{
 			Conn: client,
 			Closer: func() {
 				_ = client.Close()
@@ -93,10 +93,10 @@ type Maker interface {
 	Make(name string) (redis.UniversalClient, error)
 }
 
-// Factory is a *async.Factory that creates redis.UniversalClient using a
+// Factory is a *di.Factory that creates redis.UniversalClient using a
 // specific configuration entry.
 type Factory struct {
-	*async.Factory
+	*di.Factory
 }
 
 // Make creates redis.UniversalClient using a specific configuration entry.
@@ -109,8 +109,8 @@ func (r Factory) Make(name string) (redis.UniversalClient, error) {
 }
 
 // provideConfig exports the default redis configuration
-func provideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
+func provideConfig() []config.ExportedConfig {
+	return []config.ExportedConfig{
 		{
 			Owner: "otredis",
 			Data: map[string]interface{}{

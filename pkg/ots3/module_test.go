@@ -15,9 +15,7 @@ func TestModule(t *testing.T) {
 	c.AddDependencyFunc(ProvideManager)
 	c.AddModuleFunc(New)
 	router := mux.NewRouter()
-	for _, provider := range c.GetHttpProviders() {
-		provider(router)
-	}
+	c.ApplyRouter(router)
 	request, _ := http.NewRequest("POST", "/upload", nil)
 	assert.True(t, router.Match(request, &mux.RouteMatch{}))
 }

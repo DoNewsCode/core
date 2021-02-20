@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DoNewsCode/std/pkg/async"
+	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
@@ -37,7 +38,7 @@ type MongoOut struct {
 	Factory        Factory
 	Maker          Maker
 	Client         *mongo.Client
-	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
+	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
 }
 
 // ProvideMongo creates Factory and *mongo.Client. It is a valid dependency for
@@ -49,14 +50,14 @@ func ProvideMongo(p MongoIn) (MongoOut, func()) {
 	if err != nil {
 		level.Warn(p.Logger).Log("err", err)
 	}
-	factory := async.NewFactory(func(name string) (async.Pair, error) {
+	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			ok   bool
 			conf struct{ Uri string }
 		)
 		if conf, ok = dbConfs[name]; !ok {
 			if name != "default" {
-				return async.Pair{}, fmt.Errorf("mongo configuration %s not valid", name)
+				return di.Pair{}, fmt.Errorf("mongo configuration %s not valid", name)
 			}
 			conf.Uri = "mongodb://127.0.0.1:27017"
 		}
@@ -67,9 +68,9 @@ func ProvideMongo(p MongoIn) (MongoOut, func()) {
 		}
 		client, err := mongo.Connect(context.Background(), opts)
 		if err != nil {
-			return async.Pair{}, err
+			return di.Pair{}, err
 		}
-		return async.Pair{
+		return di.Pair{
 			Conn: client,
 			Closer: func() {
 				_ = client.Disconnect(context.Background())
@@ -86,10 +87,10 @@ func ProvideMongo(p MongoIn) (MongoOut, func()) {
 	}, factory.Close
 }
 
-// Factory is a *async.Factory that creates *mongo.Client using a specific
+// Factory is a *di.Factory that creates *mongo.Client using a specific
 // configuration entry.
 type Factory struct {
-	*async.Factory
+	*di.Factory
 }
 
 // Make creates *mongo.Client using a specific configuration entry.
@@ -102,8 +103,8 @@ func (r Factory) Make(name string) (*mongo.Client, error) {
 }
 
 // provideConfig exports the default mongo configuration.
-func provideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
+func provideConfig() []config.ExportedConfig {
+	return []config.ExportedConfig{
 		{
 			Owner: "otmongo",
 			Data: map[string]interface{}{

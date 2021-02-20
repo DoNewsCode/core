@@ -19,9 +19,11 @@ package logging
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
+	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/opentracing/opentracing-go"
 
@@ -136,6 +138,22 @@ type levelLogger struct {
 	log.Logger
 }
 
+func (l levelLogger) Debugf(s string, i ...interface{}) {
+	l.Debug(fmt.Sprintf(s, i...))
+}
+
+func (l levelLogger) Infof(s string, i ...interface{}) {
+	l.Info(fmt.Sprintf(s, i...))
+}
+
+func (l levelLogger) Warnf(s string, i ...interface{}) {
+	l.Warn(fmt.Sprintf(s, i...))
+}
+
+func (l levelLogger) Errf(s string, i ...interface{}) {
+	l.Errf(fmt.Sprintf(s, i...))
+}
+
 func (l levelLogger) Debug(s string) {
 	_ = level.Debug(l).Log("err", s)
 }
@@ -148,7 +166,7 @@ func (l levelLogger) Warn(s string) {
 	_ = level.Warn(l).Log("msg", s)
 }
 
-func (l levelLogger) Err(err error) {
+func (l levelLogger) Err(err string) {
 	_ = level.Error(l).Log("err", err)
 }
 
@@ -167,8 +185,8 @@ type moduleLogger struct {
 	log.Logger
 }
 
-func (m moduleLogger) ProvideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
+func (m moduleLogger) ProvideConfig() []config.ExportedConfig {
+	return []config.ExportedConfig{
 		{
 			Owner: "log",
 			Data: map[string]interface{}{

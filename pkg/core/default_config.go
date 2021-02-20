@@ -1,8 +1,9 @@
 package core
 
 import (
-	"github.com/DoNewsCode/std/pkg/di"
 	stdlog "log"
+
+	"github.com/DoNewsCode/std/pkg/di"
 
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
@@ -104,8 +105,8 @@ func ProvideEventDispatcher(conf contract.ConfigAccessor) contract.Dispatcher {
 }
 
 // provideDefaultConfig exports config for "name", "version", "env", "http", "grpc".
-func provideDefaultConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
+func provideDefaultConfig() []config.ExportedConfig {
+	return []config.ExportedConfig{
 		{
 			Owner: "core",
 			Data: map[string]interface{}{

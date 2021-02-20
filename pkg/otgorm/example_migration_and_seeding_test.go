@@ -65,9 +65,7 @@ func Example_migrationAndSeeding() {
 	c.AddModule(&Module{})
 	c.AddModuleFunc(otgorm.New)
 	rootCmd := cobra.Command{}
-	for _, p := range c.GetCommandProviders() {
-		p(&rootCmd)
-	}
+	c.ApplyRootCommand(&rootCmd)
 	rootCmd.SetArgs([]string{"database", "migrate"})
 	rootCmd.Execute()
 	rootCmd.SetArgs([]string{"database", "seed"})

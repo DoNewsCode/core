@@ -1,20 +1,20 @@
 package kitkafka
 
 import (
-	"github.com/DoNewsCode/std/pkg/async"
-	"github.com/DoNewsCode/std/pkg/contract"
+	"github.com/DoNewsCode/std/pkg/config"
+	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 )
 
-// ReaderFactory is a *async.Factory that creates *kafka.Reader.
+// ReaderFactory is a *di.Factory that creates *kafka.Reader.
 //
 // Unlike other database providers, the kafka factories don't bundle a default
 // kafka reader/writer. It is suggested to use Topic name as the identifier of
 // kafka config rather than an opaque name such as default.
 type ReaderFactory struct {
-	*async.Factory
+	*di.Factory
 }
 
 // Make returns a *kafka.Reader under the provided configuration entry.
@@ -26,13 +26,13 @@ func (k ReaderFactory) Make(name string) (*kafka.Reader, error) {
 	return client.(*kafka.Reader), nil
 }
 
-// WriterFactory is a *async.Factory that creates *kafka.Writer.
+// WriterFactory is a *di.Factory that creates *kafka.Writer.
 //
 // Unlike other database providers, the kafka factories don't bundle a default
 // kafka reader/writer. It is suggested to use Topic name as the identifier of
 // kafka config rather than an opaque name such as default.
 type WriterFactory struct {
-	*async.Factory
+	*di.Factory
 }
 
 // Make returns a *kafka.Writer under the provided configuration entry.
@@ -112,8 +112,8 @@ func MakePublisherService(endpoint endpoint.Endpoint, opt ...PublisherOpt) *Publ
 	return &PublisherService{endpoint: endpoint}
 }
 
-func provideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
+func provideConfig() []config.ExportedConfig {
+	return []config.ExportedConfig{
 		{
 			Owner: "kitkafka",
 			Data: map[string]interface{}{

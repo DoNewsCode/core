@@ -1,18 +1,21 @@
-package async
+package di
 
 import "sync"
 
+// Pair is a tuple representing a connection and a closer function
 type Pair struct {
 	Conn   interface{}
 	Closer func()
 }
 
+// Factory is a concurrent safe, generic factory for databases and connections.
 type Factory struct {
 	mutex       sync.Mutex
 	cache       map[string]Pair
 	constructor func(name string) (Pair, error)
 }
 
+// NewFactory creates a new factory.
 func NewFactory(constructor func(name string) (Pair, error)) *Factory {
 	return &Factory{
 		mutex:       sync.Mutex{},
@@ -21,6 +24,8 @@ func NewFactory(constructor func(name string) (Pair, error)) *Factory {
 	}
 }
 
+// Make creates an instance under the provided name. It an instance is already
+// created and it is not nil, that instance is returned to the caller.
 func (f *Factory) Make(name string) (interface{}, error) {
 	var err error
 
@@ -38,12 +43,15 @@ func (f *Factory) Make(name string) (interface{}, error) {
 	return f.cache[name].Conn, nil
 }
 
+// List lists created instance in the factory.
 func (f *Factory) List() map[string]Pair {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 	return f.cache
 }
 
+// Close closes every connection created by the factory. Connections are closed
+// concurrently.
 func (f *Factory) Close() {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
@@ -62,6 +70,7 @@ func (f *Factory) Close() {
 	wg.Wait()
 }
 
+// CloseConn closes a specific connection in the factory.
 func (f *Factory) CloseConn(name string) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()

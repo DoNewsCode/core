@@ -1,6 +1,8 @@
 package container
 
 import (
+	"sync"
+
 	"github.com/Reasno/ifilter"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
@@ -10,41 +12,60 @@ import (
 )
 
 type Container struct {
-	HttpProviders    []func(router *mux.Router)
-	GrpcProviders    []func(server *grpc.Server)
-	CloserProviders  []func()
-	RunProviders     []func(g *run.Group)
-	Modules          ifilter.Collection
-	CronProviders    []func(crontab *cron.Cron)
-	CommandProviders []func(command *cobra.Command)
+	httpProviders    []func(router *mux.Router)
+	grpcProviders    []func(server *grpc.Server)
+	closerProviders  []func()
+	runProviders     []func(g *run.Group)
+	modules          ifilter.Collection
+	cronProviders    []func(crontab *cron.Cron)
+	commandProviders []func(command *cobra.Command)
 }
 
-func (c *Container) GetHttpProviders() []func(router *mux.Router) {
-	return c.HttpProviders
+func (c *Container) ApplyRouter(router *mux.Router) {
+	for _, p := range c.httpProviders {
+		p(router)
+	}
 }
 
-func (c *Container) GetGrpcProviders() []func(server *grpc.Server) {
-	return c.GrpcProviders
+func (c *Container) ApplyGRPCServer(server *grpc.Server) {
+	for _, p := range c.grpcProviders {
+		p(server)
+	}
 }
 
-func (c *Container) GetCloserProviders() []func() {
-	return c.CloserProviders
+func (c *Container) Shutdown() {
+	var wg sync.WaitGroup
+	for _, p := range c.closerProviders {
+		wg.Add(1)
+		p := p
+		go func() {
+			p()
+			wg.Done()
+		}()
+	}
+	wg.Wait()
 }
 
-func (c *Container) GetRunProviders() []func(g *run.Group) {
-	return c.RunProviders
+func (c *Container) ApplyRunGroup(g *run.Group) {
+	for _, p := range c.runProviders {
+		p(g)
+	}
 }
 
-func (c *Container) GetModules() ifilter.Collection {
-	return c.Modules
+func (c *Container) Modules() ifilter.Collection {
+	return c.modules
 }
 
-func (c *Container) GetCronProviders() []func(crontab *cron.Cron) {
-	return c.CronProviders
+func (c *Container) ApplyCron(crontab *cron.Cron) {
+	for _, p := range c.cronProviders {
+		p(crontab)
+	}
 }
 
-func (c *Container) GetCommandProviders() []func(command *cobra.Command) {
-	return c.CommandProviders
+func (c *Container) ApplyRootCommand(command *cobra.Command) {
+	for _, p := range c.commandProviders {
+		p(command)
+	}
 }
 
 type CronProvider interface {
@@ -79,25 +100,25 @@ func (h HttpFunc) ProvideHttp(router *mux.Router) {
 
 func (c *Container) AddModule(module interface{}) {
 	if p, ok := module.(func()); ok {
-		c.CloserProviders = append(c.CloserProviders, p)
+		c.closerProviders = append(c.closerProviders, p)
 	}
 	if p, ok := module.(HttpProvider); ok {
-		c.HttpProviders = append(c.HttpProviders, p.ProvideHttp)
+		c.httpProviders = append(c.httpProviders, p.ProvideHttp)
 	}
 	if p, ok := module.(GrpcProvider); ok {
-		c.GrpcProviders = append(c.GrpcProviders, p.ProvideGrpc)
+		c.grpcProviders = append(c.grpcProviders, p.ProvideGrpc)
 	}
 	if p, ok := module.(CronProvider); ok {
-		c.CronProviders = append(c.CronProviders, p.ProvideCron)
+		c.cronProviders = append(c.cronProviders, p.ProvideCron)
 	}
 	if p, ok := module.(RunProvider); ok {
-		c.RunProviders = append(c.RunProviders, p.ProvideRunGroup)
+		c.runProviders = append(c.runProviders, p.ProvideRunGroup)
 	}
 	if p, ok := module.(CommandProvider); ok {
-		c.CommandProviders = append(c.CommandProviders, p.ProvideCommand)
+		c.commandProviders = append(c.commandProviders, p.ProvideCommand)
 	}
 	if p, ok := module.(CloserProvider); ok {
-		c.CloserProviders = append(c.CloserProviders, p.ProvideCloser)
+		c.closerProviders = append(c.closerProviders, p.ProvideCloser)
 	}
-	c.Modules = append(c.Modules, module)
+	c.modules = append(c.modules, module)
 }

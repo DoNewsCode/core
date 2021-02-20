@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/ghodss/yaml"
 	"github.com/go-kit/kit/log"
@@ -25,7 +26,7 @@ type ObservabilityOut struct {
 
 	Tracer         opentracing.Tracer
 	Hist           metrics.Histogram
-	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
+	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
 }
 
 // Provide provides the observability suite for the system. It contains a tracer and
@@ -53,11 +54,11 @@ jaeger:
     addr:
 `
 
-func exportConfig() []contract.ExportedConfig {
+func exportConfig() []config.ExportedConfig {
 
 	var conf map[string]interface{}
 	_ = yaml.Unmarshal([]byte(sample), conf)
-	return []contract.ExportedConfig{
+	return []config.ExportedConfig{
 		{
 			Owner:   "observability",
 			Data:    conf,

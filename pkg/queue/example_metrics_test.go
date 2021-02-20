@@ -65,9 +65,7 @@ func bootstrapMetrics() *core.C {
 func serveMetrics(c *core.C, duration time.Duration) {
 	var g run.Group
 
-	for _, r := range c.GetRunProviders() {
-		r(&g)
-	}
+	c.ApplyRunGroup(&g)
 
 	// cancel the run group after some time, so that the program ends. In real project, this is not necessary.
 	ctx, cancel := context.WithTimeout(context.Background(), duration)

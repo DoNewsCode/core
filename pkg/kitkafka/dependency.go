@@ -3,7 +3,7 @@ package kitkafka
 import (
 	"fmt"
 
-	"github.com/DoNewsCode/std/pkg/async"
+	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/go-kit/kit/log"
@@ -39,7 +39,7 @@ type KafkaOut struct {
 	WriterFactory   WriterFactory
 	ReaderMaker     ReaderMaker
 	WriterMaker     WriterMaker
-	ExportedConfigs []contract.ExportedConfig `group:"config,flatten"`
+	ExportedConfigs []config.ExportedConfig `group:"config,flatten"`
 }
 
 // ProvideKafka creates the ReaderFactory and WriterFactory. It is
@@ -68,13 +68,13 @@ func ProvideReaderFactory(p KafkaIn) (ReaderFactory, func()) {
 	if err != nil {
 		_ = level.Warn(p.Logger).Log("err", err)
 	}
-	factory := async.NewFactory(func(name string) (async.Pair, error) {
+	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			ok           bool
 			readerConfig ReaderConfig
 		)
 		if readerConfig, ok = dbConfs[name]; !ok {
-			return async.Pair{}, fmt.Errorf("kafka reader configuration %s not valid", name)
+			return di.Pair{}, fmt.Errorf("kafka reader configuration %s not valid", name)
 		}
 
 		// converts to the kafka.ReaderConfig from github.com/segmentio/kafka-go
@@ -85,7 +85,7 @@ func ProvideReaderFactory(p KafkaIn) (ReaderFactory, func()) {
 			p.ReaderInterceptor(name, &conf)
 		}
 		client := kafka.NewReader(conf)
-		return async.Pair{
+		return di.Pair{
 			Conn: client,
 			Closer: func() {
 				_ = client.Close()
@@ -104,13 +104,13 @@ func ProvideWriterFactory(p KafkaIn) (WriterFactory, func()) {
 	if err != nil {
 		_ = level.Warn(p.Logger).Log("err", err)
 	}
-	factory := async.NewFactory(func(name string) (async.Pair, error) {
+	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			ok           bool
 			writerConfig WriterConfig
 		)
 		if writerConfig, ok = dbConfs[name]; !ok {
-			return async.Pair{}, fmt.Errorf("kafka writer configuration %s not valid", name)
+			return di.Pair{}, fmt.Errorf("kafka writer configuration %s not valid", name)
 		}
 		writer := fromWriterConfig(writerConfig)
 		writer.Logger = KafkaLogAdapter{Logging: level.Debug(p.Logger)}
@@ -119,7 +119,7 @@ func ProvideWriterFactory(p KafkaIn) (WriterFactory, func()) {
 			p.WriterInterceptor(name, &writer)
 		}
 
-		return async.Pair{
+		return di.Pair{
 			Conn: &writer,
 			Closer: func() {
 				_ = writer.Close()

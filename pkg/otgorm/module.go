@@ -9,21 +9,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// MigrationProvider is an interface for database migrations. Modules
+// MigrationProvider is an interface for database migrations. modules
 // implementing this interface are migration providers. migrations will be
 // collected in migrate command.
 type MigrationProvider interface {
 	ProvideMigration() []*Migration
 }
 
-// SeedProvider is an interface for database seeding. Modules
+// SeedProvider is an interface for database seeding. modules
 // implementing this interface are seed providers. seeds will be
 // collected in seed command.
 type SeedProvider interface {
 	ProvideSeed() []*Seed
 }
 
-// Module is the registration unit for Morph. It provides migration and seed command.
+// Module is the registration unit for package core. It provides migration and seed command.
 type Module struct {
 	maker     Maker
 	env       contract.Env
@@ -127,7 +127,7 @@ func (m Module) collectMigrations(connection string) Migrations {
 		connection = "default"
 	}
 	var migrations Migrations
-	m.container.GetModules().Filter(func(p MigrationProvider) {
+	m.container.Modules().Filter(func(p MigrationProvider) {
 		for _, migration := range p.ProvideMigration() {
 			if migration.Connection == "" {
 				migration.Connection = "default"
@@ -146,7 +146,7 @@ func (m Module) collectSeeds(connection string) Seeds {
 		connection = "default"
 	}
 	var seeds Seeds
-	m.container.GetModules().Filter(func(p SeedProvider) {
+	m.container.Modules().Filter(func(p SeedProvider) {
 		for _, seed := range p.ProvideSeed() {
 			if seed.Connection == "" {
 				seed.Connection = "default"

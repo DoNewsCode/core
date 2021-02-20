@@ -162,12 +162,6 @@ func (c *C) AddModule(modules ...interface{}) {
 	}
 }
 
-func (c *C) Shutdown() {
-	for _, f := range c.GetCloserProviders() {
-		f()
-	}
-}
-
 func (c *C) addDependency(dep interface{}) {
 	inTypes := make([]reflect.Type, 0)
 	outTypes := make([]reflect.Type, 0)
@@ -256,7 +250,7 @@ type CoreDependencies struct {
 	ConfigWatcher  contract.ConfigWatcher
 	Logger         log.Logger
 	Dispatcher     contract.Dispatcher
-	DefaultConfigs []contract.ExportedConfig `group:"config,flatten"`
+	DefaultConfigs []config.ExportedConfig `group:"config,flatten"`
 }
 
 func (c *C) AddCoreDependencies() {

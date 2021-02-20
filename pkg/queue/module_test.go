@@ -2,7 +2,7 @@ package queue
 
 import (
 	"context"
-	"github.com/DoNewsCode/std/pkg/async"
+	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/DoNewsCode/std/pkg/events"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -47,12 +47,12 @@ func TestModule_ProvideCommand(t *testing.T) {
 
 func setUpModule() (*cobra.Command, Driver) {
 	driver := NewInProcessDriverWithPopInterval(time.Millisecond)
-	factory := async.NewFactory(func(name string) (async.Pair, error) {
+	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		queuedDispatcher := WithQueue(
 			&events.SyncDispatcher{},
 			driver,
 		)
-		return async.Pair{
+		return di.Pair{
 			Closer: nil,
 			Conn:   queuedDispatcher,
 		}, nil

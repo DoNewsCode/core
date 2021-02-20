@@ -18,12 +18,12 @@ import (
 // Module is the configuration module that bundles the reload watcher and exportConfig commands.
 type Module struct {
 	conf            *KoanfAdapter
-	exportedConfigs []contract.ExportedConfig
+	exportedConfigs []ExportedConfig
 }
 
 type ConfigIn struct {
 	Conf            contract.ConfigAccessor
-	ExportedConfigs []contract.ExportedConfig `group:"config"`
+	ExportedConfigs []ExportedConfig `group:"config"`
 }
 
 func New(p ConfigIn) (Module, error) {
@@ -64,7 +64,7 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 			var (
 				handler         handler
 				targetFile      *os.File
-				exportedConfigs []contract.ExportedConfig
+				exportedConfigs []ExportedConfig
 				confMap         map[string]interface{}
 				err             error
 			)
@@ -76,7 +76,7 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 				exportedConfigs = m.exportedConfigs
 			}
 			if len(args) >= 1 {
-				var copy = make([]contract.ExportedConfig, 0)
+				var copy = make([]ExportedConfig, 0)
 				for i := range m.exportedConfigs {
 					for j := 0; j < len(args); j++ {
 						if args[j] == m.exportedConfigs[i].Owner {
@@ -154,7 +154,7 @@ func (y yamlHandler) unmarshal(bytes []byte, o interface{}) error {
 	return yaml.Unmarshal(bytes, o)
 }
 
-func (y yamlHandler) write(file *os.File, configs []contract.ExportedConfig, confMap map[string]interface{}) error {
+func (y yamlHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error {
 out:
 	for _, config := range configs {
 		for k := range config.Data {
@@ -187,7 +187,7 @@ out:
 type handler interface {
 	flags() int
 	unmarshal(bytes []byte, o interface{}) error
-	write(file *os.File, configs []contract.ExportedConfig, confMap map[string]interface{}) error
+	write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error
 }
 
 type jsonHandler struct {
@@ -204,7 +204,7 @@ func (y jsonHandler) unmarshal(bytes []byte, o interface{}) error {
 	return json.Unmarshal(bytes, o)
 }
 
-func (y jsonHandler) write(file *os.File, configs []contract.ExportedConfig, confMap map[string]interface{}) error {
+func (y jsonHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error {
 	if confMap == nil {
 		confMap = make(map[string]interface{})
 	}

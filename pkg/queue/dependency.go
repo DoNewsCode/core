@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/DoNewsCode/std/pkg/async"
+	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/go-kit/kit/log"
@@ -57,7 +57,7 @@ type DispatcherOut struct {
 	DispatcherMaker     DispatcherMaker
 	QueueableDispatcher *QueueableDispatcher
 	DispatcherFactory   *DispatcherFactory
-	ExportedConfig      []contract.ExportedConfig `group:"config,flatten"`
+	ExportedConfig      []config.ExportedConfig `group:"config,flatten"`
 }
 
 // ProvideDispatcher is a provider for *DispatcherFactory and *QueueableDispatcher.
@@ -71,13 +71,13 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 	if err != nil {
 		level.Warn(p.Logger).Log("err", err)
 	}
-	factory := async.NewFactory(func(name string) (async.Pair, error) {
+	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			ok   bool
 			conf configuration
 		)
 		if conf, ok = queueConfs[name]; !ok {
-			return async.Pair{}, fmt.Errorf("queue configuration %s not found", name)
+			return di.Pair{}, fmt.Errorf("queue configuration %s not found", name)
 		}
 		if p.Gauge != nil {
 			p.Gauge = p.Gauge.With("queue", name)
@@ -100,7 +100,7 @@ func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
 			UseParallelism(conf.Parallelism),
 			UseGauge(p.Gauge, time.Duration(conf.CheckQueueLengthIntervalSecond)*time.Second),
 		)
-		return async.Pair{
+		return di.Pair{
 			Closer: nil,
 			Conn:   queuedDispatcher,
 		}, nil
@@ -145,17 +145,17 @@ func (d DispatcherOut) ProvideRunGroup(group *run.Group) {
 //
 // Here is an example on how to create a custom DispatcherFactory with an InProcessDriver.
 //
-//		factory := async.NewFactory(func(name string) (async.Pair, error) {
+//		factory := di.NewFactory(func(name string) (di.Pair, error) {
 //			queuedDispatcher := queue.WithQueue(
 //				&events.SyncDispatcher{},
 //				queue.NewInProcessDriver(),
 //			)
-//			return async.Pair{Conn: queuedDispatcher}, nil
+//			return di.Pair{Conn: queuedDispatcher}, nil
 //		})
 //		dispatcherFactory := DispatcherFactory{Factory: factory}
 //
 type DispatcherFactory struct {
-	*async.Factory
+	*di.Factory
 }
 
 // Make returns a QueueableDispatcher by the given name. If it has already been created under the same name,
@@ -168,8 +168,8 @@ func (s *DispatcherFactory) Make(name string) (*QueueableDispatcher, error) {
 	return client.(*QueueableDispatcher), nil
 }
 
-func provideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{{
+func provideConfig() []config.ExportedConfig {
+	return []config.ExportedConfig{{
 		Owner: "queue",
 		Data: map[string]interface{}{
 			"queue": map[string]configuration{

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/DoNewsCode/std/pkg/async"
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/di"
@@ -69,7 +68,7 @@ type DatabaseOut struct {
 	Database       *gorm.DB
 	Factory        Factory
 	Maker          Maker
-	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
+	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
 }
 
 // ProvideDialector provides a gorm.Dialector. Mean to be used as an intermediate
@@ -145,10 +144,10 @@ func ProvideDatabase(p DatabaseIn) (DatabaseOut, func(), error) {
 	}, cleanup, nil
 }
 
-// Factory is the *async.Factory that creates *gorm.DB under a specific
+// Factory is the *di.Factory that creates *gorm.DB under a specific
 // configuration entry.
 type Factory struct {
-	*async.Factory
+	*di.Factory
 }
 
 // Make creates *gorm.DB under a specific configuration entry.
@@ -185,7 +184,7 @@ func provideDBFactory(p DatabaseIn) (Factory, func()) {
 	if err != nil {
 		level.Warn(logger).Log("err", err)
 	}
-	factory := async.NewFactory(func(name string) (async.Pair, error) {
+	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			dialector gorm.Dialector
 			conf      databaseConf
@@ -194,11 +193,11 @@ func provideDBFactory(p DatabaseIn) (Factory, func()) {
 			cleanup   func()
 		)
 		if conf, ok = dbConfs[name]; !ok {
-			return async.Pair{}, confNotFoundErr(fmt.Sprintf("database configuration %s not found", name))
+			return di.Pair{}, confNotFoundErr(fmt.Sprintf("database configuration %s not found", name))
 		}
 		dialector, err = ProvideDialector(&conf)
 		if err != nil {
-			return async.Pair{}, err
+			return di.Pair{}, err
 		}
 		gormConfig := ProvideGormConfig(logger, &conf)
 		if p.GormConfigInterceptor != nil {
@@ -206,9 +205,9 @@ func provideDBFactory(p DatabaseIn) (Factory, func()) {
 		}
 		conn, cleanup, err = ProvideGormDB(dialector, gormConfig, p.Tracer)
 		if err != nil {
-			return async.Pair{}, err
+			return di.Pair{}, err
 		}
-		return async.Pair{
+		return di.Pair{
 			Conn:   conn,
 			Closer: cleanup,
 		}, err
@@ -218,8 +217,8 @@ func provideDBFactory(p DatabaseIn) (Factory, func()) {
 }
 
 // ProvideConfig exports the default database configuration.
-func provideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
+func provideConfig() []config.ExportedConfig {
+	return []config.ExportedConfig{
 		{
 			Owner: "otgorm",
 			Data: map[string]interface{}{

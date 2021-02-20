@@ -52,9 +52,7 @@ func TestModule_ProvideCommand(t *testing.T) {
 	mock := &Mock{}
 	c.AddModule(mock)
 	rootCmd := cobra.Command{}
-	for _, p := range c.GetCommandProviders() {
-		p(&rootCmd)
-	}
+	c.ApplyRootCommand(&rootCmd)
 	assert.True(t, rootCmd.HasSubCommands())
 
 	cases := []struct {

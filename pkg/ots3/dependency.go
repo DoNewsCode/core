@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/DoNewsCode/std/pkg/async"
+	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/di"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -45,12 +45,12 @@ type S3Out struct {
 	Factory        *S3Factory
 	Maker          S3Maker
 	Uploader       Uploader
-	ExportedConfig []contract.ExportedConfig `group:"config,flatten"`
+	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
 }
 
 // S3Factory can be used to connect to multiple s3 servers.
 type S3Factory struct {
-	*async.Factory
+	*di.Factory
 }
 
 // Make creates a s3 manager under the given name.
@@ -72,13 +72,13 @@ func ProvideManager(p S3In) S3Out {
 	if err != nil {
 		level.Warn(p.Logger).Log("err", err)
 	}
-	factory := async.NewFactory(func(name string) (async.Pair, error) {
+	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			ok   bool
 			conf S3Config
 		)
 		if conf, ok = s3configs[name]; !ok {
-			return async.Pair{}, fmt.Errorf("s3 configuration %s not found", name)
+			return di.Pair{}, fmt.Errorf("s3 configuration %s not found", name)
 		}
 		manager := NewManager(
 			conf.AccessKey,
@@ -95,7 +95,7 @@ func ProvideManager(p S3In) S3Out {
 			}),
 			WithTracer(p.Tracer),
 		)
-		return async.Pair{
+		return di.Pair{
 			Closer: nil,
 			Conn:   manager,
 		}, nil
@@ -121,8 +121,8 @@ func ProvideManager(p S3In) S3Out {
 }
 
 // provideConfig exports the default s3 configuration
-func provideConfig() []contract.ExportedConfig {
-	return []contract.ExportedConfig{
+func provideConfig() []config.ExportedConfig {
+	return []config.ExportedConfig{
 		{
 			Owner: "ots3",
 			Data: map[string]interface{}{

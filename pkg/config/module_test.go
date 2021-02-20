@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,7 +13,7 @@ func setup() *cobra.Command {
 	os.Remove("./testdata/module_test.yaml")
 	os.Remove("./testdata/module_test.json")
 	var config, _ = NewConfig()
-	var mod = Module{conf: config, exportedConfigs: []contract.ExportedConfig{
+	var mod = Module{conf: config, exportedConfigs: []ExportedConfig{
 		{
 			"foo",
 			map[string]interface{}{

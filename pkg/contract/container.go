@@ -9,13 +9,14 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Container holds modules.
 type Container interface {
-	GetHttpProviders() []func(router *mux.Router)
-	GetGrpcProviders() []func(server *grpc.Server)
-	GetCloserProviders() []func()
-	GetRunProviders() []func(g *run.Group)
-	GetModules() ifilter.Collection
-	GetCronProviders() []func(crontab *cron.Cron)
-	GetCommandProviders() []func(command *cobra.Command)
+	ApplyRouter(router *mux.Router)
+	ApplyGRPCServer(server *grpc.Server)
+	Shutdown()
+	ApplyRunGroup(g *run.Group)
+	Modules() ifilter.Collection
+	ApplyCron(crontab *cron.Cron)
+	ApplyRootCommand(command *cobra.Command)
 	AddModule(module interface{})
 }
