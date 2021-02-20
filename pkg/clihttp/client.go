@@ -110,7 +110,10 @@ func (c *Client) logRequest(req *http.Request, tracer *nethttp.Tracer) {
 		tracer.Span().LogKV("error", errors.Wrap(err, "cannot read request body"))
 		return
 	}
-	tracer.Span().LogKV("request", string(byt))
+	if tracer.Span() != nil {
+		tracer.Span().LogKV("request", string(byt))
+	}
+
 }
 
 func (c *Client) logResponse(response *http.Response, tracer *nethttp.Tracer) {
@@ -128,7 +131,9 @@ func (c *Client) logResponse(response *http.Response, tracer *nethttp.Tracer) {
 		ext.Error.Set(tracer.Span(), true)
 		tracer.Span().LogFields(log.Error(err))
 	}
-	tracer.Span().LogKV("response", string(byt))
+	if tracer.Span() != nil {
+		tracer.Span().LogKV("response", string(byt))
+	}
 	buf.Write(byt)
 	response.Body = ioutil.NopCloser(&buf)
 }
