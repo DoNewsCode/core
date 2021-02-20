@@ -98,14 +98,16 @@ func Example_subscriber() {
 	factory, cleanup := kitkafka.ProvideReaderFactory(kitkafka.KafkaIn{
 		Conf: config.MapAdapter{"kafka.reader": map[string]kitkafka.ReaderConfig{
 			"uppercase": {
-				Brokers: []string{"127.0.0.1:9092"},
-				Topic:   "uppercase",
-				GroupID: "kitkafka",
+				Brokers:     []string{"127.0.0.1:9092"},
+				GroupID:     "kitkafka",
+				Topic:       "uppercase",
+				StartOffset: kafka.FirstOffset,
 			},
 			"count": {
-				Brokers: []string{"127.0.0.1:9092"},
-				Topic:   "count",
-				GroupID: "kitkafka",
+				Brokers:     []string{"127.0.0.1:9092"},
+				Topic:       "count",
+				GroupID:     "kitkafka",
+				StartOffset: kafka.FirstOffset,
 			},
 		}},
 		Logger: log.NewNopLogger(),
@@ -152,7 +154,10 @@ func sendTestData() {
 		Topic:     "uppercase",
 		BatchSize: 1,
 	}
-	writer.WriteMessages(context.Background(), kafka.Message{
+	err := writer.WriteMessages(context.Background(), kafka.Message{
 		Value: []byte(`{"s":"kitkafka"}`),
 	})
+	if err != nil {
+		panic(err)
+	}
 }
