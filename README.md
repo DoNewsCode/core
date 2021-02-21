@@ -25,7 +25,7 @@ Whatever the app is, the bootstrapping phase are roughly composed by:
 
 - Initialize dependencies. Databases, message queues, service discoveries, etc.
 
-- Defines how to run the app. HTTP, RPC, command-lines, cron jobs, or more often mixed.
+- Define how to run the app. HTTP, RPC, command-lines, cron jobs, or more often mixed.
 
 Package core abstracts those repeated steps, keeping them concise, portable yet explicit. 
 Let's see the following snippet:
