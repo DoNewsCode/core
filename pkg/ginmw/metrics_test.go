@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -27,5 +28,8 @@ func TestWithMetrics(t *testing.T) {
 	g.Handle("GET", "/", func(context *gin.Context) {
 		context.String(200, "%s", "ok")
 	})
+	req := httptest.NewRequest("GET", "/", nil)
+	writer := httptest.NewRecorder()
+	g.ServeHTTP(writer, req)
 	assert.NotZero(t, metric.observed)
 }
