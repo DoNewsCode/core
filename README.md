@@ -158,7 +158,7 @@ Had this been a DDD workshop, we would be expanding the example even further. Bu
 
 - No package global state.
 - Promote dependency injection.
-- Keep testing in mind.
+- Testable code.
 - Minimalist interface design. Easy to decorate and replace.
 - Tries to work with the go ecosystem rather than reinventing the wheel.
 - End to end Context passing.
