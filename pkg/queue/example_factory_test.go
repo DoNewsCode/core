@@ -39,10 +39,10 @@ func bootstrapFactories() *core.C {
 		core.WithConfigStack(rawbytes.Provider([]byte(sampleConfig)), json.Parser()),
 	)
 
-	// Add Provider
-	c.AddCoreDependencies()
-	c.AddDependencyFunc(queue.ProvideDispatcher)
-	c.AddDependencyFunc(func() redis.UniversalClient {
+	// Add ConfProvider
+	c.ProvideEssentials()
+	c.Provide(queue.ProvideDispatcher)
+	c.Provide(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()
 		return client

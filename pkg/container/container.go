@@ -123,5 +123,8 @@ func (c *Container) AddModule(module interface{}) {
 	if p, ok := module.(CloserProvider); ok {
 		c.closerProviders = append(c.closerProviders, p.ProvideCloser)
 	}
-	c.modules = append(c.modules, module)
+	if _, ok := module.(func()); !ok {
+		c.modules = append(c.modules, module)
+	}
+
 }

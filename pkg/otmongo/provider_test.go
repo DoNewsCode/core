@@ -8,6 +8,7 @@ import (
 )
 
 func TestNewMongoFactory(t *testing.T) {
+	t.Parallel()
 	factory, cleanup := ProvideMongo(MongoIn{
 		In: dig.In{},
 		Conf: config.MapAdapter{"mongo": map[string]struct{ Uri string }{

@@ -46,8 +46,8 @@ func (m *Mock) ProvideMigration() []*Migration {
 func TestModule_ProvideCommand(t *testing.T) {
 	c := core.New(core.WithInline("gorm.default.database", "sqlite"),
 		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"))
-	c.AddCoreDependencies()
-	c.AddDependencyFunc(ProvideDatabase)
+	c.ProvideEssentials()
+	c.Provide(ProvideDatabase)
 	c.AddModuleFunc(New)
 	mock := &Mock{}
 	c.AddModule(mock)

@@ -62,7 +62,7 @@
 // automatically by the core.
 //
 //  var c *core.C
-//  c.AddDependencyFunc(queue.ProvideDispatcher)
+//  c.Provide(queue.ProvideDispatcher)
 //
 // A module is also bundled, providing the queue command.
 //
@@ -87,7 +87,7 @@
 // To gain visibility on how the length of the queue, inject a gauge into the core and alias it to queue.Gauge. The
 // queue length of the all internal queues will be periodically reported to metrics collector (Presumably Prometheus).
 //
-//  c.AddDependencyFunc(func(appName contract.AppName, env contract.Env) queue.Gauge {
+//  c.Provide(func(appName contract.AppName, env contract.Env) queue.Gauge {
 //    return prometheus.NewGaugeFrom(
 //      stdprometheus.GaugeOpts{
 //        Namespace: appName.String(),

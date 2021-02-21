@@ -42,7 +42,7 @@ func TestClient_Do(t *testing.T) {
 			tracer := mocktracer.New()
 			client := NewClient(tracer, c.Option...)
 			_, _ = client.Do(c.request)
-			assert.NotZero(t, tracer.FinishedSpans())
+			assert.NotEmpty(t, tracer.FinishedSpans())
 		})
 	}
 }

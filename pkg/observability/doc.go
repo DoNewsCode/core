@@ -13,7 +13,7 @@ Integration
 Add the observabilities to core:
 
 	var c *core.C = core.New()
-	c.AddDependencyFunc(observability.Provide)
+	c.Provide(observability.Provide)
 
 See example for usage.
 */

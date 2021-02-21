@@ -11,8 +11,8 @@ import (
 
 func TestModule(t *testing.T) {
 	c := core.New()
-	c.AddCoreDependencies()
-	c.AddDependencyFunc(ProvideManager)
+	c.ProvideEssentials()
+	c.Provide(ProvideManager)
 	c.AddModuleFunc(New)
 	router := mux.NewRouter()
 	c.ApplyRouter(router)

@@ -11,7 +11,7 @@ Integration
 Package logging is bundled in core. Enable logging as dependency by calling:
 
 	var c *core.C = core.New()
-	c.AddCoreDependencies()
+	c.ProvideEssentials()
 
 See example for usage.
 */

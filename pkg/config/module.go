@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/DoNewsCode/std/pkg/di"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -22,6 +23,8 @@ type Module struct {
 }
 
 type ConfigIn struct {
+	di.In
+
 	Conf            contract.ConfigAccessor
 	ExportedConfigs []ExportedConfig `group:"config"`
 }
@@ -31,7 +34,7 @@ func New(p ConfigIn) (Module, error) {
 		ok      bool
 		adapter *KoanfAdapter
 	)
-	if p.Conf, ok = p.Conf.(*KoanfAdapter); !ok {
+	if adapter, ok = p.Conf.(*KoanfAdapter); !ok {
 		return Module{}, fmt.Errorf("expects a *config.KoanfAdapter instance, but %T given", p.Conf)
 	}
 	return Module{

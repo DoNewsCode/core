@@ -2,7 +2,6 @@ package kitkafka
 
 import (
 	"fmt"
-
 	"github.com/DoNewsCode/std/pkg/config"
 	"github.com/DoNewsCode/std/pkg/contract"
 	"github.com/DoNewsCode/std/pkg/di"

@@ -10,7 +10,7 @@ import (
 
 func TestC_Serve(t *testing.T) {
 	c := New()
-	c.AddCoreDependencies()
+	c.ProvideEssentials()
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 	e := c.Serve(ctx)

@@ -60,8 +60,8 @@ func Example_migrationAndSeeding() {
 		core.WithInline("gorm.default.database", "sqlite"),
 		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"),
 	)
-	c.AddCoreDependencies()
-	c.AddDependencyFunc(otgorm.ProvideDatabase)
+	c.ProvideEssentials()
+	c.Provide(otgorm.ProvideDatabase)
 	c.AddModule(&Module{})
 	c.AddModuleFunc(otgorm.New)
 	rootCmd := cobra.Command{}

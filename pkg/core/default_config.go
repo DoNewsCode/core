@@ -37,6 +37,7 @@ gorm:
     dsn: root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local
 `
 
+// ProvideConfig is the default ConfigProvider for package Core.
 func ProvideConfig(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor {
 	var (
 		stack []config.Option
@@ -59,6 +60,7 @@ func ProvideConfig(configStack []config.ProviderSet, configWatcher contract.Conf
 	return cfg
 }
 
+// ProvideEnv is the default EnvProvider for package Core.
 func ProvideEnv(conf contract.ConfigAccessor) contract.Env {
 	var env config.Env
 	err := conf.Unmarshal("Env", &env)
@@ -68,6 +70,7 @@ func ProvideEnv(conf contract.ConfigAccessor) contract.Env {
 	return env
 }
 
+// ProvideAppName is the default AppNameProvider for package Core.
 func ProvideAppName(conf contract.ConfigAccessor) contract.AppName {
 	var appName config.AppName
 	err := conf.Unmarshal("name", &appName)
@@ -77,6 +80,7 @@ func ProvideAppName(conf contract.ConfigAccessor) contract.AppName {
 	return appName
 }
 
+// ProvideLogger is the default LoggerProvider for package Core.
 func ProvideLogger(conf contract.ConfigAccessor, appName contract.AppName, env contract.Env) log.Logger {
 	var (
 		lvl    string
@@ -96,10 +100,12 @@ func ProvideLogger(conf contract.ConfigAccessor, appName contract.AppName, env c
 	return level.NewFilter(logger, logging.LevelFilter(lvl))
 }
 
-func ProvideDi(conf contract.ConfigAccessor) diContainer {
+// ProvideDi is the default DiProvider for package Core.
+func ProvideDi(conf contract.ConfigAccessor) DiContainer {
 	return di.NewGraph()
 }
 
+// ProvideEventDispatcher is the default EventDispatcherProvider for package Core.
 func ProvideEventDispatcher(conf contract.ConfigAccessor) contract.Dispatcher {
 	return &events.SyncDispatcher{}
 }
