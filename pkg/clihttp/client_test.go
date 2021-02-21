@@ -3,7 +3,6 @@ package clihttp
 import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -19,17 +18,20 @@ func TestClient_Do(t *testing.T) {
 	}{
 		{
 			"normal",
-			httptest.NewRequest("GET", "https://baidu.com", nil),
-			nil,
+			func() *http.Request { r, _ := http.NewRequest("GET", "https://baidu.com", nil); return r }(),
+			[]Option{},
 		},
 		{
 			"large request",
-			httptest.NewRequest("POST", "https://baidu.com", strings.NewReader(strings.Repeat("t", 10))),
+			func() *http.Request {
+				r, _ := http.NewRequest("POST", "https://baidu.com", strings.NewReader(strings.Repeat("t", 10)))
+				return r
+			}(),
 			[]Option{WithRequestLogThreshold(1)},
 		},
 		{
 			"large response",
-			httptest.NewRequest("GET", "https://baidu.com", nil),
+			func() *http.Request { r, _ := http.NewRequest("GET", "https://baidu.com", nil); return r }(),
 			[]Option{WithResponseLogThreshold(1)},
 		},
 	}
