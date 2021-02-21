@@ -12,5 +12,6 @@ func TestWithLevel(t *testing.T) {
 	var buf bytes.Buffer
 	l := log.NewLogfmtLogger(&buf)
 	WithLevel(l).Debug("hi")
-	assert.Contains(t, buf.String(), "level=debug caller=log_test.go")
+	// ensure the caller depth is correct
+	assert.Contains(t, buf.String(), "caller=log_test.go")
 }

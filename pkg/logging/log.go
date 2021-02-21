@@ -33,7 +33,7 @@ import (
 	"github.com/go-kit/kit/log/term"
 )
 
-var _ contract.LevelLogger = (*levelLogger)(nil)
+var _ LevelLogger = (*levelLogger)(nil)
 
 // NewLogger constructs a log.Logger based on the given format. The support
 // formats are "json" and "logfmt".
@@ -135,44 +135,43 @@ func withContext(logger log.Logger, ctx context.Context) log.Logger {
 }
 
 type levelLogger struct {
-	depth int
 	log.Logger
 }
 
 func (l levelLogger) Debugf(s string, i ...interface{}) {
 	s = fmt.Sprintf(s, i...)
-	_ = log.With(level.Debug(l), "caller", log.Caller(l.depth)).Log("msg", s)
+	_ = level.Debug(l).Log("msg", s)
 }
 
 func (l levelLogger) Infof(s string, i ...interface{}) {
 	s = fmt.Sprintf(s, i...)
-	_ = log.With(level.Info(l), "caller", log.Caller(l.depth)).Log("msg", s)
+	_ = level.Info(l).Log("msg", s)
 }
 
 func (l levelLogger) Warnf(s string, i ...interface{}) {
 	s = fmt.Sprintf(s, i...)
-	_ = log.With(level.Warn(l), "caller", log.Caller(l.depth)).Log("msg", s)
+	_ = level.Warn(l).Log("msg", s)
 }
 
 func (l levelLogger) Errf(s string, i ...interface{}) {
 	s = fmt.Sprintf(s, i...)
-	_ = log.With(level.Error(l), "caller", log.Caller(l.depth)).Log("err", s)
+	_ = level.Error(l).Log("err", s)
 }
 
 func (l levelLogger) Debug(s string) {
-	_ = log.With(level.Debug(l), "caller", log.Caller(l.depth)).Log("err", s)
+	_ = level.Debug(l).Log("err", s)
 }
 
 func (l levelLogger) Info(s string) {
-	_ = log.With(level.Info(l), "caller", log.Caller(l.depth)).Log("msg", s)
+	_ = level.Info(l).Log("msg", s)
 }
 
 func (l levelLogger) Warn(s string) {
-	_ = log.With(level.Warn(l), "caller", log.Caller(4)).Log("msg", s)
+	_ = level.Warn(l).Log("msg", s)
 }
 
 func (l levelLogger) Err(err string) {
-	_ = log.With(level.Error(l), "caller", log.Caller(4)).Log("err", err)
+	_ = level.Error(l).Log("err", err)
 }
 
 // WithLevel decorates the logger and returns a contract.LevelLogger.
@@ -185,7 +184,7 @@ func WithLevel(logger log.Logger) levelLogger {
 	if l, ok := logger.(levelLogger); ok {
 		return l
 	}
-	return levelLogger{4, logger}
+	return levelLogger{log.With(logger, "caller", log.Caller(5))}
 }
 
 type moduleLogger struct {
@@ -203,4 +202,17 @@ func (m moduleLogger) ProvideConfig() []config.ExportedConfig {
 			Comment: "The global logging level and format",
 		},
 	}
+}
+
+// LevelLogger is plaintext logger with level.
+type LevelLogger interface {
+	log.Logger
+	Debug(string)
+	Info(string)
+	Warn(string)
+	Err(string)
+	Debugf(string, ...interface{})
+	Infof(string, ...interface{})
+	Warnf(string, ...interface{})
+	Errf(string, ...interface{})
 }

@@ -19,7 +19,7 @@ To see all available configurations, use the exportConfig command.
 Add the redis dependency to core:
 
 	var c *core.C = core.New()
-	c.Provide(otredis.ProvideRedis)
+	c.Provide(otredis.Provide)
 
 Then you can invoke redis from the application.
 

@@ -12,7 +12,7 @@ import (
 func Example() {
 	c := core.New()
 	c.ProvideEssentials()
-	c.Provide(otredis.ProvideRedis)
+	c.Provide(otredis.Provide)
 	c.Invoke(func(redisClient redis.UniversalClient) {
 		pong, _ := redisClient.Ping(context.Background()).Result()
 		fmt.Println(pong)

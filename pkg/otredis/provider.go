@@ -19,7 +19,7 @@ import (
 // here.
 type RedisConfigurationInterceptor func(name string, opts *redis.UniversalOptions)
 
-// RedisIn is the injection parameter for ProvideRedis.
+// RedisIn is the injection parameter for Provide.
 type RedisIn struct {
 	di.In
 
@@ -29,7 +29,7 @@ type RedisIn struct {
 	Tracer      opentracing.Tracer            `optional:"true"`
 }
 
-// RedisOut is the result of ProvideRedis.
+// RedisOut is the result of Provide.
 type RedisOut struct {
 	di.Out
 
@@ -39,9 +39,9 @@ type RedisOut struct {
 	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
 }
 
-// ProvideRedis creates Factory and redis.UniversalClient. It is a valid
+// Provide creates Factory and redis.UniversalClient. It is a valid
 // dependency for package core.
-func ProvideRedis(p RedisIn) (RedisOut, func()) {
+func Provide(p RedisIn) (RedisOut, func()) {
 	var err error
 	var dbConfs map[string]redis.UniversalOptions
 	err = p.Conf.Unmarshal("redis", &dbConfs)

@@ -3,7 +3,6 @@ package core_test
 import (
 	"context"
 	"fmt"
-	"github.com/DoNewsCode/std/pkg/container"
 	"github.com/DoNewsCode/std/pkg/core"
 	"github.com/gorilla/mux"
 	"io/ioutil"
@@ -57,7 +56,7 @@ func Example_minimal() {
 
 	// Spin up a real server
 	c := core.Default(core.WithInline("log.level", "warn"))
-	c.AddModule(container.HttpFunc(func(router *mux.Router) {
+	c.AddModule(core.HttpFunc(func(router *mux.Router) {
 		router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 			writer.Write([]byte("hello world"))
 		})

@@ -1,5 +1,8 @@
 /*
-Package core is a service mux that elegantly bootstrap 12-factor apps.
+Package core is a service container that elegantly bootstrap and coordinate
+twelve-factor apps in Go.
+
+Checkout the README.md for an overview of this package.
 */
 package core
 
@@ -27,7 +30,7 @@ type C struct {
 	AppName contract.AppName
 	Env     contract.Env
 	contract.ConfigAccessor
-	contract.LevelLogger
+	logging.LevelLogger
 	contract.Container
 	contract.Dispatcher
 	di DiContainer
@@ -184,11 +187,12 @@ func New(opts ...CoreOption) *C {
 }
 
 // Default creates a core.C under its default state. Core dependencies are
-// already provided, and the config module is bundled.
+// already provided, and the config module and serve module are bundled.
 func Default(opts ...CoreOption) *C {
 	c := New(opts...)
 	c.ProvideEssentials()
 	c.AddModuleFunc(config.New)
+	c.AddModuleFunc(NewServeModule)
 	return c
 }
 

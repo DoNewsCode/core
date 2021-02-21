@@ -50,7 +50,7 @@ type Maker interface {
 	Make(name string) (*gorm.DB, error)
 }
 
-// DatabaseIn is the injection parameter for ProvideDatabase.
+// DatabaseIn is the injection parameter for Provide.
 type DatabaseIn struct {
 	di.In
 
@@ -60,7 +60,7 @@ type DatabaseIn struct {
 	Tracer                opentracing.Tracer    `optional:"true"`
 }
 
-// DatabaseOut is the result of ProvideDatabase. *gorm.DB is not a interface
+// DatabaseOut is the result of Provide. *gorm.DB is not a interface
 // type. It is up to the users to define their own database repository interface.
 type DatabaseOut struct {
 	di.Out
@@ -124,9 +124,9 @@ func ProvideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 	}, nil
 }
 
-// ProvideDatabase creates Factory and *gorm.DB. It is a valid dependency for
+// Provide creates Factory and *gorm.DB. It is a valid dependency for
 // package core.
-func ProvideDatabase(p DatabaseIn) (DatabaseOut, func(), error) {
+func Provide(p DatabaseIn) (DatabaseOut, func(), error) {
 	factory, cleanup := provideDBFactory(p)
 	database, err := factory.Make("default")
 	var confNotFound confNotFoundErr

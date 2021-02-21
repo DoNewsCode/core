@@ -95,12 +95,6 @@ type RunProvider interface {
 	ProvideRunGroup(group *run.Group)
 }
 
-type HttpFunc func(router *mux.Router)
-
-func (h HttpFunc) ProvideHttp(router *mux.Router) {
-	h(router)
-}
-
 func (c *Container) AddModule(module interface{}) {
 	if p, ok := module.(func()); ok {
 		c.closerProviders = append(c.closerProviders, p)
