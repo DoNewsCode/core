@@ -48,7 +48,7 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 			return ka.Reload()
 		})
 	}()
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 	ioutil.WriteFile("testdata/watch.yaml", []byte("foo: bar"), 0644)
 	<-end
 	assert.Equal(t, "bar", ka.String("foo"))

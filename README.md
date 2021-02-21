@@ -34,30 +34,30 @@ Let's see the following snippet:
 package main
 
 import (
-  "github.com/DoNewsCode/std/pkg/core"
-  "github.com/DoNewsCode/std/pkg/observability"
-  "github.com/DoNewsCode/std/pkg/otgorm"
-  "github.com/gorilla/mux"
-  "golang.org/x/net/context"
-  "net/http"
+	"github.com/DoNewsCode/std/pkg/core"
+	"github.com/DoNewsCode/std/pkg/observability"
+	"github.com/DoNewsCode/std/pkg/otgorm"
+	"github.com/gorilla/mux"
+	"golang.org/x/net/context"
+	"net/http"
 )
 
 func main() {
-  // Phase One: creating a core from a configuration file
-  c := core.New(core.WithYamlFile("config.yaml"))
+	// Phase One: create a core from a configuration file
+	c := core.New(core.WithYamlFile("config.yaml"))
 
-  // Phase two: binding dependencies
-  c.Provide(otgorm.Provide)
+	// Phase two: bind dependencies
+	c.Provide(otgorm.Provide)
 
-  // Phase three: define service
-  c.AddModule(core.HttpFunc(func(router *mux.Router) {
-    router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-      writer.Write([]byte("hello world"))
-    })
-  }))
+	// Phase three: define service
+	c.AddModule(core.HttpFunc(func(router *mux.Router) {
+		router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Write([]byte("hello world"))
+		})
+	}))
 
-  // Phase Four: run!
-  c.Serve(context.Background())
+	// Phase Four: run!
+	c.Serve(context.Background())
 }
 
 ```
@@ -65,14 +65,14 @@ func main() {
 In a few lines, an http service is bootstrapped in the style outlined above.
 It is simple, explicit and to some extent, declarative.
 
-You may note that the http service doesn't really consume the dependency.
-That's true. The service demonstrated above uses a inline handler function to highlight the point.
-
+The service demonstrated above uses an inline handler function to highlight the point.
 Normally, for real projects, we will use modules instead. 
 The "module" in package core's glossary is not necessarily a go module (though it can be). It is simply a group of services.
 
-Let's rewrite the http service to consume the above dependencies.
+You may note that the http service doesn't really consume the dependency.
+That's true.
 
+Let's rewrite the http service to consume the above dependencies.
 
 ```go
 package main
@@ -126,10 +126,10 @@ func (m Module) ProvideHttp(router *mux.Router) {
 }
 
 func main() {
-	// Phase One: creating a core from a configuration file
+	// Phase One: create a core from a configuration file
 	c := core.New(core.WithYamlFile("config.yaml"))
 
-	// Phase two: bootstrapping dependencies
+	// Phase two: bind dependencies
 	c.Provide(otgorm.Provide)
 
 	// Phase three: define service
@@ -150,9 +150,9 @@ Had this been a DDD workshop, we would be expanding the example even further. Bu
   You could start you project as a monolith with multiple modules, and gradually migrate them into microservices.
 
 - Package core doesn't lock in transport or framework.
-  for instance, You can use go kit to struct your service, and leveraging grpc, ampq, thrift, etc. Non network service like CLI and Cron are also supported.
+  for instance, You can use go kit to struct your service, and leveraging grpc, ampq, thrift, etc. Non network services like CLI and Cron are also supported.
 
-- Sub packages provide support around service coordination, including but not limited to opentracing integration, metrics exporter, error handling, event-dispatching and leader election.
+- Sub packages provide support around service coordination, including but not limited to opentracing integration, metrics exporting, error handling, event-dispatching and leader election.
 
 ## Design Principles and technical merits
 
@@ -166,7 +166,7 @@ Had this been a DDD workshop, we would be expanding the example even further. Bu
 ## Non-Goals
 
 - Tries to be a Laravel or Ruby on Rails.
-- Tries to care about service details such as caching and validation.
+- Tries to care about service details.
 
 ## Suggested service framework
 - Gin (if http only)
