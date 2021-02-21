@@ -150,7 +150,7 @@ Had this been a DDD workshop, we would be expanding the example even further. Bu
   You could start you project as a monolith with multiple modules, and gradually migrate them into microservices.
 
 - Package core doesn't lock in transport or framework.
-  for instance, You can use go kit to struct your service, and leveraging grpc, ampq, thrift, etc. Non network services like CLI and Cron are also supported.
+  for instance, You can use go kit to construct your service, and leveraging grpc, ampq, thrift, etc. Non network services like CLI and Cron are also supported.
 
 - Sub packages provide support around service coordination, including but not limited to opentracing integration, metrics exporting, error handling, event-dispatching and leader election.
 
