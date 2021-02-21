@@ -10,6 +10,7 @@ import (
 )
 
 func TestWithContext(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest("GET", "http://example.com/foo", nil)
 	g := gin.New()
 	g.Use(WithContext())
