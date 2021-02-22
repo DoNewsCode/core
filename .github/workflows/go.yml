@@ -57,4 +57,10 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v -race ./...
+      run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: coverage.coverprofile
