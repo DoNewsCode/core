@@ -22,14 +22,34 @@ func (m *mockMetric) Observe(value float64) {
 }
 
 func TestWithMetrics(t *testing.T) {
-	metric := &mockMetric{}
-	g := gin.New()
-	g.Use(WithMetrics(metric, key.New("module", "foo"), false))
-	g.Handle("GET", "/", func(context *gin.Context) {
-		context.String(200, "%s", "ok")
-	})
-	req := httptest.NewRequest("GET", "/", nil)
-	writer := httptest.NewRecorder()
-	g.ServeHTTP(writer, req)
-	assert.NotZero(t, metric.observed)
+	cases := []struct {
+		name    string
+		addPath bool
+	}{
+		{
+			"addPath",
+			true,
+		},
+		{
+			"addPath",
+			false,
+		},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			metric := &mockMetric{}
+			g := gin.New()
+			g.Use(WithMetrics(metric, key.New("module", "foo"), c.addPath))
+			g.Handle("GET", "/", func(context *gin.Context) {
+				context.String(200, "%s", "ok")
+			})
+			req := httptest.NewRequest("GET", "/", nil)
+			writer := httptest.NewRecorder()
+			g.ServeHTTP(writer, req)
+			assert.NotZero(t, metric.observed)
+		})
+	}
 }
