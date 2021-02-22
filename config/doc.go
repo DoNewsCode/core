@@ -43,7 +43,7 @@
 //
 // A command is provided to export the default configuration:
 //
-//  go run main.go exportConfig -o ./config/config.yaml
+//  go run main.go config init -o ./config/config.yaml
 //
 // Best Practice
 //
