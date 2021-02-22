@@ -1,6 +1,12 @@
 Package core is a service container that elegantly bootstrap and coordinate
 twelve-factor apps in Go.
 
+![GitHub Workflow Status](https://github.com/DoNewsCode/core/workflows/CI/badge.svg)
+#[![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/go-kit/kit?tab=doc)
+[![codecov](https://codecov.io/gh/DoNewsCode/core/branch/master/graph/badge.svg)](https://codecov.io/gh/go-kit/kit)
+[![Go Report Card](https://goreportcard.com/badge/DoNewsCode/core)](https://goreportcard.com/report/go-kit/kit)
+[![Sourcegraph](https://sourcegraph.com/github.com/DoNewsCode/core/-/badge.svg)](https://sourcegraph.com/github.com/go-kit/kit?badge)
+
 ## Background
 
 The twelve-factor methodology has proven its worth over the years. Since its
@@ -146,17 +152,23 @@ Phase three has been replaced by the `c.AddModuleFunc(New)`. `AddModuleFunc` pop
 and add the returned module instance to the internal module registry.
 
 Now we have a fully workable project, with layers of handler, repository and entity. 
-Had this been a DDD workshop, we would be expanding the example even further. But let's redirect our attention to other goodies package core has offered.
+Had this been a DDD workshop, we would be expanding the example even further. 
 
-- Package core is excellent at multiplexing modules. 
+That being said, let's redirect our attention to other goodies package core has offered:
+
+- Package core is natively support multiplexing modules. 
   You could start you project as a monolith with multiple modules, and gradually migrate them into microservices.
 
 - Package core doesn't lock in transport or framework.
-  for instance, You can use go kit to construct your service, and leveraging grpc, ampq, thrift, etc. Non network services like CLI and Cron are also supported.
+  For instance, you can use go kit to construct your service, and leveraging grpc, ampq, thrift, etc. Non network services like CLI and Cron are also supported.
 
 - Sub packages provide support around service coordination, including but not limited to opentracing integration, metrics exporting, error handling, event-dispatching and leader election.
 
-## Design Principles and technical merits
+## Documentation
+
+GoDoc is the primary source of documentation.
+
+## Design Principles
 
 - No package global state.
 - Promote dependency injection.
