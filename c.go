@@ -393,48 +393,6 @@ func (c *C) Invoke(function interface{}) error {
 	return c.di.Invoke(function)
 }
 
-// Currently unused
-func (c *C) populate(targets ...interface{}) error {
-	// Validate all targets are non-nil pointers.
-	targetTypes := make([]reflect.Type, len(targets))
-	for i, t := range targets {
-		if t == nil {
-			return fmt.Errorf("failed to Populate: target %v is nil", i+1)
-		}
-		rt := reflect.TypeOf(t)
-		if rt.Kind() != reflect.Ptr {
-			return fmt.Errorf("failed to Populate: target %v is not a pointer type, got %T", i+1, t)
-		}
-
-		targetTypes[i] = reflect.TypeOf(t).Elem()
-	}
-
-	fnType := reflect.FuncOf(targetTypes, nil, false)
-	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
-		for i, arg := range args {
-			reflect.ValueOf(targets[i]).Elem().Set(arg)
-		}
-		return nil
-	})
-	return c.Invoke(fn.Interface())
-}
-
-// Currently unused
-func (c *C) addDependency(dep interface{}) {
-	inTypes := make([]reflect.Type, 0)
-	outTypes := make([]reflect.Type, 0)
-	depType := reflect.TypeOf(dep)
-	if isModule(depType) {
-		c.AddModule(dep)
-	}
-	outTypes = append(outTypes, reflect.TypeOf(dep))
-	fnType := reflect.FuncOf(inTypes, outTypes, false /* variadic */)
-	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
-		return []reflect.Value{reflect.ValueOf(dep)}
-	})
-	_ = c.di.Provide(fn.Interface())
-}
-
 func isCleanup(v reflect.Type) bool {
 	if v.Kind() == reflect.Func && v.NumIn() == 0 && v.NumOut() == 0 {
 		return true
