@@ -18,7 +18,7 @@ func Example_modules() {
 	defer c.Shutdown()
 
 	c.AddModule(srvhttp.DocsModule{})
-	c.AddModule(srvhttp.HealthCheck{})
+	c.AddModule(srvhttp.HealthCheckModule{})
 	c.AddModule(srvhttp.MetricsModule{})
 	c.AddModule(srvhttp.DebugModule{})
 
