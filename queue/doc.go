@@ -62,7 +62,7 @@
 // automatically by the core.
 //
 //  var c *core.C
-//  c.Provide(queue.ProvideDispatcher)
+//  c.Provide(queue.Provide)
 //
 // A module is also bundled, providing the queue command.
 //

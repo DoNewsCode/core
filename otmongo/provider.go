@@ -15,7 +15,7 @@ import (
 	"go.uber.org/dig"
 )
 
-// MongoIn is the injection parameter for ProvideMongo.
+// MongoIn is the injection parameter for Provide.
 type MongoIn struct {
 	dig.In
 
@@ -29,7 +29,7 @@ type Maker interface {
 	Make(name string) (*mongo.Client, error)
 }
 
-// MongoOut is the result of ProvideMongo. The official mongo package doesn't
+// MongoOut is the result of Provide. The official mongo package doesn't
 // provide a proper interface type. It is up to the users to define their own
 // mongodb repository interface.
 type MongoOut struct {
@@ -41,9 +41,9 @@ type MongoOut struct {
 	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
 }
 
-// ProvideMongo creates Factory and *mongo.Client. It is a valid dependency for
+// Provide creates Factory and *mongo.Client. It is a valid dependency for
 // package core.
-func ProvideMongo(p MongoIn) (MongoOut, func()) {
+func Provide(p MongoIn) (MongoOut, func()) {
 	var err error
 	var dbConfs map[string]struct{ Uri string }
 	err = p.Conf.Unmarshal("mongo", &dbConfs)

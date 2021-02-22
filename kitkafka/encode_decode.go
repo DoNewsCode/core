@@ -3,7 +3,6 @@ package kitkafka
 import (
 	"context"
 
-	"github.com/DoNewsCode/core/contract"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -27,7 +26,7 @@ type DecodeResponseFunc func(context.Context, *kafka.Message) (response interfac
 // The request object must implement contract.Marshaller. Protobuf objects
 // implemented this interface out of box.
 func EncodeMarshaller(ctx context.Context, msg *kafka.Message, request interface{}) error {
-	byt, err := request.(contract.Marshaller).Marshal()
+	byt, err := request.(interface{ Marshal() ([]byte, error) }).Marshal()
 	if err != nil {
 		return err
 	}

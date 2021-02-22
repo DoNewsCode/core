@@ -13,7 +13,7 @@ package otmongo exports the configuration in the following format:
 Add the mongo dependency to core:
 
 	var c *core.C = core.New()
-	c.Provide(otmongo.ProvideMongo)
+	c.Provide(otmongo.Provide)
 
 Then you can invoke redis from the application.
 

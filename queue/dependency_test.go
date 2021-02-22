@@ -11,7 +11,7 @@ import (
 )
 
 func TestProvideDispatcher(t *testing.T) {
-	out, err := ProvideDispatcher(DispatcherIn{
+	out, err := Provide(DispatcherIn{
 		Conf: config.MapAdapter{"queue": map[string]configuration{
 			"default": {
 				1,

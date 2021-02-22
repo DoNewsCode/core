@@ -28,7 +28,7 @@ type S3Maker interface {
 	Make(name string) (*Manager, error)
 }
 
-// S3In is the injection parameter for ProvideManager.
+// S3In is the injection parameter for Provide.
 type S3In struct {
 	di.In
 
@@ -37,7 +37,7 @@ type S3In struct {
 	Tracer opentracing.Tracer `optional:"true"`
 }
 
-// S3Out is the di output of ProvideManager.
+// S3Out is the di output of Provide.
 type S3Out struct {
 	di.Out
 
@@ -62,8 +62,8 @@ func (s *S3Factory) Make(name string) (*Manager, error) {
 	return client.(*Manager), nil
 }
 
-// ProvideManager creates *S3Factory and *ots3.Manager. It is a valid dependency for package core.
-func ProvideManager(p S3In) S3Out {
+// Provide creates *S3Factory and *ots3.Manager. It is a valid dependency for package core.
+func Provide(p S3In) S3Out {
 	var (
 		err       error
 		s3configs map[string]S3Config

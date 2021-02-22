@@ -35,7 +35,7 @@ type configuration struct {
 	CheckQueueLengthIntervalSecond int `yaml:"checkQueueLengthIntervalSecond" json:"checkQueueLengthIntervalSecond"`
 }
 
-// DispatcherIn is the injection parameters for ProvideDispatcher
+// DispatcherIn is the injection parameters for Provide
 type DispatcherIn struct {
 	di.In
 
@@ -48,7 +48,7 @@ type DispatcherIn struct {
 	Gauge       Gauge `optional:"true"`
 }
 
-// DispatcherOut is the di output of ProvideDispatcher
+// DispatcherOut is the di output of Provide
 type DispatcherOut struct {
 	di.Out
 	di.Module
@@ -60,9 +60,9 @@ type DispatcherOut struct {
 	ExportedConfig      []config.ExportedConfig `group:"config,flatten"`
 }
 
-// ProvideDispatcher is a provider for *DispatcherFactory and *QueueableDispatcher.
+// Provide is a provider for *DispatcherFactory and *QueueableDispatcher.
 // It also provides an interface for each.
-func ProvideDispatcher(p DispatcherIn) (DispatcherOut, error) {
+func Provide(p DispatcherIn) (DispatcherOut, error) {
 	var (
 		err        error
 		queueConfs map[string]configuration

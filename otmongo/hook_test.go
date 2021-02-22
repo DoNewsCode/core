@@ -20,7 +20,7 @@ func TestHook(t *testing.T) {
 	c.Provide(func() opentracing.Tracer {
 		return tracer
 	})
-	c.Provide(ProvideMongo)
+	c.Provide(Provide)
 	c.Invoke(func(mongo *mongo.Client) {
 		mongo.Ping(context.Background(), readpref.Nearest())
 		assert.NotEmpty(t, tracer.FinishedSpans())

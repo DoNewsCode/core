@@ -49,7 +49,7 @@ func bootstrapRetry() *core.C {
 
 	// Add ConfProvider
 	c.ProvideEssentials()
-	c.Provide(queue.ProvideDispatcher)
+	c.Provide(queue.Provide)
 	c.Provide(func() redis.UniversalClient {
 		client := redis.NewUniversalClient(&redis.UniversalOptions{})
 		_, _ = client.FlushAll(context.Background()).Result()

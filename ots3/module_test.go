@@ -12,7 +12,7 @@ import (
 func TestModule(t *testing.T) {
 	c := core.New()
 	c.ProvideEssentials()
-	c.Provide(ProvideManager)
+	c.Provide(Provide)
 	c.AddModuleFunc(New)
 	router := mux.NewRouter()
 	c.ApplyRouter(router)

@@ -30,7 +30,7 @@ Package ots3 exports the following configuration:
 To use package ots3 with package core:
 
 	var c *core.C = core.New()
-	c.Provide(mods3.ProvideManager)
+	c.Provide(mods3.Provide)
 	c.AddModuleFunc(mods3.New)
 	c.Invoke(function(manager *ots3.Manager) {
 		// do something with manager
