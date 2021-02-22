@@ -22,6 +22,7 @@ type Module struct {
 	exportedConfigs []ExportedConfig
 }
 
+// ConfigIn is the injection parameter for config.New.
 type ConfigIn struct {
 	di.In
 
@@ -29,6 +30,7 @@ type ConfigIn struct {
 	ExportedConfigs []ExportedConfig `group:"config"`
 }
 
+// New creates a new config module. It contains the init command.
 func New(p ConfigIn) (Module, error) {
 	var (
 		ok      bool

@@ -5,14 +5,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Module exports queue commands, for example queue flush and queue reload.
 type Module struct {
 	Factory *DispatcherFactory
 }
 
+// New creates a new module.
 func New(factory *DispatcherFactory) Module {
 	return Module{Factory: factory}
 }
 
+// ProvideCommand implements CommandProvider for the Module. It registers flush
+// and reload command to the parent command.
 func (m Module) ProvideCommand(command *cobra.Command) {
 	var queueName string
 	var channels []string
