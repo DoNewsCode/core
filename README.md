@@ -7,7 +7,7 @@ The twelve-factor methodology has proven its worth over the years. Since its
 invention many fields in technology have changed, many among them are shining
 and exciting. In the age of Kubernetes, service mesh and serverless
 architectures, the twelve-factor methodology has not faded away, but rather has
-happen to be a good fit for nearly all of those powerful platforms.
+happened to be a good fit for nearly all of those powerful platforms.
 
 Scaffolding a twelve-factor go app may not be a difficult task for experienced
 engineers, but certainly presents some challenges to juniors. For those who are
@@ -34,30 +34,31 @@ Let's see the following snippet:
 package main
 
 import (
-	"github.com/DoNewsCode/std/pkg/core"
-	"github.com/DoNewsCode/std/pkg/observability"
-	"github.com/DoNewsCode/std/pkg/otgorm"
-	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
-	"net/http"
+  "context"
+  "net/http"
+
+  "github.com/DoNewsCode/std/pkg/core"
+  "github.com/DoNewsCode/std/pkg/observability"
+  "github.com/DoNewsCode/std/pkg/otgorm"
+  "github.com/gorilla/mux"
 )
 
 func main() {
-	// Phase One: create a core from a configuration file
-	c := core.New(core.WithYamlFile("config.yaml"))
+  // Phase One: create a core from a configuration file
+  c := core.New(core.WithYamlFile("config.yaml"))
 
-	// Phase two: bind dependencies
-	c.Provide(otgorm.Provide)
+  // Phase two: bind dependencies
+  c.Provide(otgorm.Provide)
 
-	// Phase three: define service
-	c.AddModule(core.HttpFunc(func(router *mux.Router) {
-		router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-			writer.Write([]byte("hello world"))
-		})
-	}))
+  // Phase three: define service
+  c.AddModule(core.HttpFunc(func(router *mux.Router) {
+    router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+      writer.Write([]byte("hello world"))
+    })
+  }))
 
-	// Phase Four: run!
-	c.Serve(context.Background())
+  // Phase Four: run!
+  c.Serve(context.Background())
 }
 
 ```
@@ -78,65 +79,66 @@ Let's rewrite the http service to consume the above dependencies.
 package main
 
 import (
-	"context"
-	"github.com/DoNewsCode/std/pkg/core"
-	"github.com/DoNewsCode/std/pkg/otgorm"
-	"github.com/DoNewsCode/std/pkg/srvhttp"
-	"github.com/gorilla/mux"
-	"gorm.io/gorm"
-	"net/http"
+  "context"
+  "net/http"
+
+  "github.com/DoNewsCode/std/pkg/core"
+  "github.com/DoNewsCode/std/pkg/otgorm"
+  "github.com/DoNewsCode/std/pkg/srvhttp"
+  "github.com/gorilla/mux"
+  "gorm.io/gorm"
 )
 
 type User struct {
-	Id string
-	Name string
+  Id   string
+  Name string
 }
 
 type Repository struct {
-	DB *gorm.DB
+  DB *gorm.DB
 }
 
 func (r Repository) Find(id string) (*User, error) {
-	var user User
-	if err := r.DB.First(&user, id).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
+  var user User
+  if err := r.DB.First(&user, id).Error; err != nil {
+    return nil, err
+  }
+  return &user, nil
 }
 
 type Handler struct {
-	R Repository
+  R Repository
 }
 
 func (h Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	encoder := srvhttp.NewResponseEncoder(writer)
-	encoder.Encode(h.R.Find(request.URL.Query().Get("id")))
+  encoder := srvhttp.NewResponseEncoder(writer)
+  encoder.Encode(h.R.Find(request.URL.Query().Get("id")))
 }
 
 type Module struct {
-	H Handler
+  H Handler
 }
 
 func New(db *gorm.DB) Module {
-	return Module{Handler{Repository{db}}}
+  return Module{Handler{Repository{db}}}
 }
 
 func (m Module) ProvideHttp(router *mux.Router) {
-	router.Handle("/", m.H)
+  router.Handle("/", m.H)
 }
 
 func main() {
-	// Phase One: create a core from a configuration file
-	c := core.New(core.WithYamlFile("config.yaml"))
+  // Phase One: create a core from a configuration file
+  c := core.New(core.WithYamlFile("config.yaml"))
 
-	// Phase two: bind dependencies
-	c.Provide(otgorm.Provide)
+  // Phase two: bind dependencies
+  c.Provide(otgorm.Provide)
 
-	// Phase three: define service
-	c.AddModuleFunc(New)
+  // Phase three: define service
+  c.AddModuleFunc(New)
 
-	// Phase four: run!
-	c.Serve(context.Background())
+  // Phase four: run!
+  c.Serve(context.Background())
 }
 ```
 

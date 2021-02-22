@@ -55,7 +55,7 @@ func ExampleC_Provide() {
 func Example_minimal() {
 
 	// Spin up a real server
-	c := core.Default(core.WithInline("log.level", "warn"))
+	c := core.Default(core.WithInline("log.level", "none"))
 	c.AddModule(core.HttpFunc(func(router *mux.Router) {
 		router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 			writer.Write([]byte("hello world"))
