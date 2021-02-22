@@ -32,7 +32,7 @@ type ObservabilityOut struct {
 // Provide provides the observability suite for the system. It contains a tracer and
 // a histogram to measure all incoming request.
 func Provide(in ObservabilityIn) (ObservabilityOut, func(), error) {
-	in.Logger = log.With(in.Logger, "component", "observability")
+	in.Logger = log.With(in.Logger, "tag", "observability")
 	jlogger := ProvideJaegerLogAdapter(in.Logger)
 	tracer, cleanup, err := ProvideOpentracing(in.AppName, in.Env, jlogger, in.Conf)
 	hist := ProvideHistogramMetrics(in.AppName, in.Env)
@@ -57,7 +57,7 @@ jaeger:
 func exportConfig() []config.ExportedConfig {
 
 	var conf map[string]interface{}
-	_ = yaml.Unmarshal([]byte(sample), conf)
+	_ = yaml.Unmarshal([]byte(sample), &conf)
 	return []config.ExportedConfig{
 		{
 			Owner:   "observability",

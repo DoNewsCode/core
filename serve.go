@@ -45,7 +45,7 @@ type serveModule struct {
 }
 
 func (s serveModule) ProvideCommand(command *cobra.Command) {
-	newServeCmd(s.in)
+	command.AddCommand(newServeCmd(s.in))
 }
 
 func newServeCmd(p serveIn) *cobra.Command {

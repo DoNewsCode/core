@@ -177,7 +177,7 @@ func ProvideMemoryDatabase() *gorm.DB {
 }
 
 func provideDBFactory(p DatabaseIn) (Factory, func()) {
-	logger := log.With(p.Logger, "component", "database")
+	logger := log.With(p.Logger, "tag", "database")
 
 	var dbConfs map[string]databaseConf
 	err := p.Conf.Unmarshal("gorm", &dbConfs)

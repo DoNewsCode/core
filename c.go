@@ -191,8 +191,6 @@ func New(opts ...CoreOption) *C {
 func Default(opts ...CoreOption) *C {
 	c := New(opts...)
 	c.ProvideEssentials()
-	c.AddModuleFunc(config.New)
-	c.AddModuleFunc(NewServeModule)
 	return c
 }
 
