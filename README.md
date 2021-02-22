@@ -162,11 +162,12 @@ That being said, let's redirect our attention to other goodies package core has 
 - Package core doesn't lock in transport or framework.
   For instance, you can use go kit to construct your service, and leveraging grpc, ampq, thrift, etc. Non network services like CLI and Cron are also supported.
 
-- Sub packages provide support around service coordination, including but not limited to opentracing integration, metrics exporting, error handling, event-dispatching and leader election.
+- Sub packages provide support around service coordination, including but not limited to distributed tracing, metrics exporting, error handling, event-dispatching and leader election.
 
 ## Documentation
 
-GoDoc is the primary source of documentation.
+[GoDoc](https://pkg.go.dev/github.com/DoNewsCode/core) is the primary source of documentation.
+Definitely check out the [sub packages](https://pkg.go.dev/github.com/DoNewsCode/core#section-directories) too.
 
 ## Design Principles
 
