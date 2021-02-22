@@ -1,7 +1,7 @@
 Package core is a service container that elegantly bootstrap and coordinate
 twelve-factor apps in Go.
 
-![GitHub Workflow Status](https://github.com/DoNewsCode/core/workflows/go/badge.svg)
+[![Build](https://github.com/DoNewsCode/core/actions/workflows/go.yml/badge.svg)](https://github.com/DoNewsCode/core/actions/workflows/go.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/DoNewsCode/core.svg)](https://pkg.go.dev/github.com/DoNewsCode/core)
 [![codecov](https://codecov.io/gh/DoNewsCode/core/branch/master/graph/badge.svg)](https://codecov.io/gh/go-kit/kit)
 [![Go Report Card](https://goreportcard.com/badge/DoNewsCode/core)](https://goreportcard.com/report/go-kit/kit)
