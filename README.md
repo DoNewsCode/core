@@ -169,6 +169,8 @@ That being said, let's redirect our attention to other goodies package core has 
 [GoDoc](https://pkg.go.dev/github.com/DoNewsCode/core) is the primary source of documentation.
 Definitely check out the [sub packages](https://pkg.go.dev/github.com/DoNewsCode/core#section-directories) too.
 
+> [github.com/DoNewsCode/skeleton](https://github.com/DoNewsCode/skeleton) is working demo featuring package core with go-kit and gin.
+
 ## Design Principles
 
 - No package global state.
