@@ -37,9 +37,9 @@ import (
   "context"
   "net/http"
 
-  "github.com/DoNewsCode/std/pkg/core"
-  "github.com/DoNewsCode/std/pkg/observability"
-  "github.com/DoNewsCode/std/pkg/otgorm"
+  "github.com/DoNewsCode/core"
+  "github.com/DoNewsCode/core/observability"
+  "github.com/DoNewsCode/core/otgorm"
   "github.com/gorilla/mux"
 )
 
@@ -82,9 +82,9 @@ import (
   "context"
   "net/http"
 
-  "github.com/DoNewsCode/std/pkg/core"
-  "github.com/DoNewsCode/std/pkg/otgorm"
-  "github.com/DoNewsCode/std/pkg/srvhttp"
+  "github.com/DoNewsCode/core"
+  "github.com/DoNewsCode/core/otgorm"
+  "github.com/DoNewsCode/core/srvhttp"
   "github.com/gorilla/mux"
   "gorm.io/gorm"
 )

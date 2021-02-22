@@ -1,4 +1,4 @@
-module github.com/DoNewsCode/std
+module github.com/DoNewsCode/core
 
 go 1.14
 
