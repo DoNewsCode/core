@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"io/ioutil"
+	"os"
 	gotesting "testing"
 	"time"
 
@@ -29,11 +30,15 @@ func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
 }
 
 func TestKoanfAdapter_Watch(t *gotesting.T) {
-	ioutil.WriteFile("testdata/watch.yaml", []byte("foo: baz"), 0644)
+	t.Parallel()
+	f, _ := ioutil.TempFile(".", "*")
+	defer os.Remove(f.Name())
+
+	ioutil.WriteFile(f.Name(), []byte("foo: baz"), 0644)
 
 	ka, err := NewConfig(
-		WithProviderLayer(file.Provider("testdata/watch.yaml"), yaml.Parser()),
-		WithWatcher(watcher.File{Path: "testdata/watch.yaml"}),
+		WithProviderLayer(file.Provider(f.Name()), yaml.Parser()),
+		WithWatcher(watcher.File{Path: f.Name()}),
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "baz", ka.String("foo"))
@@ -48,8 +53,8 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 			return ka.Reload()
 		})
 	}()
-	time.Sleep(250 * time.Millisecond)
-	ioutil.WriteFile("testdata/watch.yaml", []byte("foo: bar"), 0644)
+	time.Sleep(time.Second)
+	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
 	<-end
 	assert.Equal(t, "bar", ka.String("foo"))
 }
