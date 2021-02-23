@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/DoNewsCode/core/config/watcher"
 	"reflect"
 
 	"github.com/DoNewsCode/core/contract"
@@ -85,7 +84,8 @@ func (k KoanfAdapter) Reload() error {
 // in the run group.
 func (k KoanfAdapter) Watch(ctx context.Context) error {
 	if k.watcher == nil {
-		k.watcher = watcher.Signal{}
+		<-ctx.Done()
+		return ctx.Err()
 	}
 	return k.watcher.Watch(ctx, k.Reload)
 }
