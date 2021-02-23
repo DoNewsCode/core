@@ -1,9 +1,10 @@
+// +build integration
+
 package queue
 
 import (
 	"context"
 	"errors"
-	"go.uber.org/atomic"
 	"math/rand"
 	"time"
 
@@ -72,7 +73,7 @@ func setUp() *QueueableDispatcher {
 }
 
 func TestDispatcher_work(t *testing.T) {
-	rand.Seed(int64(time.Now().Unix()))
+	rand.Seed(time.Now().Unix())
 	cases := []struct {
 		name        string
 		value       contract.Event
@@ -154,7 +155,7 @@ func TestDispatcher_work(t *testing.T) {
 func TestDispatcher_Consume(t *testing.T) {
 	consumer := setUp()
 
-	var called atomic.String
+	var called = make(chan string)
 	cases := []struct {
 		name   string
 		evt    contract.Event
@@ -167,12 +168,12 @@ func TestDispatcher_Consume(t *testing.T) {
 			func(ctx context.Context, event contract.Event) error {
 				assert.IsType(t, MockEvent{}, event.Data())
 				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
-				called.Store("ordinary message")
+				called <- "ordinary message"
 				return nil
 			},
 			func() {
-				assert.Equal(t, "ordinary message", called.String())
-				called.Store("")
+				str := <-called
+				assert.Equal(t, "ordinary message", str)
 			},
 		},
 		{
@@ -181,49 +182,59 @@ func TestDispatcher_Consume(t *testing.T) {
 			func(ctx context.Context, event contract.Event) error {
 				assert.IsType(t, MockEvent{}, event.Data())
 				assert.Equal(t, "hello", event.Data().(MockEvent).Value)
-				called.Store("persist message")
+				called <- "persist message"
 				return nil
 			},
 			func() {
-				time.Sleep(5 * time.Millisecond)
-				assert.Equal(t, "persist message", called.String())
-				called.Store("")
+				str := <-called
+				assert.Equal(t, "persist message", str)
 			},
 		},
 		{
 			"deferred message",
 			Persist(events.Of(MockEvent{Value: "hello", Called: new(bool)}), Defer(2*time.Second)),
 			func(ctx context.Context, event contract.Event) error {
-				called.Store("deferred message")
+				called <- "deferred message"
 				return nil
 			},
 			func() {
-				time.Sleep(1 * time.Second)
-				assert.NotEqual(t, "deferred message", called.String())
-				called.Store("")
-				time.Sleep(2 * time.Second)
+				var str string
+				select {
+				case str = <-called:
+				case <-time.After(time.Second):
+				}
+				assert.NotEqual(t, "deferred message", str)
+				str = <-called
+				assert.Equal(t, "deferred message", str)
 			},
 		},
 		{
 			"deferred message but called",
 			Persist(events.Of(MockEvent{Value: "hello", Called: new(bool)}), Defer(time.Second)),
 			func(ctx context.Context, event contract.Event) error {
-				called.Store("deferred message but called")
+				called <- "deferred message but called"
 				return nil
 			},
 			func() {
-				time.Sleep(2 * time.Second)
-				assert.Equal(t, "deferred message but called", called.String())
-				called.Store("")
+				var str string
+				select {
+				case str = <-called:
+				case <-time.After(2 * time.Second):
+				}
+				assert.Equal(t, "deferred message but called", str)
 			},
 		},
 		{
 			"failed message",
 			Persist(events.Of(MockEvent{Value: "hello"})),
 			func(ctx context.Context, event contract.Event) error {
+				defer func() {
+					called <- "failed message"
+				}()
 				return errors.New("some err")
 			},
 			func() {
+				<-called
 				time.Sleep(100 * time.Millisecond)
 				info, _ := consumer.driver.Info(context.Background())
 				assert.Equal(t, int64(1), info.Failed)
@@ -235,14 +246,18 @@ func TestDispatcher_Consume(t *testing.T) {
 			"retry message",
 			Persist(events.Of(MockEvent{Value: "hello"}), MaxAttempts(2)),
 			func(ctx context.Context, event contract.Event) error {
-				if called.String() != "retry message" {
-					called.Store("retry message")
+				var firstTry = make(chan struct{}, 1)
+				select {
+				case <-firstTry:
+					return nil
+				default:
+					firstTry <- struct{}{}
+					called <- "retry message"
 					return errors.New("some err")
 				}
-				return nil
 			},
 			func() {
-				time.Sleep(5 * time.Millisecond)
+				<-called
 				info, _ := consumer.driver.Info(context.Background())
 				assert.Equal(t, int64(0), info.Failed)
 			},
@@ -251,20 +266,24 @@ func TestDispatcher_Consume(t *testing.T) {
 			"reload message",
 			Persist(events.Of(MockEvent{Value: "hello"}), Timeout(time.Second)),
 			func(ctx context.Context, event contract.Event) error {
-				if called.String() != "reload message" {
+				var firstTry = make(chan struct{}, 1)
+				select {
+				case <-firstTry:
+					return nil
+				default:
+					firstTry <- struct{}{}
+					called <- "reload message"
 					return errors.New("some err")
 				}
-				return nil
 			},
 			func() {
-				time.Sleep(5 * time.Millisecond)
-				called.Store("reload message")
+				<-called
+				time.Sleep(100 * time.Millisecond)
 				num, _ := consumer.driver.Reload(context.Background(), "failed")
 				assert.Equal(t, int64(1), num)
 				time.Sleep(5 * time.Millisecond)
 				info, _ := consumer.driver.Info(context.Background())
 				assert.Equal(t, int64(0), info.Failed)
-				called.Store("")
 			},
 		},
 	}
@@ -272,11 +291,15 @@ func TestDispatcher_Consume(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			dispatcher := setUp()
 			ctx, cancel := context.WithCancel(context.Background())
-			go dispatcher.Consume(ctx)
 			defer cancel()
-			dispatcher.Subscribe(c.ln)
-			err := dispatcher.Dispatch(context.Background(), c.evt)
-			assert.NoError(t, err)
+
+			go dispatcher.Consume(ctx)
+			go func() {
+				dispatcher.Subscribe(c.ln)
+				err := dispatcher.Dispatch(context.Background(), c.evt)
+				assert.NoError(t, err)
+			}()
+
 			c.called()
 		})
 	}

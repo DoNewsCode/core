@@ -177,7 +177,7 @@ Definitely check out the [sub packages](https://pkg.go.dev/github.com/DoNewsCode
 - Promote dependency injection.
 - Testable code.
 - Minimalist interface design. Easy to decorate and replace.
-- Tries to work with the go ecosystem rather than reinventing the wheel.
+- Work with the Go ecosystem rather than reinventing the wheel.
 - End to end Context passing.
 
 ## Non-Goals
