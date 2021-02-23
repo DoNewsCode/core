@@ -63,7 +63,7 @@ type AppNameProvider func(conf contract.ConfigAccessor) contract.AppName
 // EnvProvider provides the contract.Env to the core.
 type EnvProvider func(conf contract.ConfigAccessor) contract.Env
 
-// EnvProvider provides the log.Logger to the core.
+// LoggerProvider provides the log.Logger to the core.
 type LoggerProvider func(conf contract.ConfigAccessor, appName contract.AppName, env contract.Env) log.Logger
 
 type coreValues struct {
