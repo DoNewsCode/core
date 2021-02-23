@@ -1,3 +1,5 @@
+// +build integration
+
 package ots3
 
 import (
