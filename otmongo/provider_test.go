@@ -1,10 +1,11 @@
 package otmongo
 
 import (
+	"testing"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
-	"testing"
 )
 
 func TestNewMongoFactory(t *testing.T) {
