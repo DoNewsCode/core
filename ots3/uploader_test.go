@@ -75,7 +75,7 @@ func TestManager_UploadFromUrl(t *testing.T) {
 	t.Parallel()
 	tracer := mocktracer.New()
 	m := setupManagerWithTracer(tracer)
-	newURL, err := m.UploadFromUrl(context.Background(), "https://box.bdimg.com/static/fisp_static/common/img/searchbox/logo_news_276_88_1f9876a.png")
+	newURL, err := m.UploadFromUrl(context.Background(), "https://www.donews.com/static/v2/images/full-logo.png")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newURL)
 	assert.NotEmpty(t, tracer.FinishedSpans())
