@@ -20,6 +20,6 @@ func Example() {
 	})
 	fmt.Println(err)
 	// Output:
-	// mysql
+	// sqlite
 	// <nil>
 }
