@@ -36,6 +36,6 @@ func TestC_Default(t *testing.T) {
 	rootCommand.Execute()
 
 	output, _ := ioutil.ReadFile(f.Name())
-	assert.Contains(t, string(output), "database:")
+	assert.Contains(t, string(output), "gorm:")
 	os.Remove(f.Name())
 }

@@ -222,7 +222,7 @@ func provideConfig() []config.ExportedConfig {
 		{
 			Owner: "otgorm",
 			Data: map[string]interface{}{
-				"database": map[string]databaseConf{
+				"gorm": map[string]databaseConf{
 					"default": {
 						Database:                                 "mysql",
 						Dsn:                                      "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local",
