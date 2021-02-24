@@ -68,8 +68,9 @@ func NewConfig(options ...Option) (*KoanfAdapter, error) {
 	return &adapter, nil
 }
 
-// Reload reloads the whole configuration stack. It reloads layer by layer, so if an error occurred, Reload will
-// return early and abort the rest of the reloading.
+// Reload reloads the whole configuration stack. It reloads layer by layer, so if
+// an error occurred, Reload will return early and abort the rest of the
+// reloading.
 func (k KoanfAdapter) Reload() error {
 	for i := len(k.layers) - 1; i >= 0; i-- {
 		err := k.K.Load(k.layers[i].Provider, k.layers[i].Parser)
@@ -80,8 +81,9 @@ func (k KoanfAdapter) Reload() error {
 	return nil
 }
 
-// Watch uses the internal watcher to watch the configuration reload signals. This function should be registered
-// in the run group.
+// Watch uses the internal watcher to watch the configuration reload signals.
+// This function should be registered in the run group. If the watcher is nil,
+// this call will block until context expired.
 func (k KoanfAdapter) Watch(ctx context.Context) error {
 	if k.watcher == nil {
 		<-ctx.Done()

@@ -74,6 +74,7 @@ func setUp() *QueueableDispatcher {
 
 func TestDispatcher_work(t *testing.T) {
 	rand.Seed(time.Now().Unix())
+
 	cases := []struct {
 		name        string
 		value       contract.Event
@@ -155,6 +156,7 @@ func TestDispatcher_work(t *testing.T) {
 func TestDispatcher_Consume(t *testing.T) {
 	consumer := setUp()
 
+	var firstTry = make(chan struct{}, 1)
 	var called = make(chan string)
 	cases := []struct {
 		name   string
@@ -246,18 +248,18 @@ func TestDispatcher_Consume(t *testing.T) {
 			"retry message",
 			Persist(events.Of(MockEvent{Value: "hello"}), MaxAttempts(2)),
 			func(ctx context.Context, event contract.Event) error {
-				var firstTry = make(chan struct{}, 1)
 				select {
 				case <-firstTry:
+					called <- "retry message"
 					return nil
 				default:
 					firstTry <- struct{}{}
-					called <- "retry message"
 					return errors.New("some err")
 				}
 			},
 			func() {
 				<-called
+				time.Sleep(100 * time.Millisecond)
 				info, _ := consumer.driver.Info(context.Background())
 				assert.Equal(t, int64(0), info.Failed)
 			},
@@ -266,15 +268,8 @@ func TestDispatcher_Consume(t *testing.T) {
 			"reload message",
 			Persist(events.Of(MockEvent{Value: "hello"}), Timeout(time.Second)),
 			func(ctx context.Context, event contract.Event) error {
-				var firstTry = make(chan struct{}, 1)
-				select {
-				case <-firstTry:
-					return nil
-				default:
-					firstTry <- struct{}{}
-					called <- "reload message"
-					return errors.New("some err")
-				}
+				called <- "reload message"
+				return errors.New("some err")
 			},
 			func() {
 				<-called
