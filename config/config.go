@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/knadh/koanf"
@@ -16,6 +17,7 @@ type KoanfAdapter struct {
 	layers    []ProviderSet
 	watcher   contract.ConfigWatcher
 	delimiter string
+	rwlock    sync.RWMutex
 	K         *koanf.Koanf
 }
 
@@ -71,7 +73,10 @@ func NewConfig(options ...Option) (*KoanfAdapter, error) {
 // Reload reloads the whole configuration stack. It reloads layer by layer, so if
 // an error occurred, Reload will return early and abort the rest of the
 // reloading.
-func (k KoanfAdapter) Reload() error {
+func (k *KoanfAdapter) Reload() error {
+	k.rwlock.Lock()
+	defer k.rwlock.Unlock()
+
 	for i := len(k.layers) - 1; i >= 0; i-- {
 		err := k.K.Load(k.layers[i].Provider, k.layers[i].Parser)
 		if err != nil {
@@ -84,7 +89,7 @@ func (k KoanfAdapter) Reload() error {
 // Watch uses the internal watcher to watch the configuration reload signals.
 // This function should be registered in the run group. If the watcher is nil,
 // this call will block until context expired.
-func (k KoanfAdapter) Watch(ctx context.Context) error {
+func (k *KoanfAdapter) Watch(ctx context.Context) error {
 	if k.watcher == nil {
 		<-ctx.Done()
 		return ctx.Err()
@@ -94,7 +99,10 @@ func (k KoanfAdapter) Watch(ctx context.Context) error {
 
 // Unmarshal unmarshals a given key path into the given struct using the mapstructure lib.
 // If no path is specified, the whole map is unmarshalled. `koanf` is the struct field tag used to match field names.
-func (k KoanfAdapter) Unmarshal(path string, o interface{}) error {
+func (k *KoanfAdapter) Unmarshal(path string, o interface{}) error {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
 	return k.K.UnmarshalWithConf(path, o, koanf.UnmarshalConf{
 		Tag: "json",
 		DecoderConfig: &mapstructure.DecoderConfig{
@@ -109,41 +117,62 @@ func (k KoanfAdapter) Unmarshal(path string, o interface{}) error {
 // with the cut config map loaded. For instance, if the loaded config has a path that looks like parent.child.sub.a.b,
 // `Route("parent.child")` returns a new contract.ConfigAccessor instance with the config map `sub.a.b` where
 // everything above `parent.child` are cut out.
-func (k KoanfAdapter) Route(s string) contract.ConfigAccessor {
-	return KoanfAdapter{
+func (k *KoanfAdapter) Route(s string) contract.ConfigAccessor {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
+	return &KoanfAdapter{
 		K: k.K.Cut(s),
 	}
 }
 
 // String returns the string value of a given key path or "" if the path does not exist or if the value is not a valid string
-func (k KoanfAdapter) String(s string) string {
+func (k *KoanfAdapter) String(s string) string {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
 	return k.K.String(s)
 }
 
 // Int returns the int value of a given key path or 0 if the path does not exist or if the value is not a valid int.
-func (k KoanfAdapter) Int(s string) int {
+func (k *KoanfAdapter) Int(s string) int {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
 	return k.K.Int(s)
 }
 
 // Strings returns the []string slice value of a given key path or an empty []string slice if the path does not exist
 // or if the value is not a valid string slice.
-func (k KoanfAdapter) Strings(s string) []string {
+func (k *KoanfAdapter) Strings(s string) []string {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
 	return k.K.Strings(s)
 }
 
 // Bool returns the bool value of a given key path or false if the path does not exist or if the value is not a valid bool representation.
 // Accepted string representations of bool are the ones supported by strconv.ParseBool.
-func (k KoanfAdapter) Bool(s string) bool {
+func (k *KoanfAdapter) Bool(s string) bool {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
 	return k.K.Bool(s)
 }
 
 // Get returns the raw, uncast interface{} value of a given key path in the config map. If the key path does not exist, nil is returned.
-func (k KoanfAdapter) Get(s string) interface{} {
+func (k *KoanfAdapter) Get(s string) interface{} {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
 	return k.K.Get(s)
 }
 
 // Float64 returns the float64 value of a given key path or 0 if the path does not exist or if the value is not a valid float64.
-func (k KoanfAdapter) Float64(s string) float64 {
+func (k *KoanfAdapter) Float64(s string) float64 {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
 	return k.K.Float64(s)
 }
 
