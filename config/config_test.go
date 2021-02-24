@@ -21,12 +21,18 @@ func TestKoanfAdapter_Route(t *gotesting.T) {
 	assert.Implements(t, MapAdapter{}, ka.Route("foo"))
 }
 
-func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
+func TestKoanfAdapter_race(t *gotesting.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			assert.True(t, false, "shouldn't reach here")
+		}
+	}()
 	ka := prepareTestSubject(t)
-	var target string
-	err := ka.Unmarshal("foo.bar", &target)
-	assert.NoError(t, err)
-	assert.Equal(t, "baz", target)
+	for i := 0; i < 100; i++ {
+		go ka.Reload()
+		ka.String("string")
+	}
+
 }
 
 func TestKoanfAdapter_Watch(t *gotesting.T) {
@@ -55,7 +61,6 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	time.Sleep(time.Second)
 	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
 	<-end
-	time.Sleep(time.Second)
 	assert.Equal(
 		t,
 		"bar",
@@ -64,13 +69,37 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	)
 }
 
-func prepareTestSubject(t *gotesting.T) KoanfAdapter {
-	k := koanf.New(".")
-	if err := k.Load(file.Provider("testdata/mock.json"), json.Parser()); err != nil {
-		t.Fatalf("error loading config: %v", err)
-	}
-	ka := KoanfAdapter{K: k}
-	return ka
+func TestKoanfAdapter_Bool(t *gotesting.T) {
+	k := prepareTestSubject(t)
+	assert.True(t, k.Bool("bool"))
+}
+
+func TestKoanfAdapter_String(t *gotesting.T) {
+	k := prepareTestSubject(t)
+	assert.Equal(t, "string", k.String("string"))
+}
+
+func TestKoanfAdapter_Strings(t *gotesting.T) {
+	k := prepareTestSubject(t)
+	assert.Equal(t, []string{"foo", "bar"}, k.Strings("strings"))
+}
+
+func TestKoanfAdapter_Float64(t *gotesting.T) {
+	k := prepareTestSubject(t)
+	assert.Equal(t, 1.0, k.Float64("float"))
+}
+
+func TestKoanfAdapter_Get(t *gotesting.T) {
+	k := prepareTestSubject(t)
+	assert.Equal(t, 1.0, k.Get("float"))
+}
+
+func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
+	ka := prepareTestSubject(t)
+	var target string
+	err := ka.Unmarshal("foo.bar", &target)
+	assert.NoError(t, err)
+	assert.Equal(t, "baz", target)
 }
 
 func TestMapAdapter_Route(t *gotesting.T) {
@@ -107,4 +136,13 @@ func TestMapAdapter_Unmarshal(t *gotesting.T) {
 	var badTarget struct{}
 	err = m.Unmarshal("foo", &badTarget)
 	assert.Error(t, err)
+}
+
+func prepareTestSubject(t *gotesting.T) *KoanfAdapter {
+	k := koanf.New(".")
+	if err := k.Load(file.Provider("testdata/mock.json"), json.Parser()); err != nil {
+		t.Fatalf("error loading config: %v", err)
+	}
+	ka := KoanfAdapter{K: k}
+	return &ka
 }

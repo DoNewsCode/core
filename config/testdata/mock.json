@@ -1,5 +1,10 @@
 {
   "foo": {
     "bar": "baz"
-  }
+  },
+  "bool": true,
+  "string": "string",
+  "int": 42,
+  "strings": ["foo", "bar"],
+  "float": 1.0
 }
