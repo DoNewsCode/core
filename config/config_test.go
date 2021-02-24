@@ -47,16 +47,20 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	end := make(chan struct{})
 	go func() {
 		ka.watcher.Watch(ctx, func() error {
-			defer func() {
-				end <- struct{}{}
-			}()
-			return ka.Reload()
+			assert.NoError(t, ka.Reload(), "reload should be successful")
+			end <- struct{}{}
+			return nil
 		})
 	}()
 	time.Sleep(time.Second)
 	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
 	<-end
-	assert.Equal(t, "bar", ka.String("foo"))
+	assert.Equal(
+		t,
+		"bar",
+		ka.String("foo"),
+		"configAccessor should always return the latest value.",
+	)
 }
 
 func prepareTestSubject(t *gotesting.T) KoanfAdapter {
