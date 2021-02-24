@@ -151,7 +151,7 @@ func main() {
 Phase three has been replaced by the `c.AddModuleFunc(New)`. `AddModuleFunc` populates the arguments to `New` from dependency containers
 and add the returned module instance to the internal module registry.
 
-When c.Serve() is called, all registered module will be scanned for implemented interfaces. 
+When c.Serve() is called, all registered modules will be scanned for implemented interfaces. 
 The module in the example implements container.HttpProvider interface: 
 
 ```go
@@ -160,9 +160,7 @@ type HttpProvider interface {
 }
 ```
 
-> see https://github.com/DoNewsCode/core/blob/master/container/container.go for all service provider interfaces.
-
-Therefore, the core knows this module exposes http service and then invokes the method with a router. You can register multiple modules, and each module can implement one or more services.
+Therefore, the core knows this module wants to expose http service and subsequently invokes the `ProvideHttp` with a router. You can register multiple modules, and each module can implement one or more services.
 
 Now we have a fully workable project, with layers of handler, repository and entity. 
 Had this been a DDD workshop, we would be expanding the example even further. 
