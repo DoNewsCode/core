@@ -102,6 +102,42 @@ func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
 	assert.Equal(t, "baz", target)
 }
 
+func TestMapAdapter_Bool(t *gotesting.T) {
+	k := MapAdapter(
+		map[string]interface{}{
+			"bool": true,
+		},
+	)
+	assert.True(t, k.Bool("bool"))
+}
+
+func TestMapAdapter_String(t *gotesting.T) {
+	k := MapAdapter(
+		map[string]interface{}{
+			"string": "string",
+		},
+	)
+	assert.Equal(t, "string", k.String("string"))
+}
+
+func TestMapAdapter_Float64(t *gotesting.T) {
+	k := MapAdapter(
+		map[string]interface{}{
+			"float": 1.0,
+		},
+	)
+	assert.Equal(t, 1.0, k.Float64("float"))
+}
+
+func TestMapAdapter_Get(t *gotesting.T) {
+	k := MapAdapter(
+		map[string]interface{}{
+			"float": 1.0,
+		},
+	)
+	assert.Equal(t, 1.0, k.Get("float"))
+}
+
 func TestMapAdapter_Route(t *gotesting.T) {
 	m := MapAdapter(
 		map[string]interface{}{

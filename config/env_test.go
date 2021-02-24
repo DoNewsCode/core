@@ -14,3 +14,10 @@ func TestEnv_String(t *gotesting.T) {
 	assertion.Equal("production", NewEnv("PRODUCTION").String())
 	assertion.Equal("testing", NewEnv("TESTING").String())
 }
+
+func TestNewEnvFromConf(t *gotesting.T) {
+	env := NewEnvFromConf(MapAdapter(map[string]interface{}{
+		"env": "local",
+	}))
+	assert.Equal(t, "local", env.String())
+}
