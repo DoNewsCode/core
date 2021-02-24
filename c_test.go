@@ -2,13 +2,13 @@ package core
 
 import (
 	"context"
+	"github.com/DoNewsCode/core/otgorm"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
-	"github.com/DoNewsCode/core/otgorm"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
