@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/DoNewsCode/core"
 	"github.com/gorilla/mux"
@@ -64,6 +65,9 @@ func Example_minimal() {
 	}))
 	ctx, cancel := context.WithCancel(context.Background())
 	go c.Serve(ctx)
+
+	// Giver server sometime to be ready.
+	time.Sleep(time.Millisecond)
 
 	// Let's try if the server works.
 	resp, _ := http.Get("http://localhost:8080/")
