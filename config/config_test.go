@@ -52,17 +52,15 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	assert.Equal(t, "baz", ka.String("foo"))
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	end := make(chan struct{})
 	go func() {
 		ka.watcher.Watch(ctx, func() error {
 			assert.NoError(t, ka.Reload(), "reload should be successful")
-			end <- struct{}{}
 			return nil
 		})
 	}()
 	time.Sleep(time.Second)
 	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
-	<-end
+	time.Sleep(time.Second)
 	assert.Equal(
 		t,
 		"bar",
