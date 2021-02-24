@@ -16,6 +16,7 @@ import (
 )
 
 func TestKoanfAdapter_Route(t *gotesting.T) {
+	t.Parallel()
 	ka := prepareTestSubject(t)
 	assert.Implements(t, MapAdapter{}, ka.Route("foo"))
 	assert.Implements(t, MapAdapter{}, ka.Route("foo"))
@@ -27,6 +28,7 @@ func TestKoanfAdapter_race(t *gotesting.T) {
 			assert.True(t, false, "shouldn't reach here")
 		}
 	}()
+	t.Parallel()
 	ka := prepareTestSubject(t)
 	for i := 0; i < 100; i++ {
 		go ka.Reload()
@@ -70,31 +72,37 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 }
 
 func TestKoanfAdapter_Bool(t *gotesting.T) {
+	t.Parallel()
 	k := prepareTestSubject(t)
 	assert.True(t, k.Bool("bool"))
 }
 
 func TestKoanfAdapter_String(t *gotesting.T) {
+	t.Parallel()
 	k := prepareTestSubject(t)
 	assert.Equal(t, "string", k.String("string"))
 }
 
 func TestKoanfAdapter_Strings(t *gotesting.T) {
+	t.Parallel()
 	k := prepareTestSubject(t)
 	assert.Equal(t, []string{"foo", "bar"}, k.Strings("strings"))
 }
 
 func TestKoanfAdapter_Float64(t *gotesting.T) {
+	t.Parallel()
 	k := prepareTestSubject(t)
 	assert.Equal(t, 1.0, k.Float64("float"))
 }
 
 func TestKoanfAdapter_Get(t *gotesting.T) {
+	t.Parallel()
 	k := prepareTestSubject(t)
 	assert.Equal(t, 1.0, k.Get("float"))
 }
 
 func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
+	t.Parallel()
 	ka := prepareTestSubject(t)
 	var target string
 	err := ka.Unmarshal("foo.bar", &target)
@@ -103,6 +111,7 @@ func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
 }
 
 func TestMapAdapter_Bool(t *gotesting.T) {
+	t.Parallel()
 	k := MapAdapter(
 		map[string]interface{}{
 			"bool": true,
@@ -112,6 +121,7 @@ func TestMapAdapter_Bool(t *gotesting.T) {
 }
 
 func TestMapAdapter_String(t *gotesting.T) {
+	t.Parallel()
 	k := MapAdapter(
 		map[string]interface{}{
 			"string": "string",
@@ -121,6 +131,7 @@ func TestMapAdapter_String(t *gotesting.T) {
 }
 
 func TestMapAdapter_Float64(t *gotesting.T) {
+	t.Parallel()
 	k := MapAdapter(
 		map[string]interface{}{
 			"float": 1.0,
@@ -130,6 +141,7 @@ func TestMapAdapter_Float64(t *gotesting.T) {
 }
 
 func TestMapAdapter_Get(t *gotesting.T) {
+	t.Parallel()
 	k := MapAdapter(
 		map[string]interface{}{
 			"float": 1.0,
@@ -139,6 +151,7 @@ func TestMapAdapter_Get(t *gotesting.T) {
 }
 
 func TestMapAdapter_Route(t *gotesting.T) {
+	t.Parallel()
 	m := MapAdapter(
 		map[string]interface{}{
 			"foo": map[string]interface{}{
@@ -155,6 +168,7 @@ func TestMapAdapter_Route(t *gotesting.T) {
 }
 
 func TestMapAdapter_Unmarshal(t *gotesting.T) {
+	t.Parallel()
 	m := MapAdapter(
 		map[string]interface{}{
 			"foo": map[string]interface{}{

@@ -6,6 +6,7 @@ import (
 )
 
 func TestNewAppNameFromConf(t *testing.T) {
+	t.Parallel()
 	app := NewAppNameFromConf(MapAdapter(map[string]interface{}{
 		"name": "app",
 	}))

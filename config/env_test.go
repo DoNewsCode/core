@@ -7,6 +7,7 @@ import (
 )
 
 func TestEnv_String(t *gotesting.T) {
+	t.Parallel()
 	assertion := assert.New(t)
 	assertion.Equal("local", NewEnv("LOCAL").String())
 	assertion.Equal("staging", NewEnv("STAGING").String())
@@ -16,6 +17,7 @@ func TestEnv_String(t *gotesting.T) {
 }
 
 func TestNewEnvFromConf(t *gotesting.T) {
+	t.Parallel()
 	env := NewEnvFromConf(MapAdapter(map[string]interface{}{
 		"env": "local",
 	}))
