@@ -2,13 +2,13 @@ package core
 
 import (
 	"context"
+	"github.com/DoNewsCode/core/otgorm"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
-	"github.com/DoNewsCode/core/otgorm"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -36,6 +36,6 @@ func TestC_Default(t *testing.T) {
 	rootCommand.Execute()
 
 	output, _ := ioutil.ReadFile(f.Name())
-	assert.Contains(t, string(output), "database:")
+	assert.Contains(t, string(output), "gorm:")
 	os.Remove(f.Name())
 }
