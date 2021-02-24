@@ -55,6 +55,7 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	time.Sleep(time.Second)
 	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
 	<-end
+	time.Sleep(time.Second)
 	assert.Equal(
 		t,
 		"bar",
