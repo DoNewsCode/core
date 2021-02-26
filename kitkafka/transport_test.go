@@ -4,7 +4,9 @@ package kitkafka
 
 import (
 	"context"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/stretchr/testify/assert"
@@ -71,4 +73,125 @@ func TestTransport(t *testing.T) {
 	if !consumed {
 		t.Fatal("failed to consume the message")
 	}
+}
+
+type mockReader struct {
+	fetchCount int
+	hasCommit  bool
+	commitFunc func(ctx context.Context, msgs ...kafka.Message) error
+}
+
+func (r *mockReader) Close() error {
+	return nil
+}
+
+func (r *mockReader) ReadMessage(ctx context.Context) (kafka.Message, error) {
+	panic("implement me")
+}
+
+func (r *mockReader) FetchMessage(ctx context.Context) (kafka.Message, error) {
+	select {
+	case <-ctx.Done():
+		return kafka.Message{}, ctx.Err()
+	default:
+		r.fetchCount++
+		return kafka.Message{}, nil
+	}
+}
+
+func (r *mockReader) CommitMessages(ctx context.Context, msgs ...kafka.Message) error {
+	err := r.commitFunc(ctx, msgs...)
+	if err == nil {
+		r.hasCommit = true
+	}
+	return err
+}
+
+func TestServeSync(t *testing.T) {
+	var i = 0
+	for _, c := range []struct {
+		name    string
+		handler Handler
+		reader  Reader
+		asserts func(t *testing.T, reader *mockReader)
+	}{
+		{
+			"failed",
+			HandleFunc(func(ctx context.Context, msg kafka.Message) error {
+				return errors.New("false")
+			}),
+			&mockReader{},
+			func(t *testing.T, reader *mockReader) {
+				assert.Equal(t, false, reader.hasCommit)
+				assert.Equal(t, 1, reader.fetchCount)
+			},
+		}, {
+			"retrying",
+			HandleFunc(func(ctx context.Context, msg kafka.Message) error {
+				return errors.New("false")
+			}),
+			&mockReader{},
+			func(t *testing.T, reader *mockReader) {
+				assert.Equal(t, false, reader.hasCommit)
+				assert.Less(t, 1, reader.fetchCount)
+			},
+		},
+		{
+			"commit failed",
+			HandleFunc(func(ctx context.Context, msg kafka.Message) error {
+				return nil
+			}),
+			&mockReader{
+				commitFunc: func(ctx context.Context, msgs ...kafka.Message) error {
+					return errors.New("foo")
+				},
+			},
+			func(t *testing.T, reader *mockReader) {
+				assert.Equal(t, false, reader.hasCommit)
+				assert.Less(t, 1, reader.fetchCount)
+			},
+		},
+		{
+			"commit fixed",
+			HandleFunc(func(ctx context.Context, msg kafka.Message) error {
+				return nil
+			}),
+			&mockReader{
+				commitFunc: func(ctx context.Context, msgs ...kafka.Message) error {
+					if i == 0 {
+						i++
+						return errors.New("foo")
+					}
+					return nil
+				},
+			},
+
+			func(t *testing.T, reader *mockReader) {
+				assert.Equal(t, false, reader.hasCommit)
+				assert.Less(t, 1, reader.fetchCount)
+			},
+		},
+	} {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			server := SubscriberServer{
+				reader:      c.reader,
+				handler:     c.handler,
+				parallelism: 1,
+				syncCommit:  true,
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+
+			defer cancel()
+			_ = server.Serve(ctx)
+		})
+	}
+}
+
+func TestGetRetryDuration(t *testing.T) {
+	assert.Equal(t, 10*time.Second, getRetryDuration(time.Hour))
+	assert.Equal(t, time.Second, getRetryDuration(time.Microsecond))
+	assert.LessOrEqual(t, time.Second, getRetryDuration(time.Second))
+	assert.GreaterOrEqual(t, 10*time.Second, getRetryDuration(time.Second))
 }
