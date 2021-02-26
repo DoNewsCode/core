@@ -41,7 +41,7 @@ type Server interface {
 // consistency tasks. In Sync Commit mode, Server synchronously commit offset to
 // kafka when the error returned by the Handler is Nil.
 type SubscriberServer struct {
-	reader      *kafka.Reader
+	reader      Reader
 	handler     Handler
 	parallelism int
 	syncCommit  bool
@@ -101,26 +101,40 @@ func (s *SubscriberServer) serveSync(ctx context.Context) error {
 
 	for i := 0; i < s.parallelism; i++ {
 		g.Add(func() error {
+			var d time.Duration
+		loop:
 			for {
 				msg, err := s.reader.FetchMessage(ctx)
 				if err != nil {
 					return err
 				}
 				err = s.handler.Handle(ctx, msg)
-
-				if err == nil {
-					// when using sync commit, the commit cannot be cancelled by original context.
-					// Intentionally creates a new context here.
-					err = s.reader.CommitMessages(context.Background(), msg)
+				if err != nil {
+					d = getRetryDuration(d)
+					select {
+					case <-time.After(d):
+						continue loop
+					case <-ctx.Done():
+						return ctx.Err()
+					}
 				}
 
+				// when using sync commit, the commit cannot be cancelled by original context.
+				// Intentionally creates a new context here.
+				err = s.reader.CommitMessages(context.Background(), msg)
+
 				// retry commit
-				var d time.Duration
 				for err != nil {
 					d = getRetryDuration(d)
 					<-time.After(d)
-					err = s.reader.CommitMessages(context.Background(), msg)
+					select {
+					case <-time.After(d):
+						err = s.reader.CommitMessages(context.Background(), msg)
+					case <-ctx.Done():
+						return ctx.Err()
+					}
 				}
+				d = 0
 			}
 		}, func(err error) {
 			cancel()

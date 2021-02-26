@@ -39,12 +39,12 @@ func ContextToKafka(tracer opentracing.Tracer, logger log.Logger) RequestRespons
 				level.Warn(logger).Log("err", fmt.Sprintf("unable to inject tracing context: %s", err.Error()))
 			}
 
-			var header kafka.Header
 			for k, v := range carrier {
+				var header kafka.Header
 				header.Key = k
 				header.Value = []byte(v)
+				msg.Headers = append(msg.Headers, header)
 			}
-			msg.Headers = append(msg.Headers, header)
 		}
 		return ctx
 	}
