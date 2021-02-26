@@ -24,13 +24,13 @@ type CommandProvider interface {
 	ProvideCommand(command *cobra.Command)
 }
 
-// HttpProvider provides http services.
-type HttpProvider interface {
+// HTTPProvider provides http services.
+type HTTPProvider interface {
 	ProvideHttp(router *mux.Router)
 }
 
-// GrpcProvider provides gRPC services.
-type GrpcProvider interface {
+// GRPCProvider provides gRPC services.
+type GRPCProvider interface {
 	ProvideGrpc(server *grpc.Server)
 }
 
@@ -56,7 +56,7 @@ type Container struct {
 	commandProviders []func(command *cobra.Command)
 }
 
-// ApplyRouter iterates through every HttpProvider registered in the container,
+// ApplyRouter iterates through every HTTPProvider registered in the container,
 // and introduce the router to everyone.
 func (c *Container) ApplyRouter(router *mux.Router) {
 	for _, p := range c.httpProviders {
@@ -64,7 +64,7 @@ func (c *Container) ApplyRouter(router *mux.Router) {
 	}
 }
 
-// ApplyGRPCServer iterates through every GrpcProvider registered in the container,
+// ApplyGRPCServer iterates through every GRPCProvider registered in the container,
 // and introduce a *grpc.Server to everyone.
 func (c *Container) ApplyGRPCServer(server *grpc.Server) {
 	for _, p := range c.grpcProviders {
@@ -122,6 +122,8 @@ func (c *Container) ApplyCron(crontab *cron.Cron) {
 	}
 }
 
+// ApplyRootCommand iterates through every CommandProvider registered in the container,
+// and introduce the root *cobra.Command to everyone.
 func (c *Container) ApplyRootCommand(command *cobra.Command) {
 	for _, p := range c.commandProviders {
 		p(command)
@@ -133,10 +135,10 @@ func (c *Container) AddModule(module interface{}) {
 		c.closerProviders = append(c.closerProviders, p)
 		return
 	}
-	if p, ok := module.(HttpProvider); ok {
+	if p, ok := module.(HTTPProvider); ok {
 		c.httpProviders = append(c.httpProviders, p.ProvideHttp)
 	}
-	if p, ok := module.(GrpcProvider); ok {
+	if p, ok := module.(GRPCProvider); ok {
 		c.grpcProviders = append(c.grpcProviders, p.ProvideGrpc)
 	}
 	if p, ok := module.(CronProvider); ok {
