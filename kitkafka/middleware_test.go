@@ -55,15 +55,15 @@ func TestKafkaToContext_withspan(t *testing.T) {
 	message := &kafka.Message{}
 	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, tracer, "test")
 	span.SetBaggageItem("foo", "bar")
-	spanId := span.(*mocktracer.MockSpan).SpanContext.SpanID
-	traceId := span.(*mocktracer.MockSpan).SpanContext.TraceID
+	spanID := span.(*mocktracer.MockSpan).SpanContext.SpanID
+	traceID := span.(*mocktracer.MockSpan).SpanContext.TraceID
 	ctk(ctx, message)
 
 	ctx = f(context.Background(), message)
 	span = opentracing.SpanFromContext(ctx)
 	//assert.Equal(t, "test", span.(*mocktracer.MockSpan).OperationName)
-	assert.Equal(t, traceId, span.(*mocktracer.MockSpan).SpanContext.TraceID)
-	assert.Equal(t, spanId, span.(*mocktracer.MockSpan).ParentID)
+	assert.Equal(t, traceID, span.(*mocktracer.MockSpan).SpanContext.TraceID)
+	assert.Equal(t, spanID, span.(*mocktracer.MockSpan).ParentID)
 	assert.Equal(t, "bar", span.BaggageItem("foo"))
 }
 
