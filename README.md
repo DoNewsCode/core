@@ -152,10 +152,10 @@ Phase three has been replaced by the `c.AddModuleFunc(New)`. `AddModuleFunc` pop
 and add the returned module instance to the internal module registry.
 
 When c.Serve() is called, all registered modules will be scanned for implemented interfaces. 
-The module in the example implements container.HttpProvider interface: 
+The module in the example implements interface: 
 
 ```go
-type HttpProvider interface {
+type HTTPProvider interface {
 	ProvideHttp(router *mux.Router)
 }
 ```
