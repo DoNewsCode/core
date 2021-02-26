@@ -14,6 +14,38 @@ import (
 	"google.golang.org/grpc"
 )
 
+// CronProvider provides cron jobs.
+type CronProvider interface {
+	ProvideCron(crontab *cron.Cron)
+}
+
+// CommandProvider provides cobra.Command.
+type CommandProvider interface {
+	ProvideCommand(command *cobra.Command)
+}
+
+// HTTPProvider provides http services.
+type HTTPProvider interface {
+	ProvideHttp(router *mux.Router)
+}
+
+// GRPCProvider provides gRPC services.
+type GRPCProvider interface {
+	ProvideGrpc(server *grpc.Server)
+}
+
+// CloserProvider provides a shutdown function that will be called when service exits.
+type CloserProvider interface {
+	ProvideCloser()
+}
+
+// RunProvider provides a runnable actor. Use it to register any server-like
+// actions. For example, kafka consumer can be started here.
+type RunProvider interface {
+	ProvideRunGroup(group *run.Group)
+}
+
+// Container holds all modules registered.
 type Container struct {
 	httpProviders    []func(router *mux.Router)
 	grpcProviders    []func(server *grpc.Server)
@@ -24,18 +56,24 @@ type Container struct {
 	commandProviders []func(command *cobra.Command)
 }
 
+// ApplyRouter iterates through every HTTPProvider registered in the container,
+// and introduce the router to everyone.
 func (c *Container) ApplyRouter(router *mux.Router) {
 	for _, p := range c.httpProviders {
 		p(router)
 	}
 }
 
+// ApplyGRPCServer iterates through every GRPCProvider registered in the container,
+// and introduce a *grpc.Server to everyone.
 func (c *Container) ApplyGRPCServer(server *grpc.Server) {
 	for _, p := range c.grpcProviders {
 		p(server)
 	}
 }
 
+// Shutdown iterates through every CloserProvider registered in the container,
+// and calls them in parallel.
 func (c *Container) Shutdown() {
 	var wg sync.WaitGroup
 	for _, p := range c.closerProviders {
@@ -49,60 +87,58 @@ func (c *Container) Shutdown() {
 	wg.Wait()
 }
 
+// ApplyRunGroup iterates through every RunProvider registered in the container,
+// and introduce the *run.Group to everyone.
 func (c *Container) ApplyRunGroup(g *run.Group) {
 	for _, p := range c.runProviders {
 		p(g)
 	}
 }
 
+// Modules returns all modules in the container. This method is used to scan for
+// custom interfaces. For example, The database module use Modules to scan for
+// database migrations.
+/*
+	m.container.Modules().Filter(func(p MigrationProvider) {
+		for _, migration := range p.ProvideMigration() {
+			if migration.Connection == "" {
+				migration.Connection = "default"
+			}
+			if migration.Connection == connection {
+				migrations.Collection = append(migrations.Collection, migration)
+			}
+		}
+	})
+*/
 func (c *Container) Modules() ifilter.Collection {
 	return c.modules
 }
 
+// ApplyCron iterates through every CronProvider registered in the container,
+// and introduce the *cron.Cron to everyone.
 func (c *Container) ApplyCron(crontab *cron.Cron) {
 	for _, p := range c.cronProviders {
 		p(crontab)
 	}
 }
 
+// ApplyRootCommand iterates through every CommandProvider registered in the container,
+// and introduce the root *cobra.Command to everyone.
 func (c *Container) ApplyRootCommand(command *cobra.Command) {
 	for _, p := range c.commandProviders {
 		p(command)
 	}
 }
 
-type CronProvider interface {
-	ProvideCron(crontab *cron.Cron)
-}
-
-type CommandProvider interface {
-	ProvideCommand(command *cobra.Command)
-}
-
-type HttpProvider interface {
-	ProvideHttp(router *mux.Router)
-}
-
-type GrpcProvider interface {
-	ProvideGrpc(server *grpc.Server)
-}
-
-type CloserProvider interface {
-	ProvideCloser()
-}
-
-type RunProvider interface {
-	ProvideRunGroup(group *run.Group)
-}
-
 func (c *Container) AddModule(module interface{}) {
 	if p, ok := module.(func()); ok {
 		c.closerProviders = append(c.closerProviders, p)
+		return
 	}
-	if p, ok := module.(HttpProvider); ok {
+	if p, ok := module.(HTTPProvider); ok {
 		c.httpProviders = append(c.httpProviders, p.ProvideHttp)
 	}
-	if p, ok := module.(GrpcProvider); ok {
+	if p, ok := module.(GRPCProvider); ok {
 		c.grpcProviders = append(c.grpcProviders, p.ProvideGrpc)
 	}
 	if p, ok := module.(CronProvider); ok {
@@ -117,8 +153,5 @@ func (c *Container) AddModule(module interface{}) {
 	if p, ok := module.(CloserProvider); ok {
 		c.closerProviders = append(c.closerProviders, p.ProvideCloser)
 	}
-	if _, ok := module.(func()); !ok {
-		c.modules = append(c.modules, module)
-	}
-
+	c.modules = append(c.modules, module)
 }

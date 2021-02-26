@@ -67,7 +67,7 @@ func Example_minimal() {
 	go c.Serve(ctx)
 
 	// Giver server sometime to be ready.
-	time.Sleep(time.Millisecond)
+	time.Sleep(time.Second)
 
 	// Let's try if the server works.
 	resp, _ := http.Get("http://localhost:8080/")

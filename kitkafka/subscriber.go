@@ -96,3 +96,11 @@ func (s Subscriber) Handle(ctx context.Context, incoming kafka.Message) error {
 
 	return nil
 }
+
+// Reader models a kafka.Reader
+type Reader interface {
+	Close() error
+	ReadMessage(ctx context.Context) (kafka.Message, error)
+	FetchMessage(ctx context.Context) (kafka.Message, error)
+	CommitMessages(ctx context.Context, msgs ...kafka.Message) error
+}
