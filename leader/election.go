@@ -10,6 +10,7 @@ import (
 	"go.uber.org/atomic"
 )
 
+// ErrNotALeader is an error triggered when Resign is called but the current node is not leader.
 var ErrNotALeader = errors.New("not a leader")
 
 // Driver models a external storage that can be used for leader election.
@@ -20,12 +21,16 @@ type Driver interface {
 	Resign(context.Context) error
 }
 
+// Election is a struct that controls the leader election. Whenever the leader
+// status changed on this node, an event will be triggered. See example for how
+// to listen this event.
 type Election struct {
 	dispatcher contract.Dispatcher
 	status     *Status
 	driver     Driver
 }
 
+// Campaign starts a leader election. It will block until this node becomes a leader or context cancelled.
 func (e *Election) Campaign(ctx context.Context) error {
 	if err := e.driver.Campaign(ctx); err != nil {
 		return fmt.Errorf("not elected: %w", err)
@@ -36,12 +41,14 @@ func (e *Election) Campaign(ctx context.Context) error {
 	return nil
 }
 
+// Resign gives up the leadership.
 func (e *Election) Resign(ctx context.Context) error {
 	if e.status.isLeader.Load() != true {
 		return ErrNotALeader
 	}
 	// trigger events
-	e.dispatcher.Dispatch(ctx, events.Of(e.status))
+	defer e.dispatcher.Dispatch(ctx, events.Of(e.status))
+	defer e.status.isLeader.Store(false)
 	return e.driver.Resign(ctx)
 }
 
@@ -50,10 +57,12 @@ func (e *Election) Status() *Status {
 	return e.status
 }
 
+// Status is a type that describes whether the current node is leader.
 type Status struct {
 	isLeader *atomic.Bool
 }
 
+// IsLeader returns true if the current node is leader.
 func (s Status) IsLeader() bool {
 	return s.isLeader.Load()
 }

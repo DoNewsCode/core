@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewUploadManagerFactory(t *testing.T) {
-	s3out := Provide(S3In{
+	s3out := provideFactory(in{
 		Conf: config.MapAdapter{"s3": map[string]S3Config{
 			"default":     {},
 			"alternative": {},

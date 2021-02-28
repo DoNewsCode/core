@@ -238,6 +238,17 @@ func (c *C) AddModule(modules ...interface{}) {
 // constructor are treated as clean up functions. It also respect the core's unique
 // "di.Module" annotation.
 func (c *C) Provide(constructor interface{}) {
+	cvalue := reflect.ValueOf(constructor)
+	if cvalue.Kind() != reflect.Slice {
+		c.provide(constructor)
+		return
+	}
+	for i := 0; i < cvalue.Len(); i++ {
+		c.provide(cvalue.Index(i).Interface())
+	}
+}
+
+func (c *C) provide(constructor interface{}) {
 
 	var shouldMakeFunc bool
 
@@ -389,8 +400,11 @@ func (c *C) AddModuleFunc(constructor interface{}) {
 //
 // It internally calls uber's dig library. Consult dig's documentation for
 // details. (https://pkg.go.dev/go.uber.org/dig)
-func (c *C) Invoke(function interface{}) error {
-	return c.di.Invoke(function)
+func (c *C) Invoke(function interface{}) {
+	err := c.di.Invoke(function)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func isCleanup(v reflect.Type) bool {

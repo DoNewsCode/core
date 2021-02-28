@@ -21,7 +21,7 @@ func (h HandleFunc) Handle(ctx context.Context, msg kafka.Message) error {
 // Handler is a symmetric interface for both kafka publication and subscription.
 // As a publisher handler, it is responsible to writes the kafka message to kafka brokers.
 // As a subscriber handler, it is responsible to pipe kafka message to endpoints layer.
-// In go kit analog, this is a go kit transport.
+// in go kit analog, this is a go kit transport.
 type Handler interface {
 	Handle(ctx context.Context, msg kafka.Message) error
 }
@@ -38,7 +38,7 @@ type Server interface {
 // messages to many parallel worker goroutines. However, this means manual offset
 // commit is also impossible, making it not suitable for tasks that demands
 // strict consistency. An option, WithSyncCommit is provided, for such high
-// consistency tasks. In Sync Commit mode, Server synchronously commit offset to
+// consistency tasks. in Sync Commit mode, Server synchronously commit offset to
 // kafka when the error returned by the Handler is Nil.
 type SubscriberServer struct {
 	reader      Reader

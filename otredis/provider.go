@@ -12,6 +12,10 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
+// Providers is a set of dependency providers related to redis. It includes the
+// Maker, the default redis.UniversalClient and exported configs.
+var Providers = []interface{}{provideRedisFactory, provideDefaultClient, provideConfig}
+
 // RedisConfigurationInterceptor intercepts the redis.UniversalOptions before
 // creating the client so you can make amendment to it. Useful because some
 // configuration can not be mapped to a text representation. For example, you
@@ -19,8 +23,28 @@ import (
 // here.
 type RedisConfigurationInterceptor func(name string, opts *redis.UniversalOptions)
 
-// RedisIn is the injection parameter for Provide.
-type RedisIn struct {
+// Maker is models Factory
+type Maker interface {
+	Make(name string) (redis.UniversalClient, error)
+}
+
+// Factory is a *di.Factory that creates redis.UniversalClient using a
+// specific configuration entry.
+type Factory struct {
+	*di.Factory
+}
+
+// Make creates redis.UniversalClient using a specific configuration entry.
+func (r Factory) Make(name string) (redis.UniversalClient, error) {
+	client, err := r.Factory.Make(name)
+	if err != nil {
+		return nil, err
+	}
+	return client.(redis.UniversalClient), nil
+}
+
+// in is the injection parameter for provideRedisFactory.
+type in struct {
 	di.In
 
 	Logger      log.Logger
@@ -29,19 +53,17 @@ type RedisIn struct {
 	Tracer      opentracing.Tracer            `optional:"true"`
 }
 
-// RedisOut is the result of Provide.
-type RedisOut struct {
+// out is the result of provideRedisFactory.
+type out struct {
 	di.Out
 
-	Maker          Maker
-	Factory        Factory
-	Client         redis.UniversalClient
-	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
+	Maker   Maker
+	Factory Factory
 }
 
-// Provide creates Factory and redis.UniversalClient. It is a valid
+// provideRedisFactory creates Factory and redis.UniversalClient. It is a valid
 // dependency for package core.
-func Provide(p RedisIn) (RedisOut, func()) {
+func provideRedisFactory(p in) (out, func()) {
 	var err error
 	var dbConfs map[string]redis.UniversalOptions
 	err = p.Conf.Unmarshal("redis", &dbConfs)
@@ -54,7 +76,10 @@ func Provide(p RedisIn) (RedisOut, func()) {
 			conf redis.UniversalOptions
 		)
 		if conf, ok = dbConfs[name]; !ok {
-			return di.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
+			if name != "default" {
+				return di.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
+			}
+			conf = redis.UniversalOptions{}
 		}
 		if p.Interceptor != nil {
 			p.Interceptor(name, &conf)
@@ -77,40 +102,26 @@ func Provide(p RedisIn) (RedisOut, func()) {
 		}, nil
 	})
 	redisFactory := Factory{factory}
-	redisOut := RedisOut{
-		Maker:          redisFactory,
-		Factory:        redisFactory,
-		Client:         nil,
-		ExportedConfig: provideConfig(),
+	redisOut := out{
+		Maker:   redisFactory,
+		Factory: redisFactory,
 	}
-	defaultRedisClient, _ := redisFactory.Make("default")
-	redisOut.Client = defaultRedisClient
 	return redisOut, redisFactory.Close
 }
 
-// Maker is models Factory
-type Maker interface {
-	Make(name string) (redis.UniversalClient, error)
+func provideDefaultClient(maker Maker) (redis.UniversalClient, error) {
+	return maker.Make("default")
 }
 
-// Factory is a *di.Factory that creates redis.UniversalClient using a
-// specific configuration entry.
-type Factory struct {
-	*di.Factory
-}
+type configOut struct {
+	di.Out
 
-// Make creates redis.UniversalClient using a specific configuration entry.
-func (r Factory) Make(name string) (redis.UniversalClient, error) {
-	client, err := r.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(redis.UniversalClient), nil
+	Config []config.ExportedConfig `group:"config,flatten"`
 }
 
 // provideConfig exports the default redis configuration
-func provideConfig() []config.ExportedConfig {
-	return []config.ExportedConfig{
+func provideConfig() configOut {
+	configs := []config.ExportedConfig{
 		{
 			Owner: "otredis",
 			Data: map[string]interface{}{
@@ -144,4 +155,5 @@ func provideConfig() []config.ExportedConfig {
 			Comment: "The configuration of redis clients",
 		},
 	}
+	return configOut{Config: configs}
 }

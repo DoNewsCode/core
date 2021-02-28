@@ -1,7 +1,6 @@
 package kitkafka
 
 import (
-	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/pkg/errors"
@@ -107,28 +106,9 @@ type publisherConfig struct{}
 type PublisherOpt func(config *publisherConfig)
 
 // MakePublisherService returns a *PublisherService that can publish user-domain messages to kafka brokers.
-// In go kit analog, this is a service with one method, publish.
+// in go kit analog, this is a service with one method, publish.
 func MakePublisherService(endpoint endpoint.Endpoint, opt ...PublisherOpt) *PublisherService {
 	return &PublisherService{endpoint: endpoint}
-}
-
-func provideConfig() []config.ExportedConfig {
-	return []config.ExportedConfig{
-		{
-			Owner: "kitkafka",
-			Data: map[string]interface{}{
-				"kafka": map[string]interface{}{
-					"reader": ReaderConfig{
-						Brokers: []string{"127.0.0.1:9092"},
-					},
-					"writer": WriterConfig{
-						Brokers: []string{"127.0.0.1:9092"},
-					},
-				},
-			},
-			Comment: "",
-		},
-	}
 }
 
 func fromWriterConfig(config WriterConfig) kafka.Writer {

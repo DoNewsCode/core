@@ -4,7 +4,7 @@ Package kitkafka provides a kafka transport for go kit.
 Introduction
 
 Go kit has some great properties, such as allowing multiple transport to be used
-simultaneously. Sadly it limits itself to only support RPCs. In real projects
+simultaneously. Sadly it limits itself to only support RPCs. in real projects
 with many decoupled component, messaging is an inevitable path we must go down.
 
 Go kit models the RPCs as:
@@ -39,13 +39,13 @@ For a complete overview of all available options, call the config init command.
 To use package kitkafka with package core, add:
 
 	var c *core.C = core.New()
-	c.Provide(kitkafka.ProvideKafka)
+	c.Provide(kitkafka.provideKafkaFactory)
 
 The reader and writer factories are bundled into that single provider.
 
 Standalone Usage
 
-In some scenarios, the whole go kit family might be overkill. To directly
+in some scenarios, the whole go kit family might be overkill. To directly
 interact with kafka, use the factory to make writers and readers. Those
 writers/readers are provided by github.com/segmentio/kafka-go.
 

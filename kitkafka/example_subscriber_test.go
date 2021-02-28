@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/DoNewsCode/core"
+	"github.com/DoNewsCode/core/contract"
 	"strings"
 
 	"github.com/DoNewsCode/core/config"
@@ -106,8 +108,8 @@ func Example_subscriber() {
 		}),
 	)
 
-	factory, cleanup := kitkafka.ProvideReaderFactory(kitkafka.KafkaIn{
-		Conf: config.MapAdapter{"kafka.reader": map[string]kitkafka.ReaderConfig{
+	c := core.Default(core.SetConfigProvider(func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor {
+		return config.MapAdapter{"kafka.reader": map[string]kitkafka.ReaderConfig{
 			"uppercase": {
 				Brokers:     []string{"127.0.0.1:9092"},
 				GroupID:     "kitkafka",
@@ -120,22 +122,27 @@ func Example_subscriber() {
 				GroupID:     "kitkafka",
 				StartOffset: kafka.FirstOffset,
 			},
-		}},
-		Logger: log.NewNopLogger(),
+		}}
+	}), core.SetLoggerProvider(func(conf contract.ConfigAccessor, appName contract.AppName, env contract.Env) log.Logger {
+		return log.NewNopLogger()
+	}))
+	defer c.Shutdown()
+
+	c.Provide(kitkafka.Providers)
+
+	c.Invoke(func(factory kitkafka.ReaderFactory) {
+		uppercaseServer, err := factory.MakeSubscriberServer("uppercase", uppercaseHandler)
+		if err != nil {
+			panic(err)
+		}
+		countServer, err := factory.MakeSubscriberServer("count", countHandler)
+		if err != nil {
+			panic(err)
+		}
+
+		mux := kitkafka.NewMux(uppercaseServer, countServer)
+		mux.Serve(ctx)
 	})
-	defer cleanup()
-
-	uppercaseServer, err := factory.MakeSubscriberServer("uppercase", uppercaseHandler)
-	if err != nil {
-		panic(err)
-	}
-	countServer, err := factory.MakeSubscriberServer("count", countHandler)
-	if err != nil {
-		panic(err)
-	}
-
-	mux := kitkafka.NewMux(uppercaseServer, countServer)
-	mux.Serve(ctx)
 
 	// Output:
 	// KITKAFKA
@@ -159,7 +166,7 @@ func decodeCountRequest(_ context.Context, r *kafka.Message) (interface{}, error
 
 func sendTestData() {
 	// to create topics when auto.create.topics.enable='true'
-	kafka.DialLeader(context.Background(), "tcp", "localhost:9092", "my-topic", 0)
+	kafka.DialLeader(context.Background(), "tcp", "127.0.0.1:9092", "uppercase", 0)
 
 	writer := kafka.Writer{
 		Addr:      kafka.TCP("127.0.0.1:9092"),

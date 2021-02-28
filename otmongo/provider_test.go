@@ -10,7 +10,7 @@ import (
 
 func TestNewMongoFactory(t *testing.T) {
 	t.Parallel()
-	factory, cleanup := Provide(MongoIn{
+	factory, cleanup := provideMongoFactory(in{
 		In: dig.In{},
 		Conf: config.MapAdapter{"mongo": map[string]struct{ Uri string }{
 			"default": {

@@ -10,9 +10,9 @@ import (
 )
 
 func TestModule(t *testing.T) {
-	c := core.New()
+	c := core.New(core.WithInline("s3.default.accessKey", ""))
 	c.ProvideEssentials()
-	c.Provide(Provide)
+	c.Provide(Providers)
 	c.AddModuleFunc(New)
 	router := mux.NewRouter()
 	c.ApplyRouter(router)

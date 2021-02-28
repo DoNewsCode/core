@@ -1,7 +1,6 @@
 package otgorm
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/DoNewsCode/core/config"
@@ -15,6 +14,37 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
+
+// Providers is a set of database related providers for package core. It includes
+// the Maker, database configs and the default *gorm.DB instance.
+var Providers = []interface{}{provideDatabaseFactory, provideConfig, provideDefaultDatabase, provideMemoryDatabase}
+
+// Factory is the *di.Factory that creates *gorm.DB under a specific
+// configuration entry.
+type Factory struct {
+	*di.Factory
+}
+
+// Make creates *gorm.DB under a specific configuration entry.
+func (d Factory) Make(name string) (*gorm.DB, error) {
+	db, err := d.Factory.Make(name)
+	if err != nil {
+		return nil, err
+	}
+	return db.(*gorm.DB), nil
+}
+
+// Maker models Factory
+type Maker interface {
+	Make(name string) (*gorm.DB, error)
+}
+
+// GormConfigInterceptor is a function that allows user to make last minute
+// change to *gorm.Config when constructing *gorm.DB.
+type GormConfigInterceptor func(name string, conf *gorm.Config)
+
+// SQLite is an alias of gorm.DB. This is useful when injecting test db.
+type SQLite gorm.DB
 
 type confNotFoundErr string
 
@@ -41,17 +71,25 @@ type databaseConf struct {
 	} `json:"namingStrategy" yaml:"namingStrategy"`
 }
 
-// GormConfigInterceptor is a function that allows user to make last minute
-// change to *gorm.Config when constructing *gorm.DB.
-type GormConfigInterceptor func(name string, conf *gorm.Config)
-
-// Maker models Factory
-type Maker interface {
-	Make(name string) (*gorm.DB, error)
+// provideMemoryDatabase provides a sqlite database in memory mode. This is
+// useful for testing.
+func provideMemoryDatabase() *SQLite {
+	factory, _ := provideDBFactory(databaseIn{
+		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
+			"memory": {
+				Database: "sqlite",
+				Dsn:      "file::memory:?cache=shared",
+			},
+		}},
+		Logger: log.NewNopLogger(),
+		Tracer: nil,
+	})
+	memoryDatabase, _ := factory.Make("memory")
+	return (*SQLite)(memoryDatabase)
 }
 
-// DatabaseIn is the injection parameter for Provide.
-type DatabaseIn struct {
+// databaseIn is the injection parameter for provideDatabaseFactory.
+type databaseIn struct {
 	di.In
 
 	Conf                  contract.ConfigAccessor
@@ -60,20 +98,18 @@ type DatabaseIn struct {
 	Tracer                opentracing.Tracer    `optional:"true"`
 }
 
-// DatabaseOut is the result of Provide. *gorm.DB is not a interface
+// databaseOut is the result of provideDatabaseFactory. *gorm.DB is not a interface
 // type. It is up to the users to define their own database repository interface.
-type DatabaseOut struct {
+type databaseOut struct {
 	di.Out
 
-	Database       *gorm.DB
-	Factory        Factory
-	Maker          Maker
-	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
+	Factory Factory
+	Maker   Maker
 }
 
-// ProvideDialector provides a gorm.Dialector. Mean to be used as an intermediate
+// provideDialector provides a gorm.Dialector. Mean to be used as an intermediate
 // step to create *gorm.DB
-func ProvideDialector(conf *databaseConf) (gorm.Dialector, error) {
+func provideDialector(conf *databaseConf) (gorm.Dialector, error) {
 	if conf.Database == "mysql" {
 		return mysql.Open(conf.Dsn), nil
 	}
@@ -83,9 +119,9 @@ func ProvideDialector(conf *databaseConf) (gorm.Dialector, error) {
 	return nil, fmt.Errorf("unknow database type %s", conf.Database)
 }
 
-// ProvideGormConfig provides a *gorm.Config. Mean to be used as an intermediate
+// provideGormConfig provides a *gorm.Config. Mean to be used as an intermediate
 // step to create *gorm.DB
-func ProvideGormConfig(l log.Logger, conf *databaseConf) *gorm.Config {
+func provideGormConfig(l log.Logger, conf *databaseConf) *gorm.Config {
 	return &gorm.Config{
 		SkipDefaultTransaction: conf.SkipDefaultTransaction,
 		NamingStrategy: schema.NamingStrategy{
@@ -105,11 +141,11 @@ func ProvideGormConfig(l log.Logger, conf *databaseConf) *gorm.Config {
 	}
 }
 
-// ProvideGormDB provides a *gorm.DB. It is intended to be used with
-// ProvideDialector and ProvideGormConfig. Gorm opens connection to database
+// provideGormDB provides a *gorm.DB. It is intended to be used with
+// provideDialector and provideGormConfig. Gorm opens connection to database
 // while building *gorm.db. This means if the database is not available, the system
 // will fail when initializing dependencies.
-func ProvideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentracing.Tracer) (*gorm.DB, func(), error) {
+func provideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentracing.Tracer) (*gorm.DB, func(), error) {
 	db, err := gorm.Open(dialector, config)
 	if err != nil {
 		return nil, nil, err
@@ -124,59 +160,21 @@ func ProvideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 	}, nil
 }
 
-// Provide creates Factory and *gorm.DB. It is a valid dependency for
+// provideDatabaseFactory creates the Factory. It is a valid dependency for
 // package core.
-func Provide(p DatabaseIn) (DatabaseOut, func(), error) {
+func provideDatabaseFactory(p databaseIn) (databaseOut, func(), error) {
 	factory, cleanup := provideDBFactory(p)
-	database, err := factory.Make("default")
-	var confNotFound confNotFoundErr
-	// If the default configuration is not found, don't report error. Just ignore it.
-	if err != nil && !errors.As(err, &confNotFound) {
-		return DatabaseOut{},
-			func() {},
-			fmt.Errorf("failed to construct default database: %w", err)
-	}
-	return DatabaseOut{
-		Database:       database,
-		Factory:        factory,
-		Maker:          factory,
-		ExportedConfig: provideConfig(),
+	return databaseOut{
+		Factory: factory,
+		Maker:   factory,
 	}, cleanup, nil
 }
 
-// Factory is the *di.Factory that creates *gorm.DB under a specific
-// configuration entry.
-type Factory struct {
-	*di.Factory
+func provideDefaultDatabase(maker Maker) (*gorm.DB, error) {
+	return maker.Make("default")
 }
 
-// Make creates *gorm.DB under a specific configuration entry.
-func (d Factory) Make(name string) (*gorm.DB, error) {
-	db, err := d.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return db.(*gorm.DB), nil
-}
-
-// ProvideMemoryDatabase provides a sqlite database in memory mode. This is
-// useful for testing.
-func ProvideMemoryDatabase() *gorm.DB {
-	factory, _ := provideDBFactory(DatabaseIn{
-		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
-			"memory": {
-				Database: "sqlite",
-				Dsn:      "file::memory:?cache=shared",
-			},
-		}},
-		Logger: log.NewNopLogger(),
-		Tracer: nil,
-	})
-	memoryDatabase, _ := factory.Make("memory")
-	return memoryDatabase
-}
-
-func provideDBFactory(p DatabaseIn) (Factory, func()) {
+func provideDBFactory(p databaseIn) (Factory, func()) {
 	logger := log.With(p.Logger, "tag", "database")
 
 	var dbConfs map[string]databaseConf
@@ -195,15 +193,15 @@ func provideDBFactory(p DatabaseIn) (Factory, func()) {
 		if conf, ok = dbConfs[name]; !ok {
 			return di.Pair{}, confNotFoundErr(fmt.Sprintf("database configuration %s not found", name))
 		}
-		dialector, err = ProvideDialector(&conf)
+		dialector, err = provideDialector(&conf)
 		if err != nil {
 			return di.Pair{}, err
 		}
-		gormConfig := ProvideGormConfig(logger, &conf)
+		gormConfig := provideGormConfig(logger, &conf)
 		if p.GormConfigInterceptor != nil {
 			p.GormConfigInterceptor(name, gormConfig)
 		}
-		conn, cleanup, err = ProvideGormDB(dialector, gormConfig, p.Tracer)
+		conn, cleanup, err = provideGormDB(dialector, gormConfig, p.Tracer)
 		if err != nil {
 			return di.Pair{}, err
 		}
@@ -216,9 +214,15 @@ func provideDBFactory(p DatabaseIn) (Factory, func()) {
 	return dbFactory, dbFactory.Close
 }
 
+type configOut struct {
+	di.Out
+
+	Config []config.ExportedConfig `group:"config,flatten"`
+}
+
 // ProvideConfig exports the default database configuration.
-func provideConfig() []config.ExportedConfig {
-	return []config.ExportedConfig{
+func provideConfig() configOut {
+	exported := []config.ExportedConfig{
 		{
 			Owner: "otgorm",
 			Data: map[string]interface{}{
@@ -246,4 +250,5 @@ func provideConfig() []config.ExportedConfig {
 			Comment: "The database configuration",
 		},
 	}
+	return configOut{Config: exported}
 }

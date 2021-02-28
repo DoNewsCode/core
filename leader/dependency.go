@@ -2,51 +2,100 @@ package leader
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/key"
+	"github.com/DoNewsCode/core/otetcd"
 	"github.com/oklog/run"
-	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/atomic"
 )
 
-type In struct {
+/*
+Providers is a set of dependency providers for Election and *Status.
+	Depends On:
+			AppName    contract.AppName
+			Env        contract.Env
+			Config     contract.ConfigAccessor
+			Dispatcher contract.Dispatcher
+			Driver     Driver       `optional:"true"`
+			Maker      otetcd.Maker `optional:"true"`
+	Provide:
+			Election Election
+			Status   *Status
+*/
+var Providers = []interface{}{provide}
+
+type in struct {
 	di.In
 
-	dispatcher contract.Dispatcher
-	client     *clientv3.Client
+	AppName    contract.AppName
+	Env        contract.Env
+	Config     contract.ConfigAccessor
+	Dispatcher contract.Dispatcher
+	Driver     Driver       `optional:"true"`
+	Maker      otetcd.Maker `optional:"true"`
 }
 
-type Out struct {
+type out struct {
 	di.Out
 	di.Module
 
 	Election Election
-	Status   Status
+	Status   *Status
 }
 
-func Provide(in In) Out {
-	return Out{
-		Election: Election{
-			dispatcher: in.dispatcher,
-			status:     &Status{isLeader: &atomic.Bool{}},
-			driver: EtcdDriver{
-				client:  in.client,
-				session: nil,
-			},
-		},
+func provide(in in) (out, error) {
+	if err := determineDriver(&in); err != nil {
+		return out{}, err
 	}
+	st := &Status{isLeader: &atomic.Bool{}}
+	return out{
+		Election: Election{
+			dispatcher: in.Dispatcher,
+			status:     st,
+			driver:     in.Driver,
+		},
+		Status: st,
+	}, nil
 }
 
-func (m Out) ProvideCloser() {
-	_ = m.Election.Resign(context.Background())
-}
-
-func (m Out) ProvideRunGroup(group *run.Group) {
+func (m out) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
 	group.Add(func() error {
-		return m.Election.Campaign(ctx)
+		err := m.Election.Campaign(ctx)
+		if err != nil {
+			return err
+		}
+		<-ctx.Done()
+		return nil
 	}, func(err error) {
+		_ = m.Election.Resign(ctx)
 		cancel()
 	})
+}
+
+func determineDriver(in *in) error {
+	var option Option
+	if in.Driver == nil {
+		if err := in.Config.Unmarshal("leader", &option); err != nil {
+			return fmt.Errorf("leader election configuration error: %w", err)
+		}
+		if option.EtcdName == "" {
+			option.EtcdName = "default"
+		}
+		if in.Maker == nil {
+			return fmt.Errorf("must provider an otetcd.Maker or provider a leader.Driver")
+		}
+		etcdClient, err := in.Maker.Make(option.EtcdName)
+		if err != nil {
+			return fmt.Errorf("failed to initiate leader election with etcd driver (%s): %w", option.EtcdName, err)
+		}
+		in.Driver = &EtcdDriver{
+			client:  etcdClient,
+			session: nil,
+			keyer:   key.New(in.AppName.String(), in.Env.String()),
+		}
+	}
+	return nil
 }

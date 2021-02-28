@@ -63,7 +63,7 @@ func ProvideConfig(configStack []config.ProviderSet, configWatcher contract.Conf
 // ProvideEnv is the default EnvProvider for package Core.
 func ProvideEnv(conf contract.ConfigAccessor) contract.Env {
 	var env config.Env
-	err := conf.Unmarshal("Env", &env)
+	err := conf.Unmarshal("env", &env)
 	if err != nil {
 		return config.NewEnv("local")
 	}

@@ -19,7 +19,7 @@ func TestTransport(t *testing.T) {
 
 	kafka.DialLeader(context.Background(), "tcp", "localhost:9092", "Test", 0)
 
-	writerFactory, cleanupWriter := ProvideWriterFactory(KafkaIn{
+	writerFactory, cleanupWriter := provideWriterFactory(in{
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
 				Brokers: []string{"127.0.0.1:9092"},
@@ -30,7 +30,7 @@ func TestTransport(t *testing.T) {
 	})
 	defer cleanupWriter()
 
-	readerFactory, cleanupReader := ProvideReaderFactory(KafkaIn{
+	readerFactory, cleanupReader := provideReaderFactory(in{
 		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
 			"default": {
 				Brokers: []string{"127.0.0.1:9092"},

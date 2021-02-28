@@ -11,7 +11,7 @@ import (
 )
 
 func TestProvideReaderFactory(t *testing.T) {
-	factory, cleanup := ProvideReaderFactory(KafkaIn{
+	factory, cleanup := provideReaderFactory(in{
 		In: di.In{},
 		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
 			"default": {
@@ -35,7 +35,7 @@ func TestProvideReaderFactory(t *testing.T) {
 }
 
 func TestProvideWriterFactory(t *testing.T) {
-	factory, cleanup := ProvideWriterFactory(KafkaIn{
+	factory, cleanup := provideWriterFactory(in{
 		In: di.In{},
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
@@ -59,7 +59,7 @@ func TestProvideWriterFactory(t *testing.T) {
 }
 
 func TestProvideKafka(t *testing.T) {
-	Out, cleanupReader, cleanupWriter, err := ProvideKafka(KafkaIn{
+	Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(in{
 		Logger: log.NewNopLogger(),
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
@@ -84,7 +84,7 @@ func TestProvideKafka(t *testing.T) {
 }
 
 func TestNewSubscriber(t *testing.T) {
-	factory, cleanup := ProvideReaderFactory(KafkaIn{
+	factory, cleanup := provideReaderFactory(in{
 		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
 			"default": {
 				Brokers:     []string{"127.0.0.1:9092"},
