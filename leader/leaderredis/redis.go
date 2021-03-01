@@ -63,7 +63,6 @@ func (r *RedisDriver) Campaign(ctx context.Context) error {
 		if err != redis.Nil && err != nil {
 			return fmt.Errorf("error when running compaign: %w", err)
 		}
-		fmt.Println(ok, err)
 		if ok {
 			var ctx context.Context
 			ctx, r.cancel = context.WithCancel(context.Background())

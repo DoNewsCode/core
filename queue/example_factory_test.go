@@ -34,7 +34,7 @@ func (m MockFactoryListener) Process(_ context.Context, event contract.Event) er
 
 // bootstrapMetrics is normally done when bootstrapping the framework. We mimic it here for demonstration.
 func bootstrapFactories() *core.C {
-	const sampleConfig = "{\"log\":{\"level\":\"error\"},\"queue\":{\"default\":{\"parallelism\":1},\"MyQueue\":{\"parallelism\":1}}}"
+	const sampleConfig = "{\"log\":{\"level\":\"error\"},\"queue\":{\"default\":{\"parallelism\":1},\"myQueue\":{\"parallelism\":1}}}"
 
 	// Make sure redis is running at localhost:6379
 	c := core.New(
@@ -74,7 +74,7 @@ func Example_factory() {
 	c := bootstrapFactories()
 
 	c.Invoke(func(maker queue.DispatcherMaker) {
-		dispatcher, err := maker.Make("MyQueue")
+		dispatcher, err := maker.Make("myQueue")
 		if err != nil {
 			panic(err)
 		}
@@ -86,7 +86,7 @@ func Example_factory() {
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt))
 	})
 
-	serveFactories(c, time.Second)
+	serveFactories(c, 2*time.Second)
 
 	// Output:
 	// hello world
