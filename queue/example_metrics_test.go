@@ -14,7 +14,6 @@ import (
 	"github.com/DoNewsCode/core/otredis"
 	"github.com/DoNewsCode/core/queue"
 	"github.com/go-kit/kit/metrics/prometheus"
-	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/oklog/run"
@@ -49,9 +48,6 @@ func bootstrapMetrics() *core.C {
 	c.ProvideEssentials()
 	c.Provide(otredis.Providers())
 	c.Provide(queue.Providers())
-	c.Invoke(func(client redis.UniversalClient) {
-		_, _ = client.FlushAll(context.Background()).Result()
-	})
 	c.Provide(di.Deps{func(appName contract.AppName, env contract.Env) queue.Gauge {
 		return prometheus.NewGaugeFrom(
 			stdprometheus.GaugeOpts{

@@ -12,7 +12,6 @@ import (
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/otredis"
 	"github.com/DoNewsCode/core/queue"
-	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/oklog/run"
@@ -45,9 +44,6 @@ func bootstrapDefer() *core.C {
 	c.ProvideEssentials()
 	c.Provide(otredis.Providers())
 	c.Provide(queue.Providers())
-	c.Invoke(func(client redis.UniversalClient) {
-		_, _ = client.FlushAll(context.Background()).Result()
-	})
 	return c
 }
 

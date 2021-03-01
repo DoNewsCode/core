@@ -63,6 +63,7 @@ func (r *RedisDriver) Campaign(ctx context.Context) error {
 		if err != redis.Nil && err != nil {
 			return fmt.Errorf("error when running compaign: %w", err)
 		}
+		fmt.Println(ok, err)
 		if ok {
 			var ctx context.Context
 			ctx, r.cancel = context.WithCancel(context.Background())
@@ -71,7 +72,7 @@ func (r *RedisDriver) Campaign(ctx context.Context) error {
 					select {
 					case <-ctx.Done():
 						return
-					case <-time.After(3 * r.expiration / 4):
+					case <-time.After(1 * r.expiration / 4):
 						r.client.Expire(ctx, r.keyer.Key(":", "leader"), r.expiration).Result()
 					}
 				}

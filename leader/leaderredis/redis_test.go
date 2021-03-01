@@ -15,10 +15,7 @@ import (
 )
 
 func TestCampaign(t *testing.T) {
-	t.Parallel()
 	client := redis.NewUniversalClient(&redis.UniversalOptions{})
-	client.FlushAll(context.Background()).Result()
-
 	driver := RedisDriver{
 		client: client,
 		keyer:  key.New(),
@@ -35,10 +32,7 @@ func TestCampaign(t *testing.T) {
 }
 
 func TestNewRedisDriver(t *testing.T) {
-	t.Parallel()
 	client := redis.NewUniversalClient(&redis.UniversalOptions{})
-	client.FlushAll(context.Background()).Result()
-
 	driver := NewRedisDriver(client, key.New("foo", "bar"), WithExpiration(time.Hour), WithPollInterval(time.Minute))
 	assert.NotNil(t, driver)
 }
