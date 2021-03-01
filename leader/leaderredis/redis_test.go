@@ -44,7 +44,6 @@ func TestNewRedisDriver(t *testing.T) {
 }
 
 func TestElection(t *testing.T) {
-	t.Parallel()
 	var dispatcher = &events.SyncDispatcher{}
 	var e1, e2 *leader.Election
 	var driver = NewRedisDriver(redis.NewUniversalClient(&redis.UniversalOptions{}), key.New("testElection"), WithPollInterval(time.Millisecond), WithExpiration(time.Second))
