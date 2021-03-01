@@ -127,7 +127,7 @@ func provideDispatcherFactory(p makerIn) (makerOut, error) {
 			ok   bool
 			conf configuration
 		)
-
+		p := p
 		if conf, ok = queueConfs[name]; !ok {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("queue configuration %s not found", name)

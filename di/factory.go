@@ -1,6 +1,8 @@
 package di
 
-import "sync"
+import (
+	"sync"
+)
 
 // Pair is a tuple representing a connection and a closer function
 type Pair struct {
