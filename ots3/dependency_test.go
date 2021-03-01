@@ -21,3 +21,8 @@ func TestNewUploadManagerFactory(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, alt)
 }
+
+func TestProvideConfigs(t *testing.T) {
+	c := provideConfig()
+	assert.NotEmpty(t, c.Config)
+}

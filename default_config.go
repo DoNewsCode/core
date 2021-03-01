@@ -152,5 +152,12 @@ func provideDefaultConfig() []config.ExportedConfig {
 			},
 			Comment: "The gRPC address",
 		},
+		{
+			Owner: "core",
+			Data: map[string]interface{}{
+				"log": map[string]interface{}{"level": "debug", "format": "logfmt"},
+			},
+			Comment: "The global logging level and format",
+		},
 	}
 }

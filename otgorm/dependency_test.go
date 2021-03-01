@@ -65,3 +65,8 @@ func TestProvideMemoryDatabase(t *testing.T) {
 		assert.Equal(t, "sqlite", d1.Name())
 	})
 }
+
+func TestProvideConfigs(t *testing.T) {
+	c := provideConfig()
+	assert.NotEmpty(t, c.Config)
+}

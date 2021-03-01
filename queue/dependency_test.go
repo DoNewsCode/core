@@ -110,3 +110,8 @@ func TestProvideDispatcher_withDriver(t *testing.T) {
 	assert.NotNil(t, def)
 	assert.Implements(t, (*di.Module)(nil), out)
 }
+
+func TestProvideConfigs(t *testing.T) {
+	c := provideConfig()
+	assert.NotEmpty(t, c.Config)
+}

@@ -75,5 +75,4 @@ func TestDetermineDriver(t *testing.T) {
 	}
 	err = determineDriver(&p)
 	assert.Error(t, err)
-
 }

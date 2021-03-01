@@ -342,7 +342,6 @@ func (c *C) ProvideEssentials() {
 		if cc, ok := c.ConfigAccessor.(contract.ConfigWatcher); ok {
 			coreDependencies.ConfigWatcher = cc
 		}
-
 		return coreDependencies
 	})
 }

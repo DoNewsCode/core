@@ -27,3 +27,8 @@ func TestNewRedisFactory(t *testing.T) {
 	assert.NotNil(t, cleanup)
 	cleanup()
 }
+
+func TestProvideConfigs(t *testing.T) {
+	c := provideConfig()
+	assert.NotEmpty(t, c.Config)
+}
