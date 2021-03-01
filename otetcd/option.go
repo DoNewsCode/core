@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Option is a type that holds all of available etcd configurations.
 type Option struct {
 	// Endpoints is a list of URLs.
 	Endpoints []string `json:"endpoints" yaml:"endpoints"`

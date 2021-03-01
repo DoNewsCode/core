@@ -15,7 +15,8 @@ import (
 	"go.uber.org/dig"
 )
 
-/* Providers returns a set of dependency providers. It includes the Maker, the
+/*
+Providers returns a set of dependency providers. It includes the Maker, the
 default mongo.Client and exported configs.
 	Depends On:
 		log.Logger

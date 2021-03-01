@@ -13,7 +13,8 @@ import (
 	"github.com/DoNewsCode/core/contract"
 )
 
-/* Providers returns a set of dependencies providers related to S3. It includes the s3
+/*
+Providers returns a set of dependencies providers related to S3. It includes the s3
 Manager, the Maker and exported configurations.
 	Depends On:
 		log.Logger
