@@ -62,7 +62,7 @@ func Example_publisher() {
 		return log.NewNopLogger()
 	}))
 	defer c.Shutdown()
-	c.Provide(kitkafka.Providers)
+	c.Provide(kitkafka.Providers())
 
 	c.Invoke(func(maker kitkafka.WriterFactory) {
 		uppercaseClient, _ := maker.MakeClient("uppercase")

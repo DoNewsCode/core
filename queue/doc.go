@@ -63,8 +63,8 @@
 // automatically by the core.
 //
 //  var c *core.C
-//  c.Provide(otredis.Providers) // to provide the redis driver
-//  c.Provide(queue.Providers)
+//  c.Provide(otredis.Providers()) // to provide the redis driver
+//  c.Provide(queue.Providers())
 //
 // A module is also bundled, providing the queue command (for reloading and flushing).
 //
@@ -89,7 +89,7 @@
 // To gain visibility on how the length of the queue, inject a gauge into the core and alias it to queue.Gauge. The
 // queue length of the all internal queues will be periodically reported to metrics collector (Presumably Prometheus).
 //
-//  c.provideDispatcherFactory(func(appName contract.AppName, env contract.Env) queue.Gauge {
+//  c.provideDispatcherFactory(di.Deps{func(appName contract.AppName, env contract.Env) queue.Gauge {
 //    return prometheus.NewGaugeFrom(
 //      stdprometheus.GaugeOpts{
 //        Namespace: appName.String(),
@@ -98,5 +98,5 @@
 //        Help:      "The gauge of queue length",
 //      }, []string{"name", "channel"},
 //    )
-//  })
+//  }})
 package queue

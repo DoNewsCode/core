@@ -14,7 +14,7 @@ func Example() {
 	// Suppress log output by gorm in this test.
 	c := core.New(core.WithInline("log.level", "warn"))
 	c.ProvideEssentials()
-	c.Provide(otgorm.Providers)
+	c.Provide(otgorm.Providers())
 	c.Invoke(func(db *gorm.DB) {
 		fmt.Println(db.Name())
 	})

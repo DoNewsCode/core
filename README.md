@@ -54,7 +54,7 @@ func main() {
   c := core.New(core.WithYamlFile("config.yaml"))
 
   // Phase two: bind dependencies
-  c.Provide(otgorm.Provide)
+  c.Provide(otgorm.Providers())
 
   // Phase three: define service
   c.AddModule(core.HttpFunc(func(router *mux.Router) {
@@ -138,7 +138,7 @@ func main() {
   c := core.New(core.WithYamlFile("config.yaml"))
 
   // Phase two: bind dependencies
-  c.Provide(otgorm.Provide)
+  c.Provide(otgorm.Providers())
 
   // Phase three: define service
   c.AddModuleFunc(New)

@@ -15,9 +15,21 @@ import (
 	"go.uber.org/dig"
 )
 
-// Providers is a set of dependency providers. It includes the Maker, the
-// default mongo.Client and exported configs.
-var Providers = []interface{}{provideMongoFactory, provideDefaultClient, provideConfig}
+/* Providers returns a set of dependency providers. It includes the Maker, the
+default mongo.Client and exported configs.
+	Depends On:
+		log.Logger
+		contract.ConfigAccessor
+		MongoConfigInterceptor `optional:"true"`
+		opentracing.Tracer     `optional:"true"`
+	Provides:
+		Factory
+		Maker
+		*mongo.Client
+*/
+func Providers() di.Deps {
+	return []interface{}{provideMongoFactory, provideDefaultClient, provideConfig}
+}
 
 // MongoConfigInterceptor is an injection type hint that allows user to make last
 // minute modification to mongo configuration. This is useful when some

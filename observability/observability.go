@@ -3,6 +3,7 @@ package observability
 import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
 	"github.com/ghodss/yaml"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
@@ -10,8 +11,24 @@ import (
 	"go.uber.org/dig"
 )
 
-// ObservabilityIn is the injection argument of Provide.
-type ObservabilityIn struct {
+/*
+Providers returns a set of providers available in package observability
+
+	Depends On:
+		log.Logger
+		contract.ConfigAccessor
+		contract.AppName
+		contract.Env
+	Provides:
+		opentracing.Tracer
+		metrics.Histogram
+*/
+func Providers() di.Deps {
+	return di.Deps{provide, exportConfig}
+}
+
+// in is the injection argument of provide.
+type in struct {
 	dig.In
 
 	Logger  log.Logger
@@ -20,26 +37,24 @@ type ObservabilityIn struct {
 	Env     contract.Env
 }
 
-// ObservabilityOut is the result of Provide
-type ObservabilityOut struct {
+// out is the result of provide
+type out struct {
 	dig.Out
 
-	Tracer         opentracing.Tracer
-	Hist           metrics.Histogram
-	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
+	Tracer opentracing.Tracer
+	Hist   metrics.Histogram
 }
 
-// Provide provides the observability suite for the system. It contains a tracer and
+// provide provides the observability suite for the system. It contains a tracer and
 // a histogram to measure all incoming request.
-func Provide(in ObservabilityIn) (ObservabilityOut, func(), error) {
+func provide(in in) (out, func(), error) {
 	in.Logger = log.With(in.Logger, "tag", "observability")
 	jlogger := ProvideJaegerLogAdapter(in.Logger)
 	tracer, cleanup, err := ProvideOpentracing(in.AppName, in.Env, jlogger, in.Conf)
 	hist := ProvideHistogramMetrics(in.AppName, in.Env)
-	return ObservabilityOut{
-		Tracer:         tracer,
-		Hist:           hist,
-		ExportedConfig: exportConfig(),
+	return out{
+		Tracer: tracer,
+		Hist:   hist,
 	}, cleanup, err
 }
 
@@ -54,15 +69,22 @@ jaeger:
     addr:
 `
 
-func exportConfig() []config.ExportedConfig {
+type configOut struct {
+	di.Out
+
+	Config []config.ExportedConfig `group:"config,flatten"`
+}
+
+func exportConfig() configOut {
 
 	var conf map[string]interface{}
 	_ = yaml.Unmarshal([]byte(sample), &conf)
-	return []config.ExportedConfig{
+	configs := []config.ExportedConfig{
 		{
 			Owner:   "observability",
 			Data:    conf,
 			Comment: "The observability configuration",
 		},
 	}
+	return configOut{Config: configs}
 }

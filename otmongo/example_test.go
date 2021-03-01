@@ -15,7 +15,7 @@ import (
 func Example() {
 	c := core.New()
 	c.ProvideEssentials()
-	c.Provide(otmongo.Provide)
+	c.Provide(otmongo.Providers())
 	c.Invoke(func(mongo *mongo.Client) {
 		err := mongo.Ping(context.Background(), readpref.Nearest())
 		fmt.Println(err)

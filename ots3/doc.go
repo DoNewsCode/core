@@ -30,7 +30,7 @@ Package ots3 exports the following configuration:
 To use package ots3 with package core:
 
 	var c *core.C = core.New()
-	c.Provide(ots3.Providers)
+	c.Provide(ots3.Providers())
 	c.AddModuleFunc(ots3.New)
 	c.Invoke(function(manager *ots3.Manager) {
 		// do something with manager
@@ -40,9 +40,9 @@ Adding the module created by mods3.New is optional. This module provides an "/up
 for the http router. If this is not relevant, just leave it out.
 
 Sometimes there are valid reasons to connect to more than one s3 server. Inject
-mods3.S3Maker to factory a *ots3.Manager with a specific configuration entry.
+mods3.Maker to factory a *ots3.Manager with a specific configuration entry.
 
-	c.Invoke(function(maker ots3.S3Maker) {
+	c.Invoke(function(maker ots3.Maker) {
 		manager, err := maker.Make("default")
 	})
 

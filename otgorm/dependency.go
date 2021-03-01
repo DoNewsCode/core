@@ -15,9 +15,22 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-// Providers is a set of database related providers for package core. It includes
-// the Maker, database configs and the default *gorm.DB instance.
-var Providers = []interface{}{provideDatabaseFactory, provideConfig, provideDefaultDatabase, provideMemoryDatabase}
+/*
+Providers returns a set of database related providers for package core. It includes
+the Maker, database configs and the default *gorm.DB instance.
+	Depends On:
+		contract.ConfigAccessor
+		log.Logger
+		GormConfigInterceptor `optional:"true"`
+		opentracing.Tracer    `optional:"true"`
+	Provide:
+		Maker
+		Factory
+		*gorm.DB
+*/
+func Providers() []interface{} {
+	return []interface{}{provideDatabaseFactory, provideConfig, provideDefaultDatabase, provideMemoryDatabase}
+}
 
 // Factory is the *di.Factory that creates *gorm.DB under a specific
 // configuration entry.

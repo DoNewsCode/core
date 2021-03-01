@@ -16,9 +16,27 @@ import (
 	"github.com/oklog/run"
 )
 
-// Providers is a set of dependencies related to queue. It includes the
-// DispatcherMaker, the Dispatcher and the exported configs.
-var Providers = []interface{}{provideDispatcherFactory, provideConfig, provideDispatcher}
+/*
+Providers returns a set of dependencies related to queue. It includes the
+DispatcherMaker, the Dispatcher and the exported configs.
+	Depends On:
+		contract.ConfigAccessor
+		contract.Dispatcher
+		Driver        `optional:"true"`
+		otredis.Maker `optional:"true"`
+		log.Logger
+		contract.AppName
+		contract.Env
+		Gauge `optional:"true"`
+	Provides:
+		DispatcherMaker
+		DispatcherFactory
+		Dispatcher
+		*QueueableDispatcher
+*/
+func Providers() di.Deps {
+	return []interface{}{provideDispatcherFactory, provideConfig, provideDispatcher}
+}
 
 // Gauge is an alias used for dependency injection
 type Gauge metrics.Gauge
@@ -50,7 +68,7 @@ type DispatcherFactory struct {
 
 // Make returns a QueueableDispatcher by the given name. If it has already been created under the same name,
 // the that one will be returned.
-func (s *DispatcherFactory) Make(name string) (*QueueableDispatcher, error) {
+func (s DispatcherFactory) Make(name string) (*QueueableDispatcher, error) {
 	client, err := s.Factory.Make(name)
 	if err != nil {
 		return nil, err
@@ -89,7 +107,7 @@ type makerOut struct {
 	di.Module
 
 	DispatcherMaker   DispatcherMaker
-	DispatcherFactory *DispatcherFactory
+	DispatcherFactory DispatcherFactory
 	ExportedConfig    []config.ExportedConfig `group:"config,flatten"`
 }
 
@@ -162,7 +180,7 @@ func provideDispatcherFactory(p makerIn) (makerOut, error) {
 		factory.Make(name)
 	}
 
-	dispatcherFactory := &DispatcherFactory{Factory: factory}
+	dispatcherFactory := DispatcherFactory{Factory: factory}
 	return makerOut{
 		DispatcherFactory: dispatcherFactory,
 		DispatcherMaker:   dispatcherFactory,

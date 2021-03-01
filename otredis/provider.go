@@ -12,9 +12,23 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-// Providers is a set of dependency providers related to redis. It includes the
-// Maker, the default redis.UniversalClient and exported configs.
-var Providers = []interface{}{provideRedisFactory, provideDefaultClient, provideConfig}
+/*
+Providers returns a set of dependency providers related to redis. It includes the
+Maker, the default redis.UniversalClient and exported configs.
+
+	Depends On:
+		log.Logger
+		contract.ConfigAccessor
+		RedisConfigurationInterceptor `optional:"true"`
+		opentracing.Tracer            `optional:"true"`
+	Provide:
+		Maker
+		Factory
+		redis.UniversalClient
+*/
+func Providers() []interface{} {
+	return []interface{}{provideRedisFactory, provideDefaultClient, provideConfig}
+}
 
 // RedisConfigurationInterceptor intercepts the redis.UniversalOptions before
 // creating the client so you can make amendment to it. Useful because some

@@ -2,6 +2,8 @@ package otetcd
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
@@ -11,12 +13,23 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc"
-	"time"
 )
 
-// Providers is a set of dependencies including the Maker, the default
-// *clientv3.Client and the exported configs.
-var Providers = []interface{}{provideFactory, provideDefaultClient, provideExportedConfigs}
+/*
+Providers returns a set of dependencies including the Maker, the default *clientv3.Client and the exported configs.
+	Depends On:
+		log.Logger
+		contract.ConfigAccessor
+		EtcdConfigInterceptor `optional:"true"`
+		opentracing.Tracer    `optional:"true"`
+	Provide:
+		Maker
+		Factory
+		*clientv3.Client
+*/
+func Providers() []interface{} {
+	return []interface{}{provideFactory, provideDefaultClient, provideExportedConfigs}
+}
 
 // EtcdConfigInterceptor is an injector type hint that allows user to do
 // last minute modification to etcd configurations. This is useful when some

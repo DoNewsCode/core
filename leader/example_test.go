@@ -14,8 +14,8 @@ import (
 
 func Example() {
 	c := core.Default()
-	c.Provide(otetcd.Providers)
-	c.Provide(leader.Providers)
+	c.Provide(otetcd.Providers())
+	c.Provide(leader.Providers())
 	c.Invoke(func(dispatcher contract.Dispatcher) {
 		// This listener will be called twice. Once on becoming the leader and once on resigning the leader.
 		dispatcher.Subscribe(events.Listen(events.From(&leader.Status{}), func(ctx context.Context, event contract.Event) error {

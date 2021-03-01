@@ -10,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/otredis"
 	"github.com/DoNewsCode/core/queue"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
@@ -43,11 +44,10 @@ func bootstrapFactories() *core.C {
 
 	// Add ConfProvider
 	c.ProvideEssentials()
-	c.Provide(queue.provideDispatcherFactory)
-	c.Provide(func() redis.UniversalClient {
-		client := redis.NewUniversalClient(&redis.UniversalOptions{})
+	c.Provide(otredis.Providers())
+	c.Provide(queue.Providers())
+	c.Invoke(func(client redis.UniversalClient) {
 		_, _ = client.FlushAll(context.Background()).Result()
-		return client
 	})
 	return c
 }
@@ -77,7 +77,7 @@ func serveFactories(c *core.C, duration time.Duration) {
 func Example_factory() {
 	c := bootstrapFactories()
 
-	err := c.Invoke(func(maker queue.DispatcherMaker) {
+	c.Invoke(func(maker queue.DispatcherMaker) {
 		dispatcher, err := maker.Make("MyQueue")
 		if err != nil {
 			panic(err)
@@ -89,9 +89,6 @@ func Example_factory() {
 		evt := events.Of(MockFactoryData{Value: "hello world"})
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt))
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	serveFactories(c, time.Second)
 

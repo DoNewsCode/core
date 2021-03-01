@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core"
+	"github.com/DoNewsCode/core/di"
 	"github.com/gorilla/mux"
 )
 
@@ -39,13 +40,15 @@ func ExampleC_Provide() {
 		foo Foo
 	}
 	c := core.New()
-	c.Provide(func() (foo Foo, cleanup func(), err error) {
-		return Foo{
-			Value: "test",
-		}, func() {}, nil
-	})
-	c.Provide(func(foo Foo) Bar {
-		return Bar{foo: foo}
+	c.Provide(di.Deps{
+		func() (foo Foo, cleanup func(), err error) {
+			return Foo{
+				Value: "test",
+			}, func() {}, nil
+		},
+		func(foo Foo) Bar {
+			return Bar{foo: foo}
+		},
 	})
 	c.Invoke(func(bar Bar) {
 		fmt.Println(bar.foo.Value)

@@ -2,6 +2,7 @@ package otgorm
 
 import (
 	"github.com/DoNewsCode/core"
+	"github.com/DoNewsCode/core/di"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -47,7 +48,7 @@ func TestModule_ProvideCommand(t *testing.T) {
 	c := core.New(core.WithInline("gorm.default.database", "sqlite"),
 		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"))
 	c.ProvideEssentials()
-	c.Provide(provideDatabaseFactory)
+	c.Provide(di.Deps{provideDatabaseFactory})
 	c.AddModuleFunc(New)
 	mock := &Mock{}
 	c.AddModule(mock)

@@ -30,6 +30,15 @@ type Election struct {
 	driver     Driver
 }
 
+// NewElection returns a pointer to the newly constructed Election instance.
+func NewElection(dispatcher contract.Dispatcher, driver Driver) *Election {
+	return &Election{
+		dispatcher: dispatcher,
+		status:     &Status{isLeader: &atomic.Bool{}},
+		driver:     driver,
+	}
+}
+
 // Campaign starts a leader election. It will block until this node becomes a leader or context cancelled.
 func (e *Election) Campaign(ctx context.Context) error {
 	if err := e.driver.Campaign(ctx); err != nil {

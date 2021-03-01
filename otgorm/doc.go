@@ -14,7 +14,7 @@ package otgorm exports the configuration in the following format:
 Add the gorm dependency to core:
 
 	var c *core.C = core.New()
-	c.provideDatabaseFactory(otgorm.provideDatabaseFactory)
+	c.Provide(otgorm.Providers())
 
 Then you can invoke gorm from the application.
 

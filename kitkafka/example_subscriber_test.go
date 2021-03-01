@@ -128,7 +128,7 @@ func Example_subscriber() {
 	}))
 	defer c.Shutdown()
 
-	c.Provide(kitkafka.Providers)
+	c.Provide(kitkafka.Providers())
 
 	c.Invoke(func(factory kitkafka.ReaderFactory) {
 		uppercaseServer, err := factory.MakeSubscriberServer("uppercase", uppercaseHandler)

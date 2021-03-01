@@ -3,28 +3,30 @@ package leader
 import (
 	"context"
 	"fmt"
+
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/key"
 	"github.com/DoNewsCode/core/otetcd"
 	"github.com/oklog/run"
-	"go.uber.org/atomic"
 )
 
 /*
-Providers is a set of dependency providers for Election and *Status.
+Providers returns a set of dependency providers for Election and *Status.
 	Depends On:
-			AppName    contract.AppName
-			Env        contract.Env
-			Config     contract.ConfigAccessor
-			Dispatcher contract.Dispatcher
-			Driver     Driver       `optional:"true"`
-			Maker      otetcd.Maker `optional:"true"`
+		contract.AppName
+		contract.Env
+		contract.ConfigAccessor
+		contract.Dispatcher
+		Driver       `optional:"true"`
+		otetcd.Maker `optional:"true"`
 	Provide:
-			Election Election
-			Status   *Status
+		Election *Election
+		Status   *Status
 */
-var Providers = []interface{}{provide}
+func Providers() di.Deps {
+	return []interface{}{provide}
+}
 
 type in struct {
 	di.In
@@ -41,7 +43,7 @@ type out struct {
 	di.Out
 	di.Module
 
-	Election Election
+	Election *Election
 	Status   *Status
 }
 
@@ -49,14 +51,10 @@ func provide(in in) (out, error) {
 	if err := determineDriver(&in); err != nil {
 		return out{}, err
 	}
-	st := &Status{isLeader: &atomic.Bool{}}
+	e := NewElection(in.Dispatcher, in.Driver)
 	return out{
-		Election: Election{
-			dispatcher: in.Dispatcher,
-			status:     st,
-			driver:     in.Driver,
-		},
-		Status: st,
+		Election: e,
+		Status:   e.status,
 	}, nil
 }
 

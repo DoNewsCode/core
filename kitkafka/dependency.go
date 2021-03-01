@@ -10,8 +10,22 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// Providers is a set of dependencies including ReaderMaker, WriterMaker and exported configs.
-var Providers = []interface{}{provideKafkaFactory, provideConfig}
+/*
+Providers is a set of dependencies including ReaderMaker, WriterMaker and exported configs.
+	Depends On:
+		ReaderInterceptor `optional:"true"`
+		WriterInterceptor `optional:"true"`
+		contract.ConfigAccessor
+		log.Logger
+	Provide:
+		ReaderFactory
+		WriterFactory
+		ReaderMaker
+		WriterMaker
+*/
+func Providers() []interface{} {
+	return []interface{}{provideKafkaFactory, provideConfig}
+}
 
 // WriterMaker models a WriterFactory
 type WriterMaker interface {

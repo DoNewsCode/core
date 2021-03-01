@@ -1,10 +1,11 @@
 package otgorm
 
 import (
+	"testing"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"gorm.io/gorm"
-	"testing"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/go-kit/kit/log"
@@ -38,7 +39,7 @@ func TestProvideDBFactory(t *testing.T) {
 func TestGorm(t *testing.T) {
 	c := core.New()
 	c.ProvideEssentials()
-	c.Provide(Providers)
+	c.Provide(Providers())
 	c.Invoke(func(
 		d1 Maker,
 		d2 Factory,
@@ -53,5 +54,14 @@ func TestGorm(t *testing.T) {
 		a.NotNil(d2)
 		a.NotEmpty(d3.Cfg)
 		a.NotNil(d4)
+	})
+}
+
+func TestProvideMemoryDatabase(t *testing.T) {
+	c := core.New()
+	c.ProvideEssentials()
+	c.Provide(di.Deps{provideMemoryDatabase})
+	c.Invoke(func(d1 *SQLite) {
+		assert.Equal(t, "sqlite", d1.Name())
 	})
 }

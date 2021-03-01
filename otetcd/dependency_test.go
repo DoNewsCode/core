@@ -1,9 +1,11 @@
 package otetcd
 
 import (
+	"fmt"
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
+	"github.com/ghodss/yaml"
 	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/clientv3"
@@ -13,7 +15,7 @@ import (
 func TestEtcd(t *testing.T) {
 	c := core.New()
 	c.ProvideEssentials()
-	c.Provide(Providers)
+	c.Provide(Providers())
 	c.Invoke(func(
 		d1 Maker,
 		d2 Factory,
@@ -51,4 +53,11 @@ func TestProvideFactory(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
 	cleanup()
+}
+
+func TestExportedConfigs(t *testing.T) {
+	conf := provideExportedConfigs()
+	bytes, err := yaml.Marshal(conf)
+	assert.NoError(t, err)
+	fmt.Println(string(bytes))
 }

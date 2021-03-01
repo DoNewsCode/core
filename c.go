@@ -237,14 +237,9 @@ func (c *C) AddModule(modules ...interface{}) {
 // from google/wire (https://github.com/google/wire). All "func()" returned by
 // constructor are treated as clean up functions. It also respect the core's unique
 // "di.Module" annotation.
-func (c *C) Provide(constructor interface{}) {
-	cvalue := reflect.ValueOf(constructor)
-	if cvalue.Kind() != reflect.Slice {
-		c.provide(constructor)
-		return
-	}
-	for i := 0; i < cvalue.Len(); i++ {
-		c.provide(cvalue.Index(i).Interface())
+func (c *C) Provide(deps di.Deps) {
+	for _, dep := range deps {
+		c.provide(dep)
 	}
 }
 
@@ -331,7 +326,7 @@ func (c *C) ProvideEssentials() {
 		DefaultConfigs []config.ExportedConfig `group:"config,flatten"`
 	}
 
-	c.Provide(func() coreDependencies {
+	c.provide(func() coreDependencies {
 		coreDependencies := coreDependencies{
 			Env:            c.Env,
 			AppName:        c.AppName,
@@ -364,7 +359,7 @@ func (c *C) Serve(ctx context.Context) error {
 // AddModuleFunc add the module after Invoking its' constructor. Clean up
 // functions and errors are handled automatically.
 func (c *C) AddModuleFunc(constructor interface{}) {
-	c.Provide(constructor)
+	c.provide(constructor)
 	ftype := reflect.TypeOf(constructor)
 	targetTypes := make([]reflect.Type, 0)
 	for i := 0; i < ftype.NumOut(); i++ {

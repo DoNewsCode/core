@@ -6,14 +6,14 @@ Integration
 
 package otmongo exports the configuration in the following format:
 
-	redis:
+	mongo:
 	  default:
 	    uri:
 
 Add the mongo dependency to core:
 
 	var c *core.C = core.New()
-	c.Provide(otmongo.Provide)
+	c.Provide(otmongo.Providers())
 
 Then you can invoke redis from the application.
 
@@ -24,7 +24,7 @@ Then you can invoke redis from the application.
 Sometimes there are valid reasons to connect to more than one mongo server. Inject
 otmongo.Maker to factory a *mongo.Client with a specific configuration entry.
 
-	c.Invoke(function(maker otredis.Maker) {
+	c.Invoke(function(maker otmongo.Maker) {
 		client, err := maker.Make("default")
 		// do something with client
 	})

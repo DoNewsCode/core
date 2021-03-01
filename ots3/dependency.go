@@ -13,9 +13,21 @@ import (
 	"github.com/DoNewsCode/core/contract"
 )
 
-// Providers is a set of dependencies providers related to S3. It includes the s3
-// Manager, the S3Maker and exported configurations.
-var Providers = []interface{}{provideFactory, provideManager, provideConfig}
+/* Providers returns a set of dependencies providers related to S3. It includes the s3
+Manager, the Maker and exported configurations.
+	Depends On:
+		log.Logger
+		contract.ConfigAccessor
+		opentracing.Tracer `optional:"true"`
+	Provide:
+		Factory
+		Maker
+		*Manager
+		Uploader
+*/
+func Providers() []interface{} {
+	return []interface{}{provideFactory, provideManager, provideConfig}
+}
 
 // S3Config contains credentials of S3 server
 type S3Config struct {
@@ -27,8 +39,8 @@ type S3Config struct {
 	CdnUrl       string `json:"cdnUrl" yaml:"cdnUrl"`
 }
 
-// S3Maker is an interface for *S3Factory. Used as a type hint for injection.
-type S3Maker interface {
+// Maker is an interface for *Factory. Used as a type hint for injection.
+type Maker interface {
 	Make(name string) (*Manager, error)
 }
 
@@ -45,17 +57,17 @@ type in struct {
 type out struct {
 	di.Out
 
-	Factory *S3Factory
-	Maker   S3Maker
+	Factory Factory
+	Maker   Maker
 }
 
-// S3Factory can be used to connect to multiple s3 servers.
-type S3Factory struct {
+// Factory can be used to connect to multiple s3 servers.
+type Factory struct {
 	*di.Factory
 }
 
 // Make creates a s3 manager under the given name.
-func (s *S3Factory) Make(name string) (*Manager, error) {
+func (s Factory) Make(name string) (*Manager, error) {
 	client, err := s.Factory.Make(name)
 	if err != nil {
 		return nil, err
@@ -63,7 +75,7 @@ func (s *S3Factory) Make(name string) (*Manager, error) {
 	return client.(*Manager), nil
 }
 
-// provideFactory creates *S3Factory and *ots3.Manager. It is a valid dependency for package core.
+// provideFactory creates *Factory and *ots3.Manager. It is a valid dependency for package core.
 func provideFactory(p in) out {
 	var (
 		err       error
@@ -104,9 +116,9 @@ func provideFactory(p in) out {
 			Conn:   manager,
 		}, nil
 	})
-	s3Factory := S3Factory{factory}
+	s3Factory := Factory{factory}
 	return out{
-		Factory: &s3Factory,
+		Factory: s3Factory,
 		Maker:   &s3Factory,
 	}
 }
@@ -118,7 +130,7 @@ type managerOut struct {
 	Uploader Uploader
 }
 
-func provideManager(maker S3Maker) (managerOut, error) {
+func provideManager(maker Maker) (managerOut, error) {
 	manager, err := maker.Make("default")
 	return managerOut{
 		Manager:  manager,
