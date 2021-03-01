@@ -39,7 +39,7 @@ For a complete overview of all available options, call the config init command.
 To use package kitkafka with package core, add:
 
 	var c *core.C = core.New()
-	c.Provide(kitkafka.provideKafkaFactory)
+	c.Provide(kitkafka.Providers())
 
 The reader and writer factories are bundled into that single provider.
 
