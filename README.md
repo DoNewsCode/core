@@ -152,10 +152,10 @@ Phase three has been replaced by the `c.AddModuleFunc(New)`. `AddModuleFunc` pop
 and add the returned module instance to the internal module registry.
 
 When c.Serve() is called, all registered modules will be scanned for implemented interfaces. 
-The module in the example implements container.HttpProvider interface: 
+The module in the example implements interface: 
 
 ```go
-type HttpProvider interface {
+type HTTPProvider interface {
 	ProvideHttp(router *mux.Router)
 }
 ```
@@ -193,8 +193,9 @@ Definitely check out the [sub packages](https://pkg.go.dev/github.com/DoNewsCode
 
 ## Non-Goals
 
-- Tries to be a Laravel or Ruby on Rails.
+- Tries to be a Spring, Laravel or Ruby on Rails.
 - Tries to care about service details.
+- Tries to reimplement the functionality provided by modern platform.
 
 ## Suggested service framework
 - Gin (if http only)
