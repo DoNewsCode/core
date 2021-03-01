@@ -20,6 +20,10 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
+      etcd:
+        image: bitnami/etcd
+        ports:
+          - 2379:2379
       mysql:
         image: mysql:5.7
         env:
