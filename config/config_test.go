@@ -38,7 +38,7 @@ func TestKoanfAdapter_race(t *gotesting.T) {
 }
 
 func TestKoanfAdapter_Watch(t *gotesting.T) {
-	f, _ := ioutil.TempFile("", "*")
+	f, _ := ioutil.TempFile(os.TempDir(), "*")
 	defer os.Remove(f.Name())
 
 	ioutil.WriteFile(f.Name(), []byte("foo: baz"), 0644)
