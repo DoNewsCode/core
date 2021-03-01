@@ -193,8 +193,9 @@ Definitely check out the [sub packages](https://pkg.go.dev/github.com/DoNewsCode
 
 ## Non-Goals
 
-- Tries to be a Laravel or Ruby on Rails.
+- Tries to be a Spring, Laravel or Ruby on Rails.
 - Tries to care about service details.
+- Tries to reimplement the functionality provided by modern platform.
 
 ## Suggested service framework
 - Gin (if http only)
