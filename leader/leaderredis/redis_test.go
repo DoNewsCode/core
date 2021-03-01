@@ -47,7 +47,7 @@ func TestElection(t *testing.T) {
 	t.Parallel()
 	var dispatcher = &events.SyncDispatcher{}
 	var e1, e2 *leader.Election
-	var driver = NewRedisDriver(redis.NewUniversalClient(&redis.UniversalOptions{}), key.New("testElection"), WithPollInterval(time.Microsecond), WithExpiration(time.Second))
+	var driver = NewRedisDriver(redis.NewUniversalClient(&redis.UniversalOptions{}), key.New("testElection"), WithPollInterval(time.Millisecond), WithExpiration(time.Second))
 
 	e1 = leader.NewElection(dispatcher, driver)
 	e2 = leader.NewElection(dispatcher, driver)
@@ -55,7 +55,6 @@ func TestElection(t *testing.T) {
 
 	e1.Campaign(ctx)
 	assert.Equal(t, e1.Status().IsLeader(), true)
-	<-time.After(2 * time.Second)
 	go e2.Campaign(ctx)
 	<-time.After(2 * time.Second)
 
