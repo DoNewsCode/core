@@ -55,9 +55,9 @@ func TestElection(t *testing.T) {
 
 	e1.Campaign(ctx)
 	assert.Equal(t, e1.Status().IsLeader(), true)
-
+	<-time.After(2 * time.Second)
 	go e2.Campaign(ctx)
-	<-time.After(3 * time.Second)
+	<-time.After(2 * time.Second)
 
 	assert.Equal(t, true, e1.Status().IsLeader())
 	assert.Equal(t, false, e2.Status().IsLeader())

@@ -1,7 +1,8 @@
 package otetcd
 
 import (
-	"fmt"
+	"testing"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
@@ -9,7 +10,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/clientv3"
-	"testing"
 )
 
 func TestEtcd(t *testing.T) {
@@ -57,7 +57,6 @@ func TestProvideFactory(t *testing.T) {
 
 func TestExportedConfigs(t *testing.T) {
 	conf := provideExportedConfigs()
-	bytes, err := yaml.Marshal(conf)
+	_, err := yaml.Marshal(conf)
 	assert.NoError(t, err)
-	fmt.Println(string(bytes))
 }
