@@ -47,6 +47,7 @@ func TestElection(t *testing.T) {
 	assert.Equal(t, e2.status.IsLeader(), false)
 
 	e1.Resign(ctx)
+	time.Sleep(time.Second)
 	assert.Equal(t, e1.status.IsLeader(), false)
 	assert.Equal(t, e2.status.IsLeader(), true)
 
