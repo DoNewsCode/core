@@ -2,14 +2,20 @@ package core_test
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"github.com/gorilla/mux"
+	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/providers/basicflag"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/file"
 )
 
 func ExampleC_AddModuleFunc() {
@@ -80,4 +86,24 @@ func Example_minimal() {
 	fmt.Println(string(bytes))
 	// Output:
 	// hello world
+}
+
+func ExampleC_stack() {
+
+	fs := flag.NewFlagSet("example", flag.ContinueOnError)
+	fs.String("log.level", "error", "the log level")
+	// Spin up a real server
+	c := core.New(
+		core.WithConfigStack(basicflag.Provider(fs, "."), nil),
+		core.WithConfigStack(env.Provider("APP_", ".", func(s string) string {
+			return strings.ToLower(strings.Replace(s, "APP_", "", 1))
+		}), nil),
+		core.WithConfigStack(file.Provider("./config/testdata/mock.json"), json.Parser()),
+	)
+	c.AddModule(core.HttpFunc(func(router *mux.Router) {
+		router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Write([]byte("hello world"))
+		})
+	}))
+	c.Serve(context.Background())
 }
