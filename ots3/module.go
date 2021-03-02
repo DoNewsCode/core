@@ -14,7 +14,7 @@ type Module struct {
 }
 
 // ProvideHttp adds a "/upload" path to router
-func (m Module) ProvideHttp(router *mux.Router) {
+func (m Module) ProvideHTTP(router *mux.Router) {
 	router.PathPrefix("/upload").Handler(m.handler)
 }
 

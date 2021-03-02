@@ -17,11 +17,11 @@ func (m mock) ProvideRunGroup(group *run.Group) {
 	panic("implement me")
 }
 
-func (m mock) ProvideGrpc(server *grpc.Server) {
+func (m mock) ProvideGRPC(server *grpc.Server) {
 	panic("implement me")
 }
 
-func (m mock) ProvideHttp(router *mux.Router) {
+func (m mock) ProvideHTTP(router *mux.Router) {
 	panic("implement me")
 }
 

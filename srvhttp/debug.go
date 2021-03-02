@@ -12,7 +12,7 @@ import (
 type DebugModule struct{}
 
 // ProvideHttp implements container.HttpProvider
-func (d DebugModule) ProvideHttp(router *mux.Router) {
+func (d DebugModule) ProvideHTTP(router *mux.Router) {
 	m := mux.NewRouter()
 	m.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 	m.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))

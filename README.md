@@ -129,7 +129,7 @@ func New(db *gorm.DB) Module {
   return Module{Handler{Repository{db}}}
 }
 
-func (m Module) ProvideHttp(router *mux.Router) {
+func (m Module) ProvideHTTP(router *mux.Router) {
   router.Handle("/", m.H)
 }
 
@@ -156,7 +156,7 @@ The module in the example implements interface:
 
 ```go
 type HTTPProvider interface {
-	ProvideHttp(router *mux.Router)
+	ProvideHTTP(router *mux.Router)
 }
 ```
 

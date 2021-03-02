@@ -26,12 +26,12 @@ type CommandProvider interface {
 
 // HTTPProvider provides http services.
 type HTTPProvider interface {
-	ProvideHttp(router *mux.Router)
+	ProvideHTTP(router *mux.Router)
 }
 
 // GRPCProvider provides gRPC services.
 type GRPCProvider interface {
-	ProvideGrpc(server *grpc.Server)
+	ProvideGRPC(server *grpc.Server)
 }
 
 // CloserProvider provides a shutdown function that will be called when service exits.
@@ -136,10 +136,10 @@ func (c *Container) AddModule(module interface{}) {
 		return
 	}
 	if p, ok := module.(HTTPProvider); ok {
-		c.httpProviders = append(c.httpProviders, p.ProvideHttp)
+		c.httpProviders = append(c.httpProviders, p.ProvideHTTP)
 	}
 	if p, ok := module.(GRPCProvider); ok {
-		c.grpcProviders = append(c.grpcProviders, p.ProvideGrpc)
+		c.grpcProviders = append(c.grpcProviders, p.ProvideGRPC)
 	}
 	if p, ok := module.(CronProvider); ok {
 		c.cronProviders = append(c.cronProviders, p.ProvideCron)

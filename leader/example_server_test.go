@@ -18,7 +18,7 @@ type ServerModule struct {
 	Sts *leader.Status
 }
 
-func (s ServerModule) ProvideHttp(router *mux.Router) {
+func (s ServerModule) ProvideHTTP(router *mux.Router) {
 	router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		if s.Sts.IsLeader() {
 			writer.Write([]byte("I am leader"))
