@@ -3,7 +3,7 @@
 At this point, We have introduced the basic concept of package core. Let's learn to use package core by more examples.
 For readers eager to see the end product, please check out the [skeleton](https://github.com/DoNewsCode/skeleton) demo.
 
-### Phase one: setup a core
+### Phase one: Setup
 
 #### Construct the core dependencies
 
@@ -230,7 +230,7 @@ dependencies that they might have.
 The default `DiContainer` implementation is the [uber/dig](https://pkg.go.dev/go.uber.org/dig). 
 For advanced usage, check out their guide.
 
-### Phase three: add functionality.
+### Phase three: Add functionality.
 
 A module is a group of functionality. It must have certain API, such as HTTP, gRPC, Cron, or command line.
 
@@ -365,7 +365,7 @@ for _, m := range c.Modules() {
 }
 ```
 
-### Phase four: serve!
+### Phase four: Serve!
 
 In most of the examples we have showed, we use `c.Serve` the run the application. 
 This is appropriate if the application is exclusively long running process.
