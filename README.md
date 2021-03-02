@@ -167,7 +167,7 @@ Had this been a DDD workshop, we would be expanding the example even further.
 
 That being said, let's redirect our attention to other goodies package core has offered:
 
-- Package core is natively support multiplexing modules. 
+- Package core natively supports multiplexing modules. 
   You could start you project as a monolith with multiple modules, and gradually migrate them into microservices.
 
 - Package core doesn't lock in transport or framework.
