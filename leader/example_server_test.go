@@ -3,17 +3,33 @@ package leader_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/leader"
 	"github.com/DoNewsCode/core/otetcd"
-	"github.com/oklog/run"
-	"time"
+	"github.com/gorilla/mux"
 )
 
-func Example() {
-	c := core.Default()
+type ServerModule struct {
+	Sts *leader.Status
+}
+
+func (s ServerModule) ProvideHttp(router *mux.Router) {
+	router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		if s.Sts.IsLeader() {
+			writer.Write([]byte("I am leader"))
+		} else {
+			writer.Write([]byte("I am follower"))
+		}
+	})
+}
+
+func Example_server() {
+	c := core.Default(core.WithInline("log.level", "none"))
 	c.Provide(otetcd.Providers())
 	c.Provide(leader.Providers())
 	c.Invoke(func(dispatcher contract.Dispatcher) {
@@ -23,24 +39,15 @@ func Example() {
 			return nil
 		}))
 	})
-	c.Invoke(func(s *leader.Status) {
-		var g run.Group
-		timeout(&g, time.Second)
-		c.ApplyRunGroup(&g)
-		g.Run()
+	c.Invoke(func(sts *leader.Status) {
+		c.AddModule(ServerModule{Sts: sts})
 	})
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	c.Serve(ctx)
 
 	// Output:
 	// true
 	// false
-}
-
-func timeout(g *run.Group, timeout time.Duration) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	g.Add(func() error {
-		<-ctx.Done()
-		return ctx.Err()
-	}, func(err error) {
-		cancel()
-	})
 }
