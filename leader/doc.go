@@ -14,8 +14,8 @@ Usage
 
 The package leader exports configuration in this format:
 
-leader:
-  etcdName: default
+	leader:
+	  etcdName: default
 
 To use package leader with package core:
 

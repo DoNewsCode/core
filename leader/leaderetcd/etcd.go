@@ -1,3 +1,4 @@
+// Package leaderetcd provides a etcd driver for package leader
 package leaderetcd
 
 import (

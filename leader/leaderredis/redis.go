@@ -1,3 +1,4 @@
+// Package leaderredis provides a redis driver for package leader
 package leaderredis
 
 import (
