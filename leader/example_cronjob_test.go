@@ -3,7 +3,6 @@ package leader_test
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
@@ -34,11 +33,5 @@ func Example_cronjob() {
 	c.Invoke(func(sts *leader.Status) {
 		c.AddModule(CronModule{Sts: sts})
 	})
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	c.Serve(ctx)
-
-	// Output:
-	// do work as leader
+	c.Serve(context.Background())
 }
