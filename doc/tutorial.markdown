@@ -159,6 +159,7 @@ func main() {
 	c := core.Default()
 
 	c.Provide(di.Deps{
+		// contract.ConfigAccessor is provided in core.Default()
 		func(conf contract.ConfigAccessor) RemoteService {
 			return RemoteService{
 				Conf: conf,
@@ -209,7 +210,218 @@ The last but not the least thing to notice is that the dependency graph is build
 The constructor call is deferred until the return value is directly or indirectly demanded.
 That means dependencies for a type can be added to the graph both, before and after the type was added.
 
-The default DiContainer implementation is the [uber/dig](https://pkg.go.dev/go.uber.org/dig). For advanced usage, check out their guide.
+Speaking of demand, `c.Invoke` can be used to instantiate dependencies.
+
+```go
+func (c *C) Invoke(function interface{})
+```
+
+Invoke runs the given function after instantiating its dependencies.
+
+Any arguments that the function has are treated as its dependencies. 
+The dependencies are instantiated in an unspecified order along with any
+dependencies that they might have.
+
+The default `DiContainer` implementation is the [uber/dig](https://pkg.go.dev/go.uber.org/dig). 
+For advanced usage, check out their guide.
+
+### Phase three: add functionality.
+
+A module is a group of functionality. It must have certain API, such as HTTP, gRPC, Cron, or command line.
+
+It is not healthy to have one group of functionality depends on another; Bounded context is usually the first
+lesson we learn building microservices.
+
+In package core, we deliberately separated the concept of dependency 
+and module so that no two modules can depend on one other. Though
+modules are allowed to have shared dependencies, the module should have 
+no idea about the shared ownership.
+
+Using this methodology, we retain the ability to move modules around microservices, 
+as long as we are able to meet the dependency requirement.
+
+There are two ways to register a module in the core. You can build the module manually or 
+autopilot with DI container:
+
+* `c.AddModule` allows you to add a manually constructed module.
+
+```go
+c.AddModule(srvhttp.DocsModule{})
+```
+
+* `c.AddModuleFunc` accepts the module's constructor as argument, 
+and instantiate the module by injecting the constructor parameters from DI container.
+
+```go
+func injectModule(conf contract.ConfigAccessor, logger log.Logger) Module, func(), error {
+	// build the module, return the module, the cleanup function or possible errors.
+}
+c.AddModuleFunc(injectModule)
+```
+
+When `c.Serve(ctx)` or the root command (see phase four) is called, 
+all registered modules will be scanned for the following interfaces:
+
+```go
+// CronProvider provides cron jobs.
+type CronProvider interface {
+	ProvideCron(crontab *cron.Cron)
+}
+
+// CommandProvider provides cobra.Command.
+type CommandProvider interface {
+	ProvideCommand(command *cobra.Command)
+}
+
+// HTTPProvider provides http services.
+type HTTPProvider interface {
+	ProvideHTTP(router *mux.Router)
+}
+
+// GRPCProvider provides gRPC services.
+type GRPCProvider interface {
+	ProvideGRPC(server *grpc.Server)
+}
+
+// CloserProvider provides a shutdown function that will be called when service exits.
+type CloserProvider interface {
+	ProvideCloser()
+}
+
+// RunProvider provides a runnable actor. Use it to register any server-like
+// actions. For example, kafka consumer can be started here.
+type RunProvider interface {
+	ProvideRunGroup(group *run.Group)
+}
+```
+
+If the module implements any of the provider interface, 
+the core will call this provider function with a "registry", say, mux.Router.
+The module can then register its routes.
+
+Let's see a module with both http, cronjobs and a closer:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+
+	"github.com/DoNewsCode/core"
+	"github.com/gorilla/mux"
+	"github.com/robfig/cron/v3"
+)
+
+type RemoteModule struct {}
+
+func (r RemoteModule) ProvideCloser() {
+	fmt.Println("closing")
+}
+
+func (r RemoteModule) ProvideCron(crontab *cron.Cron) {
+	crontab.AddFunc("* * * * *", func() {
+		fmt.Println("cron triggered")
+	})
+}
+
+func (r RemoteModule) ProvideHTTP(router *mux.Router) {
+	router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		writer.Write([]byte("hello world"))
+	})
+}
+
+func main() {
+	c := core.Default()
+	defer c.Shutdown()
+
+	c.AddModule(RemoteModule{})
+	c.Serve(context.Background())
+}
+
+```
+
+It is completely possible that none of the built-in provider interfaces satisfy the business requirement.
+However, it is deadly simple to scan for your custom interfaces:
+
+```go
+multiProcessor := thrift.NewTMultiplexedProcessor()
+for _, m := range c.Modules() {
+	if thriftModule, ok := m.(interface{ProvideThrift(p thrift.TMultiplexedProcessor)}); ok {
+        thriftModule.ProvideThrift(multiProcessor)
+    }
+}
+```
+
+### Phase four: serve!
+
+In most of the examples we have showed, we use `c.Serve` the run the application. 
+This is appropriate if the application is exclusively long running process.
+
+The manifest of twelve-factor apps stats: 
+
+> Run admin/management tasks as one-off processes
+
+Package core natively supports one-off processes. 
+Those processes were achieved by cobra.Command.
+In this model, the serve command is only one of many subcommands registered in the root command.
+
+Below is an example that groups serve and version subcommand under the root.
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/DoNewsCode/core"
+	"github.com/spf13/cobra"
+)
+
+type RemoteModule struct {}
+
+func (r RemoteModule) ProvideCommand(command *cobra.Command) {
+	cmd := &cobra.Command{
+		Use: "version",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("0.1.0")
+		},
+	}
+	command.AddCommand(cmd)
+}
+
+func main() {
+	c := core.Default()
+	defer c.Shutdown()
+
+	c.AddModule(RemoteModule{})
+	c.AddModuleFunc(core.NewServeModule)
+	rootCmd := &cobra.Command{
+		Use: "root",
+		Short: "A demo command",
+	}
+	c.ApplyRootCommand(rootCmd)
+	rootCmd.Execute()
+}
+```
+
+To start the server:
+
+```bash
+go run main.go serve
+```
+
+To print the version:
+
+```bash
+go run main.go version
+```
+
+> You can replace the `core.NewServeModule` with your own serve module too.
+
+
+
 
 
 
