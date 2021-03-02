@@ -177,10 +177,10 @@ That being said, let's redirect our attention to other goodies package core has 
 
 ## Documentation
 
-[GoDoc](https://pkg.go.dev/github.com/DoNewsCode/core) is the primary source of documentation.
-Definitely check out the [sub packages](https://pkg.go.dev/github.com/DoNewsCode/core#section-directories) too.
-
-> [github.com/DoNewsCode/skeleton](https://github.com/DoNewsCode/skeleton) is working demo featuring package core with go-kit and gin.
+* [Tutorial](https://github.com/DoNewsCode/core/blob/master/doc/tutorial.md)
+* [GoDoc](https://pkg.go.dev/github.com/DoNewsCode/core)
+* [Demo Project](https://github.com/DoNewsCode/skeleton)
+* [Contributing](https://github.com/DoNewsCode/core/blob/master/doc/contributing.markdown)
 
 ## Design Principles
 
@@ -201,5 +201,6 @@ Definitely check out the [sub packages](https://pkg.go.dev/github.com/DoNewsCode
 - Gin (if http only)
 - Go Kit (if multiple transport)
 - Go Zero
+
 
 

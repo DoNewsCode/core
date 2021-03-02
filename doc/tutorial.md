@@ -129,9 +129,12 @@ c.Default(
 )
 ```
 
-## Phase two: Add dependencies
+### Phase two: Add dependencies
 
 It is often Inevitable for our application to depend on external resources.
+
+
+#### Provide
 
 Type C accepts dependencies bindings via the `Provide` methods.
 
@@ -210,6 +213,8 @@ The last but not the least thing to notice is that the dependency graph is build
 The constructor call is deferred until the return value is directly or indirectly demanded.
 That means dependencies for a type can be added to the graph both, before and after the type was added.
 
+#### Invoke
+
 Speaking of demand, `c.Invoke` can be used to instantiate dependencies.
 
 ```go
@@ -240,6 +245,8 @@ no idea about the shared ownership.
 Using this methodology, we retain the ability to move modules around microservices, 
 as long as we are able to meet the dependency requirement.
 
+#### Add Module
+
 There are two ways to register a module in the core. You can build the module manually or 
 autopilot with DI container:
 
@@ -258,6 +265,8 @@ func injectModule(conf contract.ConfigAccessor, logger log.Logger) Module, func(
 }
 c.AddModuleFunc(injectModule)
 ```
+
+#### Module interfaces
 
 When `c.Serve(ctx)` or the root command (see phase four) is called, 
 all registered modules will be scanned for the following interfaces:
@@ -342,6 +351,8 @@ func main() {
 
 ```
 
+#### Custom module interfaces
+
 It is completely possible that none of the built-in provider interfaces satisfy the business requirement.
 However, it is deadly simple to scan for your custom interfaces:
 
@@ -349,7 +360,7 @@ However, it is deadly simple to scan for your custom interfaces:
 multiProcessor := thrift.NewTMultiplexedProcessor()
 for _, m := range c.Modules() {
 	if thriftModule, ok := m.(interface{ProvideThrift(p thrift.TMultiplexedProcessor)}); ok {
-        thriftModule.ProvideThrift(multiProcessor)
+    	thriftModule.ProvideThrift(multiProcessor)
     }
 }
 ```
@@ -359,13 +370,13 @@ for _, m := range c.Modules() {
 In most of the examples we have showed, we use `c.Serve` the run the application. 
 This is appropriate if the application is exclusively long running process.
 
-The manifest of twelve-factor apps stats: 
+The manifest of twelve-factor apps states: 
 
 > Run admin/management tasks as one-off processes
 
 Package core natively supports one-off processes. 
-Those processes were achieved by cobra.Command.
-In this model, the serve command is only one of many subcommands registered in the root command.
+Those processes were conducted by [cobra.Command](https://github.com/spf13/cobra).
+In this model, the serve command is only one of many subcommands registered under the root command.
 
 Below is an example that groups serve and version subcommand under the root.
 
@@ -418,7 +429,11 @@ To print the version:
 go run main.go version
 ```
 
-> You can replace the `core.NewServeModule` with your own serve module too.
+You can replace the `core.NewServeModule` with your own serve module too.
+
+Now that you have finished the tutorial, be sure to try out the project,
+and read function level documentation hosted at [pkg.go.dev](https://pkg.go.dev/github.com/DoNewsCode/core).
+
 
 
 
