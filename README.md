@@ -24,14 +24,14 @@ Package core was created to bootstrap and coordinate such services.
 
 ## Overview
 
-Whatever the app is, the bootstrapping phase are roughly composed by:
+Whatever the app is, the bootstrapping phase is roughly composed by:
 
-- Read configuration from out of the binary. Namely, flags, environmental
+- Read the configuration from out of the binary. Namely, flags, environment
   variables, and/or configuration files.
 
 - Initialize dependencies. Databases, message queues, service discoveries, etc.
 
-- Define how to run the app. HTTP, RPC, command-lines, cron jobs, or more often mixed.
+- Define how to run the app. HTTP, RPC, command-lines, cronjobs, or more often mixed.
 
 Package core abstracts those repeated steps, keeping them concise, portable yet explicit. 
 Let's see the following snippet:
@@ -69,17 +69,17 @@ func main() {
 
 ```
 
-In a few lines, an http service is bootstrapped in the style outlined above.
-It is simple, explicit and to some extent, declarative.
+In a few lines, an HTTP service is bootstrapped in the style outlined above.
+It is simple, explicit, and to some extent, declarative.
 
 The service demonstrated above uses an inline handler function to highlight the point.
 Normally, for real projects, we will use modules instead. 
-The "module" in package core's glossary is not necessarily a go module (though it can be). It is simply a group of services.
+The "module" in package Core's glossary is not necessarily a go module (though it can be). It is simply a group of services.
 
-You may note that the http service doesn't really consume the dependency.
+You may note that the HTTP service doesn't really consume the dependency.
 That's true.
 
-Let's rewrite the http service to consume the above dependencies.
+Let's rewrite the HTTP service to consume the above dependencies.
 
 ```go
 package main
@@ -160,9 +160,9 @@ type HTTPProvider interface {
 }
 ```
 
-Therefore, the core knows this module wants to expose http service and subsequently invokes the `ProvideHttp` with a router. You can register multiple modules, and each module can implement one or more services.
+Therefore, the core knows this module wants to expose HTTP service and subsequently invokes the `ProvideHttp` with a router. You can register multiple modules, and each module can implement one or more services.
 
-Now we have a fully workable project, with layers of handler, repository and entity. 
+Now we have a fully workable project, with layers of handler, repository, and entity. 
 Had this been a DDD workshop, we would be expanding the example even further. 
 
 That being said, let's redirect our attention to other goodies package core has offered:
@@ -171,9 +171,9 @@ That being said, let's redirect our attention to other goodies package core has 
   You could start you project as a monolith with multiple modules, and gradually migrate them into microservices.
 
 - Package core doesn't lock in transport or framework.
-  For instance, you can use go kit to construct your service, and leveraging grpc, ampq, thrift, etc. Non network services like CLI and Cron are also supported.
+  For instance, you can use go kit to construct your service, and leveraging gRPC, AMPQ, thrift, etc. Non-network services like CLI and Cron are also supported.
 
-- Sub packages provide support around service coordination, including but not limited to distributed tracing, metrics exporting, error handling, event-dispatching and leader election.
+- Sub packages provide support around service coordination, including but not limited to distributed tracing, metrics exporting, error handling, event-dispatching, and leader election.
 
 ## Documentation
 
@@ -193,13 +193,13 @@ That being said, let's redirect our attention to other goodies package core has 
 
 ## Non-Goals
 
-- Tries to be a Spring, Laravel or Ruby on Rails.
+- Tries to be a Spring, Laravel, or Ruby on Rails.
 - Tries to care about service details.
-- Tries to reimplement the functionality provided by modern platform.
+- Tries to reimplement the functionality provided by modern platforms.
 
 ## Suggested service framework
-- Gin (if http only)
-- Go Kit (if multiple transport)
+- Gin (if HTTP only)
+- Go Kit (if multiple transports)
 - Go Zero
 
 
