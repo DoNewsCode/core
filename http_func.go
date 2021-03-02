@@ -6,6 +6,6 @@ import "github.com/gorilla/mux"
 type HttpFunc func(router *mux.Router)
 
 // ProvideHttp implements container.HttpProvider
-func (h HttpFunc) ProvideHttp(router *mux.Router) {
+func (h HttpFunc) ProvideHTTP(router *mux.Router) {
 	h(router)
 }

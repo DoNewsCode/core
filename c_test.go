@@ -25,7 +25,7 @@ func TestC_Serve(t *testing.T) {
 func TestC_Default(t *testing.T) {
 	c := New()
 	c.ProvideEssentials()
-	c.Provide(otgorm.Provide)
+	c.Provide(otgorm.Providers())
 	c.AddModuleFunc(config.New)
 
 	f, _ := ioutil.TempFile("./", "*")

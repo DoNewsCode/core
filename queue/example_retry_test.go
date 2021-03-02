@@ -11,8 +11,8 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/otredis"
 	"github.com/DoNewsCode/core/queue"
-	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/oklog/run"
@@ -51,12 +51,8 @@ func bootstrapRetry() *core.C {
 
 	// Add ConfProvider
 	c.ProvideEssentials()
-	c.Provide(queue.Provide)
-	c.Provide(func() redis.UniversalClient {
-		client := redis.NewUniversalClient(&redis.UniversalOptions{})
-		_, _ = client.FlushAll(context.Background()).Result()
-		return client
-	})
+	c.Provide(otredis.Providers())
+	c.Provide(queue.Providers())
 	return c
 }
 
@@ -85,7 +81,7 @@ func serveRetry(c *core.C, duration time.Duration) {
 func Example_faulty() {
 	c := bootstrapRetry()
 
-	err := c.Invoke(func(dispatcher queue.Dispatcher) {
+	c.Invoke(func(dispatcher queue.Dispatcher) {
 		// Subscribe
 		dispatcher.Subscribe(&FaultyMockListener{})
 
@@ -93,9 +89,6 @@ func Example_faulty() {
 		evt := events.Of(FaultyMockData{Value: "hello world"})
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt, queue.MaxAttempts(3)))
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	serveRetry(c, 10*time.Second) // retries are made after a random backoff. It may take longer.
 

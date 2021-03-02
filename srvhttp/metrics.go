@@ -10,6 +10,6 @@ import (
 type MetricsModule struct{}
 
 // ProvideHttp implements container.HttpProvider
-func (m MetricsModule) ProvideHttp(router *mux.Router) {
+func (m MetricsModule) ProvideHTTP(router *mux.Router) {
 	router.PathPrefix("/metrics").Handler(promhttp.Handler())
 }

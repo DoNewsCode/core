@@ -12,7 +12,7 @@ import (
 type HealthCheckModule struct{}
 
 // ProvideHttp implements container.HttpProvider
-func (h HealthCheckModule) ProvideHttp(router *mux.Router) {
+func (h HealthCheckModule) ProvideHTTP(router *mux.Router) {
 	router.PathPrefix("/live").Handler(healthcheck.NewHandler())
 	router.PathPrefix("/ready").Handler(healthcheck.NewHandler())
 }

@@ -11,7 +11,7 @@ import (
 type DocsModule struct{}
 
 // ProvideHttp implements container.HttpProvider
-func (d DocsModule) ProvideHttp(router *mux.Router) {
+func (d DocsModule) ProvideHTTP(router *mux.Router) {
 	router.PathPrefix("/docs/").Handler(serveStatic())
 	router.PathPrefix("/docs").Handler(http.RedirectHandler("/docs/", 302))
 }

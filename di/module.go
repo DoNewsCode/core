@@ -10,3 +10,7 @@ package di
 type Module interface {
 	moduleSentinel()
 }
+
+// Deps is a set of providers grouped together. This is used by core.Provide
+// method to identify provider sets.
+type Deps []interface{}

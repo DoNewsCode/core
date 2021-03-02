@@ -9,10 +9,11 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/otredis"
 	"github.com/DoNewsCode/core/queue"
 	"github.com/go-kit/kit/metrics/prometheus"
-	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/oklog/run"
@@ -45,13 +46,9 @@ func bootstrapMetrics() *core.C {
 
 	// Add ConfProvider
 	c.ProvideEssentials()
-	c.Provide(queue.Provide)
-	c.Provide(func() redis.UniversalClient {
-		client := redis.NewUniversalClient(&redis.UniversalOptions{})
-		_, _ = client.FlushAll(context.Background()).Result()
-		return client
-	})
-	c.Provide(func(appName contract.AppName, env contract.Env) queue.Gauge {
+	c.Provide(otredis.Providers())
+	c.Provide(queue.Providers())
+	c.Provide(di.Deps{func(appName contract.AppName, env contract.Env) queue.Gauge {
 		return prometheus.NewGaugeFrom(
 			stdprometheus.GaugeOpts{
 				Namespace: appName.String(),
@@ -60,7 +57,7 @@ func bootstrapMetrics() *core.C {
 				Help:      "The gauge of queue length",
 			}, []string{"name", "channel"},
 		)
-	})
+	}})
 	return c
 }
 
@@ -89,7 +86,7 @@ func serveMetrics(c *core.C, duration time.Duration) {
 func Example_metrics() {
 	c := bootstrapMetrics()
 
-	err := c.Invoke(func(dispatcher queue.Dispatcher) {
+	c.Invoke(func(dispatcher queue.Dispatcher) {
 
 		// Subscribe
 		dispatcher.Subscribe(MockMetricsListener{})
@@ -98,9 +95,6 @@ func Example_metrics() {
 		evt := events.Of(MockMetricsData{Value: "hello world"})
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt))
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	serveMetrics(c, time.Second)
 

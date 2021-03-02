@@ -10,8 +10,8 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/otredis"
 	"github.com/DoNewsCode/core/queue"
-	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/oklog/run"
@@ -34,7 +34,7 @@ func (m MockFactoryListener) Process(_ context.Context, event contract.Event) er
 
 // bootstrapMetrics is normally done when bootstrapping the framework. We mimic it here for demonstration.
 func bootstrapFactories() *core.C {
-	const sampleConfig = "{\"log\":{\"level\":\"error\"},\"queue\":{\"default\":{\"parallelism\":1},\"MyQueue\":{\"parallelism\":1}}}"
+	const sampleConfig = "{\"log\":{\"level\":\"error\"},\"queue\":{\"default\":{\"parallelism\":2},\"myQueue\":{\"parallelism\":1}}}"
 
 	// Make sure redis is running at localhost:6379
 	c := core.New(
@@ -43,16 +43,12 @@ func bootstrapFactories() *core.C {
 
 	// Add ConfProvider
 	c.ProvideEssentials()
-	c.Provide(queue.Provide)
-	c.Provide(func() redis.UniversalClient {
-		client := redis.NewUniversalClient(&redis.UniversalOptions{})
-		_, _ = client.FlushAll(context.Background()).Result()
-		return client
-	})
+	c.Provide(otredis.Providers())
+	c.Provide(queue.Providers())
 	return c
 }
 
-// serveMetrics normally lives at serveMetrics command. We mimic it here for demonstration.
+// serveMetrics normally lives at serve command. We mimic it here for demonstration.
 func serveFactories(c *core.C, duration time.Duration) {
 	var g run.Group
 
@@ -77,8 +73,8 @@ func serveFactories(c *core.C, duration time.Duration) {
 func Example_factory() {
 	c := bootstrapFactories()
 
-	err := c.Invoke(func(maker queue.DispatcherMaker) {
-		dispatcher, err := maker.Make("MyQueue")
+	c.Invoke(func(maker queue.DispatcherMaker) {
+		dispatcher, err := maker.Make("myQueue")
 		if err != nil {
 			panic(err)
 		}
@@ -89,12 +85,8 @@ func Example_factory() {
 		evt := events.Of(MockFactoryData{Value: "hello world"})
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt))
 	})
-	if err != nil {
-		panic(err)
-	}
 
-	serveFactories(c, time.Second)
-
+	serveFactories(c, 1*time.Second)
 	// Output:
 	// hello world
 }

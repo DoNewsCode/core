@@ -237,7 +237,13 @@ func (c *C) AddModule(modules ...interface{}) {
 // from google/wire (https://github.com/google/wire). All "func()" returned by
 // constructor are treated as clean up functions. It also respect the core's unique
 // "di.Module" annotation.
-func (c *C) Provide(constructor interface{}) {
+func (c *C) Provide(deps di.Deps) {
+	for _, dep := range deps {
+		c.provide(dep)
+	}
+}
+
+func (c *C) provide(constructor interface{}) {
 
 	var shouldMakeFunc bool
 
@@ -320,7 +326,7 @@ func (c *C) ProvideEssentials() {
 		DefaultConfigs []config.ExportedConfig `group:"config,flatten"`
 	}
 
-	c.Provide(func() coreDependencies {
+	c.provide(func() coreDependencies {
 		coreDependencies := coreDependencies{
 			Env:            c.Env,
 			AppName:        c.AppName,
@@ -336,7 +342,6 @@ func (c *C) ProvideEssentials() {
 		if cc, ok := c.ConfigAccessor.(contract.ConfigWatcher); ok {
 			coreDependencies.ConfigWatcher = cc
 		}
-
 		return coreDependencies
 	})
 }
@@ -353,7 +358,7 @@ func (c *C) Serve(ctx context.Context) error {
 // AddModuleFunc add the module after Invoking its' constructor. Clean up
 // functions and errors are handled automatically.
 func (c *C) AddModuleFunc(constructor interface{}) {
-	c.Provide(constructor)
+	c.provide(constructor)
 	ftype := reflect.TypeOf(constructor)
 	targetTypes := make([]reflect.Type, 0)
 	for i := 0; i < ftype.NumOut(); i++ {
@@ -389,8 +394,11 @@ func (c *C) AddModuleFunc(constructor interface{}) {
 //
 // It internally calls uber's dig library. Consult dig's documentation for
 // details. (https://pkg.go.dev/go.uber.org/dig)
-func (c *C) Invoke(function interface{}) error {
-	return c.di.Invoke(function)
+func (c *C) Invoke(function interface{}) {
+	err := c.di.Invoke(function)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func isCleanup(v reflect.Type) bool {

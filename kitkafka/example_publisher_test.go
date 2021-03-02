@@ -6,8 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
+	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/kitkafka"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
@@ -43,8 +44,11 @@ func (s remoteStringService) Count(ctx context.Context, str string) {
 }
 
 func Example_publisher() {
-	factory, cleanup := kitkafka.ProvideWriterFactory(kitkafka.KafkaIn{
-		Conf: config.MapAdapter{"kafka.writer": map[string]kitkafka.WriterConfig{
+	// Create topic
+	kafka.DialLeader(context.Background(), "tcp", "127.0.0.1:9092", "count", 0)
+
+	c := core.Default(core.SetConfigProvider(func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor {
+		return config.MapAdapter{"kafka.writer": map[string]kitkafka.WriterConfig{
 			"uppercase": {
 				Brokers: []string{"127.0.0.1:9092"},
 				Topic:   "uppercase",
@@ -53,23 +57,27 @@ func Example_publisher() {
 				Brokers: []string{"127.0.0.1:9092"},
 				Topic:   "count",
 			},
-		}},
-		Logger: log.NewNopLogger(),
+		}}
+	}), core.SetLoggerProvider(func(conf contract.ConfigAccessor, appName contract.AppName, env contract.Env) log.Logger {
+		return log.NewNopLogger()
+	}))
+	defer c.Shutdown()
+	c.Provide(kitkafka.Providers())
+
+	c.Invoke(func(maker kitkafka.WriterFactory) {
+		uppercaseClient, _ := maker.MakeClient("uppercase")
+		countClient, _ := maker.MakeClient("count")
+
+		uppercaseEndpoint := kitkafka.NewPublisher(uppercaseClient, encodeJSONRequest).Endpoint()
+		countEndpoint := kitkafka.NewPublisher(countClient, encodeJSONRequest).Endpoint()
+
+		svc := remoteStringService{uppercaseEndpoint, countEndpoint}
+
+		svc.Count(context.Background(), "kitkafka")
+
+		received := getLastMessage()
+		fmt.Println(received)
 	})
-	defer cleanup()
-
-	uppercaseClient, _ := factory.MakeClient("uppercase")
-	countClient, _ := factory.MakeClient("count")
-
-	uppercaseEndpoint := kitkafka.NewPublisher(uppercaseClient, encodeJSONRequest).Endpoint()
-	countEndpoint := kitkafka.NewPublisher(countClient, encodeJSONRequest).Endpoint()
-
-	svc := remoteStringService{uppercaseEndpoint, countEndpoint}
-
-	svc.Count(context.Background(), "kitkafka")
-
-	received := getLastMessage()
-	fmt.Println(received)
 
 	// Output:
 	// {"s":"kitkafka"}

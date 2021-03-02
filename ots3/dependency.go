@@ -13,6 +13,23 @@ import (
 	"github.com/DoNewsCode/core/contract"
 )
 
+/*
+Providers returns a set of dependencies providers related to S3. It includes the s3
+Manager, the Maker and exported configurations.
+	Depends On:
+		log.Logger
+		contract.ConfigAccessor
+		opentracing.Tracer `optional:"true"`
+	Provide:
+		Factory
+		Maker
+		*Manager
+		Uploader
+*/
+func Providers() []interface{} {
+	return []interface{}{provideFactory, provideManager, provideConfig}
+}
+
 // S3Config contains credentials of S3 server
 type S3Config struct {
 	AccessKey    string `json:"accessKey" yaml:"accessKey"`
@@ -23,13 +40,13 @@ type S3Config struct {
 	CdnUrl       string `json:"cdnUrl" yaml:"cdnUrl"`
 }
 
-// S3Maker is an interface for *S3Factory. Used as a type hint for injection.
-type S3Maker interface {
+// Maker is an interface for *Factory. Used as a type hint for injection.
+type Maker interface {
 	Make(name string) (*Manager, error)
 }
 
-// S3In is the injection parameter for Provide.
-type S3In struct {
+// in is the injection parameter for provideFactory.
+type in struct {
 	di.In
 
 	Logger log.Logger
@@ -37,24 +54,21 @@ type S3In struct {
 	Tracer opentracing.Tracer `optional:"true"`
 }
 
-// S3Out is the di output of Provide.
-type S3Out struct {
+// out is the di output of provideFactory.
+type out struct {
 	di.Out
 
-	Manager        *Manager
-	Factory        *S3Factory
-	Maker          S3Maker
-	Uploader       Uploader
-	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
+	Factory Factory
+	Maker   Maker
 }
 
-// S3Factory can be used to connect to multiple s3 servers.
-type S3Factory struct {
+// Factory can be used to connect to multiple s3 servers.
+type Factory struct {
 	*di.Factory
 }
 
 // Make creates a s3 manager under the given name.
-func (s *S3Factory) Make(name string) (*Manager, error) {
+func (s Factory) Make(name string) (*Manager, error) {
 	client, err := s.Factory.Make(name)
 	if err != nil {
 		return nil, err
@@ -62,8 +76,8 @@ func (s *S3Factory) Make(name string) (*Manager, error) {
 	return client.(*Manager), nil
 }
 
-// Provide creates *S3Factory and *ots3.Manager. It is a valid dependency for package core.
-func Provide(p S3In) S3Out {
+// provideFactory creates *Factory and *ots3.Manager. It is a valid dependency for package core.
+func provideFactory(p in) out {
 	var (
 		err       error
 		s3configs map[string]S3Config
@@ -78,7 +92,10 @@ func Provide(p S3In) S3Out {
 			conf S3Config
 		)
 		if conf, ok = s3configs[name]; !ok {
-			return di.Pair{}, fmt.Errorf("s3 configuration %s not found", name)
+			if name != "default" {
+				return di.Pair{}, fmt.Errorf("s3 configuration %s not found", name)
+			}
+			conf = S3Config{}
 		}
 		manager := NewManager(
 			conf.AccessKey,
@@ -100,29 +117,35 @@ func Provide(p S3In) S3Out {
 			Conn:   manager,
 		}, nil
 	})
-	s3Factory := S3Factory{factory}
-	manager, err := factory.Make("default")
-	if err != nil {
-		return S3Out{
-			Manager:        nil,
-			Uploader:       nil,
-			Factory:        &s3Factory,
-			Maker:          &s3Factory,
-			ExportedConfig: provideConfig(),
-		}
-	}
-	return S3Out{
-		Manager:        manager.(*Manager),
-		Uploader:       manager.(*Manager),
-		Factory:        &s3Factory,
-		Maker:          &s3Factory,
-		ExportedConfig: provideConfig(),
+	s3Factory := Factory{factory}
+	return out{
+		Factory: s3Factory,
+		Maker:   &s3Factory,
 	}
 }
 
+type managerOut struct {
+	di.Out
+
+	Manager  *Manager
+	Uploader Uploader
+}
+
+func provideManager(maker Maker) (managerOut, error) {
+	manager, err := maker.Make("default")
+	return managerOut{
+		Manager:  manager,
+		Uploader: manager,
+	}, err
+}
+
+type configOut struct {
+	Config []config.ExportedConfig
+}
+
 // provideConfig exports the default s3 configuration
-func provideConfig() []config.ExportedConfig {
-	return []config.ExportedConfig{
+func provideConfig() configOut {
+	configs := []config.ExportedConfig{
 		{
 			Owner: "ots3",
 			Data: map[string]interface{}{
@@ -139,4 +162,5 @@ func provideConfig() []config.ExportedConfig {
 			Comment: "The s3 configuration",
 		},
 	}
+	return configOut{Config: configs}
 }

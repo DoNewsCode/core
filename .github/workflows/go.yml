@@ -20,6 +20,13 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
+      etcd:
+        image: bitnami/etcd
+        env:
+          ALLOW_NONE_AUTHENTICATION: yes
+          ETCD_ADVERTISE_CLIENT_URLS: http://localhost:2379
+        ports:
+          - 2379:2379
       mysql:
         image: mysql:5.7
         env:

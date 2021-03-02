@@ -10,8 +10,8 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/otredis"
 	"github.com/DoNewsCode/core/queue"
-	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/oklog/run"
@@ -42,12 +42,8 @@ func bootstrapDefer() *core.C {
 
 	// Add ConfProvider
 	c.ProvideEssentials()
-	c.Provide(queue.Provide)
-	c.Provide(func() redis.UniversalClient {
-		client := redis.NewUniversalClient(&redis.UniversalOptions{})
-		_, _ = client.FlushAll(context.Background()).Result()
-		return client
-	})
+	c.Provide(otredis.Providers())
+	c.Provide(queue.Providers())
 	return c
 }
 
@@ -76,7 +72,7 @@ func serveDefer(c *core.C, duration time.Duration) {
 func Example_defer() {
 	c := bootstrapDefer()
 
-	err := c.Invoke(func(dispatcher queue.Dispatcher) {
+	c.Invoke(func(dispatcher queue.Dispatcher) {
 		// Subscribe
 		dispatcher.Subscribe(DeferMockListener{})
 
@@ -85,9 +81,6 @@ func Example_defer() {
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt, queue.Defer(time.Second)))
 		_ = dispatcher.Dispatch(context.Background(), queue.Persist(evt, queue.Defer(time.Hour)))
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	serveDefer(c, 2*time.Second)
 

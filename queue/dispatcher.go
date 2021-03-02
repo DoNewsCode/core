@@ -114,7 +114,6 @@ func (d *QueueableDispatcher) Consume(ctx context.Context) error {
 			}
 		})
 	}
-
 	for i := 0; i < d.parallelism; i++ {
 		g.Go(func() error {
 			for msg := range jobChan {

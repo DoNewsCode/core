@@ -54,7 +54,7 @@ func main() {
   c := core.New(core.WithYamlFile("config.yaml"))
 
   // Phase two: bind dependencies
-  c.Provide(otgorm.Provide)
+  c.Provide(otgorm.Providers())
 
   // Phase three: define service
   c.AddModule(core.HttpFunc(func(router *mux.Router) {
@@ -129,7 +129,7 @@ func New(db *gorm.DB) Module {
   return Module{Handler{Repository{db}}}
 }
 
-func (m Module) ProvideHttp(router *mux.Router) {
+func (m Module) ProvideHTTP(router *mux.Router) {
   router.Handle("/", m.H)
 }
 
@@ -138,7 +138,7 @@ func main() {
   c := core.New(core.WithYamlFile("config.yaml"))
 
   // Phase two: bind dependencies
-  c.Provide(otgorm.Provide)
+  c.Provide(otgorm.Providers())
 
   // Phase three: define service
   c.AddModuleFunc(New)
@@ -156,7 +156,7 @@ The module in the example implements interface:
 
 ```go
 type HTTPProvider interface {
-	ProvideHttp(router *mux.Router)
+	ProvideHTTP(router *mux.Router)
 }
 ```
 

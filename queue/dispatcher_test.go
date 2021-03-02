@@ -54,7 +54,6 @@ type MockEvent struct {
 
 func setUp() *QueueableDispatcher {
 	s := redis.NewUniversalClient(&redis.UniversalOptions{})
-	s.FlushAll(context.Background())
 	driver := RedisDriver{
 		Logger:      logging.NewLogger("logfmt"),
 		RedisClient: s,
@@ -70,6 +69,22 @@ func setUp() *QueueableDispatcher {
 	}
 	dispatcher := WithQueue(&events.SyncDispatcher{}, &driver, UseLogger(logging.NewLogger("logfmt")))
 	return dispatcher
+}
+
+func tearDown() {
+	channel := ChannelConfig{
+		Delayed:  "delayed",
+		Failed:   "failed",
+		Reserved: "reserved",
+		Waiting:  "waiting",
+		Timeout:  "timeout",
+	}
+	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{})
+	redisClient.Del(context.Background(), channel.Delayed)
+	redisClient.Del(context.Background(), channel.Failed)
+	redisClient.Del(context.Background(), channel.Reserved)
+	redisClient.Del(context.Background(), channel.Waiting)
+	redisClient.Del(context.Background(), channel.Timeout)
 }
 
 func TestDispatcher_work(t *testing.T) {
@@ -131,6 +146,7 @@ func TestDispatcher_work(t *testing.T) {
 			retries := 0
 			failed := 0
 			dispatcher := setUp()
+			defer tearDown()
 			dispatcher.Subscribe(c.ln)
 			dispatcher.Subscribe(RetryingListener(func(ctx context.Context, event contract.Event) error {
 				retries++
@@ -155,6 +171,7 @@ func TestDispatcher_work(t *testing.T) {
 
 func TestDispatcher_Consume(t *testing.T) {
 	consumer := setUp()
+	defer tearDown()
 
 	var firstTry = make(chan struct{}, 1)
 	var called = make(chan string)
@@ -285,6 +302,8 @@ func TestDispatcher_Consume(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			dispatcher := setUp()
+			defer tearDown()
+
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 

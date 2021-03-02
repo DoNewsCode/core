@@ -12,7 +12,7 @@ import (
 
 func TestProvide(t *testing.T) {
 	conf, _ := config.NewConfig(config.WithProviderLayer(rawbytes.Provider([]byte(sample)), yaml.Parser()))
-	Out, cleanup, err := Provide(ObservabilityIn{
+	Out, cleanup, err := provide(in{
 		Conf:    conf,
 		Logger:  log.NewNopLogger(),
 		AppName: config.AppName("foo"),
@@ -21,6 +21,10 @@ func TestProvide(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, Out.Tracer)
 	assert.NotNil(t, Out.Hist)
-	assert.NotNil(t, Out.ExportedConfig)
 	cleanup()
+}
+
+func TestExportedConfigs(t *testing.T) {
+	Conf := exportConfig()
+	assert.NotEmpty(t, Conf.Config)
 }

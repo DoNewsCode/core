@@ -23,8 +23,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/DoNewsCode/core/config"
-	"github.com/DoNewsCode/core/di"
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/DoNewsCode/core/contract"
@@ -41,7 +39,6 @@ func NewLogger(format string) (logger log.Logger) {
 	switch strings.ToLower(format) {
 	case "json":
 		logger = log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
-		logger = moduleLogger{Logger: logger}
 		return logger
 	default:
 		// Color by level value
@@ -71,7 +68,6 @@ func NewLogger(format string) (logger log.Logger) {
 		}
 		logger = term.NewLogger(os.Stdout, log.NewLogfmtLogger, colorFn)
 		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-		logger = moduleLogger{Logger: logger}
 		return logger
 	}
 }
@@ -185,23 +181,6 @@ func WithLevel(logger log.Logger) levelLogger {
 		return l
 	}
 	return levelLogger{log.With(logger, "caller", log.Caller(5))}
-}
-
-type moduleLogger struct {
-	di.Module
-	log.Logger
-}
-
-func (m moduleLogger) ProvideConfig() []config.ExportedConfig {
-	return []config.ExportedConfig{
-		{
-			Owner: "log",
-			Data: map[string]interface{}{
-				"log": map[string]interface{}{"level": "debug", "format": "logfmt"},
-			},
-			Comment: "The global logging level and format",
-		},
-	}
 }
 
 // LevelLogger is plaintext logger with level.

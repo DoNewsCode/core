@@ -15,35 +15,72 @@ import (
 	"go.uber.org/dig"
 )
 
-// MongoIn is the injection parameter for Provide.
-type MongoIn struct {
-	dig.In
-
-	Logger log.Logger
-	Conf   contract.ConfigAccessor
-	Tracer opentracing.Tracer `optional:"true"`
+/*
+Providers returns a set of dependency providers. It includes the Maker, the
+default mongo.Client and exported configs.
+	Depends On:
+		log.Logger
+		contract.ConfigAccessor
+		MongoConfigInterceptor `optional:"true"`
+		opentracing.Tracer     `optional:"true"`
+	Provides:
+		Factory
+		Maker
+		*mongo.Client
+*/
+func Providers() di.Deps {
+	return []interface{}{provideMongoFactory, provideDefaultClient, provideConfig}
 }
+
+// MongoConfigInterceptor is an injection type hint that allows user to make last
+// minute modification to mongo configuration. This is useful when some
+// configuration cannot be easily expressed in a text form. For example, the
+// options.ContextDialer.
+type MongoConfigInterceptor func(name string, clientOptions *options.ClientOptions)
 
 // Maker models Factory
 type Maker interface {
 	Make(name string) (*mongo.Client, error)
 }
 
-// MongoOut is the result of Provide. The official mongo package doesn't
+// Factory is a *di.Factory that creates *mongo.Client using a specific
+// configuration entry.
+type Factory struct {
+	*di.Factory
+}
+
+// Make creates *mongo.Client using a specific configuration entry.
+func (r Factory) Make(name string) (*mongo.Client, error) {
+	client, err := r.Factory.Make(name)
+	if err != nil {
+		return nil, err
+	}
+	return client.(*mongo.Client), nil
+}
+
+// in is the injection parameter for Provide.
+type in struct {
+	dig.In
+
+	Logger      log.Logger
+	Conf        contract.ConfigAccessor
+	Interceptor MongoConfigInterceptor `optional:"true"`
+	Tracer      opentracing.Tracer     `optional:"true"`
+}
+
+// out is the result of Provide. The official mongo package doesn't
 // provide a proper interface type. It is up to the users to define their own
 // mongodb repository interface.
-type MongoOut struct {
+type out struct {
 	dig.Out
 
-	Factory        Factory
-	Maker          Maker
-	Client         *mongo.Client
-	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
+	Factory Factory
+	Maker   Maker
 }
 
 // Provide creates Factory and *mongo.Client. It is a valid dependency for
 // package core.
-func Provide(p MongoIn) (MongoOut, func()) {
+func provideMongoFactory(p in) (out, func()) {
 	var err error
 	var dbConfs map[string]struct{ Uri string }
 	err = p.Conf.Unmarshal("mongo", &dbConfs)
@@ -66,6 +103,9 @@ func Provide(p MongoIn) (MongoOut, func()) {
 		if p.Tracer != nil {
 			opts.Monitor = NewMonitor(p.Tracer)
 		}
+		if p.Interceptor != nil {
+			p.Interceptor(name, opts)
+		}
 		client, err := mongo.Connect(context.Background(), opts)
 		if err != nil {
 			return di.Pair{}, err
@@ -78,33 +118,25 @@ func Provide(p MongoIn) (MongoOut, func()) {
 		}, nil
 	})
 	f := Factory{factory}
-	client, _ := f.Make("default")
-	return MongoOut{
-		Factory:        f,
-		Maker:          f,
-		Client:         client,
-		ExportedConfig: provideConfig(),
+	return out{
+		Factory: f,
+		Maker:   f,
 	}, factory.Close
 }
 
-// Factory is a *di.Factory that creates *mongo.Client using a specific
-// configuration entry.
-type Factory struct {
-	*di.Factory
+func provideDefaultClient(maker Maker) (*mongo.Client, error) {
+	return maker.Make("default")
 }
 
-// Make creates *mongo.Client using a specific configuration entry.
-func (r Factory) Make(name string) (*mongo.Client, error) {
-	client, err := r.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(*mongo.Client), nil
+type configOut struct {
+	di.Out
+
+	Config []config.ExportedConfig `group:"config,flatten"`
 }
 
 // provideConfig exports the default mongo configuration.
-func provideConfig() []config.ExportedConfig {
-	return []config.ExportedConfig{
+func provideConfig() configOut {
+	configs := []config.ExportedConfig{
 		{
 			Owner: "otmongo",
 			Data: map[string]interface{}{
@@ -119,4 +151,5 @@ func provideConfig() []config.ExportedConfig {
 			Comment: "The configuration of mongoDB",
 		},
 	}
+	return configOut{Config: configs}
 }

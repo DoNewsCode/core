@@ -10,6 +10,23 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+/*
+Providers is a set of dependencies including ReaderMaker, WriterMaker and exported configs.
+	Depends On:
+		ReaderInterceptor `optional:"true"`
+		WriterInterceptor `optional:"true"`
+		contract.ConfigAccessor
+		log.Logger
+	Provide:
+		ReaderFactory
+		WriterFactory
+		ReaderMaker
+		WriterMaker
+*/
+func Providers() []interface{} {
+	return []interface{}{provideKafkaFactory, provideConfig}
+}
+
 // WriterMaker models a WriterFactory
 type WriterMaker interface {
 	Make(name string) (*kafka.Writer, error)
@@ -20,8 +37,8 @@ type ReaderMaker interface {
 	Make(name string) (*kafka.Reader, error)
 }
 
-// KafkaIn is a injection parameter for ProvideReaderFactory.
-type KafkaIn struct {
+// in is a injection parameter for provideReaderFactory.
+type in struct {
 	di.In
 
 	ReaderInterceptor ReaderInterceptor `optional:"true"`
@@ -30,37 +47,35 @@ type KafkaIn struct {
 	Logger            log.Logger
 }
 
-// KafkaOut is the result of ProvideKafka.
-type KafkaOut struct {
-	di.In
+// out is the result of provideKafkaFactory.
+type out struct {
+	di.Out
 
-	ReaderFactory   ReaderFactory
-	WriterFactory   WriterFactory
-	ReaderMaker     ReaderMaker
-	WriterMaker     WriterMaker
-	ExportedConfigs []config.ExportedConfig `group:"config,flatten"`
+	ReaderFactory ReaderFactory
+	WriterFactory WriterFactory
+	ReaderMaker   ReaderMaker
+	WriterMaker   WriterMaker
 }
 
-// ProvideKafka creates the ReaderFactory and WriterFactory. It is
+// provideKafkaFactory creates the ReaderFactory and WriterFactory. It is
 // valid dependency option for package core. Note: when working with package
-// core's DI container, use ProvideKafka over ProvideReaderFactory and
-// ProvideWriterFactory. Not only ProvideKafka provides both reader and
-// writer, but also only ProvideKafka exports default Kafka configuration.
-func ProvideKafka(p KafkaIn) (KafkaOut, func(), func(), error) {
-	rf, rc := ProvideReaderFactory(p)
-	wf, wc := ProvideWriterFactory(p)
-	return KafkaOut{
-		ReaderMaker:     rf,
-		ReaderFactory:   rf,
-		WriterMaker:     wf,
-		WriterFactory:   wf,
-		ExportedConfigs: provideConfig(),
+// core's DI container, use provideKafkaFactory over provideReaderFactory and
+// provideWriterFactory. Not only provideKafkaFactory provides both reader and
+// writer, but also only provideKafkaFactory exports default Kafka configuration.
+func provideKafkaFactory(p in) (out, func(), func(), error) {
+	rf, rc := provideReaderFactory(p)
+	wf, wc := provideWriterFactory(p)
+	return out{
+		ReaderMaker:   rf,
+		ReaderFactory: rf,
+		WriterMaker:   wf,
+		WriterFactory: wf,
 	}, wc, rc, nil
 }
 
-// ProvideReaderFactory creates the ReaderFactory. It is valid
+// provideReaderFactory creates the ReaderFactory. It is valid
 // dependency option for package core.
-func ProvideReaderFactory(p KafkaIn) (ReaderFactory, func()) {
+func provideReaderFactory(p in) (ReaderFactory, func()) {
 	var err error
 	var dbConfs map[string]ReaderConfig
 	err = p.Conf.Unmarshal("kafka.reader", &dbConfs)
@@ -94,9 +109,9 @@ func ProvideReaderFactory(p KafkaIn) (ReaderFactory, func()) {
 	return ReaderFactory{factory}, factory.Close
 }
 
-// ProvideWriterFactory creates WriterFactory. It is a valid injection
+// provideWriterFactory creates WriterFactory. It is a valid injection
 // option for package core.
-func ProvideWriterFactory(p KafkaIn) (WriterFactory, func()) {
+func provideWriterFactory(p in) (WriterFactory, func()) {
 	var err error
 	var dbConfs map[string]WriterConfig
 	err = p.Conf.Unmarshal("kafka.writer", &dbConfs)
@@ -126,4 +141,30 @@ func ProvideWriterFactory(p KafkaIn) (WriterFactory, func()) {
 		}, nil
 	})
 	return WriterFactory{factory}, factory.Close
+}
+
+type configOut struct {
+	di.Out
+
+	Config []config.ExportedConfig `group:"config,flatten"`
+}
+
+func provideConfig() configOut {
+	configs := []config.ExportedConfig{
+		{
+			Owner: "kitkafka",
+			Data: map[string]interface{}{
+				"kafka": map[string]interface{}{
+					"reader": ReaderConfig{
+						Brokers: []string{"127.0.0.1:9092"},
+					},
+					"writer": WriterConfig{
+						Brokers: []string{"127.0.0.1:9092"},
+					},
+				},
+			},
+			Comment: "",
+		},
+	}
+	return configOut{Config: configs}
 }
