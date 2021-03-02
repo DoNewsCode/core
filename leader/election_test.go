@@ -4,13 +4,15 @@ package leader
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/key"
+	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/atomic"
-	"testing"
-	"time"
 )
 
 func TestElection(t *testing.T) {
@@ -22,18 +24,12 @@ func TestElection(t *testing.T) {
 	e1 = Election{
 		dispatcher: dispatcher,
 		status:     &Status{isLeader: &atomic.Bool{}},
-		driver: &EtcdDriver{
-			keyer:  key.New("test"),
-			client: client,
-		},
+		driver:     leaderetcd2.NewEtcdDriver(client, key.New("test")),
 	}
 	e2 = Election{
 		dispatcher: dispatcher,
 		status:     &Status{isLeader: &atomic.Bool{}},
-		driver: &EtcdDriver{
-			keyer:  key.New("test"),
-			client: client,
-		},
+		driver:     leaderetcd2.NewEtcdDriver(client, key.New("test")),
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 

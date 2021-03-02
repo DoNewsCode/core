@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/key"
+	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/DoNewsCode/core/otetcd"
 	"github.com/oklog/run"
 )
 
 /*
-Providers returns a set of dependency providers for Election and *Status.
+Providers returns a set of dependency providers for *Election and *Status.
 	Depends On:
 		contract.AppName
 		contract.Env
@@ -89,11 +91,25 @@ func determineDriver(in *in) error {
 		if err != nil {
 			return fmt.Errorf("failed to initiate leader election with etcd driver (%s): %w", option.EtcdName, err)
 		}
-		in.Driver = &EtcdDriver{
-			client:  etcdClient,
-			session: nil,
-			keyer:   key.New(in.AppName.String(), in.Env.String()),
-		}
+		in.Driver = leaderetcd2.NewEtcdDriver(etcdClient, key.New(in.AppName.String(), in.Env.String()))
 	}
 	return nil
+}
+
+type configOut struct {
+	Config []config.ExportedConfig
+}
+
+func provideConfig() configOut {
+	return configOut{Config: []config.ExportedConfig{
+		{
+			Owner: "leader",
+			Data: map[string]interface{}{
+				"leader": map[string]interface{}{
+					"etcdName": "default",
+				},
+			},
+			Comment: "The leader election config",
+		},
+	}}
 }

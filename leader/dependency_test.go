@@ -1,10 +1,13 @@
 package leader
 
 import (
+	"testing"
+
 	"github.com/DoNewsCode/core/config"
+	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
+	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/clientv3"
-	"testing"
 )
 
 type mockMaker struct {
@@ -17,7 +20,7 @@ func (m *mockMaker) Make(name string) (*clientv3.Client, error) {
 }
 
 func TestDetermineDriver(t *testing.T) {
-	driver := &EtcdDriver{}
+	driver := &leaderetcd2.EtcdDriver{}
 	p := in{}
 	p.Driver = driver
 	determineDriver(&p)
@@ -75,4 +78,10 @@ func TestDetermineDriver(t *testing.T) {
 	}
 	err = determineDriver(&p)
 	assert.Error(t, err)
+}
+
+func TestExportedConfigs(t *testing.T) {
+	conf := provideConfig()
+	_, err := yaml.Marshal(conf)
+	assert.NoError(t, err)
 }

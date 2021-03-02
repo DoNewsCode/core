@@ -1,10 +1,10 @@
-package leader
+package leaderetcd
 
 import (
 	"context"
-	"github.com/DoNewsCode/core/contract"
 	"os"
 
+	"github.com/DoNewsCode/core/contract"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/concurrency"
 )
@@ -15,6 +15,16 @@ type EtcdDriver struct {
 	client   *clientv3.Client
 	session  *concurrency.Session
 	election *concurrency.Election
+}
+
+// NewEtcdDriver returns a newly constructed *EtcdDriver
+func NewEtcdDriver(client *clientv3.Client, keyer contract.Keyer) *EtcdDriver {
+	return &EtcdDriver{
+		keyer:    keyer,
+		client:   client,
+		session:  nil,
+		election: nil,
+	}
 }
 
 // Campaign starts the leader election using ETCD. It will bock until this node becomes leader or the context is expired.
@@ -34,6 +44,9 @@ func (e *EtcdDriver) Campaign(ctx context.Context) error {
 
 // Resign gives up the leadership using ETCD. If the current node is not a leader, this is a no op.
 func (e *EtcdDriver) Resign(ctx context.Context) error {
+	if e.session == nil || e.election == nil {
+		return nil
+	}
 	defer e.session.Close()
 	return e.election.Resign(ctx)
 }
