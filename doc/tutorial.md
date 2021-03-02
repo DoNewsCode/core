@@ -1,6 +1,6 @@
 ## Advanced Tutorial
 
-At this point, We have introduced the basic concept of package core. Let's learn to use package core by more examples.
+At this point, We have introduced the basic concept of package core. Let's learn to use package core with more examples.
 For readers eager to see the end product, please check out the [skeleton](https://github.com/DoNewsCode/skeleton) demo.
 
 ### Phase one: Setup
@@ -32,9 +32,9 @@ type C struct {
 Every member in the `core.C` is an interface.
 The default implementation can be found in their respective packages.
 When `core.New()` is called, a newly created C instance will be filled with the default values.
-We can replace the default implementation with the custom ones by provide the following args to the `New` method.
+We can replace the default implementation with the custom ones by providing the following args to the `New` method.
 
-Here is an example swapping every implementation. Normally this is not necessary.
+Here is an example of swapping every implementation. Normally this is not necessary.
 
 ```go
 core.New(
@@ -55,7 +55,7 @@ Unless you want fine-grained control over the DI container, you can happily use 
 #### Load configurations
 
 `New()` and `Default()` is also responsible for reading configurations from outside.
-By default it reads nothing.
+By default, it reads nothing.
 
 The configuration implementation is provided by package config.
 It views the configuration as a stack.
@@ -104,11 +104,11 @@ func main() {
 }
 ```
 
-In the example above, the configuration is loaded when the system boot up. Sometimes we want to reload configuration while the process is running.
-This is can be done by adding a watcher. Currently two kinds of watcher are supported. File watcher and signal watcher.
+In the example above, the configuration is loaded when the system boots up. Sometimes we want to reload the configuration while the process is running.
+This is can be done by adding a watcher. Currently, two kinds of watchers are supported. File watcher and signal watcher.
 File watcher reloads the configuration stack when the target file changes, and the signal watcher reloads the stack when USRSIG1 signal is received.
 
-> Due to OS limitations, signal watcher is not available on Windows.
+> Due to OS limitations, the signal watcher is not available on Windows.
 
 ```go
 c.Default(
@@ -119,7 +119,7 @@ c.Default(
 
 > The configuration watch is triggered after the serve command is called.
 
-If the rich options for `core.New()` seems overwhelming, feel free to use the bundled one-liner `WithYamlFile` option.
+If the rich options for `core.New()` seem overwhelming, feel free to use the bundled one-liner `WithYamlFile` option.
 
 The above example can be rewritten as:
 
@@ -185,7 +185,7 @@ func main() {
 
 The argument of `c.Provide`, under the type of `di.Deps`, is a list of constructor functions.
 The arguments of the functions are supposed to be injected by the di container.
-The return values is added back into the container.
+The return values are added back into the container.
 
 Multiple constructors can rely on the same type.
 The container creates a singleton for each retained type,
@@ -205,17 +205,17 @@ It may also return errors and `func()`.
 	})
 ```
 
-`func()` is treated as clean up functions. All returned clean up functions are called in parallel when `c.Shutdown()` is called.
+`func()` is treated as clean up functions. All returned clean-up functions are called in parallel when `c.Shutdown()` is called.
 
-The constructor returns error to indicate initialization failure. Core intentionally panics in this case to raise awareness.
+The constructor returns an error to indicate initialization failure. Core intentionally panics in this case to raise awareness.
 
-The last but not the least thing to notice is that the dependency graph is build lazily. 
+The last but not the least thing to notice is that the dependency graph is built lazily. 
 The constructor call is deferred until the return value is directly or indirectly demanded.
 That means dependencies for a type can be added to the graph both, before and after the type was added.
 
 #### Invoke
 
-Speaking of demand, `c.Invoke` can be used to instantiate dependencies.
+Speaking of the demand, `c.Invoke` can be used to instantiate dependencies.
 
 ```go
 func (c *C) Invoke(function interface{})
@@ -223,7 +223,7 @@ func (c *C) Invoke(function interface{})
 
 Invoke runs the given function after instantiating its dependencies.
 
-Any arguments that the function has are treated as its dependencies. 
+Any arguments that the function are treated as its dependencies. 
 The dependencies are instantiated in an unspecified order along with any
 dependencies that they might have.
 
@@ -232,7 +232,7 @@ For advanced usage, check out their guide.
 
 ### Phase three: Add functionality.
 
-A module is a group of functionality. It must have certain API, such as HTTP, gRPC, Cron, or command line.
+A module is a group of functionality. It must have certain APIs, such as HTTP, gRPC, Cron, or command line.
 
 It is not healthy to have one group of functionality depends on another; Bounded context is usually the first
 lesson we learn building microservices.
@@ -292,7 +292,7 @@ type GRPCProvider interface {
 	ProvideGRPC(server *grpc.Server)
 }
 
-// CloserProvider provides a shutdown function that will be called when service exits.
+// CloserProvider provides a shutdown function that will be called when the service exits.
 type CloserProvider interface {
 	ProvideCloser()
 }
@@ -304,11 +304,11 @@ type RunProvider interface {
 }
 ```
 
-If the module implements any of the provider interface, 
+If the module implements any of the provider interfaces, 
 the core will call this provider function with a "registry", say, mux.Router.
 The module can then register its routes.
 
-Let's see a module with both http, cronjobs and a closer:
+Let's see a module with both HTTP, cronjobs, and a closer:
 
 ```go
 package main
@@ -367,8 +367,8 @@ for _, m := range c.Modules() {
 
 ### Phase four: Serve!
 
-In most of the examples we have showed, we use `c.Serve` the run the application. 
-This is appropriate if the application is exclusively long running process.
+In most of the examples we have shown, we use `c.Serve` the run the application. 
+This is appropriate if the application is exclusively long-running process.
 
 The manifest of twelve-factor apps states: 
 
@@ -376,7 +376,7 @@ The manifest of twelve-factor apps states:
 
 Package core natively supports one-off processes. 
 Those processes were conducted by [cobra.Command](https://github.com/spf13/cobra).
-In this model, the serve command is only one of many subcommands registered under the root command.
+In this model, the `serve` command is only one of many subcommands registered under the root command.
 
 Below is an example that groups serve and version subcommand under the root.
 
