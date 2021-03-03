@@ -16,9 +16,6 @@ package otes exports the configuration in the following format:
 		"replicas":    0,
 		"sniff":       false,
 		"healthCheck": false,
-		"infoLog":     "",
-		"errorLog":    "",
-		"traceLog":    "",
 
 Add the es dependency to core:
 

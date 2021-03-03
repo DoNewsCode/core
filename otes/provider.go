@@ -109,11 +109,17 @@ func provideEsFactory(p in) (out, func()) {
 			)
 		}
 
+		if conf.Healthcheck != nil {
+			options = append(options, elastic.SetHealthcheck(*conf.Healthcheck))
+		}
+
+		if conf.Sniff != nil {
+			options = append(options, elastic.SetSniff(*conf.Sniff))
+		}
+
 		options = append(options,
 			elastic.SetURL(conf.URL),
 			elastic.SetBasicAuth(conf.Username, conf.Password),
-			elastic.SetHealthcheck(*conf.Healthcheck),
-			elastic.SetSniff(*conf.Sniff),
 		)
 
 		client, err := elastic.NewClient(options...)
