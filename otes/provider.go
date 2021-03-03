@@ -95,21 +95,26 @@ func provideEsFactory(p in) (out, func()) {
 			}
 			conf.URL = "http://localhost:9200"
 		}
+		if p.Interceptor != nil {
+			p.Interceptor(name, &conf)
+		}
+
+		if p.Tracer != nil {
+			options = append(options,
+				elastic.SetHttpClient(
+					&http.Client{
+						Transport: NewTransport(WithTracer(p.Tracer)),
+					},
+				),
+			)
+		}
+
 		options = append(options,
 			elastic.SetURL(conf.URL),
 			elastic.SetBasicAuth(conf.Username, conf.Password),
 			elastic.SetHealthcheck(*conf.Healthcheck),
 			elastic.SetSniff(*conf.Sniff),
-			elastic.SetInfoLog(esLogAdapter{conf.Infolog, p.Logger}),
-			elastic.SetErrorLog(esLogAdapter{conf.Errorlog, p.Logger}),
-			elastic.SetTraceLog(esLogAdapter{conf.Tracelog, p.Logger}),
 		)
-		if p.Tracer != nil {
-			options = append(options, elastic.SetHttpClient(&http.Client{Transport: NewTransport(WithTracer(p.Tracer))}))
-		}
-		if p.Interceptor != nil {
-			p.Interceptor(name, &conf)
-		}
 
 		client, err := elastic.NewClient(options...)
 		if err != nil {
@@ -156,9 +161,6 @@ func provideConfig() configOut {
 						"replicas":    0,
 						"sniff":       false,
 						"healthCheck": false,
-						"infoLog":     "elastic.info.log",
-						"errorLog":    "elastic.error.log",
-						"traceLog":    "elastic.trace.log",
 					},
 				},
 			},
