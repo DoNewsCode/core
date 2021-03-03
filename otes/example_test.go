@@ -1,3 +1,5 @@
+// +build integration
+
 package otes_test
 
 import (

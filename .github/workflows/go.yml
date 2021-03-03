@@ -52,6 +52,12 @@ jobs:
           KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
           KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
           KAFKA_CREATE_TOPICS: "count:1:1,uppercase:1:1,test:1:1"
+      elasticsearch:
+        image: elasticsearch:7.10.1
+        env:
+          discovery.type: single-node
+        ports:
+          - 9200:9200
     steps:
     - uses: actions/checkout@v2
 
