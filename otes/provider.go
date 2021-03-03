@@ -17,7 +17,7 @@ import (
 /*
 Providers returns a set of dependency providers. It includes the Maker, the
 default *elastic.Client and exported configs.
-	Depends On:NewMongoFactory
+	Depends On:
 		log.Logger
 		contract.ConfigAccessor
 		EsConfigInterceptor `optional:"true"`
@@ -33,7 +33,7 @@ func Providers() di.Deps {
 
 // EsConfigInterceptor is an injector type hint that allows user to do
 // last minute modification to es configurations.
-type EsConfigInterceptor func(name string, opts []elastic.ClientOptionFunc)
+type EsConfigInterceptor func(name string, opt *esConfig.Config)
 
 // Maker models Factory
 type Maker interface {
@@ -100,12 +100,15 @@ func provideEsFactory(p in) (out, func()) {
 			elastic.SetBasicAuth(conf.Username, conf.Password),
 			elastic.SetHealthcheck(*conf.Healthcheck),
 			elastic.SetSniff(*conf.Sniff),
+			elastic.SetInfoLog(esLogAdapter{conf.Infolog, p.Logger}),
+			elastic.SetErrorLog(esLogAdapter{conf.Errorlog, p.Logger}),
+			elastic.SetTraceLog(esLogAdapter{conf.Tracelog, p.Logger}),
 		)
 		if p.Tracer != nil {
 			options = append(options, elastic.SetHttpClient(&http.Client{Transport: NewTransport(WithTracer(p.Tracer))}))
 		}
 		if p.Interceptor != nil {
-			p.Interceptor(name, options)
+			p.Interceptor(name, &conf)
 		}
 
 		client, err := elastic.NewClient(options...)
@@ -153,9 +156,9 @@ func provideConfig() configOut {
 						"replicas":    0,
 						"sniff":       false,
 						"healthCheck": false,
-						"infoLog":     "",
-						"errorLog":    "",
-						"traceLog":    "",
+						"infoLog":     "elastic.info.log",
+						"errorLog":    "elastic.error.log",
+						"traceLog":    "elastic.trace.log",
 					},
 				},
 			},
