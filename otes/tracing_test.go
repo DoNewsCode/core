@@ -1,3 +1,5 @@
+// +build integration
+
 package otes
 
 import (
@@ -17,8 +19,8 @@ func TestTracing(t *testing.T) {
 	opentracing.SetGlobalTracer(tracer)
 	factory, cleanup := provideEsFactory(in{
 		Conf: config.MapAdapter{"es": map[string]esConfig.Config{
-			"default":     esConfig.Config{URL: "http://localhost:9200"},
-			"alternative": esConfig.Config{URL: "http://localhost:9200"},
+			"default":     {URL: "http://localhost:9200"},
+			"alternative": {URL: "http://localhost:9200"},
 		}},
 		Logger: log.NewNopLogger(),
 		Tracer: tracer,

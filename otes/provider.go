@@ -33,7 +33,7 @@ func Providers() di.Deps {
 
 // EsConfigInterceptor is an injector type hint that allows user to do
 // last minute modification to es configurations.
-type EsConfigInterceptor func(name string, opts *esConfig.Config)
+type EsConfigInterceptor func(name string, opts []elastic.ClientOptionFunc)
 
 // Maker models Factory
 type Maker interface {
@@ -95,13 +95,17 @@ func provideEsFactory(p in) (out, func()) {
 			}
 			conf.URL = "http://localhost:9200"
 		}
-
-		options = append(options, elastic.SetURL(conf.URL))
+		options = append(options,
+			elastic.SetURL(conf.URL),
+			elastic.SetBasicAuth(conf.Username, conf.Password),
+			elastic.SetHealthcheck(*conf.Healthcheck),
+			elastic.SetSniff(*conf.Sniff),
+		)
 		if p.Tracer != nil {
 			options = append(options, elastic.SetHttpClient(&http.Client{Transport: NewTransport(WithTracer(p.Tracer))}))
 		}
 		if p.Interceptor != nil {
-			p.Interceptor(name, &conf)
+			p.Interceptor(name, options)
 		}
 
 		client, err := elastic.NewClient(options...)
@@ -145,7 +149,7 @@ func provideConfig() configOut {
 						"index":       "",
 						"username":    "",
 						"password":    "",
-						"shards":      0,
+						"shards":      1,
 						"replicas":    0,
 						"sniff":       false,
 						"healthCheck": false,

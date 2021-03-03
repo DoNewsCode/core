@@ -28,6 +28,8 @@ func WithRoundTripper(rt http.RoundTripper) Option {
 	}
 }
 
+// WithTracer specifies the opentracing.Tracer to call
+// this transport.
 func WithTracer(tracer opentracing.Tracer) Option {
 	return func(t *Transport) {
 		t.tracer = tracer
