@@ -33,9 +33,6 @@ func (i *InProcessStore) UncommittedSteps(ctx context.Context, correlationId str
 	)
 
 	for _, l := range i.logsById[correlationId] {
-		if l.LogType == Committed {
-			return []Log{}, nil
-		}
 		if l.LogType == Executed {
 			stepStates[l.StepNumber] = l
 		}
@@ -54,6 +51,9 @@ func (i *InProcessStore) UncommittedSteps(ctx context.Context, correlationId str
 func (i *InProcessStore) UncommittedSagas(ctx context.Context) ([]Log, error) {
 	var logs []Log
 	for k := range i.logsById {
+		if i.logsById[k][0].LogType == Session && !i.logsById[k][0].FinishedAt.IsZero() {
+			return []Log{}, nil
+		}
 		parts, err := i.UncommittedSteps(ctx, k)
 		if err != nil {
 			return nil, err

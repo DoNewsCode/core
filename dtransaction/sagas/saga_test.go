@@ -81,7 +81,7 @@ func TestSaga_failure(t *testing.T) {
 		Store:         &InProcessStore{},
 	}
 	result := c.Execute(context.Background())
-	assert.Error(t, result.DoErr)
+	assert.Error(t, result.(*Result).DoErr)
 	assert.Equal(t, 0, value)
 }
 
@@ -126,7 +126,8 @@ func TestSaga_recovery(t *testing.T) {
 		Store:         store,
 	}
 	result := c.Execute(context.Background())
-	assert.NotEmpty(t, result.UndoErr)
+	assert.NotEmpty(t, result.(*Result).UndoErr)
+	assert.Contains(t, result.Error(), "additional errors encountered while rolling back")
 	assert.Equal(t, 1, value)
 
 	var r = NewRegistry(store)
@@ -221,6 +222,45 @@ func TestSaga_shortCircuit(t *testing.T) {
 		Store:         store,
 	}
 	result := c.Execute(context.Background())
-	assert.Error(t, result.DoErr)
+	assert.Error(t, result.(*Result).DoErr)
+	assert.Equal(t, 0, value)
+}
+
+func TestSaga_emptyRecover(t *testing.T) {
+	var value int
+	var attempt int
+	var store = &InProcessStore{}
+	var mySaga = &Saga{
+		Name: "test",
+		steps: []*Step{
+			{
+				"one",
+				func(ctx context.Context, correlationId string) error {
+					value++
+					return errors.New("foo")
+				},
+				func(ctx context.Context, correlationId string) error {
+					if attempt == 0 {
+						attempt++
+						value--
+						return nil
+					}
+					panic("err")
+				},
+			},
+		},
+	}
+	var c = Coordinator{
+		CorrelationId: "test",
+		Saga:          mySaga,
+		Store:         store,
+	}
+	result := c.Execute(context.Background())
+	assert.Error(t, result.(*Result).DoErr)
+	assert.Equal(t, 0, value)
+
+	var r = NewRegistry(store)
+	r.Register(mySaga)
+	r.Recover(context.Background())
 	assert.Equal(t, 0, value)
 }

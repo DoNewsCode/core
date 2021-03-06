@@ -23,37 +23,32 @@ type Coordinator struct {
 	aborted       bool
 }
 
-func (c *Coordinator) Execute(ctx context.Context) Result {
+func (c *Coordinator) Execute(ctx context.Context) error {
 
 	// start
-	must(c.Store.Log(ctx, Log{
+	sagaLog := Log{
 		ID:            xid.New().String(),
 		CorrelationID: c.CorrelationId,
 		SagaName:      c.Saga.Name,
 		StartedAt:     time.Now(),
-		FinishedAt:    time.Now(),
-		LogType:       Pending,
-	}))
+		LogType:       Session,
+	}
+
+	must(c.Store.Log(ctx, sagaLog))
 
 	for i := 0; i < len(c.Saga.steps); i++ {
 		c.execStep(ctx, i)
 	}
 
 	if c.aborted {
-		return Result{DoErr: c.doErr, UndoErr: c.undoErr}
+		return &Result{DoErr: c.doErr, UndoErr: c.undoErr}
 	}
 
 	// commit
-	must(c.Store.Log(ctx, Log{
-		ID:            xid.New().String(),
-		CorrelationID: c.CorrelationId,
-		SagaName:      c.Saga.Name,
-		StartedAt:     time.Now(),
-		FinishedAt:    time.Now(),
-		LogType:       Committed,
-	}))
+	sagaLog.FinishedAt = time.Now()
+	must(c.Store.Log(ctx, sagaLog))
 
-	return Result{DoErr: c.doErr, UndoErr: c.undoErr}
+	return nil
 }
 
 func (c *Coordinator) execStep(ctx context.Context, i int) {

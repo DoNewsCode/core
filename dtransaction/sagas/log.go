@@ -7,10 +7,9 @@ import (
 type LogType uint
 
 const (
-	Pending LogType = iota
+	Session LogType = iota
 	Executed
 	Compensated
-	Committed
 )
 
 type Log struct {

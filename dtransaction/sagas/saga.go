@@ -1,6 +1,9 @@
 package sagas
 
-import "context"
+import (
+	"context"
+	"strings"
+)
 
 type Step struct {
 	Name string
@@ -16,6 +19,21 @@ type Saga struct {
 type Result struct {
 	DoErr   error
 	UndoErr []error
+}
+
+func (r *Result) Error() string {
+	var builder strings.Builder
+	builder.WriteString("error encountered while executing saga: ")
+	builder.WriteString(r.DoErr.Error())
+	if len(r.UndoErr) > 0 {
+		builder.WriteString("; \n")
+		builder.WriteString("additional errors encountered while rolling back: ")
+		for _, err := range r.UndoErr {
+			builder.WriteString(err.Error())
+			builder.WriteString("; \n")
+		}
+	}
+	return builder.String()
 }
 
 func (saga *Saga) AddStep(step *Step) error {
