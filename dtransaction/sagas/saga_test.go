@@ -15,22 +15,22 @@ func TestSaga_success(t *testing.T) {
 		steps: []*Step{
 			{
 				"one",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value++
 					return nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value--
 					return nil
 				},
 			},
 			{
 				"two",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value++
 					return nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value--
 					return nil
 				},
@@ -53,22 +53,22 @@ func TestSaga_failure(t *testing.T) {
 		steps: []*Step{
 			{
 				"one",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value++
 					return nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value--
 					return nil
 				},
 			},
 			{
 				"two",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value++
 					return errors.New("")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value--
 					return nil
 				},
@@ -94,22 +94,22 @@ func TestSaga_recovery(t *testing.T) {
 		steps: []*Step{
 			{
 				"one",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value++
 					return nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value--
 					return nil
 				},
 			},
 			{
 				"two",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value++
 					return errors.New("")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					if attempt == 0 {
 						attempt++
 						return errors.New("")
@@ -144,22 +144,22 @@ func TestSaga_panic(t *testing.T) {
 		steps: []*Step{
 			{
 				"one",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value++
 					return nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value--
 					return nil
 				},
 			},
 			{
 				"two",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value++
 					return errors.New("")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					if attempt == 0 {
 						attempt++
 						panic("err")
@@ -195,21 +195,21 @@ func TestSaga_shortCircuit(t *testing.T) {
 		steps: []*Step{
 			{
 				"one",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value++
 					return errors.New("foo")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					value--
 					return nil
 				},
 			},
 			{
 				"two",
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					panic("should not reach")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, correlationId string) error {
 					panic("should not reach")
 				},
 			},

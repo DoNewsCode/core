@@ -70,7 +70,7 @@ func (c *Coordinator) execStep(ctx context.Context, i int) {
 		StepName:      c.Saga.steps[i].Name,
 	}
 	must(c.Store.Log(ctx, stepLog))
-	err := c.Saga.steps[i].Do(ctx)
+	err := c.Saga.steps[i].Do(ctx, c.CorrelationId)
 
 	stepLog.FinishedAt = time.Now()
 	stepLog.StepError = err
@@ -109,7 +109,7 @@ func (c *Coordinator) compensateStep(ctx context.Context, step Log) error {
 	}
 	must(c.Store.Log(ctx, compensateLog))
 
-	err := c.Saga.steps[step.StepNumber].Undo(ctx)
+	err := c.Saga.steps[step.StepNumber].Undo(ctx, c.CorrelationId)
 	compensateLog.FinishedAt = time.Now()
 	compensateLog.StepError = err
 

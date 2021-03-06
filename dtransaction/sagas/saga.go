@@ -4,8 +4,8 @@ import "context"
 
 type Step struct {
 	Name string
-	Do   func(context.Context) error
-	Undo func(context.Context) error
+	Do   func(ctx context.Context, correlationId string) error
+	Undo func(ctx context.Context, correlationId string) error
 }
 
 type Saga struct {
