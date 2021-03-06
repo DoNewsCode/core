@@ -39,7 +39,7 @@ func (i *InProcessStore) UncommittedSteps(ctx context.Context, correlationId str
 		if l.LogType == Executed {
 			stepStates[l.StepNumber] = l
 		}
-		if l.LogType == Compensated && (l.FinishedAt.IsZero()) && l.StepError == nil {
+		if l.LogType == Compensated && (!l.FinishedAt.IsZero()) && l.StepError == nil {
 			delete(stepStates, l.StepNumber)
 		}
 	}
