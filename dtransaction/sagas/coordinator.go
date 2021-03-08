@@ -7,15 +7,18 @@ import (
 	"github.com/rs/xid"
 )
 
+// Store is the interface to persist logs of transactions.
 type Store interface {
 	Log(ctx context.Context, log Log) error
-	Ack(ctx context.Context, log Log) error
-	UncommittedSteps(ctx context.Context, correlationId string) ([]Log, error)
+	Ack(ctx context.Context, id string, err error) error
+	UnacknowledgedSteps(ctx context.Context, correlationId string) ([]Log, error)
 	UncommittedSagas(ctx context.Context) ([]Log, error)
 }
 
+// Coordinator is a distributed transaction coordinator. It should be initialized
+// by directly assigning its public members.
 type Coordinator struct {
-	CorrelationId string
+	correlationId string
 	Saga          *Saga
 	Store         Store
 	doErr         error
@@ -23,12 +26,20 @@ type Coordinator struct {
 	aborted       bool
 }
 
-func (c *Coordinator) Execute(ctx context.Context) error {
+// Execute initiates a new transaction with the given parameter. Each call to
+// Execute will generate a unique CorrelationId. This id will be stored both in
+// the log and in the context. Upstream services can use this id to guarantee
+// idempotency and issue transaction locks.
+func (c *Coordinator) Execute(ctx context.Context, request interface{}) (response interface{}, err error) {
+	c.correlationId = xid.New().String()
+	ctx = context.WithValue(ctx, CorrelationId, c.correlationId)
+	ctx, cancel := context.WithTimeout(ctx, c.Saga.Timeout)
+	defer cancel()
 
 	// start
 	sagaLog := Log{
 		ID:            xid.New().String(),
-		CorrelationID: c.CorrelationId,
+		CorrelationID: c.correlationId,
 		SagaName:      c.Saga.Name,
 		StartedAt:     time.Now(),
 		LogType:       Session,
@@ -36,51 +47,45 @@ func (c *Coordinator) Execute(ctx context.Context) error {
 
 	must(c.Store.Log(ctx, sagaLog))
 
-	for i := 0; i < len(c.Saga.steps); i++ {
-		c.execStep(ctx, i)
-	}
-
-	if c.aborted {
-		return &Result{DoErr: c.doErr, UndoErr: c.undoErr}
+	for i := 0; i < len(c.Saga.Steps); i++ {
+		response, err = c.execStep(ctx, i, request)
+		if err != nil {
+			c.doErr = err
+			c.abort(ctx)
+			return nil, &Result{DoErr: c.doErr, UndoErr: c.undoErr}
+		}
+		request = response
 	}
 
 	// commit
 	sagaLog.FinishedAt = time.Now()
-	must(c.Store.Log(ctx, sagaLog))
+	must(c.Store.Ack(ctx, sagaLog.ID, nil))
 
-	return nil
+	return response, nil
 }
 
-func (c *Coordinator) execStep(ctx context.Context, i int) {
-	if c.aborted {
-		return
-	}
+func (c *Coordinator) execStep(ctx context.Context, i int, request interface{}) (response interface{}, err error) {
+
+	logId := xid.New().String()
 	stepLog := Log{
-		ID:            xid.New().String(),
-		CorrelationID: c.CorrelationId,
+		ID:            logId,
+		CorrelationID: c.correlationId,
 		SagaName:      c.Saga.Name,
 		StartedAt:     time.Now(),
-		LogType:       Executed,
+		LogType:       Do,
 		StepNumber:    i,
-		StepName:      c.Saga.steps[i].Name,
+		StepName:      c.Saga.Steps[i].Name,
 	}
 	must(c.Store.Log(ctx, stepLog))
-	err := c.Saga.steps[i].Do(ctx, c.CorrelationId)
+	response, err = c.Saga.Steps[i].Do(ctx, request)
 
-	stepLog.FinishedAt = time.Now()
-	stepLog.StepError = err
-	must(c.Store.Ack(ctx, stepLog))
+	must(c.Store.Ack(ctx, logId, err))
 
-	if err != nil {
-		c.doErr = err
-		c.abort(ctx)
-	}
-
+	return response, err
 }
 
 func (c *Coordinator) abort(ctx context.Context) {
-	c.aborted = true
-	steps, err := c.Store.UncommittedSteps(ctx, c.CorrelationId)
+	steps, err := c.Store.UnacknowledgedSteps(ctx, c.correlationId)
 	if err != nil {
 		panic(err)
 	}
@@ -93,22 +98,21 @@ func (c *Coordinator) abort(ctx context.Context) {
 }
 
 func (c *Coordinator) compensateStep(ctx context.Context, step Log) error {
+	logId := xid.New().String()
 	compensateLog := Log{
-		ID:            xid.New().String(),
-		CorrelationID: c.CorrelationId,
+		ID:            logId,
+		CorrelationID: c.correlationId,
 		SagaName:      step.SagaName,
 		StartedAt:     time.Now(),
-		LogType:       Compensated,
+		LogType:       Undo,
 		StepNumber:    step.StepNumber,
-		StepName:      step.SagaName,
+		StepName:      step.StepName,
 	}
 	must(c.Store.Log(ctx, compensateLog))
 
-	err := c.Saga.steps[step.StepNumber].Undo(ctx, c.CorrelationId)
-	compensateLog.FinishedAt = time.Now()
-	compensateLog.StepError = err
+	err := c.Saga.Steps[step.StepNumber].Undo(ctx)
 
-	must(c.Store.Ack(ctx, compensateLog))
+	must(c.Store.Ack(ctx, logId, err))
 	return err
 }
 

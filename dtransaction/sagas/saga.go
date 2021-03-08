@@ -3,24 +3,41 @@ package sagas
 import (
 	"context"
 	"strings"
+	"time"
+
+	"github.com/go-kit/kit/endpoint"
 )
 
+type correlationIdType string
+
+const CorrelationId correlationIdType = "CorrelationId"
+
+// Step is a step in the Saga.
 type Step struct {
 	Name string
-	Do   func(ctx context.Context, correlationId string) error
-	Undo func(ctx context.Context, correlationId string) error
+	Do   endpoint.Endpoint
+	Undo func(ctx context.Context) error
 }
 
+// A Saga is a model for distributed transaction. It contains a number of statically defined steps.
+// Whenever any of the step fails, the saga is rolled back.
 type Saga struct {
-	Name  string
-	steps []*Step
+	// Name is the name of the saga. Used for log entries.
+	Name string
+	// Timeout is the timeout duration of the entire saga. It this timeout has passed, the saga will be rolled back.
+	Timeout time.Duration
+	Steps   []*Step
 }
 
+// Result is the error type of a saga execution. It contains the DoErr: the error
+// occurred during executing incremental step, and UndoErr: the errors
+// encountered in the compensation steps.
 type Result struct {
 	DoErr   error
 	UndoErr []error
 }
 
+// Error implements the error interface.
 func (r *Result) Error() string {
 	var builder strings.Builder
 	builder.WriteString("error encountered while executing saga: ")
@@ -34,9 +51,4 @@ func (r *Result) Error() string {
 		}
 	}
 	return builder.String()
-}
-
-func (saga *Saga) AddStep(step *Step) error {
-	saga.steps = append(saga.steps, step)
-	return nil
 }

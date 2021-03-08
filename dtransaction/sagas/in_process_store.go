@@ -2,63 +2,106 @@ package sagas
 
 import (
 	"context"
+	"sync"
+	"time"
 )
 
+// InProcessStore creates an in process storage that implements Store.
 type InProcessStore struct {
-	logsById map[string][]Log
+	lock         sync.Mutex
+	transactions map[string][]Log
 }
 
-func (i *InProcessStore) Ack(ctx context.Context, log Log) error {
-	logs := i.logsById[log.CorrelationID]
+// NewInProcessStore creates a InProcessStore.
+func NewInProcessStore() *InProcessStore {
+	return &InProcessStore{
+		transactions: make(map[string][]Log),
+	}
+}
+
+// Ack marks the log entry as acknowledged, either with an error or not. It is
+// safe to call ack to the same log entry more than once.
+func (i *InProcessStore) Ack(ctx context.Context, logId string, err error) error {
+	co := ctx.Value(CorrelationId).(string)
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	logs := i.transactions[co]
 	for k := 0; k < len(logs); k++ {
-		if logs[k].ID == log.ID {
-			i.logsById[log.CorrelationID][k] = log
+		if logs[k].ID == logId {
+			if i.transactions[co][k].LogType == Session && err == nil {
+				delete(i.transactions, co)
+				return nil
+			}
+			i.transactions[co][k].StepError = err
+			i.transactions[co][k].FinishedAt = time.Now()
 		}
 	}
 	return nil
 }
 
+// Log appends a new unacknowledged log entry to the store.
 func (i *InProcessStore) Log(ctx context.Context, log Log) error {
-	if i.logsById == nil {
-		i.logsById = make(map[string][]Log)
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if i.transactions == nil {
+		i.transactions = make(map[string][]Log)
 	}
-	i.logsById[log.CorrelationID] = append(i.logsById[log.CorrelationID], log)
+	i.transactions[log.CorrelationID] = append(i.transactions[log.CorrelationID], log)
 	return nil
 }
 
-func (i *InProcessStore) UncommittedSteps(ctx context.Context, correlationId string) ([]Log, error) {
+// UncommittedSteps searches the InProcessStore for unacknowledged steps under the given CorrelationId.
+func (i *InProcessStore) UnacknowledgedSteps(ctx context.Context, correlationId string) ([]Log, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
 
-	var (
-		stepStates = make(map[int]Log)
-	)
-
-	for _, l := range i.logsById[correlationId] {
-		if l.LogType == Executed {
-			stepStates[l.StepNumber] = l
-		}
-		if l.LogType == Compensated && (!l.FinishedAt.IsZero()) && l.StepError == nil {
-			delete(stepStates, l.StepNumber)
-		}
-	}
-	var steps []Log
-	for k := range stepStates {
-		steps = append(steps, stepStates[k])
-	}
-	return steps, nil
-
+	return i.unacknowledgedSteps(ctx, correlationId)
 }
 
+// UncommittedSagas searches the store for all uncommitted sagas, and return log entries under the matching sagas.
 func (i *InProcessStore) UncommittedSagas(ctx context.Context) ([]Log, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
 	var logs []Log
-	for k := range i.logsById {
-		if i.logsById[k][0].LogType == Session && !i.logsById[k][0].FinishedAt.IsZero() {
+	for k := range i.transactions {
+		// For safety only. Memory store will not persist successfully finished transactions.
+		if i.transactions[k][0].LogType == Session && !i.transactions[k][0].FinishedAt.IsZero() {
 			return []Log{}, nil
 		}
-		parts, err := i.UncommittedSteps(ctx, k)
+
+		parts, err := i.unacknowledgedSteps(ctx, k)
+
 		if err != nil {
 			return nil, err
 		}
 		logs = append(logs, parts...)
 	}
 	return logs, nil
+}
+
+func (i *InProcessStore) unacknowledgedSteps(ctx context.Context, correlationId string) ([]Log, error) {
+
+	var (
+		stepStates = make(map[string]Log)
+	)
+
+	for _, l := range i.transactions[correlationId] {
+		if l.LogType == Do {
+			stepStates[l.StepName] = l
+		}
+		if l.LogType == Undo && (!l.FinishedAt.IsZero()) && l.StepError == nil {
+			delete(stepStates, l.StepName)
+		}
+	}
+	var steps []Log
+	for k := range stepStates {
+		steps = append(steps, stepStates[k])
+	}
+	if len(steps) == 0 {
+		delete(i.transactions, correlationId)
+	}
+	return steps, nil
 }
