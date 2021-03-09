@@ -54,7 +54,7 @@ func (i *InProcessStore) Log(ctx context.Context, log Log) error {
 	return nil
 }
 
-// UncommittedSteps searches the InProcessStore for unacknowledged steps under the given correlationID.
+// UnacknowledgedSteps searches the InProcessStore for unacknowledged steps under the given correlationID.
 func (i *InProcessStore) UnacknowledgedSteps(ctx context.Context, correlationID string) ([]Log, error) {
 	i.lock.Lock()
 	defer i.lock.Unlock()

@@ -77,13 +77,13 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 func (r *Registry) AddStep(step *Step) endpoint.Endpoint {
 	r.steps[step.Name] = step
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		logId := xid.New().String()
+		logID := xid.New().String()
 		tx := TxFromContext(ctx)
 		if tx.completed {
 			panic("re-executing a completed transaction")
 		}
 		stepLog := Log{
-			ID:            logId,
+			ID:            logID,
 			correlationID: tx.correlationID,
 			StartedAt:     time.Now(),
 			LogType:       Do,
@@ -92,9 +92,9 @@ func (r *Registry) AddStep(step *Step) endpoint.Endpoint {
 		}
 		must(tx.store.Log(ctx, stepLog))
 		tx.rollbacks[step.Name] = func(ctx context.Context, _ interface{}) (response interface{}, err error) {
-			logId := xid.New().String()
+			logID := xid.New().String()
 			compensateLog := Log{
-				ID:            logId,
+				ID:            logID,
 				correlationID: tx.correlationID,
 				StartedAt:     time.Now(),
 				LogType:       Undo,
@@ -103,12 +103,12 @@ func (r *Registry) AddStep(step *Step) endpoint.Endpoint {
 			}
 			must(tx.store.Log(ctx, compensateLog))
 			resp, err := step.Undo(ctx, request)
-			must(tx.store.Ack(ctx, logId, err))
+			must(tx.store.Ack(ctx, logID, err))
 
 			return resp, err
 		}
 		response, err = step.Do(ctx, request)
-		must(tx.store.Ack(ctx, logId, err))
+		must(tx.store.Ack(ctx, logID, err))
 		if err != nil {
 			tx.doErr = append(tx.doErr, err)
 		}
@@ -137,9 +137,9 @@ func (r *Registry) Recover(ctx context.Context) {
 			store:         r.Store,
 		}
 		ctx = context.WithValue(ctx, dtransaction.CorrelationID, tx.correlationID)
-		logId := xid.New().String()
+		logID := xid.New().String()
 		compensateLog := Log{
-			ID:            logId,
+			ID:            logID,
 			correlationID: tx.correlationID,
 			StartedAt:     time.Now(),
 			LogType:       Undo,
@@ -149,6 +149,6 @@ func (r *Registry) Recover(ctx context.Context) {
 
 		must(tx.store.Log(ctx, compensateLog))
 		_, err := r.steps[log.StepName].Undo(ctx, log.StepParam)
-		must(tx.store.Ack(ctx, logId, err))
+		must(tx.store.Ack(ctx, logID, err))
 	}
 }

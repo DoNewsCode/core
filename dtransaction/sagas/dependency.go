@@ -11,6 +11,18 @@ import (
 	"github.com/oklog/run"
 )
 
+/*
+Providers returns a set of dependency providers.
+	Depends On:
+		contract.ConfigAccessor
+		log.Logger
+		Store   `optional:"true"`
+		[]*Step `group:"saga"`
+	Provide:
+		*Registry
+		recoverInterval
+		SagaEndpoints
+*/
 func Providers() di.Deps {
 	return []interface{}{provide}
 }
