@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	gotesting "testing"
@@ -55,14 +56,18 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	var ch = make(chan struct{})
 	go func() {
 		ka.watcher.Watch(ctx, func() error {
-			assert.NoError(t, ka.Reload(), "reload should be successful")
-			ch <- struct{}{}
+      assert.NoError(t, ka.Reload(), "reload should be successful")
+			err := ka.Reload()
+			fmt.Println(err)
+      ch <- struct{}{}
 			return nil
 		})
 	}()
 	time.Sleep(time.Second)
 	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
-	<-ch
+	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
+  <-ch
+
 
 	// The following test is flaky on CI. Unable to reproduce locally.
 	/*
