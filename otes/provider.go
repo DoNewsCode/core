@@ -120,6 +120,9 @@ func provideEsFactory(p in) (out, func()) {
 		options = append(options,
 			elastic.SetURL(conf.URL),
 			elastic.SetBasicAuth(conf.Username, conf.Password),
+			elastic.SetInfoLog(esInfoLogAdapter{p.Logger}),
+			elastic.SetErrorLog(esErrorLogAdapter{p.Logger}),
+			elastic.SetTraceLog(esTraceLogAdapter{p.Logger}),
 		)
 
 		client, err := elastic.NewClient(options...)
