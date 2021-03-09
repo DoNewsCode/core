@@ -189,7 +189,7 @@ func (m *Manager) otHandler() func(*request.Request) {
 		var sp opentracing.Span
 
 		ctx := r.Context()
-		if ctx == nil || !opentracing.IsGlobalTracerRegistered() {
+		if ctx == nil || opentracing.IsGlobalTracerRegistered() {
 			sp = tracer.StartSpan(r.Operation.Name)
 		} else {
 			sp, ctx = opentracing.StartSpanFromContextWithTracer(ctx, m.tracer, r.Operation.Name)

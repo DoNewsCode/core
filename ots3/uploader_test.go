@@ -78,5 +78,5 @@ func TestManager_UploadFromUrl(t *testing.T) {
 	newURL, err := m.UploadFromUrl(context.Background(), "https://www.donews.com/static/v2/images/full-logo.png")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newURL)
-	assert.NotEmpty(t, tracer.FinishedSpans())
+	assert.Len(t, tracer.FinishedSpans(), 2)
 }
