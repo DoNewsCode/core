@@ -163,6 +163,7 @@ func (m *Manager) UploadFromUrl(ctx context.Context, url string) (newUrl string,
 	if err != nil {
 		return "", errors.Wrap(err, "cannot build request")
 	}
+	req.WithContext(ctx)
 	resp, err := m.doer.Do(req)
 	if err != nil {
 		return "", errors.Wrap(err, "cannot fetch image")
