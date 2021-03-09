@@ -23,7 +23,6 @@ func TestInProcessStore_Ack(t *testing.T) {
 				ID:            "1",
 				CorrelationID: "2",
 				LogType:       Session,
-				SagaName:      "test",
 				StartedAt:     time.Now(),
 			},
 			nil,
@@ -37,7 +36,6 @@ func TestInProcessStore_Ack(t *testing.T) {
 				ID:            "1",
 				CorrelationID: "2",
 				LogType:       Session,
-				SagaName:      "test",
 				StartedAt:     time.Now(),
 			},
 			errors.New("foo"),
@@ -52,7 +50,6 @@ func TestInProcessStore_Ack(t *testing.T) {
 				ID:            "1",
 				CorrelationID: "2",
 				LogType:       Do,
-				SagaName:      "test",
 				StartedAt:     time.Now(),
 			},
 			nil,
@@ -68,7 +65,6 @@ func TestInProcessStore_Ack(t *testing.T) {
 				ID:            "1",
 				CorrelationID: "2",
 				LogType:       Do,
-				SagaName:      "test",
 				StartedAt:     time.Now(),
 			},
 			errors.New("foo"),
@@ -99,14 +95,12 @@ func TestInProcessStore_UncommittedSteps(t *testing.T) {
 	store.Log(ctx, Log{
 		ID:            "1",
 		CorrelationID: "2",
-		SagaName:      "3",
 		StartedAt:     time.Now(),
 		LogType:       Session,
 	})
 	store.Log(ctx, Log{
 		ID:            "2",
 		CorrelationID: "2",
-		SagaName:      "3",
 		StartedAt:     time.Now(),
 		LogType:       Do,
 	})
@@ -117,7 +111,6 @@ func TestInProcessStore_UncommittedSteps(t *testing.T) {
 	store.Log(ctx, Log{
 		ID:            "2",
 		CorrelationID: "2",
-		SagaName:      "3",
 		StartedAt:     time.Now(),
 		LogType:       Undo,
 	})

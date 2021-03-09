@@ -20,7 +20,6 @@ const (
 type Log struct {
 	ID            string
 	CorrelationID string
-	SagaName      string
 	StartedAt     time.Time
 	FinishedAt    time.Time
 	LogType       LogType

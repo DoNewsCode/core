@@ -3,7 +3,6 @@ package sagas_test
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/DoNewsCode/core/dtransaction"
 	"github.com/DoNewsCode/core/dtransaction/sagas"
@@ -42,10 +41,10 @@ func orderEndpoint(ctx context.Context, request interface{}) (response interface
 	}, nil
 }
 
-func orderCancelEndpoint(ctx context.Context) (err error) {
+func orderCancelEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
 	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
 	delete(orderTable, correlationId)
-	return nil
+	return nil, nil
 }
 
 func paymentEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
@@ -61,58 +60,59 @@ func paymentEndpoint(ctx context.Context, request interface{}) (response interfa
 	}, nil
 }
 
-func paymentCancelEndpoint(ctx context.Context) (err error) {
+func paymentCancelEndpoint(ctx context.Context) (response interface{}, err error) {
 	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
 	delete(paymentTable, correlationId)
-	return nil
+	return nil, nil
 }
 
 func Example() {
-	saga := &sagas.Saga{
-		Name:    "example",
-		Timeout: 10 * time.Second,
-		Steps: []*sagas.Step{
-			{
-				Name: "Add Order",
-				Do: func(ctx context.Context, request interface{}) (response interface{}, err error) {
-					resp, err := orderEndpoint(ctx, request.(OrderRequest))
-					if err != nil {
-						return nil, err
-					}
-					// Convert the response to next request
-					return PaymentRequest{
-						OrderID: resp.(OrderResponse).OrderID,
-						Sku:     resp.(OrderResponse).Sku,
-						Cost:    resp.(OrderResponse).Cost,
-					}, nil
-				},
-				Undo: func(ctx context.Context, req interface{}) error {
-					return orderCancelEndpoint(ctx)
-				},
-			},
-			{
-				Name: "Make Payment",
-				Do: func(ctx context.Context, request interface{}) (response interface{}, err error) {
-					resp, err := paymentEndpoint(ctx, request.(PaymentRequest))
-					if err != nil {
-						return nil, err
-					}
-					return resp, nil
-				},
-				Undo: func(ctx context.Context, req interface{}) error {
-					return paymentCancelEndpoint(ctx)
-				},
-			},
+	store := sagas.NewInProcessStore()
+	registry := sagas.NewRegistry(store)
+	addOrder := registry.AddStep(&sagas.Step{
+		Name: "Add Order",
+		Do: func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			resp, err := orderEndpoint(ctx, request.(OrderRequest))
+			if err != nil {
+				return nil, err
+			}
+			// Convert the response to next request
+			return resp, nil
 		},
-	}
+		Undo: func(ctx context.Context, req interface{}) (response interface{}, err error) {
+			return orderCancelEndpoint(ctx, req)
+		},
+	})
+	makePayment := registry.AddStep(&sagas.Step{
+		Name: "Make Payment",
+		Do: func(ctx context.Context, request interface{}) (response interface{}, err error) {
+			resp, err := paymentEndpoint(ctx, request.(PaymentRequest))
+			if err != nil {
+				return nil, err
+			}
+			return resp, nil
+		},
+		Undo: func(ctx context.Context, req interface{}) (response interface{}, err error) {
+			return paymentCancelEndpoint(ctx)
+		},
+	})
 
-	c := sagas.Coordinator{
-		Saga:  saga,
-		Store: sagas.NewInProcessStore(),
+	tx, ctx := registry.StartTx(context.Background())
+	resp, err := addOrder(ctx, OrderRequest{Sku: "1"})
+	if err != nil {
+		tx.Rollback(ctx)
 	}
-
-	resp, _ := c.Execute(context.Background(), OrderRequest{Sku: "1"})
+	resp, err = makePayment(ctx, PaymentRequest{
+		OrderID: resp.(OrderResponse).OrderID,
+		Sku:     resp.(OrderResponse).Sku,
+		Cost:    resp.(OrderResponse).Cost,
+	})
+	if err != nil {
+		tx.Rollback(ctx)
+	}
+	tx.Commit(ctx)
 	fmt.Println(resp.(PaymentResponse).Success)
+
 	// Output:
 	// true
 

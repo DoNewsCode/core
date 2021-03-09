@@ -6,37 +6,44 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core"
-	"github.com/DoNewsCode/core/config"
-	"github.com/go-kit/kit/log"
+	"github.com/DoNewsCode/core/di"
 	"github.com/oklog/run"
 	"github.com/stretchr/testify/assert"
 )
+
+type sagas struct {
+	di.Out
+
+	Step *Step `group:"saga"`
+}
 
 func TestNew(t *testing.T) {
 	t.Parallel()
 	var g run.Group
 	c := core.Default()
-	module := New(In{
-		Conf:   config.MapAdapter{"sagas.recoverIntervalSecond": 1.0, "sagas.defaultSagaTimeoutSecond": 1.0},
-		Logger: log.NewNopLogger(),
-		Store:  &InProcessStore{},
-		Sagas: []*Saga{{
-			Name: "foo",
-			Steps: []*Step{{
+	c.Provide(Providers())
+	c.Provide(di.Deps{func() sagas {
+		return sagas{
+			Step: &Step{
 				Name: "bar",
 				Do: func(ctx context.Context, request interface{}) (response interface{}, err error) {
+					return 1, nil
+				},
+				Undo: func(ctx context.Context, req interface{}) (response interface{}, err error) {
 					return nil, nil
 				},
-				Undo: func(ctx context.Context, req interface{}) error {
-					return nil
-				},
-			}},
-		}},
+			},
+		}
+	}})
+	c.Invoke(func(r *Registry, endpoints SagaEndpoints) {
+		tx, ctx := r.StartTx(context.Background())
+		resp, _ := endpoints["bar"](ctx, nil)
+		assert.Equal(t, 1, resp)
+		tx.Commit(ctx)
+		c.ApplyRunGroup(&g)
+		timeout(time.Second, &g)
+		assert.NoError(t, g.Run())
 	})
-	c.AddModule(module)
-	c.ApplyRunGroup(&g)
-	timeout(time.Second, &g)
-	assert.NoError(t, g.Run())
 }
 
 func timeout(duration time.Duration, g *run.Group) {

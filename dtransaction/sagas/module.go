@@ -6,54 +6,70 @@ import (
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/oklog/run"
 )
 
-// Module is a saga registry. It will spawn a goroutine to periodically rollback problematic sagas.
-type Module struct {
-	*Registry
-	RecoverInterval time.Duration
+func Providers() di.Deps {
+	return []interface{}{provide}
 }
 
-// In is the injection parameter for saga module.
-type In struct {
+// in is the injection parameter for saga module.
+type in struct {
 	di.In
 
 	Conf   contract.ConfigAccessor
 	Logger log.Logger
 	Store  Store   `optional:"true"`
-	Sagas  []*Saga `group:"saga"`
+	Steps  []*Step `group:"saga"`
 }
 
-// New creates a new saga module.
-func New(in In) Module {
+type recoverInterval time.Duration
+
+// SagaEndpoints is a collection of all registered endpoint in the saga registry
+type SagaEndpoints map[string]endpoint.Endpoint
+
+type out struct {
+	di.Out
+	di.Module
+
+	Registry      *Registry
+	Interval      recoverInterval
+	SagaEndpoints SagaEndpoints
+}
+
+// provide creates a new saga module.
+func provide(in in) out {
 	if in.Store == nil {
 		in.Store = NewInProcessStore()
 	}
-	registry := NewRegistry(in.Store, WithLogger(in.Logger))
-	for i := range in.Sagas {
-		timeoutSec := in.Conf.Float64("sagas.defaultSagaTimeoutSecond")
-		if timeoutSec == 0 {
-			timeoutSec = 360
-		}
-		timeout := time.Duration(timeoutSec) * time.Second
-		if in.Sagas[i].Timeout == 0 {
-			in.Sagas[i].Timeout = timeout
-		}
-		registry.Register(in.Sagas[i])
+	timeoutSec := in.Conf.Float64("sagas.defaultSagaTimeoutSecond")
+	if timeoutSec == 0 {
+		timeoutSec = 600
 	}
+	registry := NewRegistry(
+		in.Store,
+		WithLogger(in.Logger),
+		WithTimeout(time.Duration(timeoutSec)*time.Second),
+	)
+	eps := make(SagaEndpoints)
+
+	for i := range in.Steps {
+		eps[in.Steps[i].Name] = registry.AddStep(in.Steps[i])
+	}
+
 	recoverSec := in.Conf.Float64("sagas.recoverIntervalSecond")
 	if recoverSec == 0 {
 		recoverSec = 60
 	}
-	return Module{Registry: registry, RecoverInterval: time.Duration(recoverSec) * time.Second}
+	return out{Registry: registry, Interval: recoverInterval(time.Duration(recoverSec) * time.Second), SagaEndpoints: eps}
 }
 
 // ProvideRunGroup implements the RunProvider.
-func (m Module) ProvideRunGroup(group *run.Group) {
+func (m out) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
-	ticker := time.NewTicker(m.RecoverInterval)
+	ticker := time.NewTicker(time.Duration(m.Interval))
 	group.Add(func() error {
 		m.Registry.Recover(ctx)
 		for {
