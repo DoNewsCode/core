@@ -19,7 +19,7 @@ const (
 // Log is the structural Log type of the distributed saga.
 type Log struct {
 	ID            string
-	CorrelationID string
+	correlationID string
 	StartedAt     time.Time
 	FinishedAt    time.Time
 	LogType       LogType

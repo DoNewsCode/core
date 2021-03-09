@@ -36,7 +36,7 @@ func TestSaga_success(t *testing.T) {
 		},
 	})
 
-	var c, ctx = r.StartTx(context.Background())
+	var c, ctx = r.StartTX(context.Background())
 	ep1(ctx, nil)
 	ep2(ctx, nil)
 	c.Commit(ctx)
@@ -72,7 +72,7 @@ func TestSaga_failure(t *testing.T) {
 		},
 	})
 
-	var c, ctx = r.StartTx(context.Background())
+	var c, ctx = r.StartTX(context.Background())
 	ep1(ctx, nil)
 	ep2(ctx, nil)
 	c.Rollback(ctx)
@@ -115,7 +115,7 @@ func TestSaga_recovery(t *testing.T) {
 		},
 	})
 
-	var c, ctx = r.StartTx(context.Background())
+	var c, ctx = r.StartTX(context.Background())
 	ep1(ctx, nil)
 	ep2(ctx, nil)
 	err := c.Rollback(ctx)
@@ -168,7 +168,7 @@ func TestSaga_panic(t *testing.T) {
 		}
 	}(r)
 
-	var _, ctx = r.StartTx(context.Background())
+	var _, ctx = r.StartTX(context.Background())
 	ep1(ctx, nil)
 	ep2(ctx, nil)
 }
@@ -200,7 +200,7 @@ func TestSaga_shortCircuit(t *testing.T) {
 		},
 	})
 
-	var c, ctx = r.StartTx(context.Background())
+	var c, ctx = r.StartTX(context.Background())
 	ep1(ctx, nil)
 	c.Commit(ctx)
 	assert.Equal(t, 1, value)
@@ -227,7 +227,7 @@ func TestSaga_emptyRecover(t *testing.T) {
 			panic("err")
 		},
 	})
-	tx, ctx := r.StartTx(context.Background())
+	tx, ctx := r.StartTX(context.Background())
 	tx.Commit(ctx)
 	r.Recover(context.Background())
 	assert.Equal(t, 0, value)

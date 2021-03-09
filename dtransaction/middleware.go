@@ -22,11 +22,11 @@ type Oncer interface {
 func MakeIdempotence(s Oncer) endpoint.Middleware {
 	return func(e endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			correlationId, ok := ctx.Value(CorrelationID).(string)
+			correlationID, ok := ctx.Value(CorrelationID).(string)
 			if !ok {
 				return e(ctx, request)
 			}
-			if s.Once(ctx, correlationId) {
+			if s.Once(ctx, correlationID) {
 				return nil, ErrNonIdempotent
 			}
 			return e(ctx, request)
@@ -45,12 +45,12 @@ type Locker interface {
 func MakeLock(l Locker) endpoint.Middleware {
 	return func(e endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			correlationId, ok := ctx.Value(CorrelationID).(string)
+			correlationID, ok := ctx.Value(CorrelationID).(string)
 			if !ok {
 				return e(ctx, request)
 			}
-			if l.Lock(ctx, correlationId) {
-				defer l.Unlock(ctx, correlationId)
+			if l.Lock(ctx, correlationID) {
+				defer l.Unlock(ctx, correlationID)
 				return e(ctx, request)
 			}
 			return nil, ErrNoLock
@@ -71,11 +71,11 @@ type AtomicTransactioner interface {
 func MakeAttempt(s AtomicTransactioner) endpoint.Middleware {
 	return func(e endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			correlationId, ok := ctx.Value(CorrelationID).(string)
+			correlationID, ok := ctx.Value(CorrelationID).(string)
 			if !ok {
 				return e(ctx, request)
 			}
-			if s.MarkAttemptedCheckCancelled(ctx, correlationId) {
+			if s.MarkAttemptedCheckCancelled(ctx, correlationID) {
 				return nil, nil
 			}
 			return e(ctx, request)
@@ -89,11 +89,11 @@ func MakeAttempt(s AtomicTransactioner) endpoint.Middleware {
 func MakeCancel(s AtomicTransactioner) endpoint.Middleware {
 	return func(e endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			correlationId, ok := ctx.Value(CorrelationID).(string)
+			correlationID, ok := ctx.Value(CorrelationID).(string)
 			if !ok {
 				return e(ctx, request)
 			}
-			if !s.MarkCancelledCheckAttempted(ctx, correlationId) {
+			if !s.MarkCancelledCheckAttempted(ctx, correlationID) {
 				return nil, nil
 			}
 			return e(ctx, request)

@@ -23,14 +23,14 @@ func NewInProcessStore() *InProcessStore {
 
 // Ack marks the log entry as acknowledged, either with an error or not. It is
 // safe to call ack to the same log entry more than once.
-func (i *InProcessStore) Ack(ctx context.Context, logId string, err error) error {
+func (i *InProcessStore) Ack(ctx context.Context, logID string, err error) error {
 	co := ctx.Value(dtransaction.CorrelationID).(string)
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
 	logs := i.transactions[co]
 	for k := 0; k < len(logs); k++ {
-		if logs[k].ID == logId {
+		if logs[k].ID == logID {
 			if i.transactions[co][k].LogType == Session && err == nil {
 				delete(i.transactions, co)
 				return nil
@@ -50,16 +50,16 @@ func (i *InProcessStore) Log(ctx context.Context, log Log) error {
 	if i.transactions == nil {
 		i.transactions = make(map[string][]Log)
 	}
-	i.transactions[log.CorrelationID] = append(i.transactions[log.CorrelationID], log)
+	i.transactions[log.correlationID] = append(i.transactions[log.correlationID], log)
 	return nil
 }
 
-// UncommittedSteps searches the InProcessStore for unacknowledged steps under the given CorrelationId.
-func (i *InProcessStore) UnacknowledgedSteps(ctx context.Context, correlationId string) ([]Log, error) {
+// UncommittedSteps searches the InProcessStore for unacknowledged steps under the given correlationID.
+func (i *InProcessStore) UnacknowledgedSteps(ctx context.Context, correlationID string) ([]Log, error) {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
-	return i.unacknowledgedSteps(ctx, correlationId)
+	return i.unacknowledgedSteps(ctx, correlationID)
 }
 
 // UncommittedSagas searches the store for all uncommitted sagas, and return log entries under the matching sagas.
@@ -84,13 +84,13 @@ func (i *InProcessStore) UncommittedSagas(ctx context.Context) ([]Log, error) {
 	return logs, nil
 }
 
-func (i *InProcessStore) unacknowledgedSteps(ctx context.Context, correlationId string) ([]Log, error) {
+func (i *InProcessStore) unacknowledgedSteps(ctx context.Context, correlationID string) ([]Log, error) {
 
 	var (
 		stepStates = make(map[string]Log)
 	)
 
-	for _, l := range i.transactions[correlationId] {
+	for _, l := range i.transactions[correlationID] {
 		if l.LogType == Do {
 			stepStates[l.StepName] = l
 		}
@@ -103,7 +103,7 @@ func (i *InProcessStore) unacknowledgedSteps(ctx context.Context, correlationId 
 		steps = append(steps, stepStates[k])
 	}
 	if len(steps) == 0 {
-		delete(i.transactions, correlationId)
+		delete(i.transactions, correlationID)
 	}
 	return steps, nil
 }

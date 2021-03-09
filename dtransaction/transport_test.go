@@ -15,7 +15,7 @@ func TestHTTPToContext(t *testing.T) {
 	ctx := reqFunc(context.Background(), &http.Request{})
 
 	if ctx.Value(CorrelationID) != nil {
-		t.Error("Context shouldn't contain the correlationID")
+		t.Error("Context shouldn't contain the CorrelationID")
 	}
 
 	head := http.Header{}

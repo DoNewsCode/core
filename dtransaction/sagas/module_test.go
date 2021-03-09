@@ -36,7 +36,7 @@ func TestNew(t *testing.T) {
 		}
 	}})
 	c.Invoke(func(r *Registry, endpoints SagaEndpoints) {
-		tx, ctx := r.StartTx(context.Background())
+		tx, ctx := r.StartTX(context.Background())
 		resp, _ := endpoints["bar"](ctx, nil)
 		assert.Equal(t, 1, resp)
 		tx.Commit(ctx)

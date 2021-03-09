@@ -53,17 +53,17 @@ func NewRegistry(store Store, opts ...Option) *Registry {
 }
 
 // StartTX starts a transaction using saga pattern.
-func (r *Registry) StartTx(ctx context.Context) (*TX, context.Context) {
+func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 	cid := xid.New().String()
 	tx := &TX{
 		session: Log{
 			ID:            xid.New().String(),
-			CorrelationID: cid,
+			correlationID: cid,
 			StartedAt:     time.Now(),
 			LogType:       Session,
 		},
 		store:         r.Store,
-		correlationId: cid,
+		correlationID: cid,
 		rollbacks:     make(map[string]endpoint.Endpoint),
 	}
 	ctx = context.WithValue(ctx, dtransaction.CorrelationID, cid)
@@ -84,7 +84,7 @@ func (r *Registry) AddStep(step *Step) endpoint.Endpoint {
 		}
 		stepLog := Log{
 			ID:            logId,
-			CorrelationID: tx.correlationId,
+			correlationID: tx.correlationID,
 			StartedAt:     time.Now(),
 			LogType:       Do,
 			StepName:      step.Name,
@@ -95,7 +95,7 @@ func (r *Registry) AddStep(step *Step) endpoint.Endpoint {
 			logId := xid.New().String()
 			compensateLog := Log{
 				ID:            logId,
-				CorrelationID: tx.correlationId,
+				correlationID: tx.correlationID,
 				StartedAt:     time.Now(),
 				LogType:       Undo,
 				StepName:      step.Name,
@@ -133,14 +133,14 @@ func (r *Registry) Recover(ctx context.Context) {
 			)
 		}
 		tx := TX{
-			correlationId: log.CorrelationID,
+			correlationID: log.correlationID,
 			store:         r.Store,
 		}
-		ctx = context.WithValue(ctx, dtransaction.CorrelationID, tx.correlationId)
+		ctx = context.WithValue(ctx, dtransaction.CorrelationID, tx.correlationID)
 		logId := xid.New().String()
 		compensateLog := Log{
 			ID:            logId,
-			CorrelationID: tx.correlationId,
+			correlationID: tx.correlationID,
 			StartedAt:     time.Now(),
 			LogType:       Undo,
 			StepName:      log.StepName,

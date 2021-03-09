@@ -15,7 +15,7 @@ const TxContextKey contextKey = "coordinator"
 type Store interface {
 	Log(ctx context.Context, log Log) error
 	Ack(ctx context.Context, id string, err error) error
-	UnacknowledgedSteps(ctx context.Context, correlationId string) ([]Log, error)
+	UnacknowledgedSteps(ctx context.Context, correlationID string) ([]Log, error)
 	UncommittedSagas(ctx context.Context) ([]Log, error)
 }
 
@@ -23,7 +23,7 @@ type Store interface {
 // by directly assigning its public members.
 type TX struct {
 	store         Store
-	correlationId string
+	correlationID string
 	session       Log
 	rollbacks     map[string]endpoint.Endpoint
 	doErr         []error

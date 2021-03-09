@@ -32,8 +32,8 @@ type PaymentResponse struct {
 }
 
 func orderEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
-	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
-	orderTable[correlationId] = request
+	correlationID := ctx.Value(dtransaction.CorrelationID).(string)
+	orderTable[correlationID] = request
 	return OrderResponse{
 		OrderID: "1",
 		Sku:     "1",
@@ -42,14 +42,14 @@ func orderEndpoint(ctx context.Context, request interface{}) (response interface
 }
 
 func orderCancelEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
-	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
-	delete(orderTable, correlationId)
+	correlationID := ctx.Value(dtransaction.CorrelationID).(string)
+	delete(orderTable, correlationID)
 	return nil, nil
 }
 
 func paymentEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
-	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
-	paymentTable[correlationId] = request
+	correlationID := ctx.Value(dtransaction.CorrelationID).(string)
+	paymentTable[correlationID] = request
 	if request.(PaymentRequest).Cost < 20 {
 		return PaymentResponse{
 			Success: true,
@@ -61,8 +61,8 @@ func paymentEndpoint(ctx context.Context, request interface{}) (response interfa
 }
 
 func paymentCancelEndpoint(ctx context.Context) (response interface{}, err error) {
-	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
-	delete(paymentTable, correlationId)
+	correlationID := ctx.Value(dtransaction.CorrelationID).(string)
+	delete(paymentTable, correlationID)
 	return nil, nil
 }
 
@@ -97,7 +97,7 @@ func Example() {
 		},
 	})
 
-	tx, ctx := registry.StartTx(context.Background())
+	tx, ctx := registry.StartTX(context.Background())
 	resp, err := addOrder(ctx, OrderRequest{Sku: "1"})
 	if err != nil {
 		tx.Rollback(ctx)
