@@ -19,7 +19,7 @@ func TestSaga_success(t *testing.T) {
 					value++
 					return nil, nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					value--
 					return nil
 				},
@@ -30,7 +30,7 @@ func TestSaga_success(t *testing.T) {
 					value++
 					return nil, nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					value--
 					return nil
 				},
@@ -57,7 +57,7 @@ func TestSaga_failure(t *testing.T) {
 					value++
 					return nil, nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					value--
 					return nil
 				},
@@ -68,7 +68,7 @@ func TestSaga_failure(t *testing.T) {
 					value++
 					return nil, errors.New("")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					value--
 					return nil
 				},
@@ -99,7 +99,7 @@ func TestSaga_recovery(t *testing.T) {
 					value++
 					return nil, nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					value--
 					return nil
 				},
@@ -110,7 +110,7 @@ func TestSaga_recovery(t *testing.T) {
 					value++
 					return nil, errors.New("")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					if attempt == 0 {
 						attempt++
 						return errors.New("")
@@ -151,7 +151,7 @@ func TestSaga_panic(t *testing.T) {
 					value++
 					return nil, nil
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					value--
 					return nil
 				},
@@ -162,7 +162,7 @@ func TestSaga_panic(t *testing.T) {
 					value++
 					return nil, errors.New("")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					if attempt == 0 {
 						attempt++
 						panic("err")
@@ -202,7 +202,7 @@ func TestSaga_shortCircuit(t *testing.T) {
 					value++
 					return nil, errors.New("foo")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					value--
 					return nil
 				},
@@ -212,7 +212,7 @@ func TestSaga_shortCircuit(t *testing.T) {
 				func(ctx context.Context, req interface{}) (interface{}, error) {
 					panic("should not reach")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					panic("should not reach")
 				},
 			},
@@ -242,7 +242,7 @@ func TestSaga_emptyRecover(t *testing.T) {
 					value++
 					return nil, errors.New("foo")
 				},
-				func(ctx context.Context) error {
+				func(ctx context.Context, req interface{}) error {
 					if attempt == 0 {
 						attempt++
 						value--

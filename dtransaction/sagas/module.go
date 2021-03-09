@@ -10,7 +10,7 @@ import (
 	"github.com/oklog/run"
 )
 
-// Module is a saga registry
+// Module is a saga registry. It will spawn a goroutine to periodically rollback problematic sagas.
 type Module struct {
 	*Registry
 	RecoverInterval time.Duration
@@ -26,7 +26,7 @@ type In struct {
 	Sagas  []*Saga `group:"saga"`
 }
 
-// New creates a new saga module
+// New creates a new saga module.
 func New(in In) Module {
 	if in.Store == nil {
 		in.Store = NewInProcessStore()
@@ -50,7 +50,7 @@ func New(in In) Module {
 	return Module{Registry: registry, RecoverInterval: time.Duration(recoverSec) * time.Second}
 }
 
-// ProvideRunGroup implements the RunProvider
+// ProvideRunGroup implements the RunProvider.
 func (m Module) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ticker := time.NewTicker(m.RecoverInterval)

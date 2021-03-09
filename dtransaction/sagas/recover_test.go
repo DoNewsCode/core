@@ -42,7 +42,7 @@ func TestRegistry_RecoverWithTimeout(t *testing.T) {
 					t.Fatal("should not be called")
 					return nil, nil
 				},
-				Undo: func(ctx context.Context) error {
+				Undo: func(ctx context.Context, req interface{}) error {
 					t.Fatal("should not be called")
 					return nil
 				},

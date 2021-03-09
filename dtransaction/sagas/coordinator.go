@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/DoNewsCode/core/dtransaction"
 	"github.com/rs/xid"
 )
 
@@ -32,7 +33,7 @@ type Coordinator struct {
 // idempotency and issue transaction locks.
 func (c *Coordinator) Execute(ctx context.Context, request interface{}) (response interface{}, err error) {
 	c.correlationId = xid.New().String()
-	ctx = context.WithValue(ctx, CorrelationId, c.correlationId)
+	ctx = context.WithValue(ctx, dtransaction.CorrelationID, c.correlationId)
 	ctx, cancel := context.WithTimeout(ctx, c.Saga.Timeout)
 	defer cancel()
 
@@ -43,6 +44,7 @@ func (c *Coordinator) Execute(ctx context.Context, request interface{}) (respons
 		SagaName:      c.Saga.Name,
 		StartedAt:     time.Now(),
 		LogType:       Session,
+		StepParam:     request,
 	}
 
 	must(c.Store.Log(ctx, sagaLog))
@@ -75,6 +77,7 @@ func (c *Coordinator) execStep(ctx context.Context, i int, request interface{}) 
 		LogType:       Do,
 		StepNumber:    i,
 		StepName:      c.Saga.Steps[i].Name,
+		StepParam:     request,
 	}
 	must(c.Store.Log(ctx, stepLog))
 	response, err = c.Saga.Steps[i].Do(ctx, request)
@@ -110,7 +113,7 @@ func (c *Coordinator) compensateStep(ctx context.Context, step Log) error {
 	}
 	must(c.Store.Log(ctx, compensateLog))
 
-	err := c.Saga.Steps[step.StepNumber].Undo(ctx)
+	err := c.Saga.Steps[step.StepNumber].Undo(ctx, step.StepParam)
 
 	must(c.Store.Ack(ctx, logId, err))
 	return err

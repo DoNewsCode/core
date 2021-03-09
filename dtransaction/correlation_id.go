@@ -2,4 +2,5 @@ package dtransaction
 
 type correlationIdType string
 
-const CorrelationId correlationIdType = "CorrelationId"
+// CorrelationID is an identifier to correlate transactions in context.
+const CorrelationID correlationIdType = "CorrelationID"

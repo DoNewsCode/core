@@ -14,7 +14,7 @@ const (
 	headerHTTP2 string = "x-tx-correlation-id"
 )
 
-// HTTPToContext moves a JWT from request header to context. Particularly
+// HTTPToContext moves a CorrelationID from request header to context. Particularly
 // useful for servers.
 func HTTPToContext() http.RequestFunc {
 	return func(ctx context.Context, r *stdhttp.Request) context.Context {
@@ -22,15 +22,15 @@ func HTTPToContext() http.RequestFunc {
 		if token == "" {
 			return ctx
 		}
-		return context.WithValue(ctx, CorrelationId, token)
+		return context.WithValue(ctx, CorrelationID, token)
 	}
 }
 
-// ContextToHTTP moves a JWT from context to request header. Particularly
+// ContextToHTTP moves a CorrelationID from context to request header. Particularly
 // useful for clients.
 func ContextToHTTP() http.RequestFunc {
 	return func(ctx context.Context, r *stdhttp.Request) context.Context {
-		token, ok := ctx.Value(CorrelationId).(string)
+		token, ok := ctx.Value(CorrelationID).(string)
 		if ok {
 			r.Header.Add(header, token)
 		}
@@ -38,7 +38,7 @@ func ContextToHTTP() http.RequestFunc {
 	}
 }
 
-// GRPCToContext moves a JWT from grpc metadata to context. Particularly
+// GRPCToContext moves a CorrelationID from grpc metadata to context. Particularly
 // userful for servers.
 func GRPCToContext() grpc.ServerRequestFunc {
 	return func(ctx context.Context, md metadata.MD) context.Context {
@@ -50,16 +50,16 @@ func GRPCToContext() grpc.ServerRequestFunc {
 		if len(tokens) <= 0 {
 			return ctx
 		}
-		ctx = context.WithValue(ctx, CorrelationId, tokens[len(tokens)])
+		ctx = context.WithValue(ctx, CorrelationID, tokens[len(tokens)-1])
 		return ctx
 	}
 }
 
-// ContextToGRPC moves a JWT from context to grpc metadata. Particularly
+// ContextToGRPC moves a CorrelationID from context to grpc metadata. Particularly
 // useful for clients.
 func ContextToGRPC() grpc.ClientRequestFunc {
 	return func(ctx context.Context, md *metadata.MD) context.Context {
-		token, ok := ctx.Value(CorrelationId).(string)
+		token, ok := ctx.Value(CorrelationID).(string)
 		if ok {
 			// capital "Key" is illegal in HTTP/2.
 			(*md)[headerHTTP2] = []string{token}

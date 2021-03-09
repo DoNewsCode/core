@@ -1,3 +1,5 @@
+// Package sagas implements the orchestration based saga pattern.
+// See https://microservices.io/patterns/data/saga.html
 package sagas
 
 import (
@@ -8,15 +10,11 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-type correlationIdType string
-
-const CorrelationId correlationIdType = "CorrelationId"
-
 // Step is a step in the Saga.
 type Step struct {
 	Name string
 	Do   endpoint.Endpoint
-	Undo func(ctx context.Context) error
+	Undo func(ctx context.Context, request interface{}) error
 }
 
 // A Saga is a model for distributed transaction. It contains a number of statically defined steps.

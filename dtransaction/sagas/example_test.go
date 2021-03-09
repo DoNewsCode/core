@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/DoNewsCode/core/dtransaction"
 	"github.com/DoNewsCode/core/dtransaction/sagas"
-	"github.com/go-kit/kit/auth/jwt"
 )
 
 var orderTable = make(map[string]interface{})
@@ -33,7 +33,7 @@ type PaymentResponse struct {
 }
 
 func orderEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
-	correlationId := ctx.Value(sagas.CorrelationId).(string)
+	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
 	orderTable[correlationId] = request
 	return OrderResponse{
 		OrderID: "1",
@@ -43,13 +43,13 @@ func orderEndpoint(ctx context.Context, request interface{}) (response interface
 }
 
 func orderCancelEndpoint(ctx context.Context) (err error) {
-	correlationId := ctx.Value(sagas.CorrelationId).(string)
+	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
 	delete(orderTable, correlationId)
 	return nil
 }
 
 func paymentEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
-	correlationId := ctx.Value(sagas.CorrelationId).(string)
+	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
 	paymentTable[correlationId] = request
 	if request.(PaymentRequest).Cost < 20 {
 		return PaymentResponse{
@@ -62,7 +62,7 @@ func paymentEndpoint(ctx context.Context, request interface{}) (response interfa
 }
 
 func paymentCancelEndpoint(ctx context.Context) (err error) {
-	correlationId := ctx.Value(sagas.CorrelationId).(string)
+	correlationId := ctx.Value(dtransaction.CorrelationID).(string)
 	delete(paymentTable, correlationId)
 	return nil
 }
@@ -79,7 +79,6 @@ func Example() {
 					if err != nil {
 						return nil, err
 					}
-					jwt.ContextToGRPC()
 					// Convert the response to next request
 					return PaymentRequest{
 						OrderID: resp.(OrderResponse).OrderID,
@@ -87,7 +86,7 @@ func Example() {
 						Cost:    resp.(OrderResponse).Cost,
 					}, nil
 				},
-				Undo: func(ctx context.Context) error {
+				Undo: func(ctx context.Context, req interface{}) error {
 					return orderCancelEndpoint(ctx)
 				},
 			},
@@ -100,7 +99,7 @@ func Example() {
 					}
 					return resp, nil
 				},
-				Undo: func(ctx context.Context) error {
+				Undo: func(ctx context.Context, req interface{}) error {
 					return paymentCancelEndpoint(ctx)
 				},
 			},

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DoNewsCode/core/dtransaction"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -84,7 +85,7 @@ func TestInProcessStore_Ack(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			store := NewInProcessStore()
-			ctx := context.WithValue(context.Background(), CorrelationId, c.log.CorrelationID)
+			ctx := context.WithValue(context.Background(), dtransaction.CorrelationID, c.log.CorrelationID)
 			store.Log(ctx, c.log)
 			store.Ack(ctx, c.log.ID, c.err)
 			c.asserts(t, c.log, store)
@@ -94,7 +95,7 @@ func TestInProcessStore_Ack(t *testing.T) {
 
 func TestInProcessStore_UncommittedSteps(t *testing.T) {
 	store := NewInProcessStore()
-	ctx := context.WithValue(context.Background(), CorrelationId, "2")
+	ctx := context.WithValue(context.Background(), dtransaction.CorrelationID, "2")
 	store.Log(ctx, Log{
 		ID:            "1",
 		CorrelationID: "2",

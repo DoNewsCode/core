@@ -25,6 +25,7 @@ type Log struct {
 	FinishedAt    time.Time
 	LogType       LogType
 	StepNumber    int
+	StepParam     interface{}
 	StepName      string
 	StepError     error
 }
