@@ -3,7 +3,6 @@
 package otes_test
 
 import (
-	"context"
 	"fmt"
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/otes"
@@ -11,13 +10,13 @@ import (
 )
 
 func Example() {
-	c := core.New()
+	c := core.New(core.WithInline("log.level", "none"))
 	c.ProvideEssentials()
 	c.Provide(otes.Providers())
 	c.Invoke(func(esClient *elastic.Client) {
-		_, _ ,err := esClient.Ping("http://localhost:9200").Do(context.TODO())
-		fmt.Println(err)
+		running := esClient.IsRunning()
+		fmt.Println(running)
 	})
 	// Output:
-	// nil
+	// true
 }
