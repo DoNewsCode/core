@@ -163,6 +163,7 @@ func (m *Manager) UploadFromUrl(ctx context.Context, url string) (newUrl string,
 	if err != nil {
 		return "", errors.Wrap(err, "cannot build request")
 	}
+	req.WithContext(ctx)
 	resp, err := m.doer.Do(req)
 	if err != nil {
 		return "", errors.Wrap(err, "cannot fetch image")
@@ -189,7 +190,7 @@ func (m *Manager) otHandler() func(*request.Request) {
 		var sp opentracing.Span
 
 		ctx := r.Context()
-		if ctx == nil || !opentracing.IsGlobalTracerRegistered() {
+		if ctx == nil || opentracing.IsGlobalTracerRegistered() {
 			sp = tracer.StartSpan(r.Operation.Name)
 		} else {
 			sp, ctx = opentracing.StartSpanFromContextWithTracer(ctx, m.tracer, r.Operation.Name)
