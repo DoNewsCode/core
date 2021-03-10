@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DoNewsCode/core/dtransaction"
-	"github.com/DoNewsCode/core/dtransaction/sagas"
+	"github.com/DoNewsCode/core/dtx"
+	"github.com/DoNewsCode/core/dtx/sagas"
 )
 
 var orderTable = make(map[string]interface{})
@@ -32,7 +32,7 @@ type PaymentResponse struct {
 }
 
 func orderEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
-	correlationID := ctx.Value(dtransaction.CorrelationID).(string)
+	correlationID := ctx.Value(dtx.CorrelationID).(string)
 	orderTable[correlationID] = request
 	return OrderResponse{
 		OrderID: "1",
@@ -42,13 +42,13 @@ func orderEndpoint(ctx context.Context, request interface{}) (response interface
 }
 
 func orderCancelEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
-	correlationID := ctx.Value(dtransaction.CorrelationID).(string)
+	correlationID := ctx.Value(dtx.CorrelationID).(string)
 	delete(orderTable, correlationID)
 	return nil, nil
 }
 
 func paymentEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
-	correlationID := ctx.Value(dtransaction.CorrelationID).(string)
+	correlationID := ctx.Value(dtx.CorrelationID).(string)
 	paymentTable[correlationID] = request
 	if request.(PaymentRequest).Cost < 20 {
 		return PaymentResponse{
@@ -61,7 +61,7 @@ func paymentEndpoint(ctx context.Context, request interface{}) (response interfa
 }
 
 func paymentCancelEndpoint(ctx context.Context) (response interface{}, err error) {
-	correlationID := ctx.Value(dtransaction.CorrelationID).(string)
+	correlationID := ctx.Value(dtx.CorrelationID).(string)
 	delete(paymentTable, correlationID)
 	return nil, nil
 }

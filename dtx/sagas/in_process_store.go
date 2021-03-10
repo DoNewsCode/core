@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DoNewsCode/core/dtransaction"
+	"github.com/DoNewsCode/core/dtx"
 )
 
 // InProcessStore creates an in process storage that implements Store.
@@ -24,7 +24,7 @@ func NewInProcessStore() *InProcessStore {
 // Ack marks the log entry as acknowledged, either with an error or not. It is
 // safe to call ack to the same log entry more than once.
 func (i *InProcessStore) Ack(ctx context.Context, logID string, err error) error {
-	co := ctx.Value(dtransaction.CorrelationID).(string)
+	co := ctx.Value(dtx.CorrelationID).(string)
 	i.lock.Lock()
 	defer i.lock.Unlock()
 

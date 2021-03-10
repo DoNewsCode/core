@@ -1,4 +1,4 @@
-package dtransaction
+package dtx
 
 import (
 	"context"
@@ -34,7 +34,7 @@ func MakeIdempotence(s Oncer) endpoint.Middleware {
 	}
 }
 
-// Locker is an interface for distributed lock.
+// Locker is an interface for the distributed lock.
 type Locker interface {
 	// Lock should return true only when it successfully grabs the lock.
 	Lock(ctx context.Context, key string) bool
@@ -58,9 +58,9 @@ func MakeLock(l Locker) endpoint.Middleware {
 	}
 }
 
-// AtomicTransactioner is an interface that shields against the disordering of
+// Sequencer is an interface that shields against the disordering of
 // attempt and cancel in a transactional context.
-type AtomicTransactioner interface {
+type Sequencer interface {
 	MarkCancelledCheckAttempted(context.Context, string) bool
 	MarkAttemptedCheckCancelled(context.Context, string) bool
 }
@@ -68,7 +68,11 @@ type AtomicTransactioner interface {
 // MakeAttempt returns a middleware that wraps around an attempt endpoint. If the
 // this segment of the distributed transaction is already cancelled, the next
 // endpoint will never be executed.
-func MakeAttempt(s AtomicTransactioner) endpoint.Middleware {
+//
+// If the forward operation arrives later than the compensating operation due to
+// network exceptions, the forward operation must be discarded. Otherwise,
+// resource suspension occurs.
+func MakeAttempt(s Sequencer) endpoint.Middleware {
 	return func(e endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			correlationID, ok := ctx.Value(CorrelationID).(string)
@@ -86,7 +90,11 @@ func MakeAttempt(s AtomicTransactioner) endpoint.Middleware {
 // MakeCancel returns a middleware that wraps around the cancellation endpoint.
 // It guarantees if this segment of the distributed transaction is never attempted,
 // the cancellation endpoint will not be executed.
-func MakeCancel(s AtomicTransactioner) endpoint.Middleware {
+//
+// Transaction participants may receive the compensation order before performing
+// normal operations due to network exceptions. In this case, null compensation
+// is required.
+func MakeCancel(s Sequencer) endpoint.Middleware {
 	return func(e endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			correlationID, ok := ctx.Value(CorrelationID).(string)

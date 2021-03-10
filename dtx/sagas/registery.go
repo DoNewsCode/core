@@ -5,12 +5,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/DoNewsCode/core/dtransaction"
+	"github.com/DoNewsCode/core/dtx"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/rs/xid"
 )
+
+// Step is a step in the Saga.
+type Step struct {
+	Name string
+	Do   endpoint.Endpoint
+	Undo endpoint.Endpoint
+}
 
 // Registry holds all transaction sagas in this process. It should be populated during the initialization of the application.
 type Registry struct {
@@ -66,7 +73,7 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 		correlationID: cid,
 		rollbacks:     make(map[string]endpoint.Endpoint),
 	}
-	ctx = context.WithValue(ctx, dtransaction.CorrelationID, cid)
+	ctx = context.WithValue(ctx, dtx.CorrelationID, cid)
 	ctx = context.WithValue(ctx, TxContextKey, tx)
 	must(tx.store.Log(ctx, tx.session))
 	return tx, ctx
@@ -109,9 +116,6 @@ func (r *Registry) AddStep(step *Step) endpoint.Endpoint {
 		}
 		response, err = step.Do(ctx, request)
 		must(tx.store.Ack(ctx, logID, err))
-		if err != nil {
-			tx.doErr = append(tx.doErr, err)
-		}
 		return response, err
 	}
 }
@@ -136,7 +140,7 @@ func (r *Registry) Recover(ctx context.Context) {
 			correlationID: log.correlationID,
 			store:         r.Store,
 		}
-		ctx = context.WithValue(ctx, dtransaction.CorrelationID, tx.correlationID)
+		ctx = context.WithValue(ctx, dtx.CorrelationID, tx.correlationID)
 		logID := xid.New().String()
 		compensateLog := Log{
 			ID:            logID,

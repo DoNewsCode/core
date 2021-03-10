@@ -7,6 +7,7 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
+	"github.com/ghodss/yaml"
 	"github.com/oklog/run"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,6 +45,12 @@ func TestNew(t *testing.T) {
 		timeout(time.Second, &g)
 		assert.NoError(t, g.Run())
 	})
+}
+
+func TestExportedConfigs(t *testing.T) {
+	conf := provideConfig()
+	_, err := yaml.Marshal(conf)
+	assert.NoError(t, err)
 }
 
 func timeout(duration time.Duration, g *run.Group) {

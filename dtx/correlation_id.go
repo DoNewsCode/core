@@ -1,4 +1,4 @@
-package dtransaction
+package dtx
 
 type correlationIDType string
 

@@ -1,4 +1,4 @@
-package dtransaction
+package dtx
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-// RedisStore is an implementation of Oncer, Locker and AtomicTransactioner.
+// RedisStore is an implementation of Oncer, Locker and Sequencer.
 type RedisStore struct {
 	keyer  contract.Keyer
 	client redis.UniversalClient
@@ -41,7 +41,7 @@ return 0
 }
 
 // Lock grabs the lock for the given key. It returns true if the lock is
-// successfully held. If the lock is not available, this method will block until
+// successfully acquired. If the lock is not available, this method will block until
 // the lock is released or the context expired. In latter case, false is
 // returned.
 func (r RedisStore) Lock(ctx context.Context, key string) bool {

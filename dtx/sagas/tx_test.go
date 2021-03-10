@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -84,7 +85,7 @@ func TestSaga_recovery(t *testing.T) {
 	var value int
 	var store = &InProcessStore{}
 	var r = NewRegistry(store, WithTimeout(0))
-
+	var errTest = errors.New("test")
 	ep1 := r.AddStep(&Step{
 		"one",
 		func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -107,7 +108,7 @@ func TestSaga_recovery(t *testing.T) {
 		func(ctx context.Context, req interface{}) (interface{}, error) {
 			if attempt == 0 {
 				attempt++
-				return nil, errors.New("")
+				return nil, errTest
 			}
 			value--
 			return nil, nil
@@ -120,8 +121,7 @@ func TestSaga_recovery(t *testing.T) {
 	ep2(ctx, nil)
 	err := c.Rollback(ctx)
 	assert.NotNil(t, err)
-	assert.NotEmpty(t, err.(*Result).UndoErr)
-	assert.Contains(t, err.Error(), "errors encountered while rolling back")
+	assert.Len(t, err.(*multierror.Error).Errors, 1)
 	assert.Equal(t, 1, value)
 
 	r.Recover(ctx)

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/hashicorp/go-multierror"
 )
 
 type contextKey string
@@ -26,15 +27,14 @@ type TX struct {
 	correlationID string
 	session       Log
 	rollbacks     map[string]endpoint.Endpoint
-	doErr         []error
-	undoErr       []error
+	undoErr       *multierror.Error
 	completed     bool
 }
 
 // Commit commits the current transaction.
-func (tx *TX) Commit(ctx context.Context) {
-	must(tx.store.Ack(ctx, tx.session.ID, nil))
+func (tx *TX) Commit(ctx context.Context) error {
 	tx.completed = true
+	return tx.store.Ack(ctx, tx.session.ID, nil)
 }
 
 // Rollback rollbacks the current transaction.
@@ -42,14 +42,11 @@ func (tx *TX) Rollback(ctx context.Context) error {
 	for _, call := range tx.rollbacks {
 		_, err := call(ctx, nil)
 		if err != nil {
-			tx.undoErr = append(tx.undoErr, err)
+			tx.undoErr = multierror.Append(tx.undoErr, err)
 		}
 	}
 	tx.completed = true
-	if len(tx.undoErr) >= 1 {
-		return &Result{DoErr: tx.doErr, UndoErr: tx.undoErr}
-	}
-	return nil
+	return tx.undoErr.ErrorOrNil()
 }
 
 // TxFromContext returns the tx instance from context.

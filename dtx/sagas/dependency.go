@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/endpoint"
@@ -20,11 +21,10 @@ Providers returns a set of dependency providers.
 		[]*Step `group:"saga"`
 	Provide:
 		*Registry
-		recoverInterval
 		SagaEndpoints
 */
 func Providers() di.Deps {
-	return []interface{}{provide}
+	return []interface{}{provide, provideConfig}
 }
 
 // in is the injection parameter for saga module.
@@ -56,7 +56,7 @@ func provide(in in) out {
 	if in.Store == nil {
 		in.Store = NewInProcessStore()
 	}
-	timeoutSec := in.Conf.Float64("sagas.defaultSagaTimeoutSecond")
+	timeoutSec := in.Conf.Float64("sagas.sagaTimeoutSecond")
 	if timeoutSec == 0 {
 		timeoutSec = 600
 	}
@@ -96,4 +96,23 @@ func (m out) ProvideRunGroup(group *run.Group) {
 		cancel()
 		ticker.Stop()
 	})
+}
+
+type configOut struct {
+	Config []config.ExportedConfig
+}
+
+func provideConfig() configOut {
+	return configOut{Config: []config.ExportedConfig{
+		{
+			Owner: "sagas",
+			Data: map[string]interface{}{
+				"sagas": map[string]interface{}{
+					"sagaTimeoutSecond":     "600",
+					"recoverIntervalSecond": "60",
+				},
+			},
+			Comment: "The saga config",
+		},
+	}}
 }
