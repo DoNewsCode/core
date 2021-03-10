@@ -18,7 +18,7 @@ func TestMakeAsyncMiddleware(t *testing.T) {
 	m := MakeAsyncMiddleware(log.NewNopLogger(), 5)
 	f := m(func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		c.Inc()
-		assert.Less(t, c.Load(), 5)
+		assert.Less(t, int(c.Load()), 5)
 		time.Sleep(time.Duration(rand.Float64()) * time.Second)
 		c.Dec()
 		return nil, nil

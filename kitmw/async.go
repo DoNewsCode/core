@@ -28,6 +28,7 @@ func MakeAsyncMiddleware(logger log.Logger, concurrency int) endpoint.Middleware
 				defer func() {
 					limit <- struct{}{}
 				}()
+				var err error
 				ctx := opentracing.ContextWithSpan(context.Background(), span)
 				_, err = next(ctx, request)
 				if err != nil {
