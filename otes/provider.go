@@ -2,6 +2,8 @@ package otes
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
@@ -11,7 +13,6 @@ import (
 	esConfig "github.com/olivere/elastic/v7/config"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/dig"
-	"net/http"
 )
 
 /*
@@ -116,13 +117,13 @@ func provideEsFactory(p in) (out, func()) {
 		if conf.Sniff != nil {
 			options = append(options, elastic.SetSniff(*conf.Sniff))
 		}
-
+		logger := log.With(p.Logger, "tag", "es")
 		options = append(options,
 			elastic.SetURL(conf.URL),
 			elastic.SetBasicAuth(conf.Username, conf.Password),
-			elastic.SetInfoLog(esInfoLogAdapter{p.Logger}),
-			elastic.SetErrorLog(esErrorLogAdapter{p.Logger}),
-			elastic.SetTraceLog(esTraceLogAdapter{p.Logger}),
+			elastic.SetInfoLog(esLogAdapter{level.Info(logger)}),
+			elastic.SetErrorLog(esLogAdapter{level.Error(logger)}),
+			elastic.SetTraceLog(esLogAdapter{level.Debug(logger)}),
 		)
 
 		client, err := elastic.NewClient(options...)
