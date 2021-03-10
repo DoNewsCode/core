@@ -180,6 +180,7 @@ That being said, let's redirect our attention to other goodies package core has 
 * [Tutorial](https://github.com/DoNewsCode/core/blob/master/doc/tutorial.md)
 * [GoDoc](https://pkg.go.dev/github.com/DoNewsCode/core)
 * [Demo Project](https://github.com/DoNewsCode/skeleton)
+* [Core Skeleton](https://github.com/DoNewsCode/core-skeleton)
 * [Contributing](https://github.com/DoNewsCode/core/blob/master/doc/contributing.md)
 
 ## Design Principles
