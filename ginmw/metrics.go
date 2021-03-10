@@ -15,8 +15,9 @@ import (
 // cardinality of request path is high.
 func WithMetrics(hist metrics.Histogram, keyer contract.Keyer, addPath bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		if addPath {
-			keyer = key.With(keyer, "method", c.Request.URL.Path)
+			keyer = key.With(keyer, "method", c.FullPath())
 		} else {
 			keyer = key.With(keyer, "method", "-")
 		}
