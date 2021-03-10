@@ -10,16 +10,17 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/atomic"
 )
 
 func TestMakeAsyncMiddleware(t *testing.T) {
-	var c int
+	var c atomic.Int32
 	m := MakeAsyncMiddleware(log.NewNopLogger(), 5)
 	f := m(func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		c++
-		assert.Less(t, c, 5)
+		c.Inc()
+		assert.Less(t, int(c.Load()), 5)
 		time.Sleep(time.Duration(rand.Float64()) * time.Second)
-		c--
+		c.Dec()
 		return nil, nil
 	})
 
