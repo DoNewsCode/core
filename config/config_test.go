@@ -52,16 +52,22 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	assert.Equal(t, "baz", ka.String("foo"))
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	var ch = make(chan struct{})
 	go func() {
 		ka.watcher.Watch(ctx, func() error {
+      assert.NoError(t, ka.Reload(), "reload should be successful")
 			err := ka.Reload()
 			fmt.Println(err)
+      ch <- struct{}{}
 			return nil
 		})
 	}()
 	time.Sleep(time.Second)
 	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
 	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
+  <-ch
+
 
 	// The following test is flaky on CI. Unable to reproduce locally.
 	/*

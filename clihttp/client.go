@@ -73,66 +73,72 @@ func NewClient(tracer opentracing.Tracer, options ...Option) *Client {
 
 // Do sends the request.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	req, tracer := nethttp.TraceRequest(c.tracer, req)
-	defer tracer.Finish()
+	clientSpan := c.tracer.StartSpan("HTTP Client")
+	defer clientSpan.Finish()
 
-	c.logRequest(req, tracer)
+	ext.SpanKindRPCClient.Set(clientSpan)
+	ext.HTTPUrl.Set(clientSpan, req.RequestURI)
+	ext.HTTPMethod.Set(clientSpan, req.Method)
 
+	// Inject the client span context into the headers
+	c.logRequest(req, clientSpan)
+
+	c.tracer.Inject(clientSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	response, err := c.underlying.Do(req)
 	if err != nil {
 		return response, err
 	}
 
-	c.logResponse(response, tracer)
+	c.logResponse(response, clientSpan)
 
 	return response, err
 }
 
-func (c *Client) logRequest(req *http.Request, tracer *nethttp.Tracer) {
+func (c *Client) logRequest(req *http.Request, span opentracing.Span) {
 	if req.Body == nil {
 		return
 	}
 	body, err := req.GetBody()
 	if err != nil {
-		ext.Error.Set(tracer.Span(), true)
-		tracer.Span().LogKV("error", errors.Wrap(err, "cannot get request body"))
+		ext.Error.Set(span, true)
+		span.LogKV("error", errors.Wrap(err, "cannot get request body"))
 		return
 	}
 	length, _ := strconv.Atoi(req.Header.Get(http.CanonicalHeaderKey("Content-Length")))
 	if length > c.requestLogThreshold {
-		ext.Error.Set(tracer.Span(), true)
-		tracer.Span().LogKV("request", "elided: Content-Length too large")
+		ext.Error.Set(span, true)
+		span.LogKV("request", "elided: Content-Length too large")
 		return
 	}
 	byt, err := ioutil.ReadAll(body)
 	if err != nil {
-		ext.Error.Set(tracer.Span(), true)
-		tracer.Span().LogKV("error", errors.Wrap(err, "cannot read request body"))
+		ext.Error.Set(span, true)
+		span.LogKV("error", errors.Wrap(err, "cannot read request body"))
 		return
 	}
-	if tracer.Span() != nil {
-		tracer.Span().LogKV("request", string(byt))
+	if span != nil {
+		span.LogKV("request", string(byt))
 	}
 
 }
 
-func (c *Client) logResponse(response *http.Response, tracer *nethttp.Tracer) {
+func (c *Client) logResponse(response *http.Response, span opentracing.Span) {
 	if response.Body == nil {
 		return
 	}
 	length, _ := strconv.Atoi(response.Header.Get(http.CanonicalHeaderKey("Content-Length")))
 	if length > c.responseLogThreshold {
-		tracer.Span().LogKV("response", "elided: Content-Length too large")
+		span.LogKV("response", "elided: Content-Length too large")
 		return
 	}
 	var buf bytes.Buffer
 	byt, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		ext.Error.Set(tracer.Span(), true)
-		tracer.Span().LogFields(log.Error(err))
+		ext.Error.Set(span, true)
+		span.LogFields(log.Error(err))
 	}
-	if tracer.Span() != nil {
-		tracer.Span().LogKV("response", string(byt))
+	if span != nil {
+		span.LogKV("response", string(byt))
 	}
 	buf.Write(byt)
 	response.Body = ioutil.NopCloser(&buf)

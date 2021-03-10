@@ -1,11 +1,12 @@
 package clihttp
 
 import (
-	"github.com/opentracing/opentracing-go"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/opentracing/opentracing-go/mocktracer"
 )
@@ -49,27 +50,16 @@ func TestClient_Do(t *testing.T) {
 }
 
 func TestClient_race(t *testing.T) {
-	cases := []struct {
-		name    string
-		request *http.Request
-		Option  []Option
-	}{
-		{
-			"normal",
-			func() *http.Request { r, _ := http.NewRequest("GET", "https://baidu.com", nil); return r }(),
-			[]Option{},
-		},
+	// the mock tracer is not concurrent safe.
+	//tracer := opentracing.GlobalTracer()
+	tracer := opentracing.NoopTracer{}
+	client := NewClient(tracer)
+	for i := 0; i < 100; i++ {
+		t.Run("", func(t *testing.T) {
+			t.Parallel()
+			r, _ := http.NewRequest("GET", "https://baidu.com", nil)
+			_, _ = client.Do(r)
+		})
 	}
-	for _, c := range cases {
-		c := c
-		// the mock tracer is not concurrent safe.
-		tracer := opentracing.GlobalTracer()
-		client := NewClient(tracer, c.Option...)
-		for i := 0; i < 10; i++ {
-			t.Run(c.name, func(t *testing.T) {
-				t.Parallel()
-				_, _ = client.Do(c.request)
-			})
-		}
-	}
+
 }
