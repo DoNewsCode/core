@@ -107,4 +107,7 @@ func TestRealIP(t *testing.T) {
 	req.Header.Set("X-FORWARDED-FOR", "10.0.0.1, 1.1.1.1")
 	ip := realIP(req)
 	assert.Equal(t, "10.0.0.1", ip)
+	req.Header.Set("X-FORWARDED-FOR", "10.0.0.1")
+	ip = realIP(req)
+	assert.Equal(t, "10.0.0.1", ip)
 }
