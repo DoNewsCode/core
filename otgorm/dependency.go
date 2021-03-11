@@ -1,7 +1,9 @@
 package otgorm
 
 import (
+	"errors"
 	"fmt"
+	"net"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
@@ -160,9 +162,13 @@ func provideGormConfig(l log.Logger, conf *databaseConf) *gorm.Config {
 // will fail when initializing dependencies.
 func provideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentracing.Tracer) (*gorm.DB, func(), error) {
 	db, err := gorm.Open(dialector, config)
-	if err != nil {
+
+	var nerr *net.OpError
+
+	if err != nil && !errors.As(err, &nerr) {
 		return nil, nil, err
 	}
+
 	if tracer != nil {
 		AddGormCallbacks(db, tracer)
 	}
