@@ -100,8 +100,7 @@ func provideRedisFactory(p in) (out, func()) {
 		}
 		client := redis.NewUniversalClient(&conf)
 		if p.Logger != nil {
-			logger := log.With(p.Logger, "tag", "redis")
-			redis.SetLogger(&RedisLogAdapter{level.Debug(logger)})
+			redis.SetLogger(&RedisLogAdapter{level.Debug(p.Logger)})
 		}
 		if p.Tracer != nil {
 			client.AddHook(
