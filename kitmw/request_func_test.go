@@ -101,3 +101,10 @@ func TestTransportToHTTPContext(t *testing.T) {
 
 	http.Get("http://127.0.0.1:8181/hello")
 }
+
+func TestRealIP(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.Header.Set("X-FORWARDED-FOR", "10.0.0.1, 1.1.1.1")
+	ip := realIP(req)
+	assert.Equal(t, "10.0.0.1", ip)
+}

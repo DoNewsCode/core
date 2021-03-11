@@ -61,7 +61,7 @@ func MakeUploadEndpoint(uploader Uploader) endpoint.Endpoint {
 // Middleware adds logging and error handling to the endpoint.
 func Middleware(logger log.Logger, env contract.Env) endpoint.Middleware {
 	keyer := key.New("module", "S3", "service", "upload")
-	l := kitmw.Logging(logger, keyer, env.IsLocal())
+	l := kitmw.Log(logger, keyer, env.IsLocal())
 	e := kitmw.Error(kitmw.ErrorOption{
 		AlwaysHTTP200: false,
 		ShouldRecover: env.IsProduction(),

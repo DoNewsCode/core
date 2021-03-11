@@ -34,7 +34,7 @@ func ExampleError() {
 	// *unierr.Error
 }
 
-func ExampleLogging() {
+func ExampleLog() {
 	var (
 		original endpoint.Endpoint
 		wrapped  endpoint.Endpoint
@@ -43,7 +43,7 @@ func ExampleLogging() {
 		return "respData", nil
 	}
 
-	wrapped = kitmw.Logging(
+	wrapped = kitmw.Log(
 		logging.NewLogger("json"),
 		key.New(),
 		false,

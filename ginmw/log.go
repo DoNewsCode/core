@@ -11,9 +11,9 @@ import (
 	"github.com/go-kit/kit/log/level"
 )
 
-// Logging is a gin middleware that logs access record via kitlog. The paths
+// Log is a gin middleware that logs access record via kitlog. The paths
 // defined by "ignore" argument are ignored.
-func Logging(logger log.Logger, keyer contract.Keyer, ignore ...string) gin.HandlerFunc {
+func Log(logger log.Logger, keyer contract.Keyer, ignore ...string) gin.HandlerFunc {
 	var skip map[string]struct{}
 
 	if length := len(ignore); length > 0 {
