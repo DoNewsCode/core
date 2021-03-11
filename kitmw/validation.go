@@ -11,7 +11,7 @@ type validator interface {
 	Validate() error
 }
 
-// MakeValidationMiddleware returns a middleware that validates the request by
+// Validate returns a middleware that validates the request by
 // calling Validate(). The request must implement the following interface,
 // otherwise the middleware is a no-op:
 //
@@ -19,7 +19,7 @@ type validator interface {
 //	 Validate() error
 //  }
 //
-func MakeValidationMiddleware() endpoint.Middleware {
+func Validate() endpoint.Middleware {
 	return func(in endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			if t, ok := req.(validator); ok {

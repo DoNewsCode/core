@@ -6,7 +6,7 @@ import (
 
 	"github.com/DoNewsCode/core/key"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 func TestNewEtcdDriver(t *testing.T) {

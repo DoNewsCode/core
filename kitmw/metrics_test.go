@@ -23,7 +23,7 @@ func (h *hist) Observe(value float64) {
 	h.observed = value
 }
 
-func TestMakeMetricsMiddleware(t *testing.T) {
+func TestMetrics(t *testing.T) {
 	var (
 		original endpoint.Endpoint
 		wrapped  endpoint.Endpoint
@@ -32,7 +32,7 @@ func TestMakeMetricsMiddleware(t *testing.T) {
 	original = func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		return nil, errors.New("")
 	}
-	wrapped = MakeMetricsMiddleware(&hist, key.New())(original)
+	wrapped = Metrics(&hist, key.New())(original)
 	wrapped(context.Background(), nil)
 	assert.NotZero(t, hist.observed)
 }

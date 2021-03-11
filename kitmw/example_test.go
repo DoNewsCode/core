@@ -12,7 +12,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func ExampleMakeErrorConversionMiddleware() {
+func ExampleError() {
 	var (
 		err      error
 		original endpoint.Endpoint
@@ -24,7 +24,7 @@ func ExampleMakeErrorConversionMiddleware() {
 	_, err = original(context.Background(), nil)
 	fmt.Printf("%T\n", err)
 
-	wrapped = kitmw.MakeErrorConversionMiddleware(kitmw.ErrorOption{})(original)
+	wrapped = kitmw.Error(kitmw.ErrorOption{})(original)
 
 	_, err = wrapped(context.Background(), nil)
 	fmt.Printf("%T\n", err)
@@ -34,7 +34,7 @@ func ExampleMakeErrorConversionMiddleware() {
 	// *unierr.Error
 }
 
-func ExampleMakeLoggingMiddleware() {
+func ExampleLogging() {
 	var (
 		original endpoint.Endpoint
 		wrapped  endpoint.Endpoint
@@ -43,7 +43,7 @@ func ExampleMakeLoggingMiddleware() {
 		return "respData", nil
 	}
 
-	wrapped = kitmw.MakeLoggingMiddleware(
+	wrapped = kitmw.Logging(
 		logging.NewLogger("json"),
 		key.New(),
 		false,
@@ -55,7 +55,7 @@ func ExampleMakeLoggingMiddleware() {
 	// {"request":"reqData","response":"respData"}
 }
 
-func ExampleMakeRetryMiddleware() {
+func ExampleRetry() {
 	var (
 		original endpoint.Endpoint
 		wrapped  endpoint.Endpoint
@@ -65,7 +65,10 @@ func ExampleMakeRetryMiddleware() {
 		return nil, errors.New("")
 	}
 
-	wrapped = kitmw.MakeRetryMiddleware(5, time.Hour)(original)
+	wrapped = kitmw.Retry(kitmw.RetryOption{
+		Max:     5,
+		Timeout: time.Second,
+	})(original)
 
 	wrapped(context.Background(), nil)
 
@@ -77,7 +80,7 @@ func ExampleMakeRetryMiddleware() {
 	// attempt
 }
 
-func ExampleMakeTimeoutMiddleware() {
+func ExampleTimeout() {
 	var (
 		original endpoint.Endpoint
 		wrapped  endpoint.Endpoint
@@ -91,7 +94,7 @@ func ExampleMakeTimeoutMiddleware() {
 		}
 	}
 
-	wrapped = kitmw.MakeTimeoutMiddleware(time.Microsecond)(original)
+	wrapped = kitmw.Timeout(time.Microsecond)(original)
 	_, err := wrapped(context.Background(), nil)
 	fmt.Println(err)
 

@@ -46,7 +46,7 @@ func TestWithLogger(t *testing.T) {
 			t.Parallel()
 			g := gin.New()
 			logger := MockLogger{}
-			g.Use(WithLogger(&logger, key.New("module", "foo"), c.ignore...))
+			g.Use(Logging(&logger, key.New("module", "foo"), c.ignore...))
 			g.Handle("GET", "/", func(context *gin.Context) {
 				context.String(200, "%s", "ok")
 			})

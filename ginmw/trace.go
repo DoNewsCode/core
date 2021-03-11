@@ -10,8 +10,8 @@ import (
 	stdtracing "github.com/opentracing/opentracing-go"
 )
 
-// WithTrace is a gin middleware that adds opentracing support.
-func WithTrace(tracer stdtracing.Tracer, keyer contract.Keyer) gin.HandlerFunc {
+// Trace is a gin middleware that adds opentracing support.
+func Trace(tracer stdtracing.Tracer, keyer contract.Keyer) gin.HandlerFunc {
 	return tracegin.Middleware(tracer, tracegin.OperationNameFunc(func(r *http.Request) string {
 		return key.KeepOdd(keyer).Key(".", "http", r.Method)
 	}))

@@ -3,7 +3,6 @@ package sagas
 import (
 	"context"
 
-	"github.com/go-kit/kit/endpoint"
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -26,7 +25,7 @@ type TX struct {
 	store         Store
 	correlationID string
 	session       Log
-	rollbacks     map[string]endpoint.Endpoint
+	rollbacks     map[string]func(context.Context, interface{}) (interface{}, error)
 	undoErr       *multierror.Error
 	completed     bool
 }

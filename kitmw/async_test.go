@@ -15,7 +15,7 @@ import (
 
 func TestMakeAsyncMiddleware(t *testing.T) {
 	var c atomic.Int32
-	m := MakeAsyncMiddleware(log.NewNopLogger(), 5)
+	m := Async(log.NewNopLogger(), 5)
 	f := m(func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		c.Inc()
 		assert.Less(t, int(c.Load()), 5)
@@ -37,7 +37,7 @@ func TestMakeAsyncMiddleware_tracing(t *testing.T) {
 	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "foo")
 	var done = make(chan struct{})
 
-	m := MakeAsyncMiddleware(log.NewNopLogger(), 5)
+	m := Async(log.NewNopLogger(), 5)
 	f := m(func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		span := opentracing.SpanFromContext(ctx)
 		span.SetBaggageItem("foo", "bar")

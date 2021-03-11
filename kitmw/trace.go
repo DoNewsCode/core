@@ -10,18 +10,18 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-// MakeLabeledTraceServerMiddleware returns a LabeledMiddleware that wraps the `next` Endpoint in an
+// LabeledTraceServer returns a LabeledMiddleware that wraps the `next` Endpoint in an
 // OpenTracing Span. The name of the operation is defined by contract.Keyer.
-func MakeLabeledTraceServerMiddleware(tracer stdtracing.Tracer, keyer contract.Keyer) LabeledMiddleware {
+func LabeledTraceServer(tracer stdtracing.Tracer, keyer contract.Keyer) LabeledMiddleware {
 	return func(method string, endpoint endpoint.Endpoint) endpoint.Endpoint {
 		name := key.KeepOdd(keyer).Key(".", "method", method)
 		return TraceConsumer(tracer, name, ext.SpanKindRPCServerEnum)(endpoint)
 	}
 }
 
-// MakeTraceServerMiddleware returns a Middleware that wraps the `next` Endpoint in an
+// TraceServer returns a Middleware that wraps the `next` Endpoint in an
 // OpenTracing Span. The name of the operation is defined by contract.Keyer.
-func MakeTraceServerMiddleware(tracer stdtracing.Tracer, keyer contract.Keyer) endpoint.Middleware {
+func TraceServer(tracer stdtracing.Tracer, keyer contract.Keyer) endpoint.Middleware {
 	return func(endpoint endpoint.Endpoint) endpoint.Endpoint {
 		name := key.KeepOdd(keyer).Key(".")
 		return TraceConsumer(tracer, name, ext.SpanKindRPCServerEnum)(endpoint)

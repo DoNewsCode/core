@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/dtx"
-	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/rs/xid"
@@ -15,8 +14,8 @@ import (
 // Step is a step in the Saga.
 type Step struct {
 	Name string
-	Do   endpoint.Endpoint
-	Undo endpoint.Endpoint
+	Do   func(context.Context, interface{}) (interface{}, error)
+	Undo func(context.Context, interface{}) (interface{}, error)
 }
 
 // Registry holds all transaction sagas in this process. It should be populated during the initialization of the application.
@@ -71,7 +70,7 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 		},
 		store:         r.Store,
 		correlationID: cid,
-		rollbacks:     make(map[string]endpoint.Endpoint),
+		rollbacks:     make(map[string]func(context.Context, interface{}) (interface{}, error)),
 	}
 	ctx = context.WithValue(ctx, dtx.CorrelationID, cid)
 	ctx = context.WithValue(ctx, TxContextKey, tx)
@@ -81,7 +80,7 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 
 // AddStep registers the saga steps in the registry. The registration should be done
 // during the bootstrapping of application.
-func (r *Registry) AddStep(step *Step) endpoint.Endpoint {
+func (r *Registry) AddStep(step *Step) func(context.Context, interface{}) (interface{}, error) {
 	r.steps[step.Name] = step
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		logID := xid.New().String()

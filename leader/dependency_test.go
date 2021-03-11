@@ -7,7 +7,7 @@ import (
 	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 type mockMaker struct {
