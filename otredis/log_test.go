@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func Test_redisLogAdapter_Printf(t *testing.T) {
+func TestRedisLogAdapter_Printf(t *testing.T) {
 	var buf bytes.Buffer
 	l := RedisLogAdapter{Logging: log.NewLogfmtLogger(&buf)}
 	l.Printf(context.Background(), "test %s", "logger")
