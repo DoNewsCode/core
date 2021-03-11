@@ -22,9 +22,9 @@ func IPToHTTPContext() httptransport.RequestFunc {
 	}
 }
 
-// IpToGRPCContext is a grpctransport.ServerRequestFunc that put client ip to
+// IPToGRPCContext is a grpctransport.ServerRequestFunc that put client ip to
 // context, under contract.IpKey.
-func IpToGRPCContext() grpctransport.ServerRequestFunc {
+func IPToGRPCContext() grpctransport.ServerRequestFunc {
 	return func(ctx context.Context, md metadata.MD) context.Context {
 		remote, _ := peer.FromContext(ctx)
 		ip, _, _ := net.SplitHostPort(remote.Addr.String())

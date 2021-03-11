@@ -62,7 +62,7 @@ func TestTransportToGRPCContext(t *testing.T) {
 			return i, nil
 		},
 		grpctransport.ServerBefore(TransportToGRPCContext()),
-		grpctransport.ServerBefore(IpToGRPCContext()),
+		grpctransport.ServerBefore(IPToGRPCContext()),
 	)
 
 	helloworld_v1.RegisterGreeterServer(server, gs{sayHello: *sayHello})
