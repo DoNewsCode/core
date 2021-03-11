@@ -12,7 +12,7 @@ package otredis exports the configuration in the following format:
 	  default:
 	    addrs:
 	      - 127.0.0.1:6379
-	    DB: 0
+	    db: 0
 
 To see all available configurations, use the exportConfig command.
 
