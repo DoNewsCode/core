@@ -92,9 +92,9 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 				}
 				exportedConfigs = copy
 			}
-			os.MkdirAll(filepath.Dir(outputFile), 0644)
+			os.MkdirAll(filepath.Dir(outputFile), os.ModePerm)
 			targetFile, err = os.OpenFile(outputFile,
-				handler.flags(), 0644)
+				handler.flags(), os.ModePerm)
 			if err != nil {
 				return errors.Wrap(err, "failed to open config file")
 			}
