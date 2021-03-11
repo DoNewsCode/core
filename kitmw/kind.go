@@ -1,6 +1,8 @@
 package kitmw
 
 const (
-	HTTPKind string = "HTTP" // HTTPKind stands for HTTP transport
-	GRPCKind string = "GRPC" // GRPCKind stands for GRPC transport
+	// HTTPKind stands for HTTP transport
+	HTTPKind string = "HTTP"
+	// GRPCKind stands for GRPC transport
+	GRPCKind string = "GRPC"
 )
