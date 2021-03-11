@@ -98,10 +98,9 @@ func provideRedisFactory(p in) (out, func()) {
 		if p.Interceptor != nil {
 			p.Interceptor(name, &conf)
 		}
+		redis.SetLogger(&RedisLogAdapter{level.Debug(p.Logger)})
+
 		client := redis.NewUniversalClient(&conf)
-		if p.Logger != nil {
-			redis.SetLogger(&RedisLogAdapter{level.Debug(p.Logger)})
-		}
 		if p.Tracer != nil {
 			client.AddHook(
 				hook{
