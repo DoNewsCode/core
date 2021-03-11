@@ -6,7 +6,7 @@ import (
 	"github.com/go-kit/kit/log"
 )
 
-// redisLogAdapter is an adapter between kitlog and redis logger interface
+// RedisLogAdapter is an adapter between kitlog and redis logger interface
 type RedisLogAdapter struct {
 	Logging log.Logger
 }
