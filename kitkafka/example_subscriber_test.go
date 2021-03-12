@@ -133,12 +133,14 @@ func Example_subscriber() {
 
 	c.Provide(otkafka.Providers())
 
-	c.Invoke(func(factory kitkafka.ReaderFactory) {
-		uppercaseServer, err := factory.MakeSubscriberServer("uppercase", uppercaseHandler)
+	c.Invoke(func(maker otkafka.ReaderMaker) {
+		uppercaseReader, _ := maker.Make("uppercase")
+		countReader, _ := maker.Make("count")
+		uppercaseServer, err := kitkafka.MakeSubscriberServer(uppercaseReader, uppercaseHandler)
 		if err != nil {
 			panic(err)
 		}
-		countServer, err := factory.MakeSubscriberServer("count", countHandler)
+		countServer, err := kitkafka.MakeSubscriberServer(countReader, countHandler)
 		if err != nil {
 			panic(err)
 		}

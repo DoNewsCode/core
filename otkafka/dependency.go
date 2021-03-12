@@ -58,6 +58,8 @@ type out struct {
 	WriterFactory WriterFactory
 	ReaderMaker   ReaderMaker
 	WriterMaker   WriterMaker
+	Reader        *kafka.Reader
+	Writer        *kafka.Writer
 }
 
 // provideKafkaFactory creates the ReaderFactory and WriterFactory. It is
@@ -68,11 +70,15 @@ type out struct {
 func provideKafkaFactory(p in) (out, func(), func(), error) {
 	rf, rc := provideReaderFactory(p)
 	wf, wc := provideWriterFactory(p)
+	dr, _ := rf.Make("default")
+	dw, _ := wf.Make("default")
 	return out{
 		ReaderMaker:   rf,
 		ReaderFactory: rf,
 		WriterMaker:   wf,
 		WriterFactory: wf,
+		Reader:        dr,
+		Writer:        dw,
 	}, wc, rc, nil
 }
 

@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/otkafka"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DoNewsCode/core/logging"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -20,60 +21,58 @@ func TestTransport(t *testing.T) {
 
 	kafka.DialLeader(context.Background(), "tcp", "localhost:9092", "Test", 0)
 
-	writerFactory, cleanupWriter := otkafka.provideWriterFactory(otkafka.in{
-		Conf: config.MapAdapter{"kafka.writer": map[string]otkafka.WriterConfig{
-			"default": {
-				Brokers: []string{"127.0.0.1:9092"},
-				Topic:   "test",
-			},
-		}},
-		Logger: logging.NewLogger("logfmt"),
-	})
-	defer cleanupWriter()
+	c := core.Default(
+		core.SetConfigProvider(func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor {
+			return config.MapAdapter{"kafka.writer": map[string]otkafka.WriterConfig{
+				"default": {
+					Brokers: []string{"127.0.0.1:9092"},
+					Topic:   "test",
+				},
+			}, "kafka.reader": map[string]otkafka.ReaderConfig{
+				"default": {
+					Brokers: []string{"127.0.0.1:9092"},
+					Topic:   "test",
+				},
+			}}
+		}),
+	)
+	c.Provide(otkafka.Providers())
 
-	readerFactory, cleanupReader := otkafka.provideReaderFactory(otkafka.in{
-		Conf: config.MapAdapter{"kafka.reader": map[string]otkafka.ReaderConfig{
-			"default": {
-				Brokers: []string{"127.0.0.1:9092"},
-				Topic:   "test",
-			},
-		}},
-		Logger: logging.NewLogger("logfmt"),
-	})
-	defer cleanupReader()
+	c.Invoke(func(r *kafka.Reader, w *kafka.Writer) {
+		// write test data
+		h, err := MakeClient(w)
+		assert.NoError(t, err)
 
-	// write test data
-	h, err := writerFactory.MakeClient("default")
-	assert.NoError(t, err)
+		err = h.Handle(context.Background(), kafka.Message{
+			Value: []byte("hello"),
+		})
+		assert.NoError(t, err)
 
-	err = h.Handle(context.Background(), kafka.Message{
-		Value: []byte("hello"),
-	})
-	assert.NoError(t, err)
+		// consume test data
+		var consumed = false
 
-	// consume test data
-	var consumed = false
-
-	endpoint := func(ctx context.Context, message interface{}) (interface{}, error) {
-		if message.(string) != "hello" {
-			t.Fatalf("want hello, got %s", message)
+		endpoint := func(ctx context.Context, message interface{}) (interface{}, error) {
+			if message.(string) != "hello" {
+				t.Fatalf("want hello, got %s", message)
+			}
+			consumed = true
+			return nil, nil
 		}
-		consumed = true
-		return nil, nil
-	}
-	sub, err := readerFactory.MakeSubscriberServer("default", NewSubscriber(endpoint, func(ctx context.Context, message *kafka.Message) (request interface{}, err error) {
-		return string(message.Value), nil
-	}))
+		sub, err := MakeSubscriberServer(r, NewSubscriber(endpoint, func(ctx context.Context, message *kafka.Message) (request interface{}, err error) {
+			return string(message.Value), nil
+		}))
 
-	assert.NoError(t, err)
+		assert.NoError(t, err)
 
-	err = sub.serveOnce(context.Background())
+		err = sub.serveOnce(context.Background())
 
-	assert.NoError(t, err)
+		assert.NoError(t, err)
 
-	if !consumed {
-		t.Fatal("failed to consume the message")
-	}
+		if !consumed {
+			t.Fatal("failed to consume the message")
+		}
+	})
+
 }
 
 type mockReader struct {
