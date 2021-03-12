@@ -6,32 +6,41 @@ import (
 	"github.com/DoNewsCode/core/contract"
 )
 
+const (
+	EnvLocal       Env = "local"
+	EnvTesting     Env = "testing"
+	EnvDevelopment Env = "development"
+	EnvStaging     Env = "staging"
+	EnvProduction  Env = "production"
+	EnvUnknown     Env = "unknown"
+)
+
 // Env is the environment of the application. It is primarily used as dependency injection symbol
 type Env string
 
 // IsLocal returns true if the environment is local
 func (e Env) IsLocal() bool {
-	return e == "local"
+	return e == EnvLocal
 }
 
 // IsTesting returns true if the environment is testing
 func (e Env) IsTesting() bool {
-	return e == "testing"
+	return e == EnvTesting
 }
 
 // IsDevelopment returns true if the environment is development
 func (e Env) IsDevelopment() bool {
-	return e == "development"
+	return e == EnvDevelopment
 }
 
 // IsStaging returns true if the environment is staging
 func (e Env) IsStaging() bool {
-	return e == "staging"
+	return e == EnvStaging
 }
 
 // IsProduction returns true if the environment is production
 func (e Env) IsProduction() bool {
-	return e == "production"
+	return e == EnvProduction
 }
 
 // String returns the string form of the environment. This is a lowercase full word, such as production.
@@ -43,22 +52,20 @@ func (e Env) String() string {
 // For example, prod, PROD, production and PRODUCTION produces the same type. It is recommended to use one of
 // "production", "staging", "development", "local", or "testing" as output to avoid unexpected outcome.
 func NewEnv(env string) Env {
-	if strings.EqualFold("prod", env) || strings.EqualFold("production", env) {
-		return "production"
+	switch strings.ToLower(env) {
+	case "production", "prod", "online":
+		return EnvProduction
+	case "pre-prod", "staging":
+		return EnvStaging
+	case "development", "develop", "dev":
+		return EnvDevelopment
+	case "local":
+		return EnvLocal
+	case "testing", "test":
+		return EnvTesting
+	default:
+		return EnvUnknown
 	}
-	if strings.EqualFold("pre-prod", env) || strings.EqualFold("staging", env) {
-		return "staging"
-	}
-	if strings.EqualFold("development", env) || strings.EqualFold("dev", env) {
-		return "development"
-	}
-	if strings.EqualFold("local", env) {
-		return "local"
-	}
-	if strings.EqualFold("testing", env) {
-		return "testing"
-	}
-	return "unknown"
 }
 
 // NewEnvFromConf reads the name of application from configuration's "env" entry.

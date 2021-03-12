@@ -6,20 +6,37 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var cases = []struct {
+	name string
+	env  string
+	want Env
+}{
+	{"env-lower", "local", EnvLocal},
+	{"env-upper", "LOCAL", EnvLocal},
+	{"env-long", "production", EnvProduction},
+	{"env-short", "prod", EnvProduction},
+	{"env-alias", "online", EnvProduction},
+	{"env-alias", "pre-prod", EnvStaging},
+}
+
 func TestEnv_String(t *gotesting.T) {
 	t.Parallel()
-	assertion := assert.New(t)
-	assertion.Equal("local", NewEnv("LOCAL").String())
-	assertion.Equal("staging", NewEnv("STAGING").String())
-	assertion.Equal("development", NewEnv("DEV").String())
-	assertion.Equal("production", NewEnv("PRODUCTION").String())
-	assertion.Equal("testing", NewEnv("TESTING").String())
+	for _, c := range cases {
+		t.Run(c.name, func(t *gotesting.T) {
+			env := NewEnv(c.env)
+			assert.Equal(t, c.want, env)
+		})
+	}
 }
 
 func TestNewEnvFromConf(t *gotesting.T) {
 	t.Parallel()
-	env := NewEnvFromConf(MapAdapter(map[string]interface{}{
-		"env": "local",
-	}))
-	assert.Equal(t, "local", env.String())
+	for _, c := range cases {
+		t.Run(c.name, func(t *gotesting.T) {
+			env := NewEnvFromConf(MapAdapter(map[string]interface{}{
+				"env": c.env,
+			}))
+			assert.Equal(t, c.want, env)
+		})
+	}
 }

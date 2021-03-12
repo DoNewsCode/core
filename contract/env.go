@@ -5,6 +5,7 @@ type Env interface {
 	IsLocal() bool
 	IsDevelopment() bool
 	IsTesting() bool
+	IsStaging() bool
 	IsProduction() bool
 	String() string
 }
