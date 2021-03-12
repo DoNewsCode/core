@@ -6,13 +6,20 @@ import (
 	"github.com/DoNewsCode/core/contract"
 )
 
+// global static variables for Env
 const (
-	EnvLocal       Env = "local"
-	EnvTesting     Env = "testing"
+	// local
+	EnvLocal Env = "local"
+	// testing
+	EnvTesting Env = "testing"
+	// development
 	EnvDevelopment Env = "development"
-	EnvStaging     Env = "staging"
-	EnvProduction  Env = "production"
-	EnvUnknown     Env = "unknown"
+	// staging
+	EnvStaging Env = "staging"
+	// production
+	EnvProduction Env = "production"
+	// unknown
+	EnvUnknown Env = "unknown"
 )
 
 // Env is the environment of the application. It is primarily used as dependency injection symbol
