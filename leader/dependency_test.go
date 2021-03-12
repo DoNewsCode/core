@@ -63,7 +63,7 @@ func TestDetermineDriver(t *testing.T) {
 		Driver:     nil,
 		Maker:      nil,
 		AppName:    config.AppName("foo"),
-		Env:        config.Env("testing"),
+		Env:        config.EnvTesting,
 	}
 	err := determineDriver(&p)
 	assert.Error(t, err)
@@ -74,7 +74,7 @@ func TestDetermineDriver(t *testing.T) {
 		Driver:     nil,
 		Maker:      maker,
 		AppName:    config.AppName("foo"),
-		Env:        config.Env("testing"),
+		Env:        config.EnvTesting,
 	}
 	err = determineDriver(&p)
 	assert.Error(t, err)

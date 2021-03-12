@@ -65,7 +65,7 @@ func ProvideEnv(conf contract.ConfigAccessor) contract.Env {
 	var env config.Env
 	err := conf.Unmarshal("env", &env)
 	if err != nil {
-		return config.NewEnv("local")
+		return config.EnvLocal
 	}
 	return env
 }
