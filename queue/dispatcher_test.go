@@ -156,7 +156,7 @@ func TestDispatcher_work(t *testing.T) {
 				failed++
 				return nil
 			}))
-			msg, err := dispatcher.packer.Compress(c.value.Data())
+			msg, err := dispatcher.packer.Marshal(c.value.Data())
 			assert.NoError(t, err)
 			dispatcher.work(context.Background(), &PersistedEvent{
 				Key:         c.value.Type(),

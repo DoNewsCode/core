@@ -2,7 +2,6 @@ package sagas
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/DoNewsCode/core/contract"
@@ -22,18 +21,11 @@ type Step struct {
 	DecodeParam func([]byte) (interface{}, error)
 }
 
-// Codec is an interface for serialization and deserialization.
-type Codec interface {
-	Unmarshal(data []byte, value interface{}) error
-	Marshal(value interface{}) ([]byte, error)
-}
-
 // Registry holds all transaction sagas in this process. It should be populated during the initialization of the application.
 type Registry struct {
 	logger     log.Logger
 	Store      Store
 	timeout    time.Duration
-	codec      Codec
 	dispatcher contract.Dispatcher
 }
 
@@ -170,18 +162,4 @@ func (r *Registry) Recover(ctx context.Context) {
 		ctx = context.WithValue(ctx, TxContextKey, &tx)
 		_ = r.dispatcher.Dispatch(ctx, rollbackEvent{name: log.StepName, request: log.StepParam})
 	}
-}
-
-func (r *Registry) marshal(param interface{}) ([]byte, error) {
-	if r.codec != nil {
-		return r.codec.Marshal(param)
-	}
-	return json.Marshal(param)
-}
-
-func (r *Registry) unmarshal(bytes []byte, param interface{}) error {
-	if r.codec != nil {
-		return r.codec.Unmarshal(bytes, param)
-	}
-	return json.Unmarshal(bytes, param)
 }
