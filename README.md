@@ -206,9 +206,9 @@ That being said, let's redirect our attention to other goodies package core has 
 - Tries to reimplement the functionality provided by modern platforms.
 
 ## Suggested service framework
-- Gin (if HTTP only)
-- Go Kit (if multiple transports)
-- Go Zero
+- [Gin](https://github.com/DoNewsCode/core-gin) (if HTTP only)
+- [Go Kit](https://github.com/DoNewsCode/core-kit) (if multiple transports)
+- Kratos (when v2 is ready)
 
 
 
