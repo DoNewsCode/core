@@ -2,28 +2,39 @@ package sagas
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"time"
 
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/dtx"
+	"github.com/DoNewsCode/core/events"
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/pkg/errors"
 	"github.com/rs/xid"
 )
 
 // Step is a step in the Saga.
 type Step struct {
-	Name string
-	Do   func(context.Context, interface{}) (interface{}, error)
-	Undo func(context.Context, interface{}) (interface{}, error)
+	Name        string
+	Do          func(context.Context, interface{}) (interface{}, error)
+	Undo        func(ctx context.Context, req interface{}) error
+	EncodeParam func(interface{}) ([]byte, error)
+	DecodeParam func([]byte) (interface{}, error)
+}
+
+// Codec is an interface for serialization and deserialization.
+type Codec interface {
+	Unmarshal(data []byte, value interface{}) error
+	Marshal(value interface{}) ([]byte, error)
 }
 
 // Registry holds all transaction sagas in this process. It should be populated during the initialization of the application.
 type Registry struct {
-	logger  log.Logger
-	Store   Store
-	steps   map[string]*Step
-	timeout time.Duration
+	logger     log.Logger
+	Store      Store
+	timeout    time.Duration
+	codec      Codec
+	dispatcher contract.Dispatcher
 }
 
 // Option is the functional option for NewRegistry.
@@ -47,10 +58,10 @@ func WithTimeout(duration time.Duration) Option {
 // NewRegistry creates a new Registry.
 func NewRegistry(store Store, opts ...Option) *Registry {
 	r := &Registry{
-		logger:  log.NewNopLogger(),
-		Store:   store,
-		timeout: 10 * time.Minute,
-		steps:   make(map[string]*Step),
+		dispatcher: &events.SyncDispatcher{},
+		logger:     log.NewNopLogger(),
+		Store:      store,
+		timeout:    10 * time.Minute,
 	}
 	for _, f := range opts {
 		f(r)
@@ -69,8 +80,9 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 			LogType:       Session,
 		},
 		store:         r.Store,
+		dispatcher:    r.dispatcher,
 		correlationID: cid,
-		rollbacks:     make(map[string]func(context.Context, interface{}) (interface{}, error)),
+		rollbacks:     make(map[string]rollbackEvent),
 	}
 	ctx = context.WithValue(ctx, dtx.CorrelationID, cid)
 	ctx = context.WithValue(ctx, TxContextKey, tx)
@@ -81,8 +93,36 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 // AddStep registers the saga steps in the registry. The registration should be done
 // during the bootstrapping of application.
 func (r *Registry) AddStep(step *Step) func(context.Context, interface{}) (interface{}, error) {
-	r.steps[step.Name] = step
+	r.dispatcher.Subscribe(events.Listen(
+		[]contract.Event{rollbackEvent{name: step.Name, request: []byte{}}},
+		func(ctx context.Context, event contract.Event) error {
+			request := event.Data()
+			logID := xid.New().String()
+			tx := TxFromContext(ctx)
+
+			compensateLog := Log{
+				ID:            logID,
+				correlationID: tx.correlationID,
+				StartedAt:     time.Now(),
+				LogType:       Undo,
+				StepName:      step.Name,
+				StepParam:     event.Data(),
+			}
+			if _, ok := event.Data().([]byte); step.DecodeParam != nil && ok {
+				var err error
+				request, err = step.DecodeParam(event.Data().([]byte))
+				if err != nil {
+					return errors.Wrap(err, "unable to encode step parameter")
+				}
+			}
+			must(tx.store.Log(ctx, compensateLog))
+			err := step.Undo(ctx, request)
+			must(tx.store.Ack(ctx, logID, err))
+
+			return err
+		}))
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		data := request
 		logID := xid.New().String()
 		tx := TxFromContext(ctx)
 		if tx.completed {
@@ -96,23 +136,16 @@ func (r *Registry) AddStep(step *Step) func(context.Context, interface{}) (inter
 			StepName:      step.Name,
 			StepParam:     request,
 		}
-		must(tx.store.Log(ctx, stepLog))
-		tx.rollbacks[step.Name] = func(ctx context.Context, _ interface{}) (response interface{}, err error) {
-			logID := xid.New().String()
-			compensateLog := Log{
-				ID:            logID,
-				correlationID: tx.correlationID,
-				StartedAt:     time.Now(),
-				LogType:       Undo,
-				StepName:      step.Name,
-				StepParam:     request,
+		if step.EncodeParam != nil {
+			data, err = step.EncodeParam(request)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to encode step parameter")
 			}
-			must(tx.store.Log(ctx, compensateLog))
-			resp, err := step.Undo(ctx, request)
-			must(tx.store.Ack(ctx, logID, err))
-
-			return resp, err
+			stepLog.StepParam = data
 		}
+
+		must(tx.store.Log(ctx, stepLog))
+		tx.rollbacks[step.Name] = rollbackEvent{name: step.Name, request: data}
 		response, err = step.Do(ctx, request)
 		must(tx.store.Ack(ctx, logID, err))
 		return response, err
@@ -129,29 +162,26 @@ func (r *Registry) Recover(ctx context.Context) {
 		if log.StartedAt.Add(r.timeout).After(time.Now()) {
 			continue
 		}
-		if _, ok := r.steps[log.StepName]; !ok {
-			level.Warn(r.logger).Log(
-				"msg",
-				fmt.Sprintf("saga step %s not registered", log.StepName),
-			)
-		}
 		tx := TX{
 			correlationID: log.correlationID,
 			store:         r.Store,
 		}
 		ctx = context.WithValue(ctx, dtx.CorrelationID, tx.correlationID)
-		logID := xid.New().String()
-		compensateLog := Log{
-			ID:            logID,
-			correlationID: tx.correlationID,
-			StartedAt:     time.Now(),
-			LogType:       Undo,
-			StepName:      log.StepName,
-			StepParam:     log.StepParam,
-		}
-
-		must(tx.store.Log(ctx, compensateLog))
-		_, err := r.steps[log.StepName].Undo(ctx, log.StepParam)
-		must(tx.store.Ack(ctx, logID, err))
+		ctx = context.WithValue(ctx, TxContextKey, &tx)
+		_ = r.dispatcher.Dispatch(ctx, rollbackEvent{name: log.StepName, request: log.StepParam})
 	}
+}
+
+func (r *Registry) marshal(param interface{}) ([]byte, error) {
+	if r.codec != nil {
+		return r.codec.Marshal(param)
+	}
+	return json.Marshal(param)
+}
+
+func (r *Registry) unmarshal(bytes []byte, param interface{}) error {
+	if r.codec != nil {
+		return r.codec.Unmarshal(bytes, param)
+	}
+	return json.Unmarshal(bytes, param)
 }
