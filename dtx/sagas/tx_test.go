@@ -3,6 +3,7 @@ package sagas
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/go-multierror"
@@ -15,25 +16,25 @@ func TestSaga_success(t *testing.T) {
 	r := NewRegistry(store)
 
 	ep1 := r.AddStep(&Step{
-		"one",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "one",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, nil
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			value--
-			return nil, nil
+			return nil
 		},
 	})
 	ep2 := r.AddStep(&Step{
-		"two",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "two",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, nil
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			value--
-			return nil, nil
+			return nil
 		},
 	})
 
@@ -50,26 +51,26 @@ func TestSaga_failure(t *testing.T) {
 	r := NewRegistry(store)
 
 	ep1 := r.AddStep(&Step{
-		"one",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "one",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, nil
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			value--
-			return nil, nil
+			return nil
 		},
 	})
 
 	ep2 := r.AddStep(&Step{
-		"two",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "two",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, errors.New("")
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			value--
-			return nil, nil
+			return nil
 		},
 	})
 
@@ -87,31 +88,31 @@ func TestSaga_recovery(t *testing.T) {
 	var r = NewRegistry(store, WithTimeout(0))
 	var errTest = errors.New("test")
 	ep1 := r.AddStep(&Step{
-		"one",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "one",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, nil
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			value--
-			return nil, nil
+			return nil
 		},
 	})
 
 	ep2 := r.AddStep(&Step{
 
-		"two",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "two",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, errors.New("")
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			if attempt == 0 {
 				attempt++
-				return nil, errTest
+				return errTest
 			}
 			value--
-			return nil, nil
+			return nil
 
 		},
 	})
@@ -135,29 +136,29 @@ func TestSaga_panic(t *testing.T) {
 	var r = NewRegistry(store, WithTimeout(0))
 
 	ep1 := r.AddStep(&Step{
-		"one",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "one",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, nil
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			value--
-			return nil, nil
+			return nil
 		},
 	})
 	ep2 := r.AddStep(&Step{
-		"two",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "two",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, errors.New("")
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			if attempt == 0 {
 				attempt++
 				panic("err")
 			}
 			value--
-			return nil, nil
+			return nil
 		},
 	})
 
@@ -179,23 +180,23 @@ func TestSaga_shortCircuit(t *testing.T) {
 	var r = NewRegistry(store, WithTimeout(0))
 
 	ep1 := r.AddStep(&Step{
-		"one",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "one",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, nil
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			value--
-			return nil, nil
+			return nil
 		},
 	})
 
 	r.AddStep(&Step{
-		"two",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "two",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			panic("should not reach")
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			panic("should not reach")
 		},
 	})
@@ -213,16 +214,16 @@ func TestSaga_emptyRecover(t *testing.T) {
 	var r = NewRegistry(store, WithTimeout(0))
 
 	ep := r.AddStep(&Step{
-		"two",
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Name: "two",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
 			value++
 			return nil, errors.New("foo")
 		},
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		Undo: func(ctx context.Context, req interface{}) error {
 			if attempt == 0 {
 				attempt++
 				value--
-				return nil, nil
+				return nil
 			}
 			panic("err")
 		},
@@ -236,5 +237,36 @@ func TestSaga_emptyRecover(t *testing.T) {
 	}()
 
 	ep(ctx, nil)
+
+}
+
+func TestSaga_decode_encode(t *testing.T) {
+	var store = &InProcessStore{}
+	var r = NewRegistry(store, WithTimeout(0))
+	var called int
+	ep := r.AddStep(&Step{
+		Name: "two",
+		Do: func(ctx context.Context, req interface{}) (interface{}, error) {
+			assert.Equal(t, "FOO", req)
+			return nil, errors.New("foo")
+		},
+		Undo: func(ctx context.Context, req interface{}) error {
+			assert.Equal(t, "FOO", req)
+			return nil
+		},
+		DecodeParam: func(bytes []byte) (interface{}, error) {
+			called++
+			return strings.ToUpper(string(bytes)), nil
+		},
+		EncodeParam: func(i interface{}) ([]byte, error) {
+			called++
+			return []byte(strings.ToLower(i.(string))), nil
+		},
+	})
+	tx, ctx := r.StartTX(context.Background())
+	ep(ctx, "FOO")
+	tx.Rollback(ctx)
+	assert.LessOrEqual(t, 2, called)
+	assert.Equal(t, "foo", string(store.transactions[tx.correlationID][1].StepParam.([]byte)))
 
 }

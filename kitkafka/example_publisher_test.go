@@ -6,10 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/kitkafka"
+	"github.com/DoNewsCode/core/otkafka"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/segmentio/kafka-go"
@@ -48,7 +50,7 @@ func Example_publisher() {
 	kafka.DialLeader(context.Background(), "tcp", "127.0.0.1:9092", "count", 0)
 
 	c := core.Default(core.SetConfigProvider(func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor {
-		return config.MapAdapter{"kafka.writer": map[string]kitkafka.WriterConfig{
+		return config.MapAdapter{"kafka.writer": map[string]otkafka.WriterConfig{
 			"uppercase": {
 				Brokers: []string{"127.0.0.1:9092"},
 				Topic:   "uppercase",
@@ -62,11 +64,13 @@ func Example_publisher() {
 		return log.NewNopLogger()
 	}))
 	defer c.Shutdown()
-	c.Provide(kitkafka.Providers())
+	c.Provide(otkafka.Providers())
 
-	c.Invoke(func(maker kitkafka.WriterFactory) {
-		uppercaseClient, _ := maker.MakeClient("uppercase")
-		countClient, _ := maker.MakeClient("count")
+	c.Invoke(func(maker otkafka.WriterFactory) {
+		uppercaseWriter, _ := maker.Make("uppercase")
+		countWriter, _ := maker.Make("count")
+		uppercaseClient, _ := kitkafka.MakeClient(uppercaseWriter)
+		countClient, _ := kitkafka.MakeClient(countWriter)
 
 		uppercaseEndpoint := kitkafka.NewPublisher(uppercaseClient, encodeJSONRequest).Endpoint()
 		countEndpoint := kitkafka.NewPublisher(countClient, encodeJSONRequest).Endpoint()

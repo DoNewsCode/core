@@ -11,7 +11,7 @@ import (
 
 func ExampleWithContext() {
 	g := gin.New()
-	g.Use(WithContext())
+	g.Use(Context())
 	g.Handle("GET", "/", func(context *gin.Context) {
 		context.String(200, "the request path is %s",
 			context.Request.Context().Value(contract.RequestUrlKey))
@@ -20,7 +20,7 @@ func ExampleWithContext() {
 
 func ExampleWithTrace() {
 	g := gin.New()
-	g.Use(WithTrace(opentracing.GlobalTracer(), key.New("module", "foo")))
+	g.Use(Trace(opentracing.GlobalTracer(), key.New("module", "foo")))
 	g.Handle("GET", "/", func(context *gin.Context) {
 		// Do stuff
 	})
@@ -28,7 +28,7 @@ func ExampleWithTrace() {
 
 func ExampleWithMetrics() {
 	g := gin.New()
-	g.Use(WithMetrics(prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+	g.Use(Metrics(prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
 		Name: "request_duration_seconds",
 		Help: "Total time spent serving requests.",
 	}, []string{"module", "method"}), key.New("module", "foo"), false))

@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWithContext(t *testing.T) {
+func TestContext(t *testing.T) {
 	t.Parallel()
 	req := httptest.NewRequest("GET", "http://example.com/foo", nil)
 	g := gin.New()
-	g.Use(WithContext())
+	g.Use(Context())
 	g.Handle("GET", "/foo", func(context *gin.Context) {
 		assert.Equal(t, "/foo", context.Request.Context().Value(contract.RequestUrlKey))
 		context.String(200, "%s", "ok")

@@ -3,7 +3,7 @@ package sagas
 import (
 	"context"
 
-	"github.com/go-kit/kit/endpoint"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -24,9 +24,10 @@ type Store interface {
 // by directly assigning its public members.
 type TX struct {
 	store         Store
+	dispatcher    contract.Dispatcher
 	correlationID string
 	session       Log
-	rollbacks     map[string]endpoint.Endpoint
+	rollbacks     map[string]rollbackEvent
 	undoErr       *multierror.Error
 	completed     bool
 }
@@ -39,8 +40,8 @@ func (tx *TX) Commit(ctx context.Context) error {
 
 // Rollback rollbacks the current transaction.
 func (tx *TX) Rollback(ctx context.Context) error {
-	for _, call := range tx.rollbacks {
-		_, err := call(ctx, nil)
+	for _, event := range tx.rollbacks {
+		err := tx.dispatcher.Dispatch(ctx, event)
 		if err != nil {
 			tx.undoErr = multierror.Append(tx.undoErr, err)
 		}

@@ -30,8 +30,8 @@ func TestNew(t *testing.T) {
 				Do: func(ctx context.Context, request interface{}) (response interface{}, err error) {
 					return 1, nil
 				},
-				Undo: func(ctx context.Context, req interface{}) (response interface{}, err error) {
-					return nil, nil
+				Undo: func(ctx context.Context, req interface{}) (err error) {
+					return nil
 				},
 			},
 		}

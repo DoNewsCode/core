@@ -13,9 +13,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// MakeLoggingMiddleware returns a middleware the logs every request and response at debug
+// Log returns a middleware the logs every request and response at debug
 // level.
-func MakeLoggingMiddleware(logger log.Logger, keyer contract.Keyer, printTrace bool) endpoint.Middleware {
+func Log(logger log.Logger, keyer contract.Keyer, printTrace bool) endpoint.Middleware {
 	return func(endpoint endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			l := logging.WithContext(level.Debug(logger), ctx)
@@ -36,8 +36,9 @@ func MakeLoggingMiddleware(logger log.Logger, keyer contract.Keyer, printTrace b
 	}
 }
 
-func MakeLabeledLoggingMiddleware(logger log.Logger, keyer contract.Keyer, printTrace bool) LabeledMiddleware {
+// LabeledLogging returns a labeled version of logging middleware.
+func LabeledLogging(logger log.Logger, keyer contract.Keyer, printTrace bool) LabeledMiddleware {
 	return func(method string, endpoint endpoint.Endpoint) endpoint.Endpoint {
-		return MakeLoggingMiddleware(logger, key.With(keyer, "method", method), printTrace)(endpoint)
+		return Log(logger, key.With(keyer, "method", method), printTrace)(endpoint)
 	}
 }

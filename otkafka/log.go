@@ -1,4 +1,4 @@
-package kitkafka
+package otkafka
 
 import (
 	"fmt"

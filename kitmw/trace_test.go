@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMakeTraceServerMiddleware(t *testing.T) {
+func TestTraceServer(t *testing.T) {
 	var (
 		original endpoint.Endpoint
 		wrapped  endpoint.Endpoint
@@ -21,7 +21,7 @@ func TestMakeTraceServerMiddleware(t *testing.T) {
 	original = func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		return nil, errors.New("")
 	}
-	wrapped = MakeTraceServerMiddleware(tracer, key.New())(original)
+	wrapped = TraceServer(tracer, key.New())(original)
 	wrapped(context.Background(), nil)
 	assert.NotEmpty(t, tracer.FinishedSpans())
 }

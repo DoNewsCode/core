@@ -18,7 +18,7 @@ func (m *MockLogger) Log(keyvals ...interface{}) error {
 	return nil
 }
 
-func TestWithLogger(t *testing.T) {
+func TestLog(t *testing.T) {
 	cases := []struct {
 		name   string
 		ignore []string
@@ -46,7 +46,7 @@ func TestWithLogger(t *testing.T) {
 			t.Parallel()
 			g := gin.New()
 			logger := MockLogger{}
-			g.Use(WithLogger(&logger, key.New("module", "foo"), c.ignore...))
+			g.Use(Log(&logger, key.New("module", "foo"), c.ignore...))
 			g.Handle("GET", "/", func(context *gin.Context) {
 				context.String(200, "%s", "ok")
 			})

@@ -41,10 +41,10 @@ func orderEndpoint(ctx context.Context, request interface{}) (response interface
 	}, nil
 }
 
-func orderCancelEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
+func orderCancelEndpoint(ctx context.Context, request interface{}) (err error) {
 	correlationID := ctx.Value(dtx.CorrelationID).(string)
 	delete(orderTable, correlationID)
-	return nil, nil
+	return nil
 }
 
 func paymentEndpoint(ctx context.Context, request interface{}) (response interface{}, err error) {
@@ -60,10 +60,10 @@ func paymentEndpoint(ctx context.Context, request interface{}) (response interfa
 	}, nil
 }
 
-func paymentCancelEndpoint(ctx context.Context) (response interface{}, err error) {
+func paymentCancelEndpoint(ctx context.Context) (err error) {
 	correlationID := ctx.Value(dtx.CorrelationID).(string)
 	delete(paymentTable, correlationID)
-	return nil, nil
+	return nil
 }
 
 func Example() {
@@ -79,7 +79,7 @@ func Example() {
 			// Convert the response to next request
 			return resp, nil
 		},
-		Undo: func(ctx context.Context, req interface{}) (response interface{}, err error) {
+		Undo: func(ctx context.Context, req interface{}) (err error) {
 			return orderCancelEndpoint(ctx, req)
 		},
 	})
@@ -92,7 +92,7 @@ func Example() {
 			}
 			return resp, nil
 		},
-		Undo: func(ctx context.Context, req interface{}) (response interface{}, err error) {
+		Undo: func(ctx context.Context, req interface{}) (err error) {
 			return paymentCancelEndpoint(ctx)
 		},
 	})

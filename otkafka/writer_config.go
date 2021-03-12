@@ -1,4 +1,4 @@
-package kitkafka
+package otkafka
 
 import (
 	"time"
@@ -80,4 +80,19 @@ type WriterConfig struct {
 	// the returned value. Use this only if you don't care about guarantees of
 	// whether the messages were written to kafka.
 	Async bool `json:"async" yaml:"async"`
+}
+
+func fromWriterConfig(config WriterConfig) kafka.Writer {
+	return kafka.Writer{
+		Addr:         kafka.TCP(config.Brokers...),
+		Topic:        config.Topic,
+		MaxAttempts:  config.MaxAttempts,
+		BatchSize:    config.BatchSize,
+		BatchBytes:   int64(config.BatchBytes),
+		BatchTimeout: config.BatchTimeout,
+		ReadTimeout:  config.ReadTimeout,
+		WriteTimeout: config.WriteTimeout,
+		RequiredAcks: kafka.RequiredAcks(config.RequiredAcks),
+		Async:        config.Async,
+	}
 }

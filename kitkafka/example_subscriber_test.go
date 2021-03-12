@@ -8,8 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/otkafka"
+
 	"strings"
 
 	"github.com/DoNewsCode/core/config"
@@ -109,7 +112,7 @@ func Example_subscriber() {
 	)
 
 	c := core.Default(core.SetConfigProvider(func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor {
-		return config.MapAdapter{"kafka.reader": map[string]kitkafka.ReaderConfig{
+		return config.MapAdapter{"kafka.reader": map[string]otkafka.ReaderConfig{
 			"uppercase": {
 				Brokers:     []string{"127.0.0.1:9092"},
 				GroupID:     "kitkafka",
@@ -128,14 +131,16 @@ func Example_subscriber() {
 	}))
 	defer c.Shutdown()
 
-	c.Provide(kitkafka.Providers())
+	c.Provide(otkafka.Providers())
 
-	c.Invoke(func(factory kitkafka.ReaderFactory) {
-		uppercaseServer, err := factory.MakeSubscriberServer("uppercase", uppercaseHandler)
+	c.Invoke(func(maker otkafka.ReaderMaker) {
+		uppercaseReader, _ := maker.Make("uppercase")
+		countReader, _ := maker.Make("count")
+		uppercaseServer, err := kitkafka.MakeSubscriberServer(uppercaseReader, uppercaseHandler)
 		if err != nil {
 			panic(err)
 		}
-		countServer, err := factory.MakeSubscriberServer("count", countHandler)
+		countServer, err := kitkafka.MakeSubscriberServer(countReader, countHandler)
 		if err != nil {
 			panic(err)
 		}

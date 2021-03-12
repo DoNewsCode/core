@@ -9,13 +9,13 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-// MakeAsyncMiddleware returns a go kit middleware that calls the next handler in
+// Async returns a go kit middleware that calls the next handler in
 // a detached goroutine. Timeout and cancellation of the previous context no
 // logger apply to the detached goroutine, the tracing context however is carried
 // over. A concurrency limit can be passed into the middleware. If the limit is
 // reached, next endpoint call will block until the level of concurrency is below
 // the limit.
-func MakeAsyncMiddleware(logger log.Logger, concurrency int) endpoint.Middleware {
+func Async(logger log.Logger, concurrency int) endpoint.Middleware {
 	limit := make(chan struct{}, concurrency)
 	for i := 0; i < concurrency; i++ {
 		limit <- struct{}{}

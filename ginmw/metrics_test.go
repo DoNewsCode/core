@@ -42,7 +42,7 @@ func TestWithMetrics(t *testing.T) {
 			t.Parallel()
 			metric := &mockMetric{}
 			g := gin.New()
-			g.Use(WithMetrics(metric, key.New("module", "foo"), c.addPath))
+			g.Use(Metrics(metric, key.New("module", "foo"), c.addPath))
 			g.Handle("GET", "/", func(context *gin.Context) {
 				context.String(200, "%s", "ok")
 			})

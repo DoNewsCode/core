@@ -5,10 +5,11 @@ package otetcd_test
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/otetcd"
-	"go.etcd.io/etcd/clientv3"
-	"log"
+	"go.etcd.io/etcd/client/v3"
 )
 
 func Example() {

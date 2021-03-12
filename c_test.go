@@ -14,7 +14,7 @@ import (
 )
 
 func TestC_Serve(t *testing.T) {
-	c := New()
+	c := New(WithInline("http.addr", ":19998"), WithInline("grpc.addr", ":19999"))
 	c.ProvideEssentials()
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()

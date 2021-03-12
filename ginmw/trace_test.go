@@ -9,11 +9,11 @@ import (
 	"testing"
 )
 
-func TestWithTrace(t *testing.T) {
+func TestTrace(t *testing.T) {
 	t.Parallel()
 	tracer := mocktracer.New()
 	g := gin.New()
-	g.Use(WithTrace(tracer, key.New("module", "foo")))
+	g.Use(Trace(tracer, key.New("module", "foo")))
 	g.Handle("GET", "/", func(context *gin.Context) {
 		context.String(200, "%s", "ok")
 	})
