@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/otkafka"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/DoNewsCode/core/logging"
@@ -19,8 +20,8 @@ func TestTransport(t *testing.T) {
 
 	kafka.DialLeader(context.Background(), "tcp", "localhost:9092", "Test", 0)
 
-	writerFactory, cleanupWriter := provideWriterFactory(in{
-		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
+	writerFactory, cleanupWriter := otkafka.provideWriterFactory(otkafka.in{
+		Conf: config.MapAdapter{"kafka.writer": map[string]otkafka.WriterConfig{
 			"default": {
 				Brokers: []string{"127.0.0.1:9092"},
 				Topic:   "test",
@@ -30,8 +31,8 @@ func TestTransport(t *testing.T) {
 	})
 	defer cleanupWriter()
 
-	readerFactory, cleanupReader := provideReaderFactory(in{
-		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
+	readerFactory, cleanupReader := otkafka.provideReaderFactory(otkafka.in{
+		Conf: config.MapAdapter{"kafka.reader": map[string]otkafka.ReaderConfig{
 			"default": {
 				Brokers: []string{"127.0.0.1:9092"},
 				Topic:   "test",

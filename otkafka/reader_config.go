@@ -1,4 +1,4 @@
-package kitkafka
+package otkafka
 
 import (
 	"time"
@@ -129,3 +129,28 @@ type ReaderConfig struct {
 // ReaderInterceptor is an interceptor that makes last minute change to a *kafka.ReaderConfig
 // during kafka.Reader's creation
 type ReaderInterceptor func(name string, reader *kafka.ReaderConfig)
+
+func fromReaderConfig(config ReaderConfig) kafka.ReaderConfig {
+	return kafka.ReaderConfig{
+		Brokers:                config.Brokers,
+		GroupID:                config.GroupID,
+		Topic:                  config.Topic,
+		Partition:              config.MaxAttempts,
+		MinBytes:               config.MinBytes,
+		MaxBytes:               config.MaxBytes,
+		MaxWait:                config.MaxWait,
+		ReadLagInterval:        config.ReadLagInterval,
+		HeartbeatInterval:      config.HeartbeatInterval,
+		CommitInterval:         config.CommitInterval,
+		PartitionWatchInterval: config.PartitionWatchInterval,
+		WatchPartitionChanges:  config.WatchPartitionChanges,
+		SessionTimeout:         config.SessionTimeout,
+		RebalanceTimeout:       config.RebalanceTimeout,
+		JoinGroupBackoff:       config.JoinGroupBackoff,
+		RetentionTime:          config.RetentionTime,
+		StartOffset:            config.StartOffset,
+		ReadBackoffMin:         config.ReadBackoffMin,
+		ReadBackoffMax:         config.ReadBackoffMax,
+		MaxAttempts:            config.MaxAttempts,
+	}
+}

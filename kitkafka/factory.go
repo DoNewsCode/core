@@ -1,55 +1,13 @@
 package kitkafka
 
 import (
-	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 )
 
-// ReaderFactory is a *di.Factory that creates *kafka.Reader.
-//
-// Unlike other database providers, the kafka factories don't bundle a default
-// kafka reader/writer. It is suggested to use Topic name as the identifier of
-// kafka config rather than an opaque name such as default.
-type ReaderFactory struct {
-	*di.Factory
-}
-
-// Make returns a *kafka.Reader under the provided configuration entry.
-func (k ReaderFactory) Make(name string) (*kafka.Reader, error) {
-	client, err := k.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(*kafka.Reader), nil
-}
-
-// WriterFactory is a *di.Factory that creates *kafka.Writer.
-//
-// Unlike other database providers, the kafka factories don't bundle a default
-// kafka reader/writer. It is suggested to use Topic name as the identifier of
-// kafka config rather than an opaque name such as default.
-type WriterFactory struct {
-	*di.Factory
-}
-
-// Make returns a *kafka.Writer under the provided configuration entry.
-func (k WriterFactory) Make(name string) (*kafka.Writer, error) {
-	client, err := k.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(*kafka.Writer), nil
-}
-
 // MakeClient creates an Handler. This handler can write *kafka.Message to
 // kafka broker. The Handler is mean to be consumed by NewPublisher.
-func (k WriterFactory) MakeClient(name string) (*writerHandle, error) {
-	writer, err := k.Make(name)
-	if err != nil {
-		return nil, err
-	}
+func MakeClient(writer *kafka.Writer) (*writerHandle, error) {
 	return &writerHandle{
 		Writer: writer,
 	}, nil
@@ -78,19 +36,13 @@ func WithSyncCommit() ReaderOpt {
 	}
 }
 
-// MakeSubscriberServer creates a *SubscriberServer.
-//     name: the key of the configuration entry.
-//     subscriber: the Handler (go kit transport layer)
-func (k ReaderFactory) MakeSubscriberServer(name string, subscriber Handler, opt ...ReaderOpt) (*SubscriberServer, error) {
+// MakeSubscriberServer creates a *SubscriberServer. Subscriber is the go kit transport layer equivalent.
+func MakeSubscriberServer(reader *kafka.Reader, subscriber Handler, opt ...ReaderOpt) (*SubscriberServer, error) {
 	var config = subscriberConfig{
 		parallelism: 1,
 	}
 	for _, o := range opt {
 		o(&config)
-	}
-	reader, err := k.Make(name)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to make subscriber")
 	}
 	return &SubscriberServer{
 		reader:      reader,
@@ -109,44 +61,4 @@ type PublisherOpt func(config *publisherConfig)
 // in go kit analog, this is a service with one method, publish.
 func MakePublisherService(endpoint endpoint.Endpoint, opt ...PublisherOpt) *PublisherService {
 	return &PublisherService{endpoint: endpoint}
-}
-
-func fromWriterConfig(config WriterConfig) kafka.Writer {
-	return kafka.Writer{
-		Addr:         kafka.TCP(config.Brokers...),
-		Topic:        config.Topic,
-		MaxAttempts:  config.MaxAttempts,
-		BatchSize:    config.BatchSize,
-		BatchBytes:   int64(config.BatchBytes),
-		BatchTimeout: config.BatchTimeout,
-		ReadTimeout:  config.ReadTimeout,
-		WriteTimeout: config.WriteTimeout,
-		RequiredAcks: kafka.RequiredAcks(config.RequiredAcks),
-		Async:        config.Async,
-	}
-}
-
-func fromReaderConfig(config ReaderConfig) kafka.ReaderConfig {
-	return kafka.ReaderConfig{
-		Brokers:                config.Brokers,
-		GroupID:                config.GroupID,
-		Topic:                  config.Topic,
-		Partition:              config.MaxAttempts,
-		MinBytes:               config.MinBytes,
-		MaxBytes:               config.MaxBytes,
-		MaxWait:                config.MaxWait,
-		ReadLagInterval:        config.ReadLagInterval,
-		HeartbeatInterval:      config.HeartbeatInterval,
-		CommitInterval:         config.CommitInterval,
-		PartitionWatchInterval: config.PartitionWatchInterval,
-		WatchPartitionChanges:  config.WatchPartitionChanges,
-		SessionTimeout:         config.SessionTimeout,
-		RebalanceTimeout:       config.RebalanceTimeout,
-		JoinGroupBackoff:       config.JoinGroupBackoff,
-		RetentionTime:          config.RetentionTime,
-		StartOffset:            config.StartOffset,
-		ReadBackoffMin:         config.ReadBackoffMin,
-		ReadBackoffMax:         config.ReadBackoffMax,
-		MaxAttempts:            config.MaxAttempts,
-	}
 }

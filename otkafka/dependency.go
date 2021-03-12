@@ -1,12 +1,14 @@
-package kitkafka
+package otkafka
 
 import (
 	"fmt"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/opentracing/opentracing-go"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -41,8 +43,9 @@ type ReaderMaker interface {
 type in struct {
 	di.In
 
-	ReaderInterceptor ReaderInterceptor `optional:"true"`
-	WriterInterceptor WriterInterceptor `optional:"true"`
+	ReaderInterceptor ReaderInterceptor  `optional:"true"`
+	WriterInterceptor WriterInterceptor  `optional:"true"`
+	Tracer            opentracing.Tracer `optional:"true"`
 	Conf              contract.ConfigAccessor
 	Logger            log.Logger
 }
@@ -127,8 +130,10 @@ func provideWriterFactory(p in) (WriterFactory, func()) {
 			return di.Pair{}, fmt.Errorf("kafka writer configuration %s not valid", name)
 		}
 		writer := fromWriterConfig(writerConfig)
-		writer.Logger = KafkaLogAdapter{Logging: level.Debug(p.Logger)}
-		writer.ErrorLogger = KafkaLogAdapter{Logging: level.Warn(p.Logger)}
+		logger := log.With(p.Logger, "tag", "kafka")
+		writer.Logger = KafkaLogAdapter{Logging: level.Debug(logger)}
+		writer.ErrorLogger = KafkaLogAdapter{Logging: level.Warn(logger)}
+		writer.Transport = NewTransport(kafka.DefaultTransport, p.Tracer)
 		if p.WriterInterceptor != nil {
 			p.WriterInterceptor(name, &writer)
 		}
