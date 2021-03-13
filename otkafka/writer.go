@@ -10,6 +10,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+// Writer is a decorator around kafka.Writer that provides tracing capabilities.
 type Writer struct {
 	*kafka.Writer
 	tracer opentracing.Tracer
@@ -26,7 +27,8 @@ func WithLogger(logger log.Logger) WriterOption {
 	}
 }
 
-func WithTrace(writer *kafka.Writer, tracer opentracing.Tracer, opts ...WriterOption) *Writer {
+// Trace takes a kafka.Writer and returns a decorated Writer.
+func Trace(writer *kafka.Writer, tracer opentracing.Tracer, opts ...WriterOption) *Writer {
 	w := &Writer{
 		Writer: writer,
 		tracer: tracer,
@@ -37,6 +39,8 @@ func WithTrace(writer *kafka.Writer, tracer opentracing.Tracer, opts ...WriterOp
 	return w
 }
 
+// WriteMessages writes a batch of messages to the kafka topic configured on this writer.
+// Each message written has tracing headers.
 func (w *Writer) WriteMessages(ctx context.Context, msgs ...kafka.Message) error {
 	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, w.tracer, "kafka writer")
 	defer span.Finish()

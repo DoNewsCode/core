@@ -20,7 +20,7 @@ func TestWriter(t *testing.T) {
 			Topic: "trace",
 		}
 		tracer := mocktracer.New()
-		w := WithTrace(&kw, tracer, WithLogger(log.NewNopLogger()))
+		w := Trace(&kw, tracer, WithLogger(log.NewNopLogger()))
 		span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, tracer, "test")
 		span.SetBaggageItem("foo", "bar")
 		err := w.WriteMessages(ctx, kafka.Message{Value: []byte(`hello`)})
