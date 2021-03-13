@@ -70,8 +70,14 @@ type out struct {
 func provideKafkaFactory(p in) (out, func(), func(), error) {
 	rf, rc := provideReaderFactory(p)
 	wf, wc := provideWriterFactory(p)
-	dr, _ := rf.Make("default")
-	dw, _ := wf.Make("default")
+	dr, err1 := rf.Make("default")
+	if err1 != nil {
+		level.Warn(p.Logger).Log("err", err1)
+	}
+	dw, err2 := wf.Make("default")
+	if err2 != nil {
+		level.Warn(p.Logger).Log("err", err2)
+	}
 	return out{
 		ReaderMaker:   rf,
 		ReaderFactory: rf,
