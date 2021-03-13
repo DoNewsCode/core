@@ -41,9 +41,11 @@ require (
 	go.uber.org/atomic v1.7.0
 	go.uber.org/dig v1.10.0
 	go.uber.org/zap v1.16.0
-	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 // indirect
+	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2 // indirect
+	golang.org/x/text v0.3.5 // indirect
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
