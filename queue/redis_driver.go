@@ -15,9 +15,9 @@ import (
 // The Packer interface describes how to save the message in wire format
 type Packer interface {
 	// Compress serializes the message to bytes
-	Compress(message interface{}) ([]byte, error)
+	Marshal(message interface{}) ([]byte, error)
 	// Decompress reverses the bytes to message
-	Decompress(data []byte, message interface{}) error
+	Unmarshal(data []byte, message interface{}) error
 }
 
 // RedisDriver is a queue driver backed by redis. It is easy to setup, and offers at least once semantic.
@@ -35,7 +35,7 @@ type RedisDriver struct {
 // will be read after the delay. Use zero value if a delay is not needed.
 func (r *RedisDriver) Push(ctx context.Context, message *PersistedEvent, delay time.Duration) error {
 	r.populateDefaults()
-	data, err := r.Packer.Compress(message)
+	data, err := r.Packer.Marshal(message)
 	if err != nil {
 		return errors.Wrap(err, "failed to compress message")
 	}
@@ -76,7 +76,7 @@ func (r *RedisDriver) Pop(ctx context.Context) (*PersistedEvent, error) {
 	}
 	data := res[1]
 	var message PersistedEvent
-	err = r.Packer.Decompress([]byte(data), &message)
+	err = r.Packer.Unmarshal([]byte(data), &message)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decompress message")
 	}
@@ -94,7 +94,7 @@ func (r *RedisDriver) Pop(ctx context.Context) (*PersistedEvent, error) {
 // Ack acknowledges a message has been processed.
 func (r *RedisDriver) Ack(ctx context.Context, message *PersistedEvent) error {
 	r.populateDefaults()
-	data, err := r.Packer.Compress(message)
+	data, err := r.Packer.Marshal(message)
 	if err != nil {
 		return errors.Wrap(err, "failed to compress message")
 	}
@@ -105,13 +105,13 @@ func (r *RedisDriver) Ack(ctx context.Context, message *PersistedEvent) error {
 func (r *RedisDriver) Fail(ctx context.Context, message *PersistedEvent) error {
 	r.populateDefaults()
 	p := r.RedisClient.TxPipeline()
-	data, err := r.Packer.Compress(message)
+	data, err := r.Packer.Marshal(message)
 	if err != nil {
 		return errors.Wrap(err, "failed to compress message")
 	}
 	p.ZRem(ctx, r.ChannelConfig.Reserved, data)
 	message.Attempts++
-	data, err = r.Packer.Compress(message)
+	data, err = r.Packer.Marshal(message)
 	if err != nil {
 		return errors.Wrap(err, "failed to compress message")
 	}
@@ -199,7 +199,7 @@ func (r *RedisDriver) remove(ctx context.Context, channel string, data []byte) e
 func (r *RedisDriver) Retry(ctx context.Context, message *PersistedEvent) error {
 	r.populateDefaults()
 	p := r.RedisClient.TxPipeline()
-	data, err := r.Packer.Compress(message)
+	data, err := r.Packer.Marshal(message)
 	if err != nil {
 		return errors.Wrap(err, "failed to compress message")
 	}
@@ -207,7 +207,7 @@ func (r *RedisDriver) Retry(ctx context.Context, message *PersistedEvent) error 
 	message.Backoff = getRetryDuration(message.Backoff)
 	message.Attempts++
 	delay := time.Now().Add(message.Backoff)
-	data, err = r.Packer.Compress(message)
+	data, err = r.Packer.Marshal(message)
 	if err != nil {
 		return errors.Wrap(err, "failed to compress message")
 	}

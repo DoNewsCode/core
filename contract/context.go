@@ -7,7 +7,7 @@ type contextKey string
 const (
 	IpKey         contextKey = "ip"         // IP address
 	TenantKey     contextKey = "tenant"     // Tenant
-	TransportKey  contextKey = "transport"  // Transport, such as http
+	TransportKey  contextKey = "transport"  // Transport, such as HTTP
 	RequestUrlKey contextKey = "requestUrl" // Request url
 )
 

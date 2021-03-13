@@ -98,6 +98,8 @@ func provideRedisFactory(p in) (out, func()) {
 		if p.Interceptor != nil {
 			p.Interceptor(name, &conf)
 		}
+		redis.SetLogger(&RedisLogAdapter{level.Debug(p.Logger)})
+
 		client := redis.NewUniversalClient(&conf)
 		if p.Tracer != nil {
 			client.AddHook(
@@ -142,7 +144,7 @@ func provideConfig() configOut {
 				"redis": map[string]map[string]interface{}{
 					"default": {
 						"addrs":              []string{"127.0.0.1:6379"},
-						"DB":                 0,
+						"db":                 0,
 						"username":           "",
 						"password":           "",
 						"sentinelPassword":   "",

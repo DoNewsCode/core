@@ -36,7 +36,7 @@ func TestProvideDispatcher(t *testing.T) {
 		RedisMaker: maker{},
 		Logger:     log.NewNopLogger(),
 		AppName:    config.AppName("test"),
-		Env:        config.NewEnv("testing"),
+		Env:        config.EnvTesting,
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, out.DispatcherFactory)
@@ -100,7 +100,7 @@ func TestProvideDispatcher_withDriver(t *testing.T) {
 		Driver:     mockDriver{},
 		Logger:     log.NewNopLogger(),
 		AppName:    config.AppName("test"),
-		Env:        config.NewEnv("testing"),
+		Env:        config.EnvTesting,
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, out.DispatcherFactory)

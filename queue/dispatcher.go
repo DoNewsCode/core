@@ -44,14 +44,14 @@ func (d *QueueableDispatcher) Dispatch(ctx context.Context, e contract.Event) er
 			return fmt.Errorf("unable to reverse engineer the event %s", e.Type())
 		}
 		ptr := reflect.New(rType)
-		err := d.packer.Decompress(e.Data().([]byte), ptr)
+		err := d.packer.Unmarshal(e.Data().([]byte), ptr)
 		if err != nil {
 			return errors.Wrapf(err, "dispatch serialized %s failed", e.Type())
 		}
 		return d.base.Dispatch(ctx, events.Of(ptr.Elem().Interface()))
 	}
 	if _, ok := e.(persistent); ok {
-		data, err := d.packer.Compress(e.Data())
+		data, err := d.packer.Marshal(e.Data())
 		if err != nil {
 			return errors.Wrapf(err, "dispatch deferrable %s failed", e.Type())
 		}

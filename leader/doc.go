@@ -22,7 +22,7 @@ To use package leader with package core:
 	var c *core.C = core.Default()
 	c.Provide(otetcd.Providers) // to provide the underlying driver
 	c.Provide(leader.Providers)
-	c.Invoke(function(status *leader.Status) {
+	c.Invoke(func(status *leader.Status) {
 		if ! status.IsLeader {
 			return
 		}

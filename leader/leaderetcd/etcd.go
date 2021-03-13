@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/DoNewsCode/core/contract"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/clientv3/concurrency"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
 // EtcdDriver implements the Driver. It is used for leader election.

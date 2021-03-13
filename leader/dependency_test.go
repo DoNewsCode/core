@@ -7,7 +7,7 @@ import (
 	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 type mockMaker struct {
@@ -63,7 +63,7 @@ func TestDetermineDriver(t *testing.T) {
 		Driver:     nil,
 		Maker:      nil,
 		AppName:    config.AppName("foo"),
-		Env:        config.Env("testing"),
+		Env:        config.EnvTesting,
 	}
 	err := determineDriver(&p)
 	assert.Error(t, err)
@@ -74,7 +74,7 @@ func TestDetermineDriver(t *testing.T) {
 		Driver:     nil,
 		Maker:      maker,
 		AppName:    config.AppName("foo"),
-		Env:        config.Env("testing"),
+		Env:        config.EnvTesting,
 	}
 	err = determineDriver(&p)
 	assert.Error(t, err)

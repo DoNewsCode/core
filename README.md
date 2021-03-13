@@ -1,11 +1,18 @@
-Package core is a service container that elegantly bootstrap and coordinate
-twelve-factor apps in Go.
-
+<div align="center">
+  <h1>CORE</h1>
+  <p>
+    <strong>Package core is a service container that elegantly bootstrap and coordinate twelve-factor apps in Go.</strong>
+  </p>
+  <p>
+	  
 [![Build](https://github.com/DoNewsCode/core/actions/workflows/go.yml/badge.svg)](https://github.com/DoNewsCode/core/actions/workflows/go.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/DoNewsCode/core.svg)](https://pkg.go.dev/github.com/DoNewsCode/core)
 [![codecov](https://codecov.io/gh/DoNewsCode/core/branch/master/graph/badge.svg)](https://codecov.io/gh/DoNewsCode/core)
 [![Go Report Card](https://goreportcard.com/badge/DoNewsCode/core)](https://goreportcard.com/report/DoNewsCode/core)
 [![Sourcegraph](https://sourcegraph.com/github.com/DoNewsCode/core/-/badge.svg)](https://sourcegraph.com/github.com/DoNewsCode/core?badge)
+ 
+ </p>
+</div>
 
 ## Background
 
@@ -180,7 +187,8 @@ That being said, let's redirect our attention to other goodies package core has 
 * [Tutorial](https://github.com/DoNewsCode/core/blob/master/doc/tutorial.md)
 * [GoDoc](https://pkg.go.dev/github.com/DoNewsCode/core)
 * [Demo Project](https://github.com/DoNewsCode/skeleton)
-* [Contributing](https://github.com/DoNewsCode/core/blob/master/doc/contributing.markdown)
+* [Starter Template](https://github.com/DoNewsCode/core-starter)
+* [Contributing](https://github.com/DoNewsCode/core/blob/master/doc/contributing.md)
 
 ## Design Principles
 
@@ -198,9 +206,9 @@ That being said, let's redirect our attention to other goodies package core has 
 - Tries to reimplement the functionality provided by modern platforms.
 
 ## Suggested service framework
-- Gin (if HTTP only)
-- Go Kit (if multiple transports)
-- Go Zero
+- [Gin](https://github.com/DoNewsCode/core-gin) (if HTTP only)
+- [Go Kit](https://github.com/DoNewsCode/core-kit) (if multiple transports)
+- Kratos (when v2 is ready)
 
 
 
