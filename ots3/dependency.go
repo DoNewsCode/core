@@ -1,7 +1,9 @@
 package ots3
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"net/url"
 
 	"github.com/DoNewsCode/core/config"
@@ -28,6 +30,12 @@ Manager, the Maker and exported configurations.
 */
 func Providers() []interface{} {
 	return []interface{}{provideFactory, provideManager, provideConfig}
+}
+
+// Uploader models UploadService
+type Uploader interface {
+	// Upload the bytes from io.Reader with a given filename to a server, and returns the url and error.
+	Upload(ctx context.Context, name string, reader io.Reader) (string, error)
 }
 
 // S3Config contains credentials of S3 server

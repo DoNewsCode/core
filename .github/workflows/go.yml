@@ -51,7 +51,7 @@ jobs:
           KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
           KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
           KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-          KAFKA_CREATE_TOPICS: "count:1:1,uppercase:1:1,test:1:1"
+          KAFKA_CREATE_TOPICS: "test:1:1,trace:1:1,example:1:1"
       elasticsearch:
         image: elasticsearch:7.10.1
         env:
@@ -70,7 +70,7 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v -race -coverprofile=coverage.txt -covermode=atomic -tags integration ./...
+      run: go test -race -coverprofile=coverage.txt -covermode=atomic -tags integration ./...
 
     - name: Upload coverage
       uses: codecov/codecov-action@v1
