@@ -6,7 +6,7 @@
 ### {{ .Title }}
 
 {{ range .Commits -}}
-* {{ if .Scope }}**{{ .Scope }}:** {{ end }}{{ .Subject }}
+* {{ if .Scope }}**{{ .Scope }}:** {{ end }}{{ .Subject }} (@[{{ .Author.Name }}]({{ .Author.Email }}))
 {{ end }}
 {{ end -}}
 
