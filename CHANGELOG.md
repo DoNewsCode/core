@@ -8,18 +8,18 @@
 
 ### ♻️ Code Refactoring
 
-* config/env refactor ([#81](https://github.com/DoNewsCode/core/issues/81)) (@[Trock](https://github.com/Trock))
-* move go kit and gin related package to seperate repo ([#74](https://github.com/DoNewsCode/core/issues/74)) (@[谷溪](https://github.com/谷溪))
+* config/env refactor ([#81](https://github.com/DoNewsCode/core/issues/81)) (@[Trock](35254251+GGXXLL@users.noreply.github.com)
+* move go kit and gin related package to seperate repo ([#74](https://github.com/DoNewsCode/core/issues/74)) (@[谷溪](guxi99@gmail.com)
 
 ### ✨ Features
 
-* replace redis logger with Kitlog [#64](https://github.com/DoNewsCode/core/issues/64) ([#73](https://github.com/DoNewsCode/core/issues/73)) (@[Trock](https://github.com/Trock))
+* replace redis logger with Kitlog [#64](https://github.com/DoNewsCode/core/issues/64) ([#73](https://github.com/DoNewsCode/core/issues/73)) (@[Trock](35254251+GGXXLL@users.noreply.github.com)
 
 ### 🐛 Bug Fixes
 
-* don't panic when the database connection cannot be established at start up. ([#77](https://github.com/DoNewsCode/core/issues/77)) (@[谷溪](https://github.com/谷溪))
-* fix example misspell ([#72](https://github.com/DoNewsCode/core/issues/72)) (@[另维64](https://github.com/另维64))
-* **ginmw:** use c.FullPath() to calculate route matched ([#70](https://github.com/DoNewsCode/core/issues/70)) (@[谷溪](https://github.com/谷溪))
+* don't panic when the database connection cannot be established at start up. ([#77](https://github.com/DoNewsCode/core/issues/77)) (@[谷溪](guxi99@gmail.com)
+* fix example misspell ([#72](https://github.com/DoNewsCode/core/issues/72)) (@[另维64](lingwei0604@gmail.com)
+* **ginmw:** use c.FullPath() to calculate route matched ([#70](https://github.com/DoNewsCode/core/issues/70)) (@[谷溪](guxi99@gmail.com)
 
 
 <a name="v0.3.0"></a>
@@ -27,18 +27,18 @@
 
 ### ♻️ Code Refactoring
 
-* **otes:** optimize logger ([#68](https://github.com/DoNewsCode/core/issues/68)) (@[谷溪](https://github.com/谷溪))
+* **otes:** optimize logger ([#68](https://github.com/DoNewsCode/core/issues/68)) (@[谷溪](guxi99@gmail.com)
 
 ### ✨ Features
 
-* Saga ([#63](https://github.com/DoNewsCode/core/issues/63)) (@[谷溪](https://github.com/谷溪))
-* **es:** Add otes package ([#61](https://github.com/DoNewsCode/core/issues/61)) (@[另维64](https://github.com/另维64))
-* **kitmw:** limit maximum concurrency ([#67](https://github.com/DoNewsCode/core/issues/67)) (@[谷溪](https://github.com/谷溪))
+* Saga ([#63](https://github.com/DoNewsCode/core/issues/63)) (@[谷溪](guxi99@gmail.com)
+* **es:** Add otes package ([#61](https://github.com/DoNewsCode/core/issues/61)) (@[另维64](1142674342@qq.com)
+* **kitmw:** limit maximum concurrency ([#67](https://github.com/DoNewsCode/core/issues/67)) (@[谷溪](guxi99@gmail.com)
 
 ### 🐛 Bug Fixes
 
-* **ots3:** investigate race condition ([#62](https://github.com/DoNewsCode/core/issues/62)) (@[谷溪](https://github.com/谷溪))
-* **ots3:** missing trace in ots3 (@[Reasno](https://github.com/Reasno))
+* **ots3:** investigate race condition ([#62](https://github.com/DoNewsCode/core/issues/62)) (@[谷溪](guxi99@gmail.com)
+* **ots3:** missing trace in ots3 (@[Reasno](guxi99@gmail.com)
 
 ### Pull Requests
 
@@ -50,5 +50,5 @@
 
 ### ✨ Features
 
-* **leader:** add leader election package. ([#56](https://github.com/DoNewsCode/core/issues/56)) (@[谷溪](https://github.com/谷溪))
+* **leader:** add leader election package. ([#56](https://github.com/DoNewsCode/core/issues/56)) (@[谷溪](guxi99@gmail.com)
 
