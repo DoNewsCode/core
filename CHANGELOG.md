@@ -12,24 +12,10 @@
 * **es:** Add otes package ([#61](https://github.com/DoNewsCode/core/issues/61))
 * **kitmw:** limit maximum concurrency ([#67](https://github.com/DoNewsCode/core/issues/67))
 
-### 🏗 Chore
-
-* add core-starter link ([#66](https://github.com/DoNewsCode/core/issues/66))
-
 ### 🐛 Bug Fixes
 
 * **ots3:** investigate race condition ([#62](https://github.com/DoNewsCode/core/issues/62))
 * **ots3:** missing trace in ots3
-
-### 📚 Documentation
-
-* fix grammar
-* fix grammar
-* add package level doc for leaderetcd and leaderredis
-
-### 🚦 Test
-
-* turn off flaky test
 
 ### Pull Requests
 
@@ -42,18 +28,6 @@
 ### ✨ Features
 
 * **leader:** add leader election package. ([#56](https://github.com/DoNewsCode/core/issues/56))
-
-### 📚 Documentation
-
-* fix cases
-* add tutorial.md chapter 3 and 4
-* add tutorial.md chapter 3 and 4
-* add tutorial.md chapter 2
-* add tutorial.md
-
-### 🚦 Test
-
-* **kitkafka:** improve test coverage in kitkafka package ([#54](https://github.com/DoNewsCode/core/issues/54))
 
 
 <a name="v0.1.1"></a>
@@ -68,23 +42,6 @@
 * **deps:** update module github.com/aws/aws-sdk-go to v1.37.16
 * **watcher:** remove default signal watch, use ctx ([#49](https://github.com/DoNewsCode/core/issues/49))
 
-### 📚 Documentation
-
-* add CONTRIBUTING.md ([#47](https://github.com/DoNewsCode/core/issues/47))
-* **readme:** clarify module usage ([#53](https://github.com/DoNewsCode/core/issues/53))
-
-### 🚦 Test
-
-* move all integration tests under -integration tag ([#46](https://github.com/DoNewsCode/core/issues/46))
-* **config:** try another approach to make tests less flaky
-* **config:** improve test coverage in config package
-* **config:** investigate config test failures
-* **config:** investigate config test failures
-* **config:** mark config tests as parallel
-* **config:** fix flaky test
-* **queue:** fix invalid tests
-* **queue:** improve test stability ([#48](https://github.com/DoNewsCode/core/issues/48))
-
 ### Pull Requests
 
 * Merge pull request [#39](https://github.com/DoNewsCode/core/issues/39) from GGXXLL/master
@@ -93,26 +50,6 @@
 
 <a name="v0.1.0"></a>
 ## v0.1.0 (2021-02-22)
-
-### Ci
-
-* add codecov.yml
-* upload codecoverage
-* fix kafka port
-* fix kafka port
-* fix kafka port
-* fix kafka port
-* fix kafka port
-* fix kafka port
-* fix kafka port
-* add kafka test
-* add kafka test
-* add kafka test
-* add redis service
-
-### Refactory
-
-* change kafka factory to kafka reader factory and kafka writer factory
 
 ### ♻️ Code Refactoring
 
@@ -142,25 +79,6 @@
 * add observability package
 * add event system
 
-### 🏗 Chore
-
-* run go mod tidy
-* **deps:** update module aws/aws-sdk-go to v1.37.3
-* **deps:** update golang.org/x/sync commit hash to 09787c9
-* **deps:** update module aws/aws-sdk-go to v1.37.12
-* **deps:** update module gogo/protobuf to v1.3.2
-* **deps:** update module go-redis/redis/v8 to v8.5.0
-* **deps:** update module reasno/ifilter to v0.1.2
-* **deps:** update module spf13/cobra to v1
-* **deps:** update module aws/aws-sdk-go to v1.37.13
-* **deps:** update module aws/aws-sdk-go to v1.37.2
-* **deps:** update module aws/aws-sdk-go to v1.37.1
-* **deps:** update module aws/aws-sdk-go to v1.37.0
-* **deps:** update module opentracing/opentracing-go to v1.2.0
-* **deps:** update module knadh/koanf to v0.15.0
-* **deps:** update module gogo/protobuf to v1.3.2
-* **deps:** update module prometheus/client_golang to v1.9.0
-
 ### 🐛 Bug Fixes
 
 * test
@@ -181,62 +99,6 @@
 * **deps:** update module github.com/spf13/cobra to v1.1.3
 * **deps:** update golang.org/x/sync commit hash to 036812b ([#36](https://github.com/DoNewsCode/core/issues/36))
 * **deps:** update module github.com/go-redis/redis/v8 to v8.6.0 ([#33](https://github.com/DoNewsCode/core/issues/33))
-
-### 📚 Documentation
-
-* add link to skeleton
-* link to go doc
-* link to go doc
-* fix badge links
-* add badge
-* add badge
-* add badge
-* fix wrong context in README.md
-* document package event
-* document package ginmw
-* document package ginmw
-* document package key
-* remove redundant doc files
-* write kafka doc
-* document ots3 package
-* add lots of doc in queue package
-* document unierr
-
-### 🚦 Test
-
-* test custom printer
-* improve test coverage
-* fix module test
-* fix module test
-* fix module test
-* cover large request
-* cover large request
-* cover large request
-* cover large request
-* with level
-* with level
-* with level
-* add clihttp test
-* fix go tests
-* finish otgorm tests
-* reduce flake
-* reduce flake
-* fix module test
-* fix module test
-* remove test metrix for now
-* remove test metrix for now
-* fix broken build
-* fix broken build
-* add mongodb
-* add mongodb
-* add test to s3 module.go
-* fix module test
-* fix module test
-* fix module test
-* **ginmw:** test metrics middleware
-* **ginmw:** test metrics middleware
-* **ginmw:** test metrics middleware
-* **ginmw:** test log middleware
 
 ### Pull Requests
 
