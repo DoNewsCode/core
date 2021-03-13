@@ -1,6 +1,10 @@
 
-<a name="v0.4.0.alpha.2"></a>
-## [v0.4.0.alpha.2](https://github.com/DoNewsCode/core/compare/v0.4.0.alpha.1...v0.4.0.alpha.2) (2021-03-13)
+<a name="v0.4.0-alpha.2"></a>
+## [v0.4.0-alpha.2](https://github.com/DoNewsCode/core/compare/v0.4.0-alpha.1...v0.4.0-alpha.2) (0001-01-01)
+
+
+<a name="v0.4.0-alpha.1"></a>
+## [v0.4.0-alpha.1](https://github.com/DoNewsCode/core/compare/v0.4.0.alpha.1...v0.4.0-alpha.1) (2021-03-13)
 
 
 <a name="v0.4.0.alpha.1"></a>
