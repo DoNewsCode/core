@@ -39,8 +39,10 @@ func Trace(writer *kafka.Writer, tracer opentracing.Tracer, opts ...WriterOption
 	return w
 }
 
-// WriteMessages writes a batch of messages to the kafka topic configured on this writer.
-// Each message written has tracing headers.
+// WriteMessages writes a batch of messages to the kafka topic configured on this
+// writer. Each message written has been injected tracing headers. The upstream
+// consumer can extract tracing spans from kafka headers, forming a distributed
+// tracing via messaging.
 func (w *Writer) WriteMessages(ctx context.Context, msgs ...kafka.Message) error {
 	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, w.tracer, "kafka writer")
 	defer span.Finish()
