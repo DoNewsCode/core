@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/events"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -14,12 +16,45 @@ import (
 )
 
 func TestC_Serve(t *testing.T) {
-	c := New(WithInline("http.addr", ":19998"), WithInline("grpc.addr", ":19999"))
+	var called int
+	c := New(
+		WithInline("http.addr", ":19998"),
+		WithInline("grpc.addr", ":19999"),
+	)
 	c.ProvideEssentials()
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
+			called++
+			assert.Equal(t, "[::]:19998", start.Data().(OnHTTPServerStart).Listener.Addr().String())
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+			called++
+			assert.Equal(t, "[::]:19998", shutdown.Data().(OnHTTPServerShutdown).Listener.Addr().String())
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerStart{}), func(ctx context.Context, start contract.Event) error {
+			called++
+			assert.Equal(t, "[::]:19999", start.Data().(OnGRPCServerStart).Listener.Addr().String())
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+			called++
+			assert.Equal(t, "[::]:19999", shutdown.Data().(OnGRPCServerShutdown).Listener.Addr().String())
+			return nil
+		}))
+	})
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 	e := c.Serve(ctx)
 	assert.NoError(t, e)
+	assert.Equal(t, 4, called)
 }
 
 func TestC_Default(t *testing.T) {
