@@ -24,7 +24,7 @@ func TestServer(t *testing.T) {
 		S3:     manager,
 	}
 	endpoint := MakeUploadEndpoint(&service)
-	endpoint = Middleware(log.NewNopLogger(), config.Env("testing"))(endpoint)
+	endpoint = Middleware(log.NewNopLogger(), config.EnvTesting)(endpoint)
 	handler := httptransport.NewServer(endpoint, decodeRequest, httptransport.EncodeJSONResponse)
 	ln, _ := net.Listen("tcp", ":8888")
 	server := &http.Server{

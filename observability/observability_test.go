@@ -16,7 +16,7 @@ func TestProvide(t *testing.T) {
 		Conf:    conf,
 		Logger:  log.NewNopLogger(),
 		AppName: config.AppName("foo"),
-		Env:     config.NewEnv("testing"),
+		Env:     config.EnvTesting,
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, Out.Tracer)
