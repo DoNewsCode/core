@@ -148,7 +148,7 @@ func provideManager(maker Maker) (managerOut, error) {
 }
 
 type configOut struct {
-	Config []config.ExportedConfig
+	Config []config.ExportedConfig `group:"config,flatten"`
 }
 
 // provideConfig exports the default s3 configuration
