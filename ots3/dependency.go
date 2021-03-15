@@ -148,6 +148,8 @@ func provideManager(maker Maker) (managerOut, error) {
 }
 
 type configOut struct {
+	di.Out
+
 	Config []config.ExportedConfig `group:"config,flatten"`
 }
 
