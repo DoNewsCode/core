@@ -19,11 +19,10 @@ const (
 // Log is the structural Log type of the distributed saga.
 type Log struct {
 	ID            string
-	correlationID string
+	CorrelationID string
 	StartedAt     time.Time
 	FinishedAt    time.Time
 	LogType       LogType
-	StepNumber    int
 	StepParam     interface{}
 	StepName      string
 	StepError     error
