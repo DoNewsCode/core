@@ -112,6 +112,11 @@ func ProvideEventDispatcher(conf contract.ConfigAccessor) contract.Dispatcher {
 
 // provideDefaultConfig exports config for "name", "version", "env", "http", "grpc".
 func provideDefaultConfig() []config.ExportedConfig {
+	var orderInit = 1000
+	order := func() int {
+		orderInit--
+		return orderInit
+	}
 	return []config.ExportedConfig{
 		{
 			Owner: "core",
@@ -119,6 +124,7 @@ func provideDefaultConfig() []config.ExportedConfig {
 				"name": "app",
 			},
 			Comment: "The name of the application",
+			Order:   order(),
 		},
 		{
 			Owner: "core",
@@ -126,6 +132,7 @@ func provideDefaultConfig() []config.ExportedConfig {
 				"version": "0.1.0",
 			},
 			Comment: "The version of the application",
+			Order:   order(),
 		},
 		{
 			Owner: "core",
@@ -133,6 +140,7 @@ func provideDefaultConfig() []config.ExportedConfig {
 				"env": "local",
 			},
 			Comment: "The environment of the application, one of production, development, staging, testing or local",
+			Order: order(),
 		},
 		{
 			Owner: "core",
@@ -142,6 +150,7 @@ func provideDefaultConfig() []config.ExportedConfig {
 				},
 			},
 			Comment: "The http address",
+			Order:   order(),
 		},
 		{
 			Owner: "core",
@@ -151,6 +160,7 @@ func provideDefaultConfig() []config.ExportedConfig {
 				},
 			},
 			Comment: "The gRPC address",
+			Order:   order(),
 		},
 		{
 			Owner: "core",
@@ -158,6 +168,7 @@ func provideDefaultConfig() []config.ExportedConfig {
 				"log": map[string]interface{}{"level": "debug", "format": "logfmt"},
 			},
 			Comment: "The global logging level and format",
+			Order:   order(),
 		},
 	}
 }

@@ -4,16 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DoNewsCode/core/di"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
 	"github.com/ghodss/yaml"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"sort"
 )
 
 // Module is the configuration module that bundles the reload watcher and exportConfig commands.
@@ -92,9 +92,13 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 				}
 				exportedConfigs = copy
 			}
+
+			sort.Slice(exportedConfigs, func(i, j int) bool {
+				return exportedConfigs[i].Order > exportedConfigs[j].Order
+			})
+
 			os.MkdirAll(filepath.Dir(outputFile), os.ModePerm)
-			targetFile, err = os.OpenFile(outputFile,
-				handler.flags(), os.ModePerm)
+			targetFile, err = os.OpenFile(outputFile, handler.flags(), os.ModePerm)
 			if err != nil {
 				return errors.Wrap(err, "failed to open config file")
 			}

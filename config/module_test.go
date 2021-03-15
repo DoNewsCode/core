@@ -14,20 +14,8 @@ func setup() *cobra.Command {
 	os.Remove("./testdata/module_test.json")
 	var config, _ = NewConfig()
 	var mod = Module{conf: config, exportedConfigs: []ExportedConfig{
-		{
-			"foo",
-			map[string]interface{}{
-				"foo": "bar",
-			},
-			"A mock config",
-		},
-		{
-			"baz",
-			map[string]interface{}{
-				"baz": "qux",
-			},
-			"Other mock config",
-		},
+		NewExportedConfig("foo", map[string]interface{}{"foo": "bar"}, "A mock config"),
+		NewExportedConfig("baz", map[string]interface{}{"baz": "qux"}, "Other mock config"),
 	}}
 	rootCmd := &cobra.Command{
 		Use: "root",
