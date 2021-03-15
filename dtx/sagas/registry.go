@@ -67,7 +67,7 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 	tx := &TX{
 		session: Log{
 			ID:            xid.New().String(),
-			correlationID: cid,
+			CorrelationID: cid,
 			StartedAt:     time.Now(),
 			LogType:       Session,
 		},
@@ -94,7 +94,7 @@ func (r *Registry) AddStep(step *Step) func(context.Context, interface{}) (inter
 
 			compensateLog := Log{
 				ID:            logID,
-				correlationID: tx.correlationID,
+				CorrelationID: tx.correlationID,
 				StartedAt:     time.Now(),
 				LogType:       Undo,
 				StepName:      step.Name,
@@ -122,7 +122,7 @@ func (r *Registry) AddStep(step *Step) func(context.Context, interface{}) (inter
 		}
 		stepLog := Log{
 			ID:            logID,
-			correlationID: tx.correlationID,
+			CorrelationID: tx.correlationID,
 			StartedAt:     time.Now(),
 			LogType:       Do,
 			StepName:      step.Name,
@@ -155,7 +155,7 @@ func (r *Registry) Recover(ctx context.Context) {
 			continue
 		}
 		tx := TX{
-			correlationID: log.correlationID,
+			correlationID: log.CorrelationID,
 			store:         r.Store,
 		}
 		ctx = context.WithValue(ctx, dtx.CorrelationID, tx.correlationID)
