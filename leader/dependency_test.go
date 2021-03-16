@@ -5,9 +5,9 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
-	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
+	"gopkg.in/yaml.v3"
 )
 
 type mockMaker struct {

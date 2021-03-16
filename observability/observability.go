@@ -4,11 +4,11 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
-	"github.com/ghodss/yaml"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/dig"
+	"gopkg.in/yaml.v3"
 )
 
 /*
