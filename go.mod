@@ -9,7 +9,6 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/ghodss/yaml v1.0.0
-	github.com/gin-gonic/gin v1.6.3
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-kit/kit v0.10.0
 	github.com/go-redis/redis/v8 v8.6.0
@@ -23,7 +22,6 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/oklog/run v1.1.0
 	github.com/olivere/elastic/v7 v7.0.22
-	github.com/opentracing-contrib/go-gin v0.0.0-20201220185307-1dd2273433a4
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e
 	github.com/opentracing-contrib/go-stdlib v1.0.0
 	github.com/opentracing/opentracing-go v1.2.0
@@ -47,8 +45,8 @@ require (
 	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2 // indirect
 	golang.org/x/text v0.3.5 // indirect
 	google.golang.org/grpc v1.35.0
-	google.golang.org/protobuf v1.25.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 	gorm.io/driver/mysql v1.0.4
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.20.12
