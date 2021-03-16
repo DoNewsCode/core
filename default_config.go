@@ -30,7 +30,7 @@ redis:
   default:
     addrs:
       - 127.0.0.1:6379
-    DB: 0
+    db: 0
 gorm:
   default:
     database: sqlite
