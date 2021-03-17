@@ -6,10 +6,10 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
-	"github.com/ghodss/yaml"
 	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
+	"gopkg.in/yaml.v3"
 )
 
 func TestEtcd(t *testing.T) {
@@ -57,6 +57,6 @@ func TestProvideFactory(t *testing.T) {
 
 func TestExportedConfigs(t *testing.T) {
 	conf := provideExportedConfigs()
-	_, err := yaml.Marshal(conf)
+	_, err := yaml.Marshal(conf.ExportedConfig)
 	assert.NoError(t, err)
 }

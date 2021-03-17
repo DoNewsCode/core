@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
-	yaml2 "github.com/ghodss/yaml"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/stretchr/testify/assert"
+	yaml2 "gopkg.in/yaml.v3"
 )
 
 func TestNewRedisFactory(t *testing.T) {

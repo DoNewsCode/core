@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/DoNewsCode/core/di"
+	"gopkg.in/yaml.v3"
+
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/DoNewsCode/core/contract"
-	"github.com/ghodss/yaml"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
