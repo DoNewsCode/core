@@ -63,7 +63,7 @@ func newServeCmd(p serveIn) *cobra.Command {
 			)
 
 			// Start HTTP server
-			{
+			if !p.Config.Bool("http.disable") {
 				httpAddr := p.Config.String("http.addr")
 				ln, err := net.Listen("tcp", httpAddr)
 				if err != nil {
@@ -93,7 +93,7 @@ func newServeCmd(p serveIn) *cobra.Command {
 			}
 
 			// Start gRPC server
-			{
+			if !p.Config.Bool("grpc.disable") {
 				grpcAddr := p.Config.String("grpc.addr")
 				ln, err := net.Listen("tcp", grpcAddr)
 				if err != nil {
@@ -121,7 +121,7 @@ func newServeCmd(p serveIn) *cobra.Command {
 			}
 
 			// Start cron runner
-			{
+			if !p.Config.Bool("cron.disable") {
 				if p.Cron == nil {
 					p.Cron = cron.New()
 				}
