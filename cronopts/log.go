@@ -1,4 +1,4 @@
-package otcron
+package cronopts
 
 import (
 	"github.com/go-kit/kit/log"
