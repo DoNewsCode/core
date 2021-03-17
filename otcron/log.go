@@ -17,5 +17,5 @@ func (r CronLogAdapter) Info(msg string, keysAndValues ...interface{}) {
 
 // Error implements cron.Logger
 func (r CronLogAdapter) Error(err error, msg string, keysAndValues ...interface{}) {
-	_ = level.Error(r.Logging).Log("msg", msg, "error", err, keysAndValues)
+	_ = level.Error(r.Logging).Log("msg", msg, "err", err, keysAndValues)
 }
