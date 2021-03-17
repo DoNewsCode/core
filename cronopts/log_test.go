@@ -1,4 +1,4 @@
-package otcron
+package cronopts
 
 import (
 	"bytes"
