@@ -11,11 +11,11 @@ type CronLogAdapter struct {
 }
 
 // Info implements cron.Logger
-func (r CronLogAdapter) Info(msg string, keysAndValues ...interface{}) {
-	_ = level.Info(r.Logging).Log(append([]interface{}{"msg", msg}, keysAndValues...)...)
+func (c CronLogAdapter) Info(msg string, keysAndValues ...interface{}) {
+	_ = level.Info(c.Logging).Log(append([]interface{}{"msg", msg}, keysAndValues...)...)
 }
 
 // Error implements cron.Logger
-func (r CronLogAdapter) Error(err error, msg string, keysAndValues ...interface{}) {
-	_ = level.Error(r.Logging).Log(append([]interface{}{"msg", msg, "err", err}, keysAndValues...)...)
+func (c CronLogAdapter) Error(err error, msg string, keysAndValues ...interface{}) {
+	_ = level.Error(c.Logging).Log(append([]interface{}{"msg", msg, "err", err}, keysAndValues...)...)
 }
