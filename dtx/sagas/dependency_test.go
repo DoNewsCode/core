@@ -7,9 +7,9 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
-	"github.com/ghodss/yaml"
 	"github.com/oklog/run"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 )
 
 type sagas struct {
