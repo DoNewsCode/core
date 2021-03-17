@@ -62,8 +62,9 @@ type in struct {
 
 	Logger      log.Logger
 	Conf        contract.ConfigAccessor
-	Interceptor EsConfigInterceptor `optional:"true"`
-	Tracer      opentracing.Tracer  `optional:"true"`
+	Interceptor EsConfigInterceptor        `optional:"true"`
+	Tracer      opentracing.Tracer         `optional:"true"`
+	Options     []elastic.ClientOptionFunc `optional:"true"`
 }
 
 // out is the result of Provide.
@@ -125,6 +126,7 @@ func provideEsFactory(p in) (out, func()) {
 			elastic.SetErrorLog(esLogAdapter{level.Error(logger)}),
 			elastic.SetTraceLog(esLogAdapter{level.Debug(logger)}),
 		)
+		options = append(options, p.Options...)
 
 		client, err := elastic.NewClient(options...)
 		if err != nil {
