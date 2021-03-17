@@ -22,7 +22,7 @@ Then you can invoke gorm from the application.
 		// use client
 	})
 
-Sometimes there are valid reasons to connect to more than one mongo server.
+Sometimes there are valid reasons to connect to more than one mysql server.
 Inject otgorm.Maker to factory a *gorm.DB with a specific configuration entry.
 
 	c.Invoke(function(maker otgorm.Maker) {
