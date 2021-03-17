@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/cronopts"
 	"net"
 	"net/http"
 	"os"
@@ -123,8 +124,9 @@ func newServeCmd(p serveIn) *cobra.Command {
 			// Start cron runner
 			if !p.Config.Bool("cron.disable") {
 				if p.Cron == nil {
-					p.Cron = cron.New()
+					p.Cron = cron.New(cron.WithLogger(cronopts.CronLogAdapter{Logging: l}))
 				}
+
 				p.Container.ApplyCron(p.Cron)
 				g.Add(func() error {
 					l.Info("cron runner started")
