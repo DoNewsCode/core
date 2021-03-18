@@ -17,5 +17,5 @@ func TestWithLevel(t *testing.T) {
 }
 
 func TestNewLogger(t *testing.T) {
-	_ = NewLogger("json")
+	_ = NewLogger("logfmt")
 }
