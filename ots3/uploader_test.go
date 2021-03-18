@@ -17,7 +17,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	manager := NewManager("Q3AM3UQ867SPQQA43P2F", "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG", "https://play.minio.io:9000", "asia", "mybucket")
+	manager := setupManager()
 	_ = manager.CreateBucket(context.Background(), "foo")
 	os.Exit(m.Run())
 }
@@ -42,7 +42,7 @@ func TestNewManager(t *testing.T) {
 
 func TestManager_CreateBucket(t *testing.T) {
 	t.Parallel()
-	m := NewManager("Q3AM3UQ867SPQQA43P2F", "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG", "https://play.minio.io:9000", "asia", "mybucket")
+	m := setupManager()
 	err := m.CreateBucket(context.Background(), "foo")
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
