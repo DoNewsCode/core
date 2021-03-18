@@ -15,23 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupManager() *Manager {
-	return setupManagerWithTracer(nil)
-}
-
-func setupManagerWithTracer(tracer opentracing.Tracer) *Manager {
-	m := NewManager(
-		"Q3AM3UQ867SPQQA43P2F",
-		"zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
-		"https://play.minio.io:9000",
-		"asia",
-		"mybucket",
-		WithTracer(tracer),
-	)
-	_ = m.CreateBucket(context.Background(), "mybucket")
-	return m
-}
-
 func TestNewManager(t *testing.T) {
 	t.Parallel()
 	assert.NotNil(t, NewManager(
@@ -52,7 +35,7 @@ func TestNewManager(t *testing.T) {
 
 func TestManager_CreateBucket(t *testing.T) {
 	t.Parallel()
-	m := NewManager("Q3AM3UQ867SPQQA43P2F", "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG", "https://play.minio.io:9000", "asia", "mybucket")
+	m := setupManager()
 	err := m.CreateBucket(context.Background(), "foo")
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
@@ -74,8 +57,25 @@ func TestManager_CreateBucket(t *testing.T) {
 func TestManager_UploadFromUrl(t *testing.T) {
 	tracer := mocktracer.New()
 	m := setupManagerWithTracer(tracer)
+	_ = m.CreateBucket(context.Background(), "mybucket")
 	newURL, err := m.UploadFromUrl(context.Background(), "https://www.donews.com/static/v2/images/full-logo.png")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newURL)
 	assert.Len(t, tracer.FinishedSpans(), 2)
+}
+
+func setupManager() *Manager {
+	return setupManagerWithTracer(nil)
+}
+
+func setupManagerWithTracer(tracer opentracing.Tracer) *Manager {
+	m := NewManager(
+		"Q3AM3UQ867SPQQA43P2F",
+		"zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
+		"https://play.minio.io:9000",
+		"asia",
+		"mybucket",
+		WithTracer(tracer),
+	)
+	return m
 }
