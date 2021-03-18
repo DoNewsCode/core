@@ -43,11 +43,13 @@ type in struct {
 
 type out struct {
 	di.Out
-	di.Module
 
 	Election *Election
 	Status   *Status
 }
+
+// ModuleSentinel marks out as module.
+func (m out) ModuleSentinel() {}
 
 func provide(in in) (out, error) {
 	if err := determineDriver(&in); err != nil {

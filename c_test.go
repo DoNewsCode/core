@@ -2,13 +2,15 @@ package core
 
 import (
 	"context"
-	"github.com/DoNewsCode/core/contract"
-	"github.com/DoNewsCode/core/events"
 	"io/ioutil"
 	"os"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/otgorm"
@@ -113,4 +115,30 @@ func TestC_Default(t *testing.T) {
 	output, _ := ioutil.ReadFile(f.Name())
 	assert.Contains(t, string(output), "gorm:")
 	os.Remove(f.Name())
+}
+
+type m1 struct {
+	di.Out
+	A int
+}
+
+func (m m1) ModuleSentinel() {
+	panic("implement me")
+}
+
+type m2 struct {
+	di.Out
+	A float32
+}
+
+func (m m2) ModuleSentinel() {
+	panic("implement me")
+}
+
+func TestC_Provide(t *testing.T) {
+	c := New()
+	c.Provide(di.Deps{
+		func() m1 { return m1{} },
+		func() m2 { return m2{} },
+	})
 }

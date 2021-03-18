@@ -44,7 +44,6 @@ type SagaEndpoints map[string]endpoint.Endpoint
 
 type out struct {
 	di.Out
-	di.Module
 
 	Registry      *Registry
 	Interval      recoverInterval
@@ -98,6 +97,8 @@ func (m out) ProvideRunGroup(group *run.Group) {
 	})
 }
 
+func (m out) ModuleSentinel() {}
+
 type configOut struct {
 	Config []config.ExportedConfig
 }
@@ -110,9 +111,14 @@ func provideConfig() configOut {
 				"sagas": map[string]interface{}{
 					"sagaTimeoutSecond":     "600",
 					"recoverIntervalSecond": "60",
+					"mysql": map[string]interface{}{
+						"connection":          "default",
+						"retentionHour":       "168",
+						"cleanupIntervalHour": "1",
+					},
 				},
 			},
-			Comment: "The saga config",
+			Comment: "The saga configuration.",
 		},
 	}}
 }
