@@ -87,7 +87,10 @@ func (s *MySQLStore) UncommittedSagas(ctx context.Context) ([]sagas.Log, error) 
 
 // CleanUp removes the logs that exceed their of maximum retention. It can be called periodically to save disk space.
 func (s *MySQLStore) CleanUp(ctx context.Context) error {
-	return s.db.WithContext(ctx).Exec("DELETE FROM saga_logs WHERE started_at < ?", time.Now().Add(-s.retention)).Error
+	return s.db.WithContext(ctx).Exec(
+		"DELETE FROM saga_logs WHERE started_at < ?",
+		time.Now().Add(-s.retention),
+	).Error
 }
 
 func (s *MySQLStore) unacknowledgedSteps(ctx context.Context, correlationID string) ([]sagas.Log, error) {

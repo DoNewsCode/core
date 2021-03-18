@@ -280,12 +280,12 @@ func TestStore_CleanUp(t *testing.T) {
 	c.Provide(otgorm.Providers())
 	c.Invoke(func(db *gorm.DB) {
 		db.Exec("truncate table saga_logs")
-		store := MySQLStore{db: db}
+		store := New(db, WithRetention(2*time.Hour))
 
 		store.Log(context.Background(), sagas.Log{
 			ID:            "100",
 			CorrelationID: "111",
-			StartedAt:     time.Now().Add(-15 * 24 * time.Hour),
+			StartedAt:     time.Now().Add(-3 * time.Hour),
 			LogType:       0,
 			StepParam:     nil,
 			StepName:      "test",
@@ -294,7 +294,7 @@ func TestStore_CleanUp(t *testing.T) {
 		store.Log(context.Background(), sagas.Log{
 			ID:            "100",
 			CorrelationID: "112",
-			StartedAt:     time.Now().Add(-1 * 24 * time.Hour),
+			StartedAt:     time.Now().Add(-1 * time.Hour),
 			LogType:       0,
 			StepParam:     nil,
 			StepName:      "test",
