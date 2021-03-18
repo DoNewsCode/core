@@ -167,7 +167,7 @@ type HTTPProvider interface {
 }
 ```
 
-Therefore, the core knows this module wants to expose HTTP service and subsequently invokes the `ProvideHttp` with a router. You can register multiple modules, and each module can implement one or more services.
+Therefore, the core knows this module wants to expose HTTP service and subsequently invokes the `ProvideHTTP` with a router. You can register multiple modules, and each module can implement one or more services.
 
 Now we have a fully workable project, with layers of handler, repository, and entity. 
 Had this been a DDD workshop, we would be expanding the example even further. 
@@ -178,7 +178,7 @@ That being said, let's redirect our attention to other goodies package core has 
   You could start you project as a monolith with multiple modules, and gradually migrate them into microservices.
 
 - Package core doesn't lock in transport or framework.
-  For instance, you can use go kit to construct your service, and leveraging gRPC, AMPQ, thrift, etc. Non-network services like CLI and Cron are also supported.
+  For instance, you can use go kit to construct your service, and bring in transports like gRPC, AMPQ, thrift, etc. Non-network services like CLI and Cron are also supported.
 
 - Sub packages provide support around service coordination, including but not limited to distributed tracing, metrics exporting, error handling, event-dispatching, and leader election.
 
