@@ -5,7 +5,6 @@ package ots3
 import (
 	"context"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core/key"
@@ -15,12 +14,6 @@ import (
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMain(m *testing.M) {
-	manager := setupManager()
-	_ = manager.CreateBucket(context.Background(), "foo")
-	os.Exit(m.Run())
-}
 
 func TestNewManager(t *testing.T) {
 	t.Parallel()
@@ -64,6 +57,7 @@ func TestManager_CreateBucket(t *testing.T) {
 func TestManager_UploadFromUrl(t *testing.T) {
 	tracer := mocktracer.New()
 	m := setupManagerWithTracer(tracer)
+	_ = m.CreateBucket(context.Background(), "mybucket")
 	newURL, err := m.UploadFromUrl(context.Background(), "https://www.donews.com/static/v2/images/full-logo.png")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newURL)
@@ -83,6 +77,5 @@ func setupManagerWithTracer(tracer opentracing.Tracer) *Manager {
 		"mybucket",
 		WithTracer(tracer),
 	)
-	_ = m.CreateBucket(context.Background(), "mybucket")
 	return m
 }
