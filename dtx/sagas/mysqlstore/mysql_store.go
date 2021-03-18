@@ -14,8 +14,9 @@ import (
 
 // MySQLStore is a Store implementation for sagas.
 type MySQLStore struct {
-	db        *gorm.DB
-	retention time.Duration
+	db              *gorm.DB
+	retention       time.Duration
+	cleanupInterval time.Duration
 }
 
 // Option is the type for MySQLStore options.
@@ -29,9 +30,16 @@ func WithRetention(duration time.Duration) Option {
 	}
 }
 
+// WithCleanUpInterval is the option that sets the clean up interval.
+func WithCleanUpInterval(duration time.Duration) Option {
+	return func(store *MySQLStore) {
+		store.cleanupInterval = duration
+	}
+}
+
 // New returns a pointer to MySQLStore.
 func New(db *gorm.DB, opts ...Option) *MySQLStore {
-	s := &MySQLStore{db: db, retention: 168 * time.Hour}
+	s := &MySQLStore{db: db, retention: 168 * time.Hour, cleanupInterval: time.Hour}
 	for _, f := range opts {
 		f(s)
 	}
@@ -85,12 +93,22 @@ func (s *MySQLStore) UncommittedSagas(ctx context.Context) ([]sagas.Log, error) 
 	return logs, nil
 }
 
-// CleanUp removes the logs that exceed their of maximum retention. It can be called periodically to save disk space.
+// CleanUp periodically removes the logs that exceed their of maximum retention.
 func (s *MySQLStore) CleanUp(ctx context.Context) error {
-	return s.db.WithContext(ctx).Exec(
-		"DELETE FROM saga_logs WHERE started_at < ?",
-		time.Now().Add(-s.retention),
-	).Error
+	timer := time.NewTicker(s.cleanupInterval)
+	for {
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+			err := s.cleanUp(ctx)
+			if err != nil {
+				timer.Stop()
+				return err
+			}
+		}
+	}
 }
 
 func (s *MySQLStore) unacknowledgedSteps(ctx context.Context, correlationID string) ([]sagas.Log, error) {
@@ -139,4 +157,12 @@ func (s *MySQLStore) unacknowledgedSteps(ctx context.Context, correlationID stri
 		result = append(result, logs[i])
 	}
 	return result, nil
+}
+
+// cleanUp removes the logs that exceed their of maximum retention. It can be called periodically to save disk space.
+func (s *MySQLStore) cleanUp(ctx context.Context) error {
+	return s.db.WithContext(ctx).Exec(
+		"DELETE FROM saga_logs WHERE started_at < ?",
+		time.Now().Add(-s.retention),
+	).Error
 }

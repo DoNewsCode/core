@@ -8,7 +8,7 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/dtx/sagas"
 	"github.com/DoNewsCode/core/otgorm"
-	"github.com/robfig/cron/v3"
+	"github.com/oklog/run"
 )
 
 /*
@@ -64,8 +64,11 @@ func (m out) ProvideMigration() []*otgorm.Migration {
 	return Migrations()
 }
 
-func (m out) ProvideCron(crontab *cron.Cron) {
-	crontab.AddFunc("0 2 * * *", func() {
-		m.Store.CleanUp(context.Background())
+func (m out) ProvideRunGroup(group *run.Group) {
+	ctx, cancel := context.WithCancel(context.Background())
+	group.Add(func() error {
+		return m.Store.CleanUp(ctx)
+	}, func(err error) {
+		cancel()
 	})
 }
