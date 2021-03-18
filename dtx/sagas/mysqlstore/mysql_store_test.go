@@ -21,7 +21,7 @@ import (
 type module struct{}
 
 func (m module) ProvideMigration() []*otgorm.Migration {
-	return Migrations()
+	return Migrations("default")
 }
 
 func TestMain(m *testing.M) {
