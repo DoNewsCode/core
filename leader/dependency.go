@@ -43,10 +43,14 @@ type in struct {
 
 type out struct {
 	di.Out
-	di.Module
 
 	Election *Election
 	Status   *Status
+}
+
+// ModuleSentinel marks out as module
+func (m out) ModuleSentinel() {
+	panic("implement me")
 }
 
 func provide(in in) (out, error) {
