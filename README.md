@@ -29,6 +29,21 @@ to be agreed upon within the team.
 
 Package core was created to bootstrap and coordinate such services.
 
+## Feature
+
+Package core shares the common concerns of your application:
+
+* **Configuration management**: env, flags, files, etc.
+* **Pluggable transports**: HTTP, gRPC, etc. 
+* **Dependency injection**
+* **Job management**: Cron, long-running, one-off commandline, etc.
+* **Events and Queues**
+* **Metrics**
+* **Distributed Tracing**
+* **Database migrations and seedings**
+* **Distributed transactions**
+* **Leader election**
+
 ## Overview
 
 Whatever the app is, the bootstrapping phase is roughly composed by:
@@ -178,9 +193,11 @@ That being said, let's redirect our attention to other goodies package core has 
   You could start you project as a monolith with multiple modules, and gradually migrate them into microservices.
 
 - Package core doesn't lock in transport or framework.
-  For instance, you can use go kit to construct your service, and bring in transports like gRPC, AMPQ, thrift, etc. Non-network services like CLI and Cron are also supported.
+  For instance, you can use go kit to construct your services, and bring in transports like gRPC, AMPQ, thrift, etc. Non-network services like CLI and Cron are also supported.
 
-- Sub packages provide support around service coordination, including but not limited to distributed tracing, metrics exporting, error handling, event-dispatching, and leader election.
+- Package core also babysits the services after initialization. The duty includes but not limited to distributed tracing, metrics exporting, error handling, event-dispatching, and leader election.
+
+Be sure to checkout the documentation section to learn more.
 
 ## Documentation
 
