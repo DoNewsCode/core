@@ -111,10 +111,13 @@ func provideConfig() configOut {
 				"sagas": map[string]interface{}{
 					"sagaTimeoutSecond":     "600",
 					"recoverIntervalSecond": "60",
-					"store":                 "default",
+					"mysql": map[string]interface{}{
+						"connection":    "default",
+						"retentionHour": "168",
+					},
 				},
 			},
-			Comment: "The saga config",
+			Comment: "The saga configuration.",
 		},
 	}}
 }

@@ -2,6 +2,7 @@ package mysqlstore
 
 import (
 	"context"
+	"time"
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
@@ -25,14 +26,18 @@ func Providers() di.Deps {
 
 func provide(in in) (out, error) {
 	conn := "default"
-	if in.Conf.String("sagas.store") != "" {
-		conn = in.Conf.String("sagas.store")
+	if in.Conf.String("sagas.mysql.connection") != "" {
+		conn = in.Conf.String("sagas.mysql.connection")
 	}
 	db, err := in.Maker.Make(conn)
 	if err != nil {
 		return out{}, err
 	}
-	store := New(db)
+	var opts []Option
+	if in.Conf.Float64("sagas.mysql.retentionHour") > 0 {
+		opts = append(opts, WithRetention(time.Hour*time.Duration(in.Conf.Float64("sagas.mysql.retentionHour"))))
+	}
+	store := New(db, opts...)
 	return out{
 		Store:     store,
 		SagaStore: store,

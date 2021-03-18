@@ -48,7 +48,7 @@ type out struct {
 	Status   *Status
 }
 
-// ModuleSentinel marks out as module
+// ModuleSentinel marks out as module.
 func (m out) ModuleSentinel() {}
 
 func provide(in in) (out, error) {

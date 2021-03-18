@@ -18,9 +18,24 @@ type MySQLStore struct {
 	retention time.Duration
 }
 
+// Option is the type for MySQLStore options.
+type Option func(store *MySQLStore)
+
+// WithRetention is the option that sets the maximum log retention after which the log
+// will be cleared.
+func WithRetention(duration time.Duration) Option {
+	return func(store *MySQLStore) {
+		store.retention = duration
+	}
+}
+
 // New returns a pointer to MySQLStore.
-func New(db *gorm.DB) *MySQLStore {
-	return &MySQLStore{db: db}
+func New(db *gorm.DB, opts ...Option) *MySQLStore {
+	s := &MySQLStore{db: db, retention: 168 * time.Hour}
+	for _, f := range opts {
+		f(s)
+	}
+	return s
 }
 
 // Log appends the log to mysql store.
