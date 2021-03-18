@@ -16,21 +16,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupManager() *Manager {
-	return setupManagerWithTracer(nil)
-}
-
-func setupManagerWithTracer(tracer opentracing.Tracer) *Manager {
-	m := NewManager(
-		"Q3AM3UQ867SPQQA43P2F",
-		"zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
-		"https://play.minio.io:9000",
-		"asia",
-		"mybucket",
-		WithTracer(tracer),
-	)
-	_ = m.CreateBucket(context.Background(), "mybucket")
-	return m
+func TestMain(m *testing.M) {
+	manager := NewManager("Q3AM3UQ867SPQQA43P2F", "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG", "https://play.minio.io:9000", "asia", "mybucket")
+	_ = manager.CreateBucket(context.Background(), "foo")
+	os.Exit(m.Run())
 }
 
 func TestNewManager(t *testing.T) {
@@ -49,12 +38,6 @@ func TestNewManager(t *testing.T) {
 		}),
 		WithKeyer(key.New()),
 	))
-}
-
-func TestMain(m *testing.M) {
-	manager := NewManager("Q3AM3UQ867SPQQA43P2F", "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG", "https://play.minio.io:9000", "asia", "mybucket")
-	_ = manager.CreateBucket(context.Background(), "foo")
-	os.Exit(m.Run())
 }
 
 func TestManager_CreateBucket(t *testing.T) {
@@ -85,4 +68,21 @@ func TestManager_UploadFromUrl(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newURL)
 	assert.Len(t, tracer.FinishedSpans(), 2)
+}
+
+func setupManager() *Manager {
+	return setupManagerWithTracer(nil)
+}
+
+func setupManagerWithTracer(tracer opentracing.Tracer) *Manager {
+	m := NewManager(
+		"Q3AM3UQ867SPQQA43P2F",
+		"zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
+		"https://play.minio.io:9000",
+		"asia",
+		"mybucket",
+		WithTracer(tracer),
+	)
+	_ = m.CreateBucket(context.Background(), "mybucket")
+	return m
 }
