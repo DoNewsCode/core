@@ -300,7 +300,7 @@ func TestStore_CleanUp(t *testing.T) {
 			StepName:      "test",
 			StepError:     nil,
 		})
-		store.CleanUp(context.Background())
+		store.cleanUp(context.Background())
 		var count int64
 		db.Table("saga_logs").Count(&count)
 		assert.Equal(t, int64(1), count)
