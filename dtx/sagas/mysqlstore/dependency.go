@@ -39,6 +39,7 @@ func provide(in in) (out, error) {
 	}
 	store := New(db, opts...)
 	return out{
+		Conn:      conn,
 		Store:     store,
 		SagaStore: store,
 	}, nil
@@ -54,6 +55,7 @@ type in struct {
 type out struct {
 	di.Out
 
+	Conn      string `name:"mysqlstore"`
 	Store     *MySQLStore
 	SagaStore sagas.Store
 }
@@ -61,7 +63,7 @@ type out struct {
 func (m out) ModuleSentinel() {}
 
 func (m out) ProvideMigration() []*otgorm.Migration {
-	return Migrations()
+	return Migrations(m.Conn)
 }
 
 func (m out) ProvideRunGroup(group *run.Group) {
