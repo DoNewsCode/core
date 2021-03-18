@@ -15,3 +15,7 @@ func TestWithLevel(t *testing.T) {
 	// ensure the caller depth is correct
 	assert.Contains(t, buf.String(), "caller=log_test.go")
 }
+
+func TestNewLogger(t *testing.T) {
+	_ = NewLogger("json")
+}
