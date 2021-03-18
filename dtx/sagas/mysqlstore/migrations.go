@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Migrations returns the database migrations needed for MySQLStore.
 func Migrations() []*otgorm.Migration {
 	return []*otgorm.Migration{
 		{

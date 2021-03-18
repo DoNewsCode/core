@@ -12,14 +12,18 @@ import (
 	"gorm.io/gorm"
 )
 
+// MySQLStore is a Store implementation for sagas.
 type MySQLStore struct {
-	db *gorm.DB
+	db        *gorm.DB
+	retention time.Duration
 }
 
+// New returns a pointer to MySQLStore.
 func New(db *gorm.DB) *MySQLStore {
 	return &MySQLStore{db: db}
 }
 
+// Log appends the log to mysql store.
 func (s *MySQLStore) Log(ctx context.Context, log sagas.Log) error {
 	return s.db.WithContext(ctx).Exec(
 		"INSERT INTO saga_logs (id, correlation_id, started_at, finished_at, log_type, step_name, step_param, step_error) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -27,6 +31,7 @@ func (s *MySQLStore) Log(ctx context.Context, log sagas.Log) error {
 	).Error
 }
 
+// Ack acknowledges a transaction step is completed.
 func (s *MySQLStore) Ack(ctx context.Context, id string, err error) error {
 	var estr string
 	if err != nil {
@@ -35,10 +40,12 @@ func (s *MySQLStore) Ack(ctx context.Context, id string, err error) error {
 	return s.db.WithContext(ctx).Exec("UPDATE saga_logs SET finished_at = ?, step_error = ? WHERE id = ?", time.Now(), estr, id).Error
 }
 
+// UnacknowledgedSteps returns all unacknowledged steps from the store. Those steps are up for rollback.
 func (s *MySQLStore) UnacknowledgedSteps(ctx context.Context, correlationID string) ([]sagas.Log, error) {
 	return s.unacknowledgedSteps(ctx, correlationID)
 }
 
+// UncommittedSagas searches all uncommitted sagas and returns unacknowledged steps from those sagas.
 func (s *MySQLStore) UncommittedSagas(ctx context.Context) ([]sagas.Log, error) {
 	var (
 		logs           []sagas.Log
@@ -49,9 +56,9 @@ func (s *MySQLStore) UncommittedSagas(ctx context.Context) ([]sagas.Log, error) 
 		return nil, err
 	}
 	for rows.Next() {
-		var correlationId string
-		rows.Scan(&correlationId)
-		correlationIDs = append(correlationIDs, correlationId)
+		var correlationID string
+		rows.Scan(&correlationID)
+		correlationIDs = append(correlationIDs, correlationID)
 	}
 	for _, id := range correlationIDs {
 		log, err := s.unacknowledgedSteps(ctx, id)
@@ -63,8 +70,9 @@ func (s *MySQLStore) UncommittedSagas(ctx context.Context) ([]sagas.Log, error) 
 	return logs, nil
 }
 
+// CleanUp removes the logs that exceed their of maximum retention. It can be called periodically to save disk space.
 func (s *MySQLStore) CleanUp(ctx context.Context) error {
-	return s.db.WithContext(ctx).Exec("DELETE FROM saga_logs WHERE started_at < ?", time.Now().Add(-7*24*time.Hour)).Error
+	return s.db.WithContext(ctx).Exec("DELETE FROM saga_logs WHERE started_at < ?", time.Now().Add(-s.retention)).Error
 }
 
 func (s *MySQLStore) unacknowledgedSteps(ctx context.Context, correlationID string) ([]sagas.Log, error) {

@@ -97,9 +97,7 @@ func (m out) ProvideRunGroup(group *run.Group) {
 	})
 }
 
-func (m out) ModuleSentinel() {
-	panic("implement me")
-}
+func (m out) ModuleSentinel() {}
 
 type configOut struct {
 	Config []config.ExportedConfig

@@ -10,6 +10,15 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+/*
+Providers returns MySQLStore dependency.
+	DependsOn:
+		- otgorm.Maker
+		- contract.ConfigAccessor
+	Provides:
+		- *MySQLStore
+		- sagas.Store
+*/
 func Providers() di.Deps {
 	return []interface{}{provide}
 }
@@ -44,9 +53,7 @@ type out struct {
 	SagaStore sagas.Store
 }
 
-func (m out) ModuleSentinel() {
-	panic("implement me")
-}
+func (m out) ModuleSentinel() {}
 
 func (m out) ProvideMigration() []*otgorm.Migration {
 	return Migrations()

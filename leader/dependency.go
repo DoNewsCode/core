@@ -49,9 +49,7 @@ type out struct {
 }
 
 // ModuleSentinel marks out as module
-func (m out) ModuleSentinel() {
-	panic("implement me")
-}
+func (m out) ModuleSentinel() {}
 
 func provide(in in) (out, error) {
 	if err := determineDriver(&in); err != nil {
