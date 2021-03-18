@@ -280,7 +280,7 @@ func TestStore_CleanUp(t *testing.T) {
 	c.Provide(otgorm.Providers())
 	c.Invoke(func(db *gorm.DB) {
 		db.Exec("truncate table saga_logs")
-		store := New(db, WithRetention(2*time.Hour))
+		store := New(db, WithRetention(2*time.Hour), WithCleanUpInterval(time.Millisecond))
 
 		store.Log(context.Background(), sagas.Log{
 			ID:            "100",
@@ -304,5 +304,9 @@ func TestStore_CleanUp(t *testing.T) {
 		var count int64
 		db.Table("saga_logs").Count(&count)
 		assert.Equal(t, int64(1), count)
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+		defer cancel()
+		assert.Error(t, store.CleanUp(ctx))
 	})
 }
