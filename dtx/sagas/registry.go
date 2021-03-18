@@ -12,12 +12,21 @@ import (
 	"github.com/rs/xid"
 )
 
-// Step is a step in the Saga.
+// Step is a step in the Saga. Steps should be registered during the bootstrap
+// phase of app, by calling Registry.AddStep.
 type Step struct {
-	Name        string
-	Do          func(context.Context, interface{}) (interface{}, error)
-	Undo        func(ctx context.Context, req interface{}) error
+	// Name is the name of the step. Useful in logs.
+	Name string
+	// Do is the forward action that should be take when proceeding the transaction.
+	Do func(context.Context, interface{}) (interface{}, error)
+	// Undo is the backward action that should be take when the transaction rolls
+	// back
+	Undo func(ctx context.Context, req interface{}) error
+	// EncodeParam is a function that encodes the request parameter to bytes. Useful
+	// when persisting the request parameter in logs.
 	EncodeParam func(interface{}) ([]byte, error)
+	// DecodeParam is a function that decodes the bytes to request parameter. Useful
+	// when reconstructing the request parameter from logs.
 	DecodeParam func([]byte) (interface{}, error)
 }
 
@@ -82,8 +91,26 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 	return tx, ctx
 }
 
-// AddStep registers the saga steps in the registry. The registration should be done
-// during the bootstrapping of application.
+// AddStep registers the saga steps in the registry. The registration should be
+// done during the bootstrapping of application. Then returned closure should be
+// used in place of the original forward action. Logging has been taken care of
+// in the returned closure. Once the transaction rollbacks, the compensating
+// action will take place automatically.
+// 	addOrder := registry.AddStep(&sagas.Step{
+//		Name: "Add Order",
+//		Do: func(ctx context.Context, request interface{}) (response interface{}, err error) {
+//			resp, err := orderEndpoint(ctx, request.(OrderRequest))
+//			if err != nil {
+//				return nil, err
+//			}
+//			return resp, nil
+//		},
+//		Undo: func(ctx context.Context, req interface{}) (response interface{}, err error) {
+//			return orderCancelEndpoint(ctx, req)
+//		},
+//	})
+//  // just call the returned closure to move the transaction forward.
+//  addOrder(ctx, request)
 func (r *Registry) AddStep(step *Step) func(context.Context, interface{}) (interface{}, error) {
 	r.dispatcher.Subscribe(events.Listen(
 		[]contract.Event{rollbackEvent{name: step.Name, request: []byte{}}},

@@ -104,12 +104,13 @@ type makerIn struct {
 // makerOut is the di output of provideDispatcherFactory
 type makerOut struct {
 	di.Out
-	di.Module
 
 	DispatcherMaker   DispatcherMaker
 	DispatcherFactory DispatcherFactory
 	ExportedConfig    []config.ExportedConfig `group:"config,flatten"`
 }
+
+func (d makerOut) ModuleSentinel() {}
 
 // provideDispatcherFactory is a provider for *DispatcherFactory and *QueueableDispatcher.
 // It also provides an interface for each.

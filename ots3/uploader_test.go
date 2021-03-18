@@ -5,6 +5,7 @@ package ots3
 import (
 	"context"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core/key"
@@ -31,6 +32,12 @@ func TestNewManager(t *testing.T) {
 		}),
 		WithKeyer(key.New()),
 	))
+}
+
+func TestMain(m *testing.M) {
+	manager := NewManager("Q3AM3UQ867SPQQA43P2F", "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG", "https://play.minio.io:9000", "asia", "mybucket")
+	_ = manager.CreateBucket(context.Background(), "foo")
+	os.Exit(m.Run())
 }
 
 func TestManager_CreateBucket(t *testing.T) {
