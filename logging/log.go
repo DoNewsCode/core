@@ -67,7 +67,7 @@ func NewLogger(format string) (logger log.Logger) {
 			return term.FgBgColor{}
 		}
 		logger = term.NewLogger(os.Stdout, log.NewLogfmtLogger, colorFn)
-		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+		logger = log.With(log.NewSyncLogger(logger), "ts", log.DefaultTimestampUTC)
 		return logger
 	}
 }
