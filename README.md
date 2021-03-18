@@ -197,6 +197,8 @@ That being said, let's redirect our attention to other goodies package core has 
 
 - Package core also babysits the services after initialization. The duty includes but not limited to distributed tracing, metrics exporting, error handling, event-dispatching, and leader election.
 
+Be sure to checkout the documentation section to learn more.
+
 ## Documentation
 
 * [Tutorial](https://github.com/DoNewsCode/core/blob/master/doc/tutorial.md)
