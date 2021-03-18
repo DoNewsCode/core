@@ -112,8 +112,9 @@ func provideConfig() configOut {
 					"sagaTimeoutSecond":     "600",
 					"recoverIntervalSecond": "60",
 					"mysql": map[string]interface{}{
-						"connection":    "default",
-						"retentionHour": "168",
+						"connection":          "default",
+						"retentionHour":       "168",
+						"cleanupIntervalHour": "1",
 					},
 				},
 			},

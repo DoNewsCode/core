@@ -35,7 +35,16 @@ func provide(in in) (out, error) {
 	}
 	var opts []Option
 	if in.Conf.Float64("sagas.mysql.retentionHour") > 0 {
-		opts = append(opts, WithRetention(time.Hour*time.Duration(in.Conf.Float64("sagas.mysql.retentionHour"))))
+		opts = append(
+			opts,
+			WithRetention(time.Hour*time.Duration(in.Conf.Float64("sagas.mysql.retentionHour"))),
+		)
+	}
+	if in.Conf.Float64("sagas.mysql.cleanupIntervalHour") > 0 {
+		opts = append(
+			opts,
+			WithCleanUpInterval(time.Hour*time.Duration(in.Conf.Float64("sagas.mysql.cleanupIntervalHour"))),
+		)
 	}
 	store := New(db, opts...)
 	return out{
