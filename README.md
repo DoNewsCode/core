@@ -9,8 +9,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/DoNewsCode/core.svg)](https://pkg.go.dev/github.com/DoNewsCode/core)
 [![codecov](https://codecov.io/gh/DoNewsCode/core/branch/master/graph/badge.svg)](https://codecov.io/gh/DoNewsCode/core)
 [![Go Report Card](https://goreportcard.com/badge/DoNewsCode/core)](https://goreportcard.com/report/DoNewsCode/core)
-[![Sourcegraph](https://sourcegraph.com/github.com/DoNewsCode/core/-/badge.svg)](https://sourcegraph.com/github.com/DoNewsCode/core?badge)
- 
+[![Release](https://img.shields.io/github/release/DoNewsCode/core.svg?style=flat-square)](https://github.com/DoNewsCode/core/releases/latest) 
  </p>
 </div>
 
