@@ -1,6 +1,31 @@
 
+<a name="v0.4.0"></a>
+## [v0.4.0](https://github.com/DoNewsCode/core/compare/v0.4.0-alpha.2...v0.4.0) (2021-03-18)
+
+### ✨ Features
+
+* **sagas:** add mysql store ([#100](https://github.com/DoNewsCode/core/issues/100)) (@[谷溪](guxi99@gmail.com))
+
+### 🐛 Bug Fixes
+
+* logging logfmt use sync-logger ([#102](https://github.com/DoNewsCode/core/issues/102)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+
 <a name="v0.4.0-alpha.2"></a>
-## [v0.4.0-alpha.2](https://github.com/DoNewsCode/core/compare/v0.4.0-alpha.1...v0.4.0-alpha.2) (2021-03-13)
+## [v0.4.0-alpha.2](https://github.com/DoNewsCode/core/compare/v0.4.0-alpha.1...v0.4.0-alpha.2) (2021-03-17)
+
+### ✨ Features
+
+* add CronLogAdapter [#88](https://github.com/DoNewsCode/core/issues/88) ([#96](https://github.com/DoNewsCode/core/issues/96)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* add a configuration entry to disable servers. ([#93](https://github.com/DoNewsCode/core/issues/93)) (@[谷溪](guxi99@gmail.com))
+* add server events ([#86](https://github.com/DoNewsCode/core/issues/86)) (@[谷溪](guxi99@gmail.com))
+* **otes:** allow users to specify extra options ([#97](https://github.com/DoNewsCode/core/issues/97)) (@[谷溪](guxi99@gmail.com))
+
+### 🐛 Bug Fixes
+
+* change default_config redis DB to db ([#95](https://github.com/DoNewsCode/core/issues/95)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* s3 config was not exported correctly ([#89](https://github.com/DoNewsCode/core/issues/89)) (@[谷溪](guxi99@gmail.com))
+* correctly export CorrelationID field ([#87](https://github.com/DoNewsCode/core/issues/87)) (@[谷溪](guxi99@gmail.com))
 
 
 <a name="v0.4.0-alpha.1"></a>

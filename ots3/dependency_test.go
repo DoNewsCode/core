@@ -1,7 +1,9 @@
 package ots3
 
 import (
+	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/di"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -22,7 +24,16 @@ func TestNewUploadManagerFactory(t *testing.T) {
 	assert.NotNil(t, alt)
 }
 
+type exportedConfig struct {
+	di.In
+
+	Conf []config.ExportedConfig `group:"config"`
+}
+
 func TestProvideConfigs(t *testing.T) {
-	c := provideConfig()
-	assert.NotEmpty(t, c.Config)
+	c := core.New()
+	c.Provide(di.Deps{provideConfig})
+	c.Invoke(func(e exportedConfig) {
+		assert.Equal(t, provideConfig().Config, e.Conf)
+	})
 }

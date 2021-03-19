@@ -21,7 +21,7 @@ func TestInProcessStore_Ack(t *testing.T) {
 			"session without error",
 			Log{
 				ID:            "1",
-				correlationID: "2",
+				CorrelationID: "2",
 				LogType:       Session,
 				StartedAt:     time.Now(),
 			},
@@ -34,44 +34,44 @@ func TestInProcessStore_Ack(t *testing.T) {
 			"session with error",
 			Log{
 				ID:            "1",
-				correlationID: "2",
+				CorrelationID: "2",
 				LogType:       Session,
 				StartedAt:     time.Now(),
 			},
 			errors.New("foo"),
 			func(t *testing.T, log Log, s *InProcessStore) {
 				assert.Len(t, s.transactions, 1)
-				assert.Error(t, s.transactions[log.correlationID][0].StepError)
+				assert.Error(t, s.transactions[log.CorrelationID][0].StepError)
 			},
 		},
 		{
 			"do without error",
 			Log{
 				ID:            "1",
-				correlationID: "2",
+				CorrelationID: "2",
 				LogType:       Do,
 				StartedAt:     time.Now(),
 			},
 			nil,
 			func(t *testing.T, log Log, s *InProcessStore) {
 				assert.Len(t, s.transactions, 1)
-				assert.False(t, s.transactions[log.correlationID][0].FinishedAt.IsZero())
-				assert.NoError(t, s.transactions[log.correlationID][0].StepError)
+				assert.False(t, s.transactions[log.CorrelationID][0].FinishedAt.IsZero())
+				assert.NoError(t, s.transactions[log.CorrelationID][0].StepError)
 			},
 		},
 		{
 			"do with error",
 			Log{
 				ID:            "1",
-				correlationID: "2",
+				CorrelationID: "2",
 				LogType:       Do,
 				StartedAt:     time.Now(),
 			},
 			errors.New("foo"),
 			func(t *testing.T, log Log, s *InProcessStore) {
 				assert.Len(t, s.transactions, 1)
-				assert.False(t, s.transactions[log.correlationID][0].FinishedAt.IsZero())
-				assert.Error(t, s.transactions[log.correlationID][0].StepError)
+				assert.False(t, s.transactions[log.CorrelationID][0].FinishedAt.IsZero())
+				assert.Error(t, s.transactions[log.CorrelationID][0].StepError)
 			},
 		},
 	}
@@ -81,7 +81,7 @@ func TestInProcessStore_Ack(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			store := NewInProcessStore()
-			ctx := context.WithValue(context.Background(), dtx.CorrelationID, c.log.correlationID)
+			ctx := context.WithValue(context.Background(), dtx.CorrelationID, c.log.CorrelationID)
 			store.Log(ctx, c.log)
 			store.Ack(ctx, c.log.ID, c.err)
 			c.asserts(t, c.log, store)
@@ -94,13 +94,13 @@ func TestInProcessStore_UncommittedSteps(t *testing.T) {
 	ctx := context.WithValue(context.Background(), dtx.CorrelationID, "2")
 	store.Log(ctx, Log{
 		ID:            "1",
-		correlationID: "2",
+		CorrelationID: "2",
 		StartedAt:     time.Now(),
 		LogType:       Session,
 	})
 	store.Log(ctx, Log{
 		ID:            "2",
-		correlationID: "2",
+		CorrelationID: "2",
 		StartedAt:     time.Now(),
 		LogType:       Do,
 	})
@@ -110,7 +110,7 @@ func TestInProcessStore_UncommittedSteps(t *testing.T) {
 
 	store.Log(ctx, Log{
 		ID:            "2",
-		correlationID: "2",
+		CorrelationID: "2",
 		StartedAt:     time.Now(),
 		LogType:       Undo,
 	})
@@ -129,7 +129,7 @@ func TestInProcessStore_UncommittedSagas(t *testing.T) {
 	store := NewInProcessStore()
 	store.transactions["test"] = []Log{{
 		ID:            "1",
-		correlationID: "test",
+		CorrelationID: "test",
 		FinishedAt:    time.Now(),
 		LogType:       Session,
 		StepError:     nil,

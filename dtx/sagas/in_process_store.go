@@ -50,7 +50,7 @@ func (i *InProcessStore) Log(ctx context.Context, log Log) error {
 	if i.transactions == nil {
 		i.transactions = make(map[string][]Log)
 	}
-	i.transactions[log.correlationID] = append(i.transactions[log.correlationID], log)
+	i.transactions[log.CorrelationID] = append(i.transactions[log.CorrelationID], log)
 	return nil
 }
 

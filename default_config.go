@@ -21,8 +21,12 @@ version: 0.1.0
 env: local
 http:
   addr: :8080
+  disable: false
 grpc:
   addr: :9090
+  disable: false
+cron:
+  disable: false
 log:
   level: debug
   format: logfmt
@@ -30,7 +34,7 @@ redis:
   default:
     addrs:
       - 127.0.0.1:6379
-    DB: 0
+    db: 0
 gorm:
   default:
     database: sqlite
@@ -138,7 +142,8 @@ func provideDefaultConfig() []config.ExportedConfig {
 			Owner: "core",
 			Data: map[string]interface{}{
 				"http": map[string]interface{}{
-					"addr": ":8080",
+					"addr":    ":8080",
+					"disable": false,
 				},
 			},
 			Comment: "The http address",
@@ -147,10 +152,20 @@ func provideDefaultConfig() []config.ExportedConfig {
 			Owner: "core",
 			Data: map[string]interface{}{
 				"grpc": map[string]interface{}{
-					"addr": ":9090",
+					"addr":    ":9090",
+					"disable": false,
 				},
 			},
 			Comment: "The gRPC address",
+		},
+		{
+			Owner: "core",
+			Data: map[string]interface{}{
+				"cron": map[string]interface{}{
+					"disable": false,
+				},
+			},
+			Comment: "The cron job runner",
 		},
 		{
 			Owner: "core",

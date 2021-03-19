@@ -4,8 +4,13 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/otgorm"
@@ -14,12 +19,84 @@ import (
 )
 
 func TestC_Serve(t *testing.T) {
-	c := New(WithInline("http.addr", ":19998"), WithInline("grpc.addr", ":19999"))
+	var called int32
+	c := New(
+		WithInline("http.addr", ":19998"),
+		WithInline("grpc.addr", ":19999"),
+	)
 	c.ProvideEssentials()
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			assert.Equal(t, "[::]:19998", start.Data().(OnHTTPServerStart).Listener.Addr().String())
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			assert.Equal(t, "[::]:19998", shutdown.Data().(OnHTTPServerShutdown).Listener.Addr().String())
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerStart{}), func(ctx context.Context, start contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			assert.Equal(t, "[::]:19999", start.Data().(OnGRPCServerStart).Listener.Addr().String())
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			assert.Equal(t, "[::]:19999", shutdown.Data().(OnGRPCServerShutdown).Listener.Addr().String())
+			return nil
+		}))
+	})
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 	e := c.Serve(ctx)
 	assert.NoError(t, e)
+	assert.Equal(t, int32(4), atomic.LoadInt32(&called))
+}
+
+func TestC_ServeDisable(t *testing.T) {
+	var called int32
+	c := New(
+		WithInline("http.disable", "true"),
+		WithInline("grpc.disable", "true"),
+		WithInline("cron.disable", "true"),
+	)
+	c.ProvideEssentials()
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerStart{}), func(ctx context.Context, start contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			return nil
+		}))
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	e := c.Serve(ctx)
+	assert.NoError(t, e)
+	assert.Equal(t, int32(0), atomic.LoadInt32(&called))
 }
 
 func TestC_Default(t *testing.T) {
@@ -38,4 +115,30 @@ func TestC_Default(t *testing.T) {
 	output, _ := ioutil.ReadFile(f.Name())
 	assert.Contains(t, string(output), "gorm:")
 	os.Remove(f.Name())
+}
+
+type m1 struct {
+	di.Out
+	A int
+}
+
+func (m m1) ModuleSentinel() {
+	panic("implement me")
+}
+
+type m2 struct {
+	di.Out
+	A float32
+}
+
+func (m m2) ModuleSentinel() {
+	panic("implement me")
+}
+
+func TestC_Provide(t *testing.T) {
+	c := New()
+	c.Provide(di.Deps{
+		func() m1 { return m1{} },
+		func() m2 { return m2{} },
+	})
 }

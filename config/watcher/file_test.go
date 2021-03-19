@@ -9,16 +9,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/atomic"
 )
 
 func TestWatch(t *testing.T) {
 	t.Run("edit", func(t *testing.T) {
 		t.Parallel()
-		var (
-			ch     chan struct{}
-			called bool
-		)
-		ch = make(chan struct{})
+		ch := make(chan struct{})
 		f, _ := ioutil.TempFile(".", "*")
 		defer os.Remove(f.Name())
 
@@ -29,21 +26,19 @@ func TestWatch(t *testing.T) {
 		defer cancel()
 
 		go w.Watch(ctx, func() error {
-			called = true
-			ch <- struct{}{}
+			close(ch)
 			return nil
 		})
 		time.Sleep(time.Second)
 		ioutil.WriteFile(f.Name(), []byte(`bar`), os.ModePerm)
 		<-ch
-		assert.True(t, called)
 	})
 
 	t.Run("delete", func(t *testing.T) {
 		t.Parallel()
 		var (
 			ch     chan struct{}
-			called bool
+			called atomic.Bool
 		)
 		ch = make(chan struct{})
 		f, _ := ioutil.TempFile(".", "*")
@@ -56,7 +51,7 @@ func TestWatch(t *testing.T) {
 
 		go func() {
 			w.Watch(ctx, func() error {
-				called = true
+				called.Store(true)
 				ch <- struct{}{}
 				return nil
 			})
@@ -65,14 +60,14 @@ func TestWatch(t *testing.T) {
 		time.Sleep(time.Second)
 		os.Remove(f.Name())
 		<-ch
-		assert.False(t, called)
+		assert.False(t, called.Load())
 	})
 
 	t.Run("reload failed", func(t *testing.T) {
 		t.Parallel()
 		var (
 			ch     chan struct{}
-			called bool
+			called atomic.Bool
 		)
 		ch = make(chan struct{})
 		f, _ := ioutil.TempFile(".", "*")
@@ -88,13 +83,12 @@ func TestWatch(t *testing.T) {
 			w.Watch(ctx, func() error {
 				return errors.New("foo")
 			})
-			called = true
+			called.Store(true)
 			ch <- struct{}{}
 		}()
 		time.Sleep(time.Second)
 		ioutil.WriteFile(f.Name(), []byte(`bar`), os.ModePerm)
 		<-ch
-		assert.True(t, called)
+		assert.True(t, called.Load())
 	})
-
 }

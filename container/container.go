@@ -6,6 +6,7 @@ package container
 import (
 	"sync"
 
+	"github.com/DoNewsCode/core/contract"
 	"github.com/Reasno/ifilter"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
@@ -13,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
+
+var _ contract.Container = (*Container)(nil)
 
 // CronProvider provides cron jobs.
 type CronProvider interface {

@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/cronopts"
 	"net"
 	"net/http"
 	"os"
@@ -24,11 +26,12 @@ import (
 type serveIn struct {
 	di.In
 
+	Dispatcher contract.Dispatcher
 	Config     contract.ConfigAccessor
 	Logger     log.Logger
 	Container  contract.Container
-	HttpServer *http.Server `optional:"true"`
-	GrpcServer *grpc.Server `optional:"true"`
+	HTTPServer *http.Server `optional:"true"`
+	GRPCServer *grpc.Server `optional:"true"`
 	Cron       *cron.Cron   `optional:"true"`
 }
 
@@ -61,52 +64,69 @@ func newServeCmd(p serveIn) *cobra.Command {
 			)
 
 			// Start HTTP server
-			{
+			if !p.Config.Bool("http.disable") {
 				httpAddr := p.Config.String("http.addr")
 				ln, err := net.Listen("tcp", httpAddr)
 				if err != nil {
 					return errors.Wrap(err, "failed start http server")
 				}
-				if p.HttpServer == nil {
-					p.HttpServer = &http.Server{}
+				if p.HTTPServer == nil {
+					p.HTTPServer = &http.Server{}
 				}
 				router := mux.NewRouter()
 				p.Container.ApplyRouter(router)
-				p.HttpServer.Handler = router
+				p.HTTPServer.Handler = router
 				g.Add(func() error {
 					l.Infof("http service is listening at %s", ln.Addr())
-					return p.HttpServer.Serve(ln)
+					p.Dispatcher.Dispatch(
+						cmd.Context(),
+						events.Of(OnHTTPServerStart{p.HTTPServer, ln}),
+					)
+					defer p.Dispatcher.Dispatch(
+						cmd.Context(),
+						events.Of(OnHTTPServerShutdown{p.HTTPServer, ln}),
+					)
+					return p.HTTPServer.Serve(ln)
 				}, func(err error) {
-					_ = p.HttpServer.Shutdown(context.Background())
+					_ = p.HTTPServer.Shutdown(context.Background())
 					_ = ln.Close()
 				})
 			}
 
 			// Start gRPC server
-			{
+			if !p.Config.Bool("grpc.disable") {
 				grpcAddr := p.Config.String("grpc.addr")
 				ln, err := net.Listen("tcp", grpcAddr)
 				if err != nil {
 					return errors.Wrap(err, "failed start grpc server")
 				}
-				if p.GrpcServer == nil {
-					p.GrpcServer = grpc.NewServer()
+				if p.GRPCServer == nil {
+					p.GRPCServer = grpc.NewServer()
 				}
-				p.Container.ApplyGRPCServer(p.GrpcServer)
+				p.Container.ApplyGRPCServer(p.GRPCServer)
 				g.Add(func() error {
 					l.Infof("gRPC service is listening at %s", ln.Addr())
-					return p.GrpcServer.Serve(ln)
+					p.Dispatcher.Dispatch(
+						cmd.Context(),
+						events.Of(OnGRPCServerStart{p.GRPCServer, ln}),
+					)
+					defer p.Dispatcher.Dispatch(
+						cmd.Context(),
+						events.Of(OnGRPCServerShutdown{p.GRPCServer, ln}),
+					)
+					return p.GRPCServer.Serve(ln)
 				}, func(err error) {
-					p.GrpcServer.GracefulStop()
+					p.GRPCServer.GracefulStop()
 					_ = ln.Close()
 				})
 			}
 
 			// Start cron runner
-			{
+			if !p.Config.Bool("cron.disable") {
 				if p.Cron == nil {
-					p.Cron = cron.New()
+					p.Cron = cron.New(cron.WithLogger(cronopts.CronLogAdapter{Logging: l}))
 				}
+
 				p.Container.ApplyCron(p.Cron)
 				g.Add(func() error {
 					l.Info("cron runner started")
