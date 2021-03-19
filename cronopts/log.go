@@ -1,3 +1,4 @@
+// Package cronopts contains the options for cron.
 package cronopts
 
 import (
