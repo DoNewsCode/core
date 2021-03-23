@@ -1,11 +1,11 @@
-## 教程
+# 教程
 
-至此，我们介绍了包核的基本概念。让我们通过更多的例子来学习如何使用包核心。
+至此，我们已经介绍了`core`包的基本概念。让我们通过更多的例子来学习如何使用`core`包。
 对于渴望看到最终产品的读者，请查看[skeleton](https://github.com/DoNewsCode/skeleton) demo 演示。
 
-### 步骤一：Setup
+## 步骤一：Setup
 
-#### 构建核心依赖关系
+### 构建核心依赖关系
 
 封装核心的核心元素是核心`c`。它是由几件作品组成的
 
@@ -24,15 +24,16 @@ type C struct {
 - `AppName`是应用程序名。
 - `Env`是一个应用环境，如生产、开发、测试等。
 - `ConfigAccessor`是中心配置单例。
-- `LevelLogger`是默认的记录器。
+- `LevelLogger`是默认的 logger。
 - `Container`用于模块注册。
 - `Dispatcher`用于在服务之间传输事件。
 - `DiContainer`用于依赖注入。
 
 `core.C`中的每个成员都是一个接口。默认实现可以在它们各自的包中找到。
-当`core.New()`被调用时，新创建的`C`实例将用默认值填充 。我们可以通过为新方法提供以下参数，将默认实现替换为自定义实现。(We can replace the default implementation with the custom ones by providing the following args to the New method.)
+当`core.New()`被调用时，新创建的`C`实例将用默认值填充 。我们可以通过为新方法提供以下参数，将默认实现替换为自定义实现。
+通过为`New`方法提供以下参数，我们用自定义实现来替换这些默认实现。
 
-下面是交换每个实现的示例。通常这是没有必要的。
+下面是一个替换每个实现的示例。通常这是没有必要的。
 
 ```go
 core.New(
@@ -45,15 +46,15 @@ core.New(
 )
 ```
 
-有另一种方法来引导`core.C`。我们可以使用 core.Default()代替 core.New()。
-这个`core.Default()`将执行`core.New()`所做的所有事情，此外，还可以自动将核心依赖项(ConfigAccessor, Logger…)添加到`DiContainer`中。
-除非你想对 DI 容器进行细粒度控制，否则你可以使用`core.Default()`。
+有另一种方法来引导`core.C`。我们可以使用`core.Default()`代替`core.New()`。
+这个`core.Default()`会做`core.New()`所做的所有事情，此外，还可以自动将核心依赖项(ConfigAccessor, Logger…)添加到`DiContainer`中。
+除非你想对 `DI container`进行细粒度控制，你可以很开心的使用`core.Default()`。
 
-#### 导致配置
+### 导致配置
 
-New()和 Default()也负责从外部读取配置。默认情况下，它不读取任何内容。
+`New()`和`Default()`还负责从外部读取配置。默认情况下，它不读取任何内容。
 
-配置实现由包配置提供。它将配置视为一个堆栈。core.C 从 package config 继承了许多选项。
+这个 configuration 实现由 config package 提供。它将配置视为一个堆栈。`core.C`从 package config 继承了许多选项。
 
 让我们构建一个典型的配置堆栈，顶部是 flag，中间是环境变量，底部是配置文件。
 
@@ -99,10 +100,10 @@ func main() {
 }
 ```
 
-在上面的示例中，配置是在系统启动时加载的。有时我们希望在进程运行时重新加载配置。这可以通过添加一个观察者来完成。
+在上面的示例中，在系统启动时加载配置。有时我们想在进程运行时重新加载配置。这可以通过添加一个观察者来完成。
 目前，支持两种类型的观察者。
 
-- 文件监视程序: 当目标文件更改时，File watcher 重新加载配置堆栈
+- 文件监视程序: 当目标配置文件发生更改时，File watcher 重新加载配置堆栈
 - 信号监视程序: 当接收到 USRSIG1 信号时，signal watcher 重新加载堆栈。
 
 > 由于操作系统的限制，信号监视程序在 Windows 上不可用。
@@ -114,9 +115,9 @@ c.Default(
 )
 ```
 
-> 调用 serve 命令后，将触发 config watcher。
+> 调用 serve 命令后，将触发 configuration watch。
 
-如果`core.New()`的丰富选项似乎太多了，可以随意使用附带的带有`yamlfile`的一行程序选项。
+如果`core.New()`的你觉得选项太多了，你也可以仅仅使用`yamlfile`的这一项配置。
 
 上面的例子可以重写为
 
@@ -126,11 +127,11 @@ c.Default(
 )
 ```
 
-### 步骤二: 增加依赖
+## 步骤二: 增加依赖
 
 我们的应用程序常常不可避免地要依赖外部资源。
 
-#### provide
+### provide
 
 Type C 通过`Provide`方法接受依赖项绑定。
 
@@ -180,7 +181,7 @@ func main() {
 
 `c.Provide`的参数，在`di.Deps`的类型下，是一系列构造函数。函数的参数应该由`di容器`注入。返回值被添加回容器中。
 
-多个构造函数可以依赖于同一类型。容器为每个保留类型创建一个单例，在直接请求时最多实例化一次，或者作为另一种类型的依赖项。
+多个构造函数可以依赖于同一类型。容器为每个保留类型创建一个单例，在直接请求时或者作为另一种类型的依赖项,它最多实例化一次。
 
 构造函数可以返回多个结果以将多个类型添加到容器中。它还可能返回 `errors` 和`func（）`。
 
@@ -195,14 +196,14 @@ c.Provide(di.Deps{
 })
 ```
 
-`func()`被视为清除函数。当`c.Shutdown()`被调用时，所有返回的清理函数都被并行调用。
+`func()`作为清除函数。当`c.Shutdown()`被调用时，所有返回的清理函数都被并行调用。
 
-构造函数返回一个错误以指示初始化失败。核心故意在这种情况下恐慌，以提高意识。
+构造函数返回一个错误以指示初始化失败。`core`故意发出 panic，以提高意识。
 
 最后但并非最不重要的一点是，依赖关系图是惰性构建的。构造函数调用被延迟，直到直接或间接地要求返回值。
 这意味着在添加类型之前和之后，类型的依赖关系都可以添加到图中。
 
-#### invoke
+### invoke
 
 说到需求，`c.Invoke`可以用来实例化依赖关系。
 
@@ -216,7 +217,7 @@ func (c *C) Invoke(function interface{})
 
 默认的双容器实现是[uber/dig](https://pkg.go.dev/go.uber.org/dig) .关于高级用法，请查看他们的指南。
 
-### 步骤三：add functionality.
+## 步骤三：add functionality.
 
 一个 module 应该是一组功能。他一定包含某些 api，如 http、grpc、Cron 或者其他命令行。
 
@@ -227,7 +228,7 @@ func (c *C) Invoke(function interface{})
 
 使用这种方法，我们保留了在微服务周围移动 module 的能力，只要我们能够满足依赖需求。
 
-#### 增加 Module
+### 增加 Module
 
 在核心中注册模块有两种方法。您可以使用 DI 容器手动或自动构建模块：
 
@@ -243,7 +244,7 @@ func (c *C) Invoke(function interface{})
     c.AddModuleFunc(injectModule)
   ```
 
-#### Module interfaces
+### Module interfaces
 
 当调用`c.Serve(ctx)`或`root command`(见阶段 4)时，所有注册的 module 将被扫描以下接口
 
@@ -280,7 +281,7 @@ type RunProvider interface {
 }
 ```
 
-如果模块实现了任何一个提供程序接口，内核将用一个“registry”调用这个提供程序函数，比如，多路路由器. 然后模块可以注册其路由。
+如果模块实现了任何一个 provider 接口，`core`将会用“registry”调用这个 provider 程序函数，比如，`mux.Router`。然后模块可以注册这些路由。
 
 让我们看一个包含 HTTP、cronjobs 和 closer 的模块：
 
@@ -324,9 +325,9 @@ func main() {
 }
 ```
 
-#### Custom Module interfaces
+### Custom Module interfaces
 
-有可能没有内置的提供者接口满足业务需求。但是，扫描自定义接口非常简单：
+当然有可能所有内置的 provider 接口都无法满足业务需求。但是，它可以非常简单的扫描自定义接口：
 
 ```go
 multiProcessor := thrift.NewTMultiplexedProcessor()
@@ -337,17 +338,18 @@ for _, m := range c.Modules() {
 }
 ```
 
-### 步骤四：Serve！
+## 步骤四：Serve！
 
 在我们展示的大多数示例中，我们使用`c.Serve`来运行应用程序。如果应用程序是专门的长时间运行的流程，这是合适的。
 
-十二因素应用程序的清单表明
+12-factor-app 的清单表明
 
 > 作为一次性流程运行管理任务
 
-包核心本机支持一次性进程。这些过程是由 [cobra.Command]() 提供。 在这个模型中，serve 命令只是在 root 命令下注册的许多子命令中的一个。
+`core`包原生支持一次性进程。这些进程是由 [cobra.Command](https://github.com/spf13/cobra) 提供。
+在这个模型中，`serve` 命令只是注册在`root command`下许多子命令中的一个。
 
-下面是一个在根目录下提供组服务和版本子命令的示例。
+下面是一个在 root 下 `groups serve`和`version subcommand`的示例。
 
 ```go
 package main
