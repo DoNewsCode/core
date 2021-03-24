@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 )
 
 func TestDuration_UnmarshalJSON(t *testing.T) {
@@ -30,28 +31,40 @@ func TestDuration_UnmarshalJSON(t *testing.T) {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			v := Duration{}
-			json.Unmarshal([]byte(c.value), &v)
-			assert.Equal(t, c.expected, v)
+			v1 := Duration{}
+			yaml.Unmarshal([]byte(c.value), &v1)
+			assert.Equal(t, c.expected, v1)
+			v2 := Duration{}
+			json.Unmarshal([]byte(c.value), &v2)
+			assert.Equal(t, c.expected, v2)
 		})
 	}
 }
 
 func TestDuration_MarshalJSON(t *testing.T) {
 	var cases = []struct {
-		name     string
-		value    Duration
-		expected string
+		name         string
+		value        interface{}
+		expectedJson string
+		expectedYaml string
 	}{
 		{
 			"simple",
 			Duration{5 * time.Second},
 			`"5s"`,
+			"5s\n",
 		},
 		{
 			"complex",
 			Duration{5*time.Second + time.Minute},
 			`"1m5s"`,
+			"1m5s\n",
+		},
+		{
+			"wrapped",
+			struct{ D Duration }{Duration{5*time.Second + time.Minute}},
+			`{"D":"1m5s"}`,
+			"d: 1m5s\n",
 		},
 	}
 
@@ -61,7 +74,9 @@ func TestDuration_MarshalJSON(t *testing.T) {
 			t.Parallel()
 			data, err := json.Marshal(c.value)
 			assert.NoError(t, err)
-			assert.Equal(t, c.expected, string(data))
+			assert.Equal(t, c.expectedJson, string(data))
+			data, err = yaml.Marshal(c.value)
+			assert.Equal(t, c.expectedYaml, string(data))
 		})
 	}
 }
