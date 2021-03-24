@@ -7,7 +7,6 @@ package otredis works with redis cluster, redis sentinel and single redis instan
 Integration
 
 package otredis exports the configuration in the following format:
-
 	redis:
 	    default:
 	        addrs:
@@ -17,26 +16,17 @@ package otredis exports the configuration in the following format:
 	        password: ""
 	        sentinelPassword: ""
 	        maxRetries: 0
-	        minRetryBackoff:
-	            duration: 0s
-	        maxRetryBackoff:
-	            duration: 0s
-	        dialTimeout:
-	            duration: 0s
-	        readTimeout:
-	            duration: 0s
-	        writeTimeout:
-	            duration: 0s
+	        minRetryBackoff: 0s
+	        maxRetryBackoff: 0s
+	        dialTimeout: 0s
+	        readTimeout: 0s
+	        writeTimeout: 0s
 	        poolSize: 0
 	        minIdleConns: 0
-	        maxConnAge:
-	            duration: 0s
-	        poolTimeout:
-	            duration: 0s
-	        idleTimeout:
-	            duration: 0s
-	        idleCheckFrequency:
-	            duration: 0s
+	        maxConnAge: 0s
+	        poolTimeout: 0s
+	        idleTimeout: 0s
+	        idleCheckFrequency: 0s
 	        maxRedirects: 0
 	        readOnly: false
 	        routeByLatency: false
