@@ -1,4 +1,4 @@
-English | [中文](./README-CN.md)
+English | [中文](./README_CN.md)
 
 <div align="center">
   <h1>CORE</h1>
