@@ -43,7 +43,7 @@ package otredis exports the configuration in the following format:
 	        routeRandomly: false
 	        masterName: ""
 
-To see all available configurations, use the exportConfig command.
+To see all available configurations, use the config init command.
 
 Add the redis dependency to core:
 

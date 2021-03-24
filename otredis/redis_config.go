@@ -4,7 +4,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 )
 
-// RedisUniversalOptions is the configuration option for redis
+// RedisUniversalOptions is the configuration options for redis.
 type RedisUniversalOptions struct {
 	// Either a single address or a seed list of host:port addresses
 	// of cluster/sentinel nodes.
