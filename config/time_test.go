@@ -45,7 +45,7 @@ func TestDuration_MarshalJSON(t *testing.T) {
 	var cases = []struct {
 		name         string
 		value        interface{}
-		expectedJson string
+		expectedJSON string
 		expectedYaml string
 	}{
 		{
@@ -74,7 +74,7 @@ func TestDuration_MarshalJSON(t *testing.T) {
 			t.Parallel()
 			data, err := json.Marshal(c.value)
 			assert.NoError(t, err)
-			assert.Equal(t, c.expectedJson, string(data))
+			assert.Equal(t, c.expectedJSON, string(data))
 			data, err = yaml.Marshal(c.value)
 			assert.Equal(t, c.expectedYaml, string(data))
 		})
