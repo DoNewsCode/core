@@ -168,9 +168,10 @@ type HTTPProvider interface {
 
 ## 文档
 
-- [Tutorial](https://github.com/DoNewsCode/core/blob/master/doc/tutorial.md)
+- [教程](https://github.com/DoNewsCode/core/blob/master/doc/tutorial_cn.md)
 - [GoDoc](https://pkg.go.dev/github.com/DoNewsCode/core)
 - [Demo Project](https://github.com/DoNewsCode/skeleton)
+- [初始模版](https://github.com/DoNewsCode/core-starter)
 - [Contributing](https://github.com/DoNewsCode/core/blob/master/doc/contributing.markdown)
 
 ## 设计原则
