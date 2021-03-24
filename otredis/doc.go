@@ -7,14 +7,33 @@ package otredis works with redis cluster, redis sentinel and single redis instan
 Integration
 
 package otredis exports the configuration in the following format:
-
 	redis:
-	  default:
-	    addrs:
-	      - 127.0.0.1:6379
-	    db: 0
+	    default:
+	        addrs:
+	          - 127.0.0.1:6379
+	        db: 0
+	        username: ""
+	        password: ""
+	        sentinelPassword: ""
+	        maxRetries: 0
+	        minRetryBackoff: 0s
+	        maxRetryBackoff: 0s
+	        dialTimeout: 0s
+	        readTimeout: 0s
+	        writeTimeout: 0s
+	        poolSize: 0
+	        minIdleConns: 0
+	        maxConnAge: 0s
+	        poolTimeout: 0s
+	        idleTimeout: 0s
+	        idleCheckFrequency: 0s
+	        maxRedirects: 0
+	        readOnly: false
+	        routeByLatency: false
+	        routeRandomly: false
+	        masterName: ""
 
-To see all available configurations, use the exportConfig command.
+To see all available configurations, use the config init command.
 
 Add the redis dependency to core:
 

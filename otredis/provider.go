@@ -79,7 +79,7 @@ type out struct {
 // dependency for package core.
 func provideRedisFactory(p in) (out, func()) {
 	var err error
-	var dbConfs map[string]redis.UniversalOptions
+	var dbConfs map[string]RedisUniversalOptions
 	err = p.Conf.Unmarshal("redis", &dbConfs)
 	if err != nil {
 		level.Warn(p.Logger).Log("err", err)
@@ -87,25 +87,51 @@ func provideRedisFactory(p in) (out, func()) {
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			ok   bool
-			conf redis.UniversalOptions
+			base RedisUniversalOptions
+			full redis.UniversalOptions
 		)
-		if conf, ok = dbConfs[name]; !ok {
+		if base, ok = dbConfs[name]; !ok {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
 			}
-			conf = redis.UniversalOptions{}
+			base = RedisUniversalOptions{}
+		}
+		full = redis.UniversalOptions{
+			Addrs:              base.Addrs,
+			DB:                 base.DB,
+			Username:           base.Username,
+			Password:           base.Password,
+			SentinelPassword:   base.SentinelPassword,
+			MaxRetries:         base.MaxRetries,
+			MinRetryBackoff:    base.MinRetryBackoff.Duration,
+			MaxRetryBackoff:    base.MaxRetryBackoff.Duration,
+			DialTimeout:        base.DialTimeout.Duration,
+			ReadTimeout:        base.ReadTimeout.Duration,
+			WriteTimeout:       base.WriteTimeout.Duration,
+			PoolSize:           base.PoolSize,
+			MinIdleConns:       base.MinIdleConns,
+			MaxConnAge:         base.MaxConnAge.Duration,
+			PoolTimeout:        base.PoolTimeout.Duration,
+			IdleTimeout:        base.IdleTimeout.Duration,
+			IdleCheckFrequency: base.IdleCheckFrequency.Duration,
+			TLSConfig:          nil,
+			MaxRedirects:       base.MaxRetries,
+			ReadOnly:           base.ReadOnly,
+			RouteByLatency:     base.RouteByLatency,
+			RouteRandomly:      base.RouteRandomly,
+			MasterName:         base.MasterName,
 		}
 		if p.Interceptor != nil {
-			p.Interceptor(name, &conf)
+			p.Interceptor(name, &full)
 		}
 		redis.SetLogger(&RedisLogAdapter{level.Debug(p.Logger)})
 
-		client := redis.NewUniversalClient(&conf)
+		client := redis.NewUniversalClient(&full)
 		if p.Tracer != nil {
 			client.AddHook(
 				hook{
-					addrs:    conf.Addrs,
-					database: conf.DB,
+					addrs:    full.Addrs,
+					database: full.DB,
 					tracer:   p.Tracer,
 				},
 			)
@@ -141,33 +167,11 @@ func provideConfig() configOut {
 		{
 			Owner: "otredis",
 			Data: map[string]interface{}{
-				"redis": map[string]map[string]interface{}{
+				"redis": map[string]RedisUniversalOptions{
 					"default": {
-						"addrs":              []string{"127.0.0.1:6379"},
-						"db":                 0,
-						"username":           "",
-						"password":           "",
-						"sentinelPassword":   "",
-						"maxRetries":         0,
-						"minRetryBackoff":    0,
-						"maxRetryBackoff":    0,
-						"dialTimeout":        0,
-						"readTimeout":        0,
-						"writeTimeout":       0,
-						"poolSize":           0,
-						"minIdleConns":       0,
-						"maxConnAge":         0,
-						"poolTimeout":        0,
-						"idleTimeout":        0,
-						"idleCheckFrequency": 0,
-						"maxRedirects":       0,
-						"readOnly":           false,
-						"routeByLatency":     false,
-						"routeRandomly":      false,
-						"masterName":         "",
+						Addrs: []string{"127.0.0.1:6379"},
 					},
-				},
-			},
+				}},
 			Comment: "The configuration of redis clients",
 		},
 	}
