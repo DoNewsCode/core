@@ -9,10 +9,39 @@ Integration
 package otredis exports the configuration in the following format:
 
 	redis:
-	  default:
-	    addrs:
-	      - 127.0.0.1:6379
-	    db: 0
+	    default:
+	        addrs:
+	          - 127.0.0.1:6379
+	        db: 0
+	        username: ""
+	        password: ""
+	        sentinelPassword: ""
+	        maxRetries: 0
+	        minRetryBackoff:
+	            duration: 0s
+	        maxRetryBackoff:
+	            duration: 0s
+	        dialTimeout:
+	            duration: 0s
+	        readTimeout:
+	            duration: 0s
+	        writeTimeout:
+	            duration: 0s
+	        poolSize: 0
+	        minIdleConns: 0
+	        maxConnAge:
+	            duration: 0s
+	        poolTimeout:
+	            duration: 0s
+	        idleTimeout:
+	            duration: 0s
+	        idleCheckFrequency:
+	            duration: 0s
+	        maxRedirects: 0
+	        readOnly: false
+	        routeByLatency: false
+	        routeRandomly: false
+	        masterName: ""
 
 To see all available configurations, use the exportConfig command.
 

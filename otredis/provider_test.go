@@ -15,7 +15,7 @@ import (
 
 func TestNewRedisFactory(t *testing.T) {
 	redisOut, cleanup := provideRedisFactory(in{
-		Conf: config.MapAdapter{"redis": map[string]redis.UniversalOptions{
+		Conf: config.MapAdapter{"redis": map[string]RedisUniversalOptions{
 			"default":     {},
 			"alternative": {},
 		}},
@@ -36,12 +36,10 @@ func TestProvideConfigs(t *testing.T) {
 	var r redis.UniversalOptions
 	c := provideConfig()
 	assert.NotEmpty(t, c.Config)
-	c.Config[0].Data["redis"].(map[string]map[string]interface{})["default"]["db"] = 1
-	c.Config[0].Data["redis"].(map[string]map[string]interface{})["default"]["addrs"] = []string{"0.0.0.0:6379"}
 	bytes, _ := yaml2.Marshal(c.Config[0].Data)
 	k := koanf.New(".")
 	k.Load(rawbytes.Provider(bytes), yaml.Parser())
 	k.Unmarshal("redis.default", &r)
-	assert.Equal(t, 1, r.DB)
-	assert.Equal(t, []string{"0.0.0.0:6379"}, r.Addrs)
+	assert.Equal(t, 0, r.DB)
+	assert.Equal(t, []string{"127.0.0.1:6379"}, r.Addrs)
 }
