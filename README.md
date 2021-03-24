@@ -1,3 +1,5 @@
+English | [中文](./README-CN.md)
+
 <div align="center">
   <h1>CORE</h1>
   <p>

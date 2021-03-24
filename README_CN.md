@@ -1,3 +1,4 @@
+[English](./README.md) | 中文
 # core
 
 Package core 是一个服务容器，在 Go 中优雅地引导和协调 12-factor 应用程序。
