@@ -58,6 +58,11 @@ jobs:
           discovery.type: single-node
         ports:
           - 9200:9200
+      minio:
+        image: minio/minio
+        ports:
+          - 9000:9000
+        options: server .
     steps:
     - uses: actions/checkout@v2
 
