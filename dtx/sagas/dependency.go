@@ -109,15 +109,15 @@ type configOut struct {
 }
 
 type configuration struct {
-	SagaTimeout     config.Duration `json:"sagaTimeout",yaml:"sagaTimeout"`
-	RecoverInterval config.Duration `json:"recoverInterval",yaml:"recoverInterval"`
-	MySQL           mysql           `json:"mysql",yaml:"mysql"`
+	SagaTimeout     config.Duration `json:"sagaTimeout" yaml:"sagaTimeout"`
+	RecoverInterval config.Duration `json:"recoverInterval" yaml:"recoverInterval"`
+	MySQL           mysql           `json:"mysql" yaml:"mysql"`
 }
 
 type mysql struct {
-	Connection      string          `json:"connection",yaml:"connection"`
-	Retention       config.Duration `json:"retention",yaml:"retention"`
-	CleanupInterval config.Duration `json:"cleanupInterval",yaml:"cleanupInterval"`
+	Connection      string          `json:"connection" yaml:"connection"`
+	Retention       config.Duration `json:"retention" yaml:"retention"`
+	CleanupInterval config.Duration `json:"cleanupInterval" yaml:"cleanupInterval"`
 }
 
 func provideConfig() configOut {
