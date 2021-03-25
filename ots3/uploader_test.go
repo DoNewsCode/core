@@ -35,7 +35,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	manager := NewManager("Q3AM3UQ867SPQQA43P2F", "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG", "https://play.minio.io:9000", "asia", "mybucket")
+	manager := NewManager("minioadmin", "minioadmin", "http://localhost:9000", "asia", "mybucket")
 	_ = manager.CreateBucket(context.Background(), "foo")
 	os.Exit(m.Run())
 }
@@ -65,7 +65,7 @@ func TestManager_UploadFromUrl(t *testing.T) {
 	tracer := mocktracer.New()
 	m := setupManagerWithTracer(tracer)
 	_ = m.CreateBucket(context.Background(), "mybucket")
-	newURL, err := m.UploadFromUrl(context.Background(), "https://www.donews.com/static/v2/images/full-logo.png")
+	newURL, err := m.UploadFromUrl(context.Background(), "https://avatars.githubusercontent.com/u/43054062")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newURL)
 	assert.Len(t, tracer.FinishedSpans(), 2)
@@ -77,9 +77,9 @@ func setupManager() *Manager {
 
 func setupManagerWithTracer(tracer opentracing.Tracer) *Manager {
 	m := NewManager(
-		"Q3AM3UQ867SPQQA43P2F",
-		"zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
-		"https://play.minio.io:9000",
+		"minioadmin",
+		"minioadmin",
+		"http://localhost:9000",
 		"asia",
 		"mybucket",
 		WithTracer(tracer),

@@ -10,7 +10,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/olivere/elastic/v7"
-	esConfig "github.com/olivere/elastic/v7/config"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/dig"
 )
@@ -34,7 +33,7 @@ func Providers() di.Deps {
 
 // EsConfigInterceptor is an injector type hint that allows user to do
 // last minute modification to es configurations.
-type EsConfigInterceptor func(name string, opt *esConfig.Config)
+type EsConfigInterceptor func(name string, opt *Config)
 
 // Maker models Factory
 type Maker interface {
@@ -80,7 +79,7 @@ type out struct {
 // package core.
 func provideEsFactory(p in) (out, func()) {
 	var err error
-	var esConfigs map[string]esConfig.Config
+	var esConfigs map[string]Config
 	err = p.Conf.Unmarshal("es", &esConfigs)
 	if err != nil {
 		level.Warn(p.Logger).Log("err", err)
@@ -88,14 +87,14 @@ func provideEsFactory(p in) (out, func()) {
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			ok      bool
-			conf    esConfig.Config
+			conf    Config
 			options []elastic.ClientOptionFunc
 		)
 		if conf, ok = esConfigs[name]; !ok {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("elastic configuration %s not valid", name)
 			}
-			conf.URL = "http://localhost:9200"
+			conf.URL = []string{"http://localhost:9200"}
 		}
 		if p.Interceptor != nil {
 			p.Interceptor(name, &conf)
@@ -120,7 +119,7 @@ func provideEsFactory(p in) (out, func()) {
 		}
 		logger := log.With(p.Logger, "tag", "es")
 		options = append(options,
-			elastic.SetURL(conf.URL),
+			elastic.SetURL(conf.URL...),
 			elastic.SetBasicAuth(conf.Username, conf.Password),
 			elastic.SetInfoLog(esLogAdapter{level.Info(logger)}),
 			elastic.SetErrorLog(esLogAdapter{level.Error(logger)}),
@@ -163,16 +162,10 @@ func provideConfig() configOut {
 		{
 			Owner: "otes",
 			Data: map[string]interface{}{
-				"es": map[string]map[string]interface{}{
+				"es": map[string]Config{
 					"default": {
-						"url":         "http://localhost:9200",
-						"index":       "",
-						"username":    "",
-						"password":    "",
-						"shards":      1,
-						"replicas":    0,
-						"sniff":       false,
-						"healthCheck": false,
+						URL:    []string{"http://localhost:9200"},
+						Shards: 1,
 					},
 				},
 			},

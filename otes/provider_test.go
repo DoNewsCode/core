@@ -6,16 +6,15 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/go-kit/kit/log"
 	"github.com/olivere/elastic/v7"
-	esConfig "github.com/olivere/elastic/v7/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestNewEsFactory(t *testing.T) {
 	esFactory, cleanup := provideEsFactory(in{
-		Conf: config.MapAdapter{"es": map[string]esConfig.Config{
-			"default":     {URL: "http://localhost:9200"},
-			"alternative": {URL: "http://localhost:9200"},
+		Conf: config.MapAdapter{"es": map[string]Config{
+			"default":     {URL: []string{"http://localhost:9200"}},
+			"alternative": {URL: []string{"http://localhost:9200"}},
 		}},
 		Logger: log.NewNopLogger(),
 		Tracer: nil,
@@ -33,8 +32,8 @@ func TestNewEsFactory(t *testing.T) {
 func TestNewEsFactoryWithOptions(t *testing.T) {
 	var called bool
 	esFactory, cleanup := provideEsFactory(in{
-		Conf: config.MapAdapter{"es": map[string]esConfig.Config{
-			"default": {URL: "http://localhost:9200"},
+		Conf: config.MapAdapter{"es": map[string]Config{
+			"default": {URL: []string{"http://localhost:9200"}},
 		}},
 		Logger: log.NewNopLogger(),
 		Options: []elastic.ClientOptionFunc{
