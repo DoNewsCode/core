@@ -12,8 +12,8 @@ import (
 func TestProviders(t *testing.T) {
 	c := core.Default(
 		core.WithInline("sagas.mysql.connection", "default"),
-		core.WithInline("sagas.mysql.retentionHour", "1"),
-		core.WithInline("sagas.mysql.retentionHour", "1"),
+		core.WithInline("sagas.mysql.retention", "1h"),
+		core.WithInline("sagas.mysql.cleanupInterval", "1h"),
 	)
 	c.Provide(otgorm.Providers())
 	c.Provide(sagas.Providers())
