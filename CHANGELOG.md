@@ -1,4 +1,13 @@
 
+<a name="v0.4.1"></a>
+## [v0.4.1](https://github.com/DoNewsCode/core/compare/v0.4.0...v0.4.1) (2021-03-25)
+
+### 🐛 Bug Fixes
+
+* sort otes configuration ([#108](https://github.com/DoNewsCode/core/issues/108)) (@[谷溪](guxi99@gmail.com))
+* sort redis configuration ([#107](https://github.com/DoNewsCode/core/issues/107)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.4.0"></a>
 ## [v0.4.0](https://github.com/DoNewsCode/core/compare/v0.4.0-alpha.2...v0.4.0) (2021-03-18)
 
