@@ -24,5 +24,5 @@ func Example() {
 	fmt.Println(url)
 
 	// Output:
-	// https://play.minio.io:9000/mybucket/foo.png
+	// http://localhost:9000/mybucket/foo.png
 }
