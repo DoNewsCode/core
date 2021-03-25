@@ -3,6 +3,7 @@ package otetcd
 import (
 	"context"
 	"crypto/tls"
+	"github.com/DoNewsCode/core/config"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -12,20 +13,20 @@ type Option struct {
 	// Endpoints is a list of URLs.
 	Endpoints []string `json:"endpoints" yaml:"endpoints"`
 
-	// AutoSyncIntervalSecond is the interval to update endpoints with its latest members.
+	// AutoSyncInterval is the interval to update endpoints with its latest members.
 	// 0 disables auto-sync. By default auto-sync is disabled.
-	AutoSyncIntervalSecond float64 `json:"autoSyncIntervalSecond" yaml:"autoSyncIntervalSecond"`
+	AutoSyncInterval config.Duration `json:"autoSyncInterval" yaml:"autoSyncInterval"`
 
-	// DialTimeoutSecond is the timeout for failing to establish a connection.
-	DialTimeoutSecond float64 `json:"dialTimeoutSecond" yaml:"dialTimeoutSecond"`
+	// DialTimeout is the timeout for failing to establish a connection.
+	DialTimeout config.Duration `json:"dialTimeout" yaml:"dialTimeout"`
 
-	// DialKeepAliveTimeSecond is the time after which client pings the server to see if
+	// DialKeepAliveTime is the time after which client pings the server to see if
 	// transport is alive.
-	DialKeepAliveTimeSecond float64 `json:"dialKeepAliveTimeSecond" yaml:"dialKeepAliveTimeSecond"`
+	DialKeepAliveTime config.Duration `json:"dialKeepAliveTime" yaml:"dialKeepAliveTime"`
 
-	// DialKeepAliveTimeoutSecond is the time that the client waits for a response for the
+	// DialKeepAliveTimeout is the time that the client waits for a response for the
 	// keep-alive probe. If the response is not received in this time, the connection is closed.
-	DialKeepAliveTimeoutSecond float64 `json:"dialKeepAliveTimeoutSecond" yaml:"dialKeepAliveTimeoutSecond"`
+	DialKeepAliveTimeout config.Duration `json:"dialKeepAliveTimeout" yaml:"dialKeepAliveTimeout"`
 
 	// MaxCallSendMsgSize is the client-side request send limit in bytes.
 	// If 0, it defaults to 2.0 MiB (2 * 1024 * 1024).
