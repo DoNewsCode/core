@@ -121,9 +121,9 @@ func provideEsFactory(p in) (out, func()) {
 		options = append(options,
 			elastic.SetURL(conf.URL...),
 			elastic.SetBasicAuth(conf.Username, conf.Password),
-			elastic.SetInfoLog(esLogAdapter{level.Info(logger)}),
-			elastic.SetErrorLog(esLogAdapter{level.Error(logger)}),
-			elastic.SetTraceLog(esLogAdapter{level.Debug(logger)}),
+			elastic.SetInfoLog(ElasticLogAdapter{level.Info(logger)}),
+			elastic.SetErrorLog(ElasticLogAdapter{level.Error(logger)}),
+			elastic.SetTraceLog(ElasticLogAdapter{level.Debug(logger)}),
 		)
 		options = append(options, p.Options...)
 
