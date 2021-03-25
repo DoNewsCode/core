@@ -188,7 +188,7 @@ func provideDispatcherFactory(p makerIn) (makerOut, error) {
 	}, nil
 }
 
-// ProvideRunGroup implements RunProvider.
+// ProvideRunGroup implements container.RunProvider.
 func (d makerOut) ProvideRunGroup(group *run.Group) {
 	for name := range d.DispatcherFactory.List() {
 		queueName := name

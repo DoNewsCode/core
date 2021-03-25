@@ -11,7 +11,7 @@ import (
 // `/debug/pprof/cmdline` invokes pprof.Cmdline
 type DebugModule struct{}
 
-// ProvideHttp implements container.HttpProvider
+// ProvideHTTP implements container.HTTPProvider
 func (d DebugModule) ProvideHTTP(router *mux.Router) {
 	m := mux.NewRouter()
 	m.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))

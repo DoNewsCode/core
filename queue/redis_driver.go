@@ -72,7 +72,7 @@ func (r *RedisDriver) Pop(ctx context.Context) (*PersistedEvent, error) {
 		return nil, ErrEmpty
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to brpop while popping")
+		return nil, errors.Wrap(err, "failed to BRPop while popping")
 	}
 	data := res[1]
 	var message PersistedEvent

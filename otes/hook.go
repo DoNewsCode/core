@@ -6,7 +6,9 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 )
+
 // hook is borrowed from https://github.com/olivere/elastic/tree/release-branch.v7/trace/opentracing
 // under MIT license: https://github.com/olivere/elastic/blob/release-branch.v7/LICENSE
 
@@ -70,6 +72,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 	if err != nil {
 		ext.Error.Set(span, true)
+		span.LogFields(log.Error(err))
 	}
 	if resp != nil {
 		ext.HTTPStatusCode.Set(span, uint16(resp.StatusCode))

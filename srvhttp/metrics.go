@@ -9,7 +9,7 @@ import (
 // for prometheus metrics scrappers.
 type MetricsModule struct{}
 
-// ProvideHttp implements container.HttpProvider
+// ProvideHTTP implements container.HTTPProvider
 func (m MetricsModule) ProvideHTTP(router *mux.Router) {
 	router.PathPrefix("/metrics").Handler(promhttp.Handler())
 }
