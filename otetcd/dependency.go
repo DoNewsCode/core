@@ -98,10 +98,10 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 		}
 		co := clientv3.Config{
 			Endpoints:            conf.Endpoints,
-			AutoSyncInterval:     duration(conf.AutoSyncIntervalSecond),
-			DialTimeout:          duration(conf.DialTimeoutSecond),
-			DialKeepAliveTime:    duration(conf.DialKeepAliveTimeSecond),
-			DialKeepAliveTimeout: duration(conf.DialKeepAliveTimeoutSecond),
+			AutoSyncInterval:     duration(conf.AutoSyncInterval),
+			DialTimeout:          duration(conf.DialTimeout),
+			DialKeepAliveTime:    duration(conf.DialKeepAliveTime),
+			DialKeepAliveTimeout: duration(conf.DialKeepAliveTimeout),
 			MaxCallSendMsgSize:   conf.MaxCallSendMsgSize,
 			MaxCallRecvMsgSize:   conf.MaxCallRecvMsgSize,
 			TLS:                  conf.TLS,
@@ -157,21 +157,21 @@ func provideExportedConfigs() configOut {
 				map[string]interface{}{
 					"etcd": map[string]Option{
 						"default": {
-							Endpoints:                  []string{"127.0.0.1:2379"},
-							AutoSyncIntervalSecond:     0,
-							DialTimeoutSecond:          0,
-							DialKeepAliveTimeSecond:    0,
-							DialKeepAliveTimeoutSecond: 0,
-							MaxCallSendMsgSize:         0,
-							MaxCallRecvMsgSize:         0,
-							TLS:                        nil,
-							Username:                   "",
-							Password:                   "",
-							RejectOldCluster:           false,
-							DialOptions:                nil,
-							Context:                    nil,
-							LogConfig:                  nil,
-							PermitWithoutStream:        false,
+							Endpoints:            []string{"127.0.0.1:2379"},
+							AutoSyncInterval:     config.Duration{},
+							DialTimeout:          config.Duration{},
+							DialKeepAliveTime:    config.Duration{},
+							DialKeepAliveTimeout: config.Duration{},
+							MaxCallSendMsgSize:   0,
+							MaxCallRecvMsgSize:   0,
+							TLS:                  nil,
+							Username:             "",
+							Password:             "",
+							RejectOldCluster:     false,
+							DialOptions:          nil,
+							Context:              nil,
+							LogConfig:            nil,
+							PermitWithoutStream:  false,
 						},
 					},
 				},
@@ -181,6 +181,6 @@ func provideExportedConfigs() configOut {
 	}
 }
 
-func duration(sec float64) time.Duration {
-	return time.Duration(sec) * time.Second
+func duration(d config.Duration) time.Duration {
+	return d.Duration
 }
