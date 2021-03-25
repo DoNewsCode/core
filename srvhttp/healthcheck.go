@@ -11,7 +11,7 @@ import (
 // e.g. probe if database connection pool has exhausted at readiness check.
 type HealthCheckModule struct{}
 
-// ProvideHttp implements container.HttpProvider
+// ProvideHTTP implements container.HTTPProvider
 func (h HealthCheckModule) ProvideHTTP(router *mux.Router) {
 	router.PathPrefix("/live").Handler(healthcheck.NewHandler())
 	router.PathPrefix("/ready").Handler(healthcheck.NewHandler())

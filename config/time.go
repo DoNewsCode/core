@@ -14,12 +14,12 @@ type Duration struct {
 	time.Duration
 }
 
-// MarshalYAML implements Marshaller
+// MarshalYAML implements yaml.Marshaler
 func (d Duration) MarshalYAML() (interface{}, error) {
 	return d.String(), nil
 }
 
-// UnmarshalYAML implements Unmarshaller
+// UnmarshalYAML implements yaml.Unmarshaler
 func (d *Duration) UnmarshalYAML(value *yaml.Node) error {
 	if value.Tag == "!!float" {
 		return d.UnmarshalJSON([]byte(value.Value))
@@ -27,12 +27,12 @@ func (d *Duration) UnmarshalYAML(value *yaml.Node) error {
 	return d.UnmarshalJSON([]byte("\"" + value.Value + "\""))
 }
 
-// MarshalJSON implements JSONMarshaller
+// MarshalJSON implements json.Marshaler
 func (d Duration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.String())
 }
 
-// UnmarshalJSON implements JSONUnmarsheller
+// UnmarshalJSON implements json.Unmarshaler
 func (d *Duration) UnmarshalJSON(b []byte) error {
 	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {

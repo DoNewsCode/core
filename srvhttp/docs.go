@@ -10,7 +10,7 @@ import (
 // `./docs` is supposed to contain doc serving engines such as Swagger, Docify or plain markdowns.
 type DocsModule struct{}
 
-// ProvideHttp implements container.HttpProvider
+// ProvideHTTP implements container.HTTPProvider
 func (d DocsModule) ProvideHTTP(router *mux.Router) {
 	router.PathPrefix("/docs/").Handler(serveStatic())
 	router.PathPrefix("/docs").Handler(http.RedirectHandler("/docs/", 302))

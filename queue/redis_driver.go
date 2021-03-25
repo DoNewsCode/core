@@ -25,7 +25,7 @@ type RedisDriver struct {
 	Logger        log.Logger            // Logger is an optional logger. By default a noop logger is used
 	RedisClient   redis.UniversalClient // RedisClient is used to communicate with redis
 	ChannelConfig ChannelConfig         // ChannelConfig holds the name of redis keys for all queues.
-	PopTimeout    time.Duration         // PopTimeout is the BRPOP timeout. ie. How long the pop action will block at most.
+	PopTimeout    time.Duration         // PopTimeout is the BRPOp timeout. ie. How long the pop action will block at most.
 	Packer        Packer                // Packer describes how to save the message in wire format
 	lock          sync.Mutex
 	defaultLoaded bool
@@ -56,7 +56,7 @@ func (r *RedisDriver) Push(ctx context.Context, message *PersistedEvent, delay t
 	return nil
 }
 
-// Pop pops the message out of the queue. It uses BRPOP underneath, so effectively it blocks until a
+// Pop pops the message out of the queue. It uses BRPOp underneath, so effectively it blocks until a
 // message is available or a timeout is reached.
 func (r *RedisDriver) Pop(ctx context.Context) (*PersistedEvent, error) {
 	r.populateDefaults()
@@ -72,7 +72,7 @@ func (r *RedisDriver) Pop(ctx context.Context) (*PersistedEvent, error) {
 		return nil, ErrEmpty
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to brpop while popping")
+		return nil, errors.Wrap(err, "failed to BRPop while popping")
 	}
 	data := res[1]
 	var message PersistedEvent

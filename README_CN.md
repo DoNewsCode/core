@@ -156,7 +156,7 @@ type HTTPProvider interface {
 }
 ```
 
-因此，`core`知道该模块想要公开 HTTP 服务，并随后通过路由器调用 `ProvideHttp`。您可以注册多个模块，每个模块可以实现一个或多个服务。
+因此，`core`知道该模块想要公开 HTTP 服务，并随后通过路由器调用 `ProvideHTTP`。您可以注册多个模块，每个模块可以实现一个或多个服务。
 
 现在我们有了一个完全可行的项目，包括 handler、repository 和 entity。如果这是一个 DDD workshop，我们将进一步扩展这个例子。
 

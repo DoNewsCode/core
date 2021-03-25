@@ -66,7 +66,7 @@ jaeger:
   reporter:
     log:
       enable: false
-    addr:
+    addr: ''
 `
 
 type configOut struct {
