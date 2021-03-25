@@ -65,7 +65,7 @@ func TestManager_UploadFromUrl(t *testing.T) {
 	tracer := mocktracer.New()
 	m := setupManagerWithTracer(tracer)
 	_ = m.CreateBucket(context.Background(), "mybucket")
-	newURL, err := m.UploadFromUrl(context.Background(), "https://www.donews.com/static/v2/images/full-logo.png")
+	newURL, err := m.UploadFromUrl(context.Background(), "https://avatars.githubusercontent.com/u/43054062")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newURL)
 	assert.Len(t, tracer.FinishedSpans(), 2)
