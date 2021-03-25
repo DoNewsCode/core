@@ -59,10 +59,13 @@ jobs:
         ports:
           - 9200:9200
       minio:
-        image: minio/minio
+        image: bitnami/minio:latest
+        env:
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
         ports:
           - 9000:9000
-        options: server .
+        options: --name minio-server
     steps:
     - uses: actions/checkout@v2
 
