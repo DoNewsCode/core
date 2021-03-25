@@ -55,14 +55,23 @@ func provide(in in) out {
 	if in.Store == nil {
 		in.Store = NewInProcessStore()
 	}
-	timeoutSec := in.Conf.Float64("sagas.sagaTimeoutSecond")
-	if timeoutSec == 0 {
-		timeoutSec = 600
+	recover := 60 * time.Second
+	timeout := 600 * time.Second
+
+	var configuration configuration
+	in.Conf.Unmarshal("sagas", &configuration)
+
+	if configuration.SagaTimeout.Duration != 0 {
+		timeout = configuration.SagaTimeout.Duration
 	}
+	if configuration.RecoverInterval.Duration != 0 {
+		recover = configuration.RecoverInterval.Duration
+	}
+
 	registry := NewRegistry(
 		in.Store,
 		WithLogger(in.Logger),
-		WithTimeout(time.Duration(timeoutSec)*time.Second),
+		WithTimeout(timeout),
 	)
 	eps := make(SagaEndpoints)
 
@@ -70,11 +79,7 @@ func provide(in in) out {
 		eps[in.Steps[i].Name] = registry.AddStep(in.Steps[i])
 	}
 
-	recoverSec := in.Conf.Float64("sagas.recoverIntervalSecond")
-	if recoverSec == 0 {
-		recoverSec = 60
-	}
-	return out{Registry: registry, Interval: recoverInterval(time.Duration(recoverSec) * time.Second), SagaEndpoints: eps}
+	return out{Registry: registry, Interval: recoverInterval(recover), SagaEndpoints: eps}
 }
 
 // ProvideRunGroup implements the RunProvider.
@@ -103,18 +108,30 @@ type configOut struct {
 	Config []config.ExportedConfig
 }
 
+type configuration struct {
+	SagaTimeout     config.Duration `json:"sagaTimeout" yaml:"sagaTimeout"`
+	RecoverInterval config.Duration `json:"recoverInterval" yaml:"recoverInterval"`
+	MySQL           mysql           `json:"mysql" yaml:"mysql"`
+}
+
+type mysql struct {
+	Connection      string          `json:"connection" yaml:"connection"`
+	Retention       config.Duration `json:"retention" yaml:"retention"`
+	CleanupInterval config.Duration `json:"cleanupInterval" yaml:"cleanupInterval"`
+}
+
 func provideConfig() configOut {
 	return configOut{Config: []config.ExportedConfig{
 		{
 			Owner: "sagas",
 			Data: map[string]interface{}{
-				"sagas": map[string]interface{}{
-					"sagaTimeoutSecond":     "600",
-					"recoverIntervalSecond": "60",
-					"mysql": map[string]interface{}{
-						"connection":          "default",
-						"retentionHour":       "168",
-						"cleanupIntervalHour": "1",
+				"sagas": configuration{
+					SagaTimeout:     config.Duration{Duration: 600 * time.Second},
+					RecoverInterval: config.Duration{Duration: 60 * time.Second},
+					MySQL: mysql{
+						Connection:      "default",
+						Retention:       config.Duration{Duration: 168 * time.Hour},
+						CleanupInterval: config.Duration{Duration: time.Hour},
 					},
 				},
 			},
