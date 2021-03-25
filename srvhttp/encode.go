@@ -9,7 +9,7 @@ import (
 )
 
 type Headerer interface {
-	// Headers provides the header map that will be sent by WriteHeader.
+	// Headers provides the header map that will be sent by http.ResponseWriter WriteHeader.
 	Headers() http.Header
 }
 
