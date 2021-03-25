@@ -10,7 +10,7 @@ import (
 
 func TestEsLogAdapter_Printf(t *testing.T) {
 	var buf bytes.Buffer
-	l := esLogAdapter{logger: log.NewLogfmtLogger(&buf)}
+	l := ElasticLogAdapter{Logging: log.NewLogfmtLogger(&buf)}
 	l.Printf("test %s", "logger")
 	assert.Equal(t, "msg=\"test logger\"\n", buf.String())
 }

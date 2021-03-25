@@ -6,12 +6,12 @@ import (
 	"github.com/go-kit/kit/log"
 )
 
-//info logs informational messages
-type esLogAdapter struct {
-	logger log.Logger
+// ElasticLogAdapter is an adapter between kitlog and elastic logger interface
+type ElasticLogAdapter struct {
+	Logging log.Logger
 }
 
 // Printf implements elastic.Logger
-func (l esLogAdapter) Printf(msg string, v ...interface{}) {
-	l.logger.Log("msg", fmt.Sprintf(msg, v...))
+func (l ElasticLogAdapter) Printf(msg string, v ...interface{}) {
+	_ = l.Logging.Log("msg", fmt.Sprintf(msg, v...))
 }
