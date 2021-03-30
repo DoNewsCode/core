@@ -115,6 +115,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		core.WithInline("gorm.default.database", "sqlite"),
 		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"),
 		core.WithInline("gormMetrics.interval", "1ms"),
+		core.WithInline("log.level", "none"),
 	)
 	c.ProvideEssentials()
 	c.Provide(di.Deps{func() *Gauges {
@@ -128,7 +129,6 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	c.AddModuleFunc(New)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	var (
 		c1 *sql.Conn
 		c2 *sql.Conn
@@ -140,7 +140,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	})
 	go c.Serve(ctx)
 	time.Sleep(3 * time.Millisecond)
+	cancel()
 	c1.Close()
 	c2.Close()
-
 }
