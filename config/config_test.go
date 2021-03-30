@@ -116,6 +116,15 @@ func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
 	err := ka.Unmarshal("foo.bar", &target)
 	assert.NoError(t, err)
 	assert.Equal(t, "baz", target)
+
+	var r Duration
+	err = ka.Unmarshal("duration_string", &r)
+	assert.NoError(t, err)
+	assert.Equal(t, r, Duration{1 * time.Second})
+
+	err = ka.Unmarshal("duration_number", &r)
+	assert.NoError(t, err)
+	assert.Equal(t, r, Duration{1 * time.Nanosecond})
 }
 
 func TestMapAdapter_Bool(t *gotesting.T) {

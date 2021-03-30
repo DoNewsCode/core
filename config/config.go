@@ -109,6 +109,10 @@ func (k *KoanfAdapter) Unmarshal(path string, o interface{}) error {
 			Result:           o,
 			ErrorUnused:      true,
 			WeaklyTypedInput: true,
+			DecodeHook: mapstructure.ComposeDecodeHookFunc(
+				mapstructure.StringToTimeDurationHookFunc(),
+				stringToConfigDurationHookFunc(),
+			),
 		},
 	})
 }
@@ -237,5 +241,30 @@ func (m MapAdapter) Route(s string) contract.ConfigAccessor {
 		return v.(MapAdapter)
 	default:
 		panic(fmt.Sprintf("value at path %s is not a valid Router", s))
+	}
+}
+
+func stringToConfigDurationHookFunc() mapstructure.DecodeHookFunc {
+	return func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{}) (interface{}, error) {
+		if t != reflect.TypeOf(Duration{}) {
+			return data, nil
+		}
+		var val string
+		if f.Kind() == reflect.Float64 {
+			val = fmt.Sprintf("%v", data)
+		} else if f.Kind() == reflect.String {
+			val = fmt.Sprintf(`"%v"`, data)
+		} else {
+			return nil, fmt.Errorf("expected a %s, should be float64 or string, got '%s'", t.String(), f.String())
+		}
+		d := Duration{}
+		err := d.UnmarshalJSON([]byte(val))
+		if err != nil {
+			return nil, err
+		}
+		return d, nil
 	}
 }

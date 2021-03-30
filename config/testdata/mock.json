@@ -6,5 +6,7 @@
   "string": "string",
   "int": 42,
   "strings": ["foo", "bar"],
-  "float": 1.0
+  "float": 1.0,
+  "duration_string": "1s",
+  "duration_number": 1
 }
