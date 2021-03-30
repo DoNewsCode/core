@@ -51,7 +51,7 @@ func ProvideGORMMetrics(appName contract.AppName, env contract.Env) *otgorm.Gaug
 		InUse: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 			Namespace: appName.String(),
 			Subsystem: env.String(),
-			Name:      "gorm_inuse_connections",
+			Name:      "gorm_in_use_connections",
 			Help:      "number of in use connections",
 		}, []string{"dbname", "driver"}),
 	}
