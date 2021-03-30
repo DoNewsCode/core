@@ -2,6 +2,7 @@ package otgorm
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/DoNewsCode/core"
@@ -93,6 +94,8 @@ func TestModule_ProvideCommand(t *testing.T) {
 }
 
 func TestModule_ProvideRunGroup(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -126,14 +129,18 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	go c.Serve(ctx)
+	var (
+		c1 *sql.Conn
+		c2 *sql.Conn
+	)
 	c.Invoke(func(db *gorm.DB) {
-		sql, _ := db.DB()
-		c1, _ := sql.Conn(ctx)
-		defer c1.Close()
-		c2, _ := sql.Conn(ctx)
-		defer c2.Close()
-		time.Sleep(3 * time.Millisecond)
+		rawSQL, _ := db.DB()
+		c1, _ = rawSQL.Conn(ctx)
+		c2, _ = rawSQL.Conn(ctx)
 	})
+	go c.Serve(ctx)
+	time.Sleep(3 * time.Millisecond)
+	c1.Close()
+	c2.Close()
+
 }
