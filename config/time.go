@@ -14,6 +14,11 @@ type Duration struct {
 	time.Duration
 }
 
+// Valid simplify if statement
+func (d Duration) Valid() bool {
+	return d.Duration > 0
+}
+
 // MarshalYAML implements yaml.Marshaler
 func (d Duration) MarshalYAML() (interface{}, error) {
 	return d.String(), nil
