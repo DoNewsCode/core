@@ -55,8 +55,8 @@ func TestProvideFactory(t *testing.T) {
 	cleanup()
 }
 
-func TestExportedConfigs(t *testing.T) {
-	conf := provideExportedConfigs()
-	_, err := yaml.Marshal(conf.ExportedConfig)
+func Test_provideConfig(t *testing.T) {
+	conf := provideConfig()
+	_, err := yaml.Marshal(conf.Config)
 	assert.NoError(t, err)
 }
