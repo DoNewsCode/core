@@ -56,18 +56,17 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	var ch = make(chan struct{})
 	go func() {
 		ka.watcher.Watch(ctx, func() error {
-      assert.NoError(t, ka.Reload(), "reload should be successful")
+			assert.NoError(t, ka.Reload(), "reload should be successful")
 			err := ka.Reload()
 			fmt.Println(err)
-      ch <- struct{}{}
+			ch <- struct{}{}
 			return nil
 		})
 	}()
 	time.Sleep(time.Second)
 	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
 	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
-  <-ch
-
+	<-ch
 
 	// The following test is flaky on CI. Unable to reproduce locally.
 	/*
@@ -117,6 +116,15 @@ func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
 	err := ka.Unmarshal("foo.bar", &target)
 	assert.NoError(t, err)
 	assert.Equal(t, "baz", target)
+
+	var r Duration
+	err = ka.Unmarshal("duration_string", &r)
+	assert.NoError(t, err)
+	assert.Equal(t, r, Duration{1 * time.Second})
+
+	err = ka.Unmarshal("duration_number", &r)
+	assert.NoError(t, err)
+	assert.Equal(t, r, Duration{1 * time.Nanosecond})
 }
 
 func TestMapAdapter_Bool(t *gotesting.T) {
