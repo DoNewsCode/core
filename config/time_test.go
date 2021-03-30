@@ -80,3 +80,23 @@ func TestDuration_MarshalJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestDuration_Valid(t *testing.T) {
+	tests := []struct {
+		name string
+		val  time.Duration
+		want bool
+	}{
+		{">0", 1, true},
+		{"<0", -1, false},
+		{"=0", 0, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := Duration{tt.val}
+			if got := d.Valid(); got != tt.want {
+				t.Errorf("Valid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

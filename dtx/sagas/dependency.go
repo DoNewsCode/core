@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
 )
 
@@ -55,18 +55,13 @@ func provide(in in) out {
 	if in.Store == nil {
 		in.Store = NewInProcessStore()
 	}
-	recover := 60 * time.Second
-	timeout := 600 * time.Second
-
-	var configuration configuration
-	in.Conf.Unmarshal("sagas", &configuration)
-
-	if configuration.SagaTimeout.Duration != 0 {
-		timeout = configuration.SagaTimeout.Duration
+	var conf configuration
+	err := in.Conf.Unmarshal("sagas", &conf)
+	if err != nil {
+		level.Warn(in.Logger).Log("err", err)
 	}
-	if configuration.RecoverInterval.Duration != 0 {
-		recover = configuration.RecoverInterval.Duration
-	}
+	timeout := conf.getSagaTimeout().Duration
+	recoverVal := conf.getRecoverInterval().Duration
 
 	registry := NewRegistry(
 		in.Store,
@@ -79,7 +74,7 @@ func provide(in in) out {
 		eps[in.Steps[i].Name] = registry.AddStep(in.Steps[i])
 	}
 
-	return out{Registry: registry, Interval: recoverInterval(recover), SagaEndpoints: eps}
+	return out{Registry: registry, Interval: recoverInterval(recoverVal), SagaEndpoints: eps}
 }
 
 // ProvideRunGroup implements the RunProvider.
@@ -103,39 +98,3 @@ func (m out) ProvideRunGroup(group *run.Group) {
 }
 
 func (m out) ModuleSentinel() {}
-
-type configOut struct {
-	Config []config.ExportedConfig
-}
-
-type configuration struct {
-	SagaTimeout     config.Duration `json:"sagaTimeout" yaml:"sagaTimeout"`
-	RecoverInterval config.Duration `json:"recoverInterval" yaml:"recoverInterval"`
-	MySQL           mysql           `json:"mysql" yaml:"mysql"`
-}
-
-type mysql struct {
-	Connection      string          `json:"connection" yaml:"connection"`
-	Retention       config.Duration `json:"retention" yaml:"retention"`
-	CleanupInterval config.Duration `json:"cleanupInterval" yaml:"cleanupInterval"`
-}
-
-func provideConfig() configOut {
-	return configOut{Config: []config.ExportedConfig{
-		{
-			Owner: "sagas",
-			Data: map[string]interface{}{
-				"sagas": configuration{
-					SagaTimeout:     config.Duration{Duration: 600 * time.Second},
-					RecoverInterval: config.Duration{Duration: 60 * time.Second},
-					MySQL: mysql{
-						Connection:      "default",
-						Retention:       config.Duration{Duration: 168 * time.Hour},
-						CleanupInterval: config.Duration{Duration: time.Hour},
-					},
-				},
-			},
-			Comment: "The saga configuration.",
-		},
-	}}
-}
