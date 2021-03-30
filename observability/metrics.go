@@ -32,7 +32,7 @@ func ProvideHistogramMetrics(appName contract.AppName, env contract.Env) metrics
 	return &his
 }
 
-// ProvideHistogramMetrics returns a *otgorm.Gauges that measures the connection info in databases.
+// ProvideGORMMetrics returns a *otgorm.Gauges that measures the connection info in databases.
 // It is meant to be consumed by the otgorm.Providers.
 func ProvideGORMMetrics(appName contract.AppName, env contract.Env) *otgorm.Gauges {
 	return &otgorm.Gauges{

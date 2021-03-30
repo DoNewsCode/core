@@ -1,3 +1,5 @@
+//go:generate mockgen -destination=./mocks/metrics.go github.com/go-kit/kit/metrics Gauge
+
 package otgorm
 
 import (
@@ -13,7 +15,6 @@ type collector struct {
 	interval time.Duration
 }
 
-//go:generate mockgen -destination=./mocks/metrics.go github.com/go-kit/kit/metrics Gauge
 // Gauges is a collection of metrics for database connection info.
 type Gauges struct {
 	Idle  metrics.Gauge
