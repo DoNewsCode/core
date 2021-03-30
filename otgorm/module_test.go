@@ -139,8 +139,9 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		c2, _ = rawSQL.Conn(ctx)
 	})
 	go c.Serve(ctx)
-	time.Sleep(3 * time.Millisecond)
+	time.Sleep(2 * time.Millisecond)
 	cancel()
+	time.Sleep(2 * time.Millisecond)
 	c1.Close()
 	c2.Close()
 }
