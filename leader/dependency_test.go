@@ -80,8 +80,8 @@ func TestDetermineDriver(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestExportedConfigs(t *testing.T) {
+func Test_provideConfig(t *testing.T) {
 	conf := provideConfig()
-	_, err := yaml.Marshal(conf)
+	_, err := yaml.Marshal(conf.Config)
 	assert.NoError(t, err)
 }

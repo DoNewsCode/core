@@ -221,7 +221,9 @@ func provideDispatcher(maker DispatcherMaker) (dispatcherOut, error) {
 }
 
 type configOut struct {
-	Config []config.ExportedConfig
+	di.Out
+
+	Config []config.ExportedConfig `group:"config,flatten"`
 }
 
 func provideConfig() configOut {

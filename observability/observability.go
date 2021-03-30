@@ -24,7 +24,7 @@ Providers returns a set of providers available in package observability
 		metrics.Histogram
 */
 func Providers() di.Deps {
-	return di.Deps{provide, exportConfig}
+	return di.Deps{provide, provideConfig}
 }
 
 // in is the injection argument of provide.
@@ -75,7 +75,7 @@ type configOut struct {
 	Config []config.ExportedConfig `group:"config,flatten"`
 }
 
-func exportConfig() configOut {
+func provideConfig() configOut {
 
 	var conf map[string]interface{}
 	_ = yaml.Unmarshal([]byte(sample), &conf)

@@ -24,7 +24,7 @@ func TestProvide(t *testing.T) {
 	cleanup()
 }
 
-func TestExportedConfigs(t *testing.T) {
-	Conf := exportConfig()
+func Test_provideConfig(t *testing.T) {
+	Conf := provideConfig()
 	assert.NotEmpty(t, Conf.Config)
 }

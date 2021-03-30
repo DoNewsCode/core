@@ -28,7 +28,7 @@ Providers returns a set of dependencies including the Maker, the default *client
 		*clientv3.Client
 */
 func Providers() []interface{} {
-	return []interface{}{provideFactory, provideDefaultClient, provideExportedConfigs}
+	return []interface{}{provideFactory, provideDefaultClient, provideConfig}
 }
 
 // EtcdConfigInterceptor is an injector type hint that allows user to do
@@ -146,12 +146,12 @@ func provideDefaultClient(maker Maker) (*clientv3.Client, error) {
 type configOut struct {
 	di.Out
 
-	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
+	Config []config.ExportedConfig `group:"config,flatten"`
 }
 
-func provideExportedConfigs() configOut {
+func provideConfig() configOut {
 	return configOut{
-		ExportedConfig: []config.ExportedConfig{
+		Config: []config.ExportedConfig{
 			{
 				"otetcd",
 				map[string]interface{}{
