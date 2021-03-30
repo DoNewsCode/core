@@ -1,8 +1,13 @@
 package otgorm
 
 import (
+	"context"
+	"time"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
+	mock_metrics "github.com/DoNewsCode/core/otgorm/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -85,4 +90,50 @@ func TestModule_ProvideCommand(t *testing.T) {
 			assert.Equal(t, cc.expect, mock.action)
 		})
 	}
+}
+
+func TestModule_ProvideRunGroup(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	idle := mock_metrics.NewMockGauge(ctrl)
+	idle.EXPECT().With(gomock.Eq("default"), gomock.Eq("sqlite")).Return(idle).MinTimes(1)
+	idle.EXPECT().Set(gomock.Eq(0.0)).MinTimes(1)
+
+	open := mock_metrics.NewMockGauge(ctrl)
+	open.EXPECT().With(gomock.Eq("default"), gomock.Eq("sqlite")).Return(open).MinTimes(1)
+	open.EXPECT().Set(gomock.Eq(2.0)).MinTimes(1)
+
+	inUse := mock_metrics.NewMockGauge(ctrl)
+	inUse.EXPECT().With(gomock.Eq("default"), gomock.Eq("sqlite")).Return(inUse).MinTimes(1)
+	inUse.EXPECT().Set(gomock.Eq(2.0)).MinTimes(1)
+
+	c := core.New(
+		core.WithInline("gorm.default.database", "sqlite"),
+		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"),
+		core.WithInline("gormMetrics.interval", "1ms"),
+	)
+	c.ProvideEssentials()
+	c.Provide(di.Deps{func() *Gauges {
+		return &Gauges{
+			Idle:  idle,
+			InUse: inUse,
+			Open:  open,
+		}
+	}})
+	c.Provide(Providers())
+	c.AddModuleFunc(New)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go c.Serve(ctx)
+	c.Invoke(func(db *gorm.DB) {
+		sql, _ := db.DB()
+		c1, _ := sql.Conn(ctx)
+		defer c1.Close()
+		c2, _ := sql.Conn(ctx)
+		defer c2.Close()
+		time.Sleep(3 * time.Millisecond)
+	})
 }

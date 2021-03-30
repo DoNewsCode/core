@@ -12,6 +12,7 @@ require (
 	github.com/go-kit/kit v0.10.0
 	github.com/go-redis/redis/v8 v8.6.0
 	github.com/gogo/protobuf v1.3.2
+	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.4.3
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0

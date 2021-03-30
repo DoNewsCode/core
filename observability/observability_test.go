@@ -10,21 +10,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestProvide(t *testing.T) {
+func TestProvideOpentracing(t *testing.T) {
 	conf, _ := config.NewConfig(config.WithProviderLayer(rawbytes.Provider([]byte(sample)), yaml.Parser()))
-	Out, cleanup, err := provide(in{
-		Conf:    conf,
-		Logger:  log.NewNopLogger(),
-		AppName: config.AppName("foo"),
-		Env:     config.EnvTesting,
-	})
+	Out, cleanup, err := ProvideOpentracing(
+		config.AppName("foo"),
+		config.EnvTesting,
+		ProvideJaegerLogAdapter(log.NewNopLogger()),
+		conf,
+	)
 	assert.NoError(t, err)
-	assert.NotNil(t, Out.Tracer)
-	assert.NotNil(t, Out.Hist)
+	assert.NotNil(t, Out)
 	cleanup()
 }
 
-func Test_provideConfig(t *testing.T) {
-	Conf := provideConfig()
+func TestProvideHistogramMetrics(t *testing.T) {
+	Out := ProvideHistogramMetrics(
+		config.AppName("foo"),
+		config.EnvTesting,
+	)
+	assert.NotNil(t, Out)
+}
+
+func TestProvideGORMMetrics(t *testing.T) {
+	Out := ProvideGORMMetrics(
+		config.AppName("foo"),
+		config.EnvTesting,
+	)
+	assert.NotNil(t, Out)
+}
+
+func TestExportedConfigs(t *testing.T) {
+	Conf := exportConfig()
 	assert.NotEmpty(t, Conf.Config)
 }
