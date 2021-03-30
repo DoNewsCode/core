@@ -3,6 +3,8 @@ package config
 import (
 	"io/ioutil"
 	"os"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -87,7 +89,11 @@ func TestModule_ProvideCommand(t *testing.T) {
 			rootCmd.Execute()
 			testTarget, _ := ioutil.ReadFile(c.output)
 			expected, _ := ioutil.ReadFile(c.expected)
-			assert.Equal(t, string(expected), string(testTarget))
+			expectedString := string(expected)
+			if runtime.GOOS == "windows" {
+				expectedString = strings.ReplaceAll(expectedString, "\r", "")
+			}
+			assert.Equal(t, expectedString, string(testTarget))
 		})
 	}
 }
