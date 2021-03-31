@@ -15,7 +15,7 @@ import (
 func TestWatch(t *testing.T) {
 	t.Run("edit", func(t *testing.T) {
 		t.Parallel()
-		ch := make(chan struct{})
+		ch := make(chan struct{}, 2)
 		f, _ := ioutil.TempFile(".", "*")
 		defer os.Remove(f.Name())
 
