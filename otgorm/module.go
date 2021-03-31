@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const defaultInterval = 15 * time.Second
+
 // MigrationProvider is an interface for database migrations. modules
 // implementing this interface are migration providers. migrations will be
 // collected in migrate command.
@@ -52,6 +54,9 @@ type moduleIn struct {
 func New(in moduleIn) Module {
 	var duration time.Duration
 	in.Conf.Unmarshal("gormMetrics.interval", &duration)
+	if duration == 0 {
+		duration = defaultInterval
+	}
 	return Module{
 		maker:     in.Make,
 		env:       in.Env,
