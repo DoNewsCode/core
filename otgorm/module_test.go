@@ -9,6 +9,7 @@ import (
 	"github.com/DoNewsCode/core/di"
 	mock_metrics "github.com/DoNewsCode/core/otgorm/mocks"
 	"github.com/golang/mock/gomock"
+	"github.com/oklog/run"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -93,6 +94,17 @@ func TestModule_ProvideCommand(t *testing.T) {
 	}
 }
 
+type mockRunGroup struct {
+	ctx context.Context
+}
+
+func (m mockRunGroup) ProvideRunGroup(group *run.Group) {
+	group.Add(func() error {
+		<-m.ctx.Done()
+		return m.ctx.Err()
+	}, func(err error) {})
+}
+
 func TestModule_ProvideRunGroup(t *testing.T) {
 	t.Parallel()
 
@@ -127,8 +139,9 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	}})
 	c.Provide(Providers())
 	c.AddModuleFunc(New)
-
 	ctx, cancel := context.WithCancel(context.Background())
+	c.AddModule(mockRunGroup{ctx})
+
 	var (
 		c1 *sql.Conn
 		c2 *sql.Conn
@@ -141,7 +154,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	go c.Serve(ctx)
 	<-time.After(10 * time.Millisecond)
 	cancel()
-	<-time.After(1000 * time.Millisecond)
+	<-time.After(100 * time.Millisecond)
 	c1.Close()
 	c2.Close()
 }
