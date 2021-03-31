@@ -114,7 +114,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	c := core.New(
 		core.WithInline("gorm.default.database", "sqlite"),
 		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"),
-		core.WithInline("gormMetrics.interval", "1ms"),
+		core.WithInline("gormMetrics.interval", "50ms"),
 		core.WithInline("log.level", "none"),
 	)
 	c.ProvideEssentials()
@@ -139,9 +139,9 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		c2, _ = rawSQL.Conn(ctx)
 	})
 	go c.Serve(ctx)
-	time.Sleep(5 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	cancel()
-	time.Sleep(5 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	c1.Close()
 	c2.Close()
 }
