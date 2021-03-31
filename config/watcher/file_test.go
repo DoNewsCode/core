@@ -26,7 +26,7 @@ func TestWatch(t *testing.T) {
 		defer cancel()
 
 		go w.Watch(ctx, func() error {
-			close(ch)
+			ch <- struct{}{}
 			return nil
 		})
 		time.Sleep(time.Second)
