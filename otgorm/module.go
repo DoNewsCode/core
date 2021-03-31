@@ -52,11 +52,8 @@ type moduleIn struct {
 
 // New creates a Module.
 func New(in moduleIn) Module {
-	var duration time.Duration
+	var duration time.Duration = defaultInterval
 	in.Conf.Unmarshal("gormMetrics.interval", &duration)
-	if duration == 0 {
-		duration = defaultInterval
-	}
 	return Module{
 		maker:     in.Make,
 		env:       in.Env,
@@ -82,6 +79,7 @@ func (m Module) ProvideRunGroup(group *run.Group) {
 				m.collector.collectConnectionStats()
 			case <-ctx.Done():
 				ticker.Stop()
+				return nil
 			}
 		}
 	}, func(err error) {
