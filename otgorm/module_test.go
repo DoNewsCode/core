@@ -114,7 +114,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	c := core.New(
 		core.WithInline("gorm.default.database", "sqlite"),
 		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"),
-		core.WithInline("gormMetrics.interval", "50ms"),
+		core.WithInline("gormMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
 	)
 	c.ProvideEssentials()
