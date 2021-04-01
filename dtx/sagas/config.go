@@ -37,14 +37,14 @@ type configuration struct {
 }
 
 func (c configuration) getSagaTimeout() config.Duration {
-	if !c.SagaTimeout.Valid() {
+	if c.SagaTimeout.IsZero() {
 		return defaultConfig.SagaTimeout
 	}
 	return c.SagaTimeout
 }
 
 func (c configuration) getRecoverInterval() config.Duration {
-	if !c.RecoverInterval.Valid() {
+	if c.RecoverInterval.IsZero() {
 		return defaultConfig.RecoverInterval
 	}
 	return c.RecoverInterval

@@ -46,14 +46,14 @@ func (c configuration) getConnection() string {
 }
 
 func (c configuration) getRetention() config.Duration {
-	if !c.Retention.Valid() {
+	if c.Retention.IsZero() {
 		return defaultConfig.Retention
 	}
 	return c.Retention
 }
 
 func (c configuration) getCleanupInterval() config.Duration {
-	if !c.CleanupInterval.Valid() {
+	if c.CleanupInterval.IsZero() {
 		return defaultConfig.CleanupInterval
 	}
 	return c.CleanupInterval
