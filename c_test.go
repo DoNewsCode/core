@@ -8,14 +8,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/config/remote"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
-
-	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/otgorm"
+
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func TestC_Serve(t *testing.T) {
@@ -106,6 +108,10 @@ func TestC_Default(t *testing.T) {
 	c.AddModuleFunc(config.New)
 
 	f, _ := ioutil.TempFile("./", "*")
+	defer func() {
+		f.Close()
+		os.Remove(f.Name())
+	}()
 
 	rootCommand := &cobra.Command{}
 	c.ApplyRootCommand(rootCommand)
@@ -114,7 +120,20 @@ func TestC_Default(t *testing.T) {
 
 	output, _ := ioutil.ReadFile(f.Name())
 	assert.Contains(t, string(output), "gorm:")
-	os.Remove(f.Name())
+}
+
+func TestC_Remote(t *testing.T) {
+	r := remote.Provider("config.yaml", &clientv3.Config{
+		Endpoints:   []string{"127.0.0.1:2379"},
+		DialTimeout: 2 * time.Second,
+	})
+	if err := r.Put("name: remote"); err != nil {
+		t.Fatal(err)
+	}
+
+	c := New(WithRemote(r))
+	c.ProvideEssentials()
+	assert.Equal(t, "remote", c.String("name"))
 }
 
 type m1 struct {
