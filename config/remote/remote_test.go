@@ -2,15 +2,15 @@ package remote
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 func TestRemote(t *testing.T) {
-
 	cfg := &clientv3.Config{
 		Endpoints:   []string{"127.0.0.1:2379"},
 		DialTimeout: 2 * time.Second,
@@ -50,4 +50,40 @@ func TestRemote(t *testing.T) {
 
 	newVal := <-ch
 	assert.Equal(t, testVal, newVal)
+}
+
+func TestError(t *testing.T) {
+	cfg := &clientv3.Config{
+		Endpoints: []string{},
+	}
+
+	r := Provider("config.yaml", cfg)
+	err := r.Put("test")
+	assert.Error(t, err)
+
+	_, err = r.ReadBytes()
+	assert.Error(t, err)
+
+	err = r.Watch(context.Background(), func() error {
+		return nil
+	})
+	assert.Error(t, err)
+
+	cfg = &clientv3.Config{
+		Endpoints:   []string{"127.0.0.1:2379"},
+		DialTimeout: 2 * time.Second,
+	}
+	r = Provider("config.yaml", cfg)
+
+	go func() {
+		err := r.Watch(context.Background(), func() error {
+			return fmt.Errorf("for test")
+		})
+		assert.Error(t, err)
+	}()
+
+	time.Sleep(1 * time.Second)
+	if err := r.Put("name: test"); err != nil {
+		t.Fatal(err)
+	}
 }

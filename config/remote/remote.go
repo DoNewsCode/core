@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 // Remote is a core.ConfProvider and contract.ConfigWatcher implementation to read and watch remote config file.

@@ -17,7 +17,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
-	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 func TestC_Serve(t *testing.T) {
@@ -131,7 +131,10 @@ func TestC_Remote(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c := New(WithRemote(r))
+	c := New(WithRemoteYamlFile("config.yaml", clientv3.Config{
+		Endpoints:   []string{"127.0.0.1:2379"},
+		DialTimeout: 2 * time.Second,
+	}))
 	c.ProvideEssentials()
 	assert.Equal(t, "remote", c.String("name"))
 }
