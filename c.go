@@ -98,7 +98,7 @@ func WithRemoteYamlFile(path string, cfg clientv3.Config) (CoreOption, CoreOptio
 	return WithRemote(r)
 }
 
-// WithRemoteYamlFile is a two-in-one coreOption. It uses the etcd's file as the
+// WithRemote is a two-in-one coreOption. It uses the etcd's file as the
 // source of configuration, and watches the change of that file for hot reloading.
 func WithRemote(r *remote.Remote) (CoreOption, CoreOption) {
 	return WithConfigStack(r, yaml.Parser()), WithConfigWatcher(r)
