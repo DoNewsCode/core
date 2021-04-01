@@ -17,12 +17,6 @@ type Remote struct {
 
 // Provider create a *Remote
 func Provider(path string, clientConfig *clientv3.Config) *Remote {
-	if path == "" {
-		panic("config path can't be empty")
-	}
-	if clientConfig == nil {
-		panic("etcd config can't be empty")
-	}
 	return &Remote{
 		path:         path,
 		clientConfig: clientConfig,
@@ -44,10 +38,8 @@ func (r *Remote) ReadBytes() ([]byte, error) {
 	if resp.Count == 0 {
 		return nil, fmt.Errorf("no such config path: %s", r.path)
 	}
-	for _, v := range resp.Kvs {
-		return v.Value, nil
-	}
-	return nil, errors.New("read remote config error")
+
+	return resp.Kvs[0].Value, nil
 }
 
 // Read is not supported by the remote provider.
