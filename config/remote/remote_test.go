@@ -53,12 +53,17 @@ func TestRemote(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
+	var (
+		r   *Remote
+		err error
+	)
+
 	cfg := &clientv3.Config{
 		Endpoints: []string{},
 	}
 
-	r := Provider("config.yaml", cfg)
-	err := r.Put("test")
+	r = Provider("config.yaml", cfg)
+	err = r.Put("test")
 	assert.Error(t, err)
 
 	_, err = r.ReadBytes()
@@ -73,10 +78,22 @@ func TestError(t *testing.T) {
 		Endpoints:   []string{"127.0.0.1:2379"},
 		DialTimeout: 2 * time.Second,
 	}
-	r = Provider("config.yaml", cfg)
+	r = Provider("config-test1", cfg)
+	_, err = r.ReadBytes()
+	assert.Error(t, err)
 
+	r = Provider("config-test2", cfg)
 	go func() {
 		err := r.Watch(context.Background(), func() error {
+			return fmt.Errorf("for test")
+		})
+		assert.Error(t, err)
+	}()
+
+	go func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := r.Watch(ctx, func() error {
 			return fmt.Errorf("for test")
 		})
 		assert.Error(t, err)
