@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -83,11 +84,16 @@ func TestError(t *testing.T) {
 	assert.Error(t, err)
 
 	r = Provider("config-test2", cfg)
+
+	// Confirm that the two coroutines are finished
+	g := sync.WaitGroup{}
+	g.Add(2)
 	go func() {
 		err := r.Watch(context.Background(), func() error {
 			return fmt.Errorf("for test")
 		})
 		assert.Error(t, err)
+		g.Done()
 	}()
 
 	go func() {
@@ -97,10 +103,12 @@ func TestError(t *testing.T) {
 			return fmt.Errorf("for test")
 		})
 		assert.Error(t, err)
+		g.Done()
 	}()
 
 	time.Sleep(1 * time.Second)
 	if err := r.Put("name: test"); err != nil {
 		t.Fatal(err)
 	}
+	g.Wait()
 }
