@@ -61,18 +61,20 @@ type Container struct {
 
 // ApplyRouter iterates through every HTTPProvider registered in the container,
 // and introduce the router to everyone.
-func (c *Container) ApplyRouter(router *mux.Router) {
+func (c *Container) ApplyRouter(router *mux.Router) int {
 	for _, p := range c.httpProviders {
 		p(router)
 	}
+	return len(c.httpProviders)
 }
 
 // ApplyGRPCServer iterates through every GRPCProvider registered in the container,
 // and introduce a *grpc.Server to everyone.
-func (c *Container) ApplyGRPCServer(server *grpc.Server) {
+func (c *Container) ApplyGRPCServer(server *grpc.Server) int {
 	for _, p := range c.grpcProviders {
 		p(server)
 	}
+	return len(c.grpcProviders)
 }
 
 // Shutdown iterates through every CloserProvider registered in the container,
@@ -119,10 +121,11 @@ func (c *Container) Modules() ifilter.Collection {
 
 // ApplyCron iterates through every CronProvider registered in the container,
 // and introduce the *cron.Cron to everyone.
-func (c *Container) ApplyCron(crontab *cron.Cron) {
+func (c *Container) ApplyCron(crontab *cron.Cron) int {
 	for _, p := range c.cronProviders {
 		p(crontab)
 	}
+	return len(c.cronProviders)
 }
 
 // ApplyRootCommand iterates through every CommandProvider registered in the container,

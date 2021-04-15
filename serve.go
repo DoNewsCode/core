@@ -2,8 +2,6 @@ package core
 
 import (
 	"context"
-	"github.com/DoNewsCode/core/events"
-	"github.com/DoNewsCode/core/cronopts"
 	"net"
 	"net/http"
 	"os"
@@ -12,7 +10,9 @@ import (
 
 	"github.com/DoNewsCode/core/container"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/cronopts"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
@@ -51,7 +51,114 @@ func (s serveModule) ProvideCommand(command *cobra.Command) {
 	command.AddCommand(newServeCmd(s.in))
 }
 
-func newServeCmd(p serveIn) *cobra.Command {
+type runGroupFunc func(ctx context.Context, logger logging.LevelLogger) (func() error, func(err error), error)
+
+func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (func() error, func(err error), error) {
+	if s.Config.Bool("http.disable") {
+		return nil, nil, nil
+	}
+
+	if s.HTTPServer == nil {
+		s.HTTPServer = &http.Server{}
+	}
+	router := mux.NewRouter()
+	if s.Container.ApplyRouter(router) == 0 {
+		return nil, nil, nil
+	}
+	s.HTTPServer.Handler = router
+
+	httpAddr := s.Config.String("http.addr")
+	ln, err := net.Listen("tcp", httpAddr)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed start http server")
+	}
+	return func() error {
+			logger.Infof("http service is listening at %s", ln.Addr())
+			s.Dispatcher.Dispatch(
+				ctx,
+				events.Of(OnHTTPServerStart{s.HTTPServer, ln}),
+			)
+			defer s.Dispatcher.Dispatch(
+				ctx,
+				events.Of(OnHTTPServerShutdown{s.HTTPServer, ln}),
+			)
+			return s.HTTPServer.Serve(ln)
+		}, func(err error) {
+			_ = s.HTTPServer.Shutdown(context.Background())
+			_ = ln.Close()
+		}, nil
+}
+
+func (s serveIn) grpcServe(ctx context.Context, logger logging.LevelLogger) (func() error, func(err error), error) {
+	if s.Config.Bool("grpc.disable") {
+		return nil, nil, nil
+	}
+	if s.GRPCServer == nil {
+		s.GRPCServer = grpc.NewServer()
+	}
+	if s.Container.ApplyGRPCServer(s.GRPCServer) == 0 {
+		return nil, nil, nil
+	}
+
+	grpcAddr := s.Config.String("grpc.addr")
+	ln, err := net.Listen("tcp", grpcAddr)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed start grpc server")
+	}
+	return func() error {
+			logger.Infof("gRPC service is listening at %s", ln.Addr())
+			s.Dispatcher.Dispatch(
+				ctx,
+				events.Of(OnGRPCServerStart{s.GRPCServer, ln}),
+			)
+			defer s.Dispatcher.Dispatch(
+				ctx,
+				events.Of(OnGRPCServerShutdown{s.GRPCServer, ln}),
+			)
+			return s.GRPCServer.Serve(ln)
+		}, func(err error) {
+			s.GRPCServer.GracefulStop()
+			_ = ln.Close()
+		}, nil
+}
+
+func (s serveIn) cronServe(ctx context.Context, logger logging.LevelLogger) (func() error, func(err error), error) {
+	if s.Config.Bool("cron.disable") {
+		return nil, nil, nil
+	}
+	if s.Cron == nil {
+		s.Cron = cron.New(cron.WithLogger(cronopts.CronLogAdapter{Logging: s.Logger}))
+	}
+
+	if s.Container.ApplyCron(s.Cron) == 0 {
+		return nil, nil, nil
+	}
+	return func() error {
+			logger.Infof("cron runner started")
+			s.Cron.Run()
+			return nil
+		}, func(err error) {
+			<-s.Cron.Stop().Done()
+		}, nil
+}
+
+func (s serveIn) signalWatch(ctx context.Context, logger logging.LevelLogger) (func() error, func(err error), error) {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	return func() error {
+			select {
+			case n := <-sig:
+				logger.Errf("signal received: %s", n)
+			case <-ctx.Done():
+				logger.Errf(ctx.Err().Error())
+			}
+			return nil
+		}, func(err error) {
+			close(sig)
+		}, nil
+}
+
+func newServeCmd(s serveIn) *cobra.Command {
 	var serveCmd = &cobra.Command{
 		Use:   "serve",
 		Short: "Start the server",
@@ -60,108 +167,44 @@ func newServeCmd(p serveIn) *cobra.Command {
 
 			var (
 				g run.Group
-				l = logging.WithLevel(p.Logger)
+				l = logging.WithLevel(s.Logger)
 			)
 
-			// Start HTTP server
-			if !p.Config.Bool("http.disable") {
-				httpAddr := p.Config.String("http.addr")
-				ln, err := net.Listen("tcp", httpAddr)
-				if err != nil {
-					return errors.Wrap(err, "failed start http server")
-				}
-				if p.HTTPServer == nil {
-					p.HTTPServer = &http.Server{}
-				}
-				router := mux.NewRouter()
-				p.Container.ApplyRouter(router)
-				p.HTTPServer.Handler = router
-				g.Add(func() error {
-					l.Infof("http service is listening at %s", ln.Addr())
-					p.Dispatcher.Dispatch(
-						cmd.Context(),
-						events.Of(OnHTTPServerStart{p.HTTPServer, ln}),
-					)
-					defer p.Dispatcher.Dispatch(
-						cmd.Context(),
-						events.Of(OnHTTPServerShutdown{p.HTTPServer, ln}),
-					)
-					return p.HTTPServer.Serve(ln)
-				}, func(err error) {
-					_ = p.HTTPServer.Shutdown(context.Background())
-					_ = ln.Close()
-				})
+			// Add serve and signalWatch
+			serves := []runGroupFunc{
+				s.httpServe,
+				s.grpcServe,
+				s.cronServe,
+				s.signalWatch,
 			}
 
-			// Start gRPC server
-			if !p.Config.Bool("grpc.disable") {
-				grpcAddr := p.Config.String("grpc.addr")
-				ln, err := net.Listen("tcp", grpcAddr)
-				if err != nil {
-					return errors.Wrap(err, "failed start grpc server")
-				}
-				if p.GRPCServer == nil {
-					p.GRPCServer = grpc.NewServer()
-				}
-				p.Container.ApplyGRPCServer(p.GRPCServer)
-				g.Add(func() error {
-					l.Infof("gRPC service is listening at %s", ln.Addr())
-					p.Dispatcher.Dispatch(
-						cmd.Context(),
-						events.Of(OnGRPCServerStart{p.GRPCServer, ln}),
-					)
-					defer p.Dispatcher.Dispatch(
-						cmd.Context(),
-						events.Of(OnGRPCServerShutdown{p.GRPCServer, ln}),
-					)
-					return p.GRPCServer.Serve(ln)
-				}, func(err error) {
-					p.GRPCServer.GracefulStop()
-					_ = ln.Close()
-				})
-			}
-
-			// Start cron runner
-			if !p.Config.Bool("cron.disable") {
-				if p.Cron == nil {
-					p.Cron = cron.New(cron.WithLogger(cronopts.CronLogAdapter{Logging: l}))
-				}
-
-				p.Container.ApplyCron(p.Cron)
-				g.Add(func() error {
-					l.Info("cron runner started")
-					p.Cron.Run()
+			serveCount := len(serves)
+			for _, serve := range serves {
+				// At least one serve: signalWatch
+				// It doesn't need to run alone
+				if serveCount == 1 {
+					l.Info("there are no services to run")
 					return nil
-				}, func(err error) {
-					<-p.Cron.Stop().Done()
-				})
-			}
-
-			// Graceful shutdown
-			{
-				sig := make(chan os.Signal, 1)
-				signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-				g.Add(func() error {
-					select {
-					case s := <-sig:
-						l.Errf("signal received: %s", s)
-					case <-cmd.Context().Done():
-						l.Errf(cmd.Context().Err().Error())
-					}
-					return nil
-				}, func(err error) {
-					close(sig)
-				})
+				}
+				execute, interrupt, err := serve(cmd.Context(), l)
+				if err != nil {
+					return err
+				}
+				if execute == nil || interrupt == nil {
+					serveCount--
+					continue
+				}
+				g.Add(execute, interrupt)
 			}
 
 			// Additional run groups
-			p.Container.ApplyRunGroup(&g)
+			s.Container.ApplyRunGroup(&g)
 
 			if err := g.Run(); err != nil {
 				return err
 			}
 
-			l.Infof("graceful shutdown complete; see you next time :)")
+			l.Info("graceful shutdown complete; see you next time :)")
 			return nil
 		},
 	}
