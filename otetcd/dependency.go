@@ -41,13 +41,13 @@ type Maker interface {
 	Make(name string) (*clientv3.Client, error)
 }
 
-// Factory is a *di.Factory that creates redis.UniversalClient using a
+// Factory is a *di.Factory that creates *clientv3.Client using a
 // specific configuration entry.
 type Factory struct {
 	*di.Factory
 }
 
-// Make creates redis.UniversalClient using a specific configuration entry.
+// Make creates *clientv3.Client using a specific configuration entry.
 func (r Factory) Make(name string) (*clientv3.Client, error) {
 	client, err := r.Factory.Make(name)
 	if err != nil {
