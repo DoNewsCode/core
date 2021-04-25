@@ -13,7 +13,7 @@ import (
 
 func TestRemote(t *testing.T) {
 	cfg := &clientv3.Config{
-		Endpoints:   []string{"192.168.82.3:2379"},
+		Endpoints:   []string{"127.0.0.1:2379"},
 		DialTimeout: 2 * time.Second,
 	}
 
@@ -76,7 +76,7 @@ func TestError(t *testing.T) {
 	assert.Error(t, err)
 
 	cfg = &clientv3.Config{
-		Endpoints:   []string{"192.168.82.3:2379"},
+		Endpoints:   []string{"127.0.0.1:2379"},
 		DialTimeout: 2 * time.Second,
 	}
 	r = Provider("config-test1", cfg)

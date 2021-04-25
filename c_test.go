@@ -124,7 +124,7 @@ func TestC_Default(t *testing.T) {
 
 func TestC_Remote(t *testing.T) {
 	cfg := clientv3.Config{
-		Endpoints:   []string{"192.168.82.3:2379"},
+		Endpoints:   []string{"127.0.0.1:2379"},
 		DialTimeout: 2 * time.Second,
 	}
 	_ = remote.Provider("config.yaml", &cfg)
