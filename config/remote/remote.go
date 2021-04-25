@@ -8,22 +8,22 @@ import (
 	"go.etcd.io/etcd/client/v3"
 )
 
-// Remote is a core.ConfProvider and contract.ConfigWatcher implementation to read and watch remote config file.
+// Remote is a core.ConfProvider and contract.ConfigWatcher implementation to read and watch remote config key.
 // The remote client uses etcd.
 type Remote struct {
-	path         string
+	key         string
 	clientConfig *clientv3.Config
 }
 
 // Provider create a *Remote
-func Provider(path string, clientConfig *clientv3.Config) *Remote {
+func Provider(key string, clientConfig *clientv3.Config) *Remote {
 	return &Remote{
-		path:         path,
+		key:         key,
 		clientConfig: clientConfig,
 	}
 }
 
-// ReadBytes reads the contents of a file from etcd and returns the bytes.
+// ReadBytes reads the contents of a key from etcd and returns the bytes.
 func (r *Remote) ReadBytes() ([]byte, error) {
 	client, err := clientv3.New(*r.clientConfig)
 	if err != nil {
@@ -31,12 +31,12 @@ func (r *Remote) ReadBytes() ([]byte, error) {
 	}
 	defer client.Close()
 
-	resp, err := client.Get(context.Background(), r.path)
+	resp, err := client.Get(context.Background(), r.key)
 	if err != nil {
 		return nil, err
 	}
 	if resp.Count == 0 {
-		return nil, fmt.Errorf("no such config path: %s", r.path)
+		return nil, fmt.Errorf("no such config key: %s", r.key)
 	}
 
 	return resp.Kvs[0].Value, nil
@@ -44,13 +44,13 @@ func (r *Remote) ReadBytes() ([]byte, error) {
 
 // Read is not supported by the remote provider.
 func (r *Remote) Read() (map[string]interface{}, error) {
-	return nil, errors.New("file provider does not support this method")
+	return nil, errors.New("remote provider does not support this method")
 }
 
-// Watch watches the change to the remote file from etcd. If the file is edited or created, the reload function
-// will be called. note the reload function should not just load the changes made within this file, but rather
+// Watch watches the change to the remote key from etcd. If the key is edited or created, the reload function
+// will be called. note the reload function should not just load the changes made within this key, but rather
 // it should reload the whole config stack. For example, if the flag or env takes precedence over the config
-// file, they should remain to be so after the file changes.
+// key, they should remain to be so after the key changes.
 func (r *Remote) Watch(ctx context.Context, reload func() error) error {
 	client, err := clientv3.New(*r.clientConfig)
 	if err != nil {
@@ -58,7 +58,7 @@ func (r *Remote) Watch(ctx context.Context, reload func() error) error {
 	}
 	defer client.Close()
 
-	rch := client.Watch(ctx, r.path)
+	rch := client.Watch(ctx, r.key)
 	for {
 		select {
 		case resp := <-rch:
@@ -75,17 +75,3 @@ func (r *Remote) Watch(ctx context.Context, reload func() error) error {
 	}
 }
 
-// Put add values to remote config file on etcd.
-func (r *Remote) Put(val string) error {
-	client, err := clientv3.New(*r.clientConfig)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
-	_, err = client.Put(context.Background(), r.path, val)
-	if err != nil {
-		return err
-	}
-	return nil
-}

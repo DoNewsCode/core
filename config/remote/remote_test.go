@@ -13,7 +13,7 @@ import (
 
 func TestRemote(t *testing.T) {
 	cfg := &clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
+		Endpoints:   []string{"192.168.82.3:2379"},
 		DialTimeout: 2 * time.Second,
 	}
 
@@ -21,7 +21,7 @@ func TestRemote(t *testing.T) {
 
 	var testVal = "name: app"
 	// PREPARE TEST DATA
-	if err := r.Put(testVal); err != nil {
+	if err := put(r, testVal); err != nil {
 		t.Fatal(err)
 	}
 
@@ -45,7 +45,7 @@ func TestRemote(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	if err := r.Put(testVal); err != nil {
+	if err := put(r, testVal); err != nil {
 		t.Fatal(err)
 	}
 
@@ -64,7 +64,7 @@ func TestError(t *testing.T) {
 	}
 
 	r = Provider("config.yaml", cfg)
-	err = r.Put("test")
+	err = put(r, "test")
 	assert.Error(t, err)
 
 	_, err = r.ReadBytes()
@@ -76,7 +76,7 @@ func TestError(t *testing.T) {
 	assert.Error(t, err)
 
 	cfg = &clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
+		Endpoints:   []string{"192.168.82.3:2379"},
 		DialTimeout: 2 * time.Second,
 	}
 	r = Provider("config-test1", cfg)
@@ -107,8 +107,22 @@ func TestError(t *testing.T) {
 	}()
 
 	time.Sleep(1 * time.Second)
-	if err := r.Put("name: test"); err != nil {
+	if err := put(r, "name: test"); err != nil {
 		t.Fatal(err)
 	}
 	g.Wait()
+}
+
+func put(r *Remote, val string) error {
+	client, err := clientv3.New(*r.clientConfig)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	_, err = client.Put(context.Background(), r.key, val)
+	if err != nil {
+		return err
+	}
+	return nil
 }

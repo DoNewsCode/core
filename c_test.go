@@ -123,18 +123,16 @@ func TestC_Default(t *testing.T) {
 }
 
 func TestC_Remote(t *testing.T) {
-	r := remote.Provider("config.yaml", &clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
+	cfg := clientv3.Config{
+		Endpoints:   []string{"192.168.82.3:2379"},
 		DialTimeout: 2 * time.Second,
-	})
-	if err := r.Put("name: remote"); err != nil {
+	}
+	_ = remote.Provider("config.yaml", &cfg)
+	if err := put(cfg, "config.yaml", "name: remote"); err != nil {
 		t.Fatal(err)
 	}
 
-	c := New(WithRemoteYamlFile("config.yaml", clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
-		DialTimeout: 2 * time.Second,
-	}))
+	c := New(WithRemoteYamlFile("config.yaml", cfg))
 	c.ProvideEssentials()
 	assert.Equal(t, "remote", c.String("name"))
 }
@@ -163,4 +161,18 @@ func TestC_Provide(t *testing.T) {
 		func() m1 { return m1{} },
 		func() m2 { return m2{} },
 	})
+}
+
+func put(cfg clientv3.Config, key, val string) error {
+	client, err := clientv3.New(cfg)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	_, err = client.Put(context.Background(), key, val)
+	if err != nil {
+		return err
+	}
+	return nil
 }
