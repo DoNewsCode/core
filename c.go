@@ -91,15 +91,15 @@ func WithYamlFile(path string) (CoreOption, CoreOption) {
 		WithConfigWatcher(watcher.File{Path: path})
 }
 
-// WithRemoteYamlFile is a two-in-one coreOption. It uses the remote file on etcd as the
-// source of configuration, and watches the change of that file for hot reloading.
-func WithRemoteYamlFile(path string, cfg clientv3.Config) (CoreOption, CoreOption) {
-	r := remote.Provider(path, &cfg)
+// WithRemoteYamlFile is a two-in-one coreOption. It uses the remote key on etcd as the
+// source of configuration, and watches the change of that key for hot reloading.
+func WithRemoteYamlFile(key string, cfg clientv3.Config) (CoreOption, CoreOption) {
+	r := remote.Provider(key, &cfg)
 	return WithRemote(r)
 }
 
-// WithRemote is a two-in-one coreOption. It uses the etcd's file as the
-// source of configuration, and watches the change of that file for hot reloading.
+// WithRemote is a two-in-one coreOption. It uses the remote key on etcd as the
+// source of configuration, and watches the change of that key for hot reloading.
 func WithRemote(r *remote.Remote) (CoreOption, CoreOption) {
 	return WithConfigStack(r, yaml.Parser()), WithConfigWatcher(r)
 }
