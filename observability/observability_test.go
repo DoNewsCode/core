@@ -1,13 +1,15 @@
 package observability
 
 import (
-	"testing"
-
+	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/otgorm"
 	"github.com/go-kit/kit/log"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
+	"testing"
 )
 
 func TestProvideOpentracing(t *testing.T) {
@@ -32,11 +34,29 @@ func TestProvideHistogramMetrics(t *testing.T) {
 }
 
 func TestProvideGORMMetrics(t *testing.T) {
-	Out := ProvideGORMMetrics(
-		config.AppName("foo"),
-		config.EnvTesting,
-	)
-	assert.NotNil(t, Out)
+	c := core.New()
+	c.ProvideEssentials()
+	c.Provide(Providers())
+	c.Provide(otgorm.Providers())
+	c.Invoke(func(db *gorm.DB, g *otgorm.Gauges) {
+		d, err := db.DB()
+		if err != nil {
+			t.Error(err)
+		}
+		stats := d.Stats()
+		withValues := []string{"dbname", "default", "driver", db.Name()}
+		g.Idle.
+			With(withValues...).
+			Set(float64(stats.Idle))
+
+		g.InUse.
+			With(withValues...).
+			Set(float64(stats.InUse))
+
+		g.Open.
+			With(withValues...).
+			Set(float64(stats.OpenConnections))
+	})
 }
 
 func TestExportedConfigs(t *testing.T) {
