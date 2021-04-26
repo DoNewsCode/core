@@ -35,18 +35,20 @@ func newCollector(factory Factory, gauges *Gauges, interval time.Duration) *coll
 // collectConnectionStats collects database connections for Prometheus to scrape.
 func (d *collector) collectConnectionStats() {
 	for k, v := range d.factory.List() {
-		db, _ := v.Conn.(*gorm.DB).DB()
+		conn := v.Conn.(*gorm.DB)
+		db, _ := conn.DB()
 		stats := db.Stats()
+		withValues := []string{"dbname", k, "driver", conn.Name()}
 		d.gauges.Idle.
-			With(k, v.Conn.(*gorm.DB).Name()).
+			With(withValues...).
 			Set(float64(stats.Idle))
 
 		d.gauges.InUse.
-			With(k, v.Conn.(*gorm.DB).Name()).
+			With(withValues...).
 			Set(float64(stats.InUse))
 
 		d.gauges.Open.
-			With(k, v.Conn.(*gorm.DB).Name()).
+			With(withValues...).
 			Set(float64(stats.OpenConnections))
 	}
 }

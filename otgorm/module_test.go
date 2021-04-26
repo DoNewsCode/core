@@ -99,16 +99,23 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	withValues := []interface{}{
+		gomock.Eq("dbname"),
+		gomock.Eq("default"),
+		gomock.Eq("driver"),
+		gomock.Eq("sqlite"),
+	}
+
 	idle := mock_metrics.NewMockGauge(ctrl)
-	idle.EXPECT().With(gomock.Eq("default"), gomock.Eq("sqlite")).Return(idle).MinTimes(1)
+	idle.EXPECT().With(withValues...).Return(idle).MinTimes(1)
 	idle.EXPECT().Set(gomock.Eq(0.0)).MinTimes(1)
 
 	open := mock_metrics.NewMockGauge(ctrl)
-	open.EXPECT().With(gomock.Eq("default"), gomock.Eq("sqlite")).Return(open).MinTimes(1)
+	open.EXPECT().With(withValues...).Return(open).MinTimes(1)
 	open.EXPECT().Set(gomock.Eq(2.0)).MinTimes(1)
 
 	inUse := mock_metrics.NewMockGauge(ctrl)
-	inUse.EXPECT().With(gomock.Eq("default"), gomock.Eq("sqlite")).Return(inUse).MinTimes(1)
+	inUse.EXPECT().With(withValues...).Return(inUse).MinTimes(1)
 	inUse.EXPECT().Set(gomock.Eq(2.0)).MinTimes(1)
 
 	c := core.New(
@@ -138,7 +145,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		c2, _ = rawSQL.Conn(ctx)
 	})
 	go c.Serve(ctx)
-	<-time.After(10 * time.Millisecond)
+	<-time.After(100 * time.Millisecond)
 	cancel()
 	<-time.After(1000 * time.Millisecond)
 	c1.Close()
