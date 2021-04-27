@@ -105,7 +105,7 @@ func WithRemote(r *remote.Remote) (CoreOption, CoreOption) {
 }
 
 // WithInline is a CoreOption that creates a inline config in the configuration stack.
-func WithInline(key, entry string) CoreOption {
+func WithInline(key string, entry interface{}) CoreOption {
 	return WithConfigStack(confmap.Provider(map[string]interface{}{
 		key: entry,
 	}, "."), nil)

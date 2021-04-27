@@ -2,6 +2,7 @@ package otredis
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
@@ -65,14 +66,16 @@ type in struct {
 	Conf        contract.ConfigAccessor
 	Interceptor RedisConfigurationInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer            `optional:"true"`
+	Gauges      *Gauges                       `optional:"true"`
 }
 
 // out is the result of provideRedisFactory.
 type out struct {
 	di.Out
 
-	Maker   Maker
-	Factory Factory
+	Maker     Maker
+	Factory   Factory
+	Collector *collector
 }
 
 // provideRedisFactory creates Factory and redis.UniversalClient. It is a valid
@@ -144,10 +147,19 @@ func provideRedisFactory(p in) (out, func()) {
 		}, nil
 	})
 	redisFactory := Factory{factory}
-	redisOut := out{
-		Maker:   redisFactory,
-		Factory: redisFactory,
+
+	var collector *collector
+	if p.Gauges != nil {
+		var interval time.Duration
+		p.Conf.Unmarshal("redisMetrics.interval", &interval)
+		collector = newCollector(redisFactory, p.Gauges, interval)
 	}
+	redisOut := out{
+		Maker:     redisFactory,
+		Factory:   redisFactory,
+		Collector: collector,
+	}
+
 	return redisOut, redisFactory.Close
 }
 
@@ -161,6 +173,10 @@ type configOut struct {
 	Config []config.ExportedConfig `group:"config,flatten"`
 }
 
+type metricsConf struct {
+	Interval config.Duration `json:"interval" yaml:"interval"`
+}
+
 // provideConfig exports the default redis configuration
 func provideConfig() configOut {
 	configs := []config.ExportedConfig{
@@ -171,7 +187,11 @@ func provideConfig() configOut {
 					"default": {
 						Addrs: []string{"127.0.0.1:6379"},
 					},
-				}},
+				},
+				"redisMetrics": metricsConf{
+					Interval: config.Duration{Duration: 15 * time.Second},
+				},
+			},
 			Comment: "The configuration of redis clients",
 		},
 	}
