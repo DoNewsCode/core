@@ -24,7 +24,7 @@ func Providers() di.Deps {
 		ProvideOpentracing,
 		ProvideHistogramMetrics,
 		ProvideGORMMetrics,
-		exportConfig,
+		provideConfig,
 	}
 }
 
@@ -45,7 +45,7 @@ type configOut struct {
 	Config []config.ExportedConfig `group:"config,flatten"`
 }
 
-func exportConfig() configOut {
+func provideConfig() configOut {
 
 	var conf map[string]interface{}
 	_ = yaml.Unmarshal([]byte(sample), &conf)
