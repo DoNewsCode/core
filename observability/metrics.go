@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/otgorm"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -29,4 +30,29 @@ func ProvideHistogramMetrics(appName contract.AppName, env contract.Env) metrics
 		}, []string{"module", "service", "method"})
 	})
 	return &his
+}
+
+// ProvideGORMMetrics returns a *otgorm.Gauges that measures the connection info in databases.
+// It is meant to be consumed by the otgorm.Providers.
+func ProvideGORMMetrics(appName contract.AppName, env contract.Env) *otgorm.Gauges {
+	return &otgorm.Gauges{
+		Idle: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Namespace: appName.String(),
+			Subsystem: env.String(),
+			Name:      "gorm_idle_connections",
+			Help:      "number of idle connections",
+		}, []string{"dbname", "driver"}),
+		Open: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Namespace: appName.String(),
+			Subsystem: env.String(),
+			Name:      "gorm_open_connections",
+			Help:      "number of open connections",
+		}, []string{"dbname", "driver"}),
+		InUse: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Namespace: appName.String(),
+			Subsystem: env.String(),
+			Name:      "gorm_in_use_connections",
+			Help:      "number of in use connections",
+		}, []string{"dbname", "driver"}),
+	}
 }

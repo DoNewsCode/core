@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
@@ -25,6 +26,7 @@ the Maker, database configs and the default *gorm.DB instance.
 		log.Logger
 		GormConfigInterceptor `optional:"true"`
 		opentracing.Tracer    `optional:"true"`
+		Gauges `optional:"true"`
 	Provide:
 		Maker
 		Factory
@@ -54,7 +56,7 @@ type Maker interface {
 	Make(name string) (*gorm.DB, error)
 }
 
-// GormConfigInterceptor is a function that allows user to make last minute
+// GormConfigInterceptor is a function that allows user to Make last minute
 // change to *gorm.Config when constructing *gorm.DB.
 type GormConfigInterceptor func(name string, conf *gorm.Config)
 
@@ -86,6 +88,10 @@ type databaseConf struct {
 	} `json:"namingStrategy" yaml:"namingStrategy"`
 }
 
+type metricsConf struct {
+	Interval config.Duration `json:"interval" yaml:"interval"`
+}
+
 // provideMemoryDatabase provides a sqlite database in memory mode. This is
 // useful for testing.
 func provideMemoryDatabase() *SQLite {
@@ -111,6 +117,7 @@ type databaseIn struct {
 	Logger                log.Logger
 	GormConfigInterceptor GormConfigInterceptor `optional:"true"`
 	Tracer                opentracing.Tracer    `optional:"true"`
+	Gauges                *Gauges               `optional:"true"`
 }
 
 // databaseOut is the result of provideDatabaseFactory. *gorm.DB is not a interface
@@ -118,8 +125,9 @@ type databaseIn struct {
 type databaseOut struct {
 	di.Out
 
-	Factory Factory
-	Maker   Maker
+	Factory   Factory
+	Maker     Maker
+	Collector *collector
 }
 
 // provideDialector provides a gorm.Dialector. Mean to be used as an intermediate
@@ -182,10 +190,19 @@ func provideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 // provideDatabaseFactory creates the Factory. It is a valid dependency for
 // package core.
 func provideDatabaseFactory(p databaseIn) (databaseOut, func(), error) {
+	var collector *collector
+
 	factory, cleanup := provideDBFactory(p)
+	if p.Gauges != nil {
+		var interval time.Duration
+		p.Conf.Unmarshal("gormMetrics.interval", &interval)
+		collector = newCollector(factory, p.Gauges, interval)
+	}
+
 	return databaseOut{
-		Factory: factory,
-		Maker:   factory,
+		Factory:   factory,
+		Maker:     factory,
+		Collector: collector,
 	}, cleanup, nil
 }
 
@@ -264,6 +281,9 @@ func provideConfig() configOut {
 							SingularTable bool   `json:"singularTable" yaml:"singularTable"`
 						}{},
 					},
+				},
+				"gormMetrics": metricsConf{
+					Interval: config.Duration{Duration: 15 * time.Second},
 				},
 			},
 			Comment: "The database configuration",
