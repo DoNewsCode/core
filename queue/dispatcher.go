@@ -140,7 +140,7 @@ func (d *QueueableDispatcher) work(ctx context.Context, msg *PersistedEvent) {
 			_ = d.driver.Retry(context.Background(), msg)
 			return
 		}
-		_ = level.Warn(d.logger).Log("err", errors.Wrapf(err, "event %s failed after %d Attempts, aborted", msg.Key, msg.MaxAttempts))
+		_ = level.Warn(d.logger).Log("err", errors.Wrapf(err, "event %s failed after %d attempts, aborted", msg.Key, msg.MaxAttempts))
 		_ = d.Dispatch(context.Background(), events.Of(AbortedEvent{Err: err, Msg: msg}))
 		_ = d.driver.Fail(context.Background(), msg)
 		return
