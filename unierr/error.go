@@ -44,6 +44,12 @@ func Newf(code codes.Code, format string, args ...interface{}) *Error {
 
 // Wrap annotates an error with a codes.Code
 func Wrap(err error, code codes.Code) *Error {
+	if err == nil {
+		return &Error{
+			msg:  code.String(),
+			code: code,
+		}
+	}
 	err = errors.WithStack(err)
 	return &Error{
 		err:  err,
@@ -181,6 +187,9 @@ type stackTracer interface {
 
 // StackTrace implements the interface of errors.Wrap()
 func (e *Error) StackTrace() errors.StackTrace {
+	if e.err == nil {
+		return nil
+	}
 	if err, ok := e.err.(stackTracer); ok {
 		return err.StackTrace()
 	}
