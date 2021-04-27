@@ -3,10 +3,9 @@ package core
 import (
 	stdlog "log"
 
-	"github.com/DoNewsCode/core/di"
-
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/kit/log"

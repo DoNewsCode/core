@@ -1,4 +1,28 @@
 
+<a name="v0.4.2"></a>
+## [v0.4.2](https://github.com/DoNewsCode/core/compare/v0.4.1...v0.4.2) (2021-04-01)
+
+### ♻️ Code Refactoring
+
+* Valid -> IsZero ([#119](https://github.com/DoNewsCode/core/issues/119)) (@[谷溪](guxi99@gmail.com))
+* **sagas:** prettify sagas config ([#116](https://github.com/DoNewsCode/core/issues/116)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+### 🐛 Bug Fixes
+
+* config.Duration Unmarshal with koanf ([#114](https://github.com/DoNewsCode/core/issues/114)) ([#115](https://github.com/DoNewsCode/core/issues/115)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* **otetcd:** change configuration to use config.Duration type. ([#112](https://github.com/DoNewsCode/core/issues/112)) (@[谷溪](guxi99@gmail.com))
+* **sagas:** change configuration to use config.Duration type. ([#111](https://github.com/DoNewsCode/core/issues/111)) (@[谷溪](guxi99@gmail.com))
+
+### BREAKING CHANGE
+
+
+the new sagas configuration is not backward compatible.
+
+* doc: unified tag format
+
+the new otetcd configuration is not backward compatible.
+
+
 <a name="v0.4.1"></a>
 ## [v0.4.1](https://github.com/DoNewsCode/core/compare/v0.4.0...v0.4.1) (2021-03-25)
 
