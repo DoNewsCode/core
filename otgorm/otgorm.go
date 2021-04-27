@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// AddGormCallbacks adds callbacks for tracing, you should call SetSpanToGorm to Make them work
+// AddGormCallbacks adds callbacks for tracing, you should call SetSpanToGorm to make them work
 // Copied from https://github.com/smacker/opentracing-gorm/blob/master/otgorm.go
 // Under MIT License: https://github.com/smacker/opentracing-gorm/blob/master/LICENSE
 func AddGormCallbacks(db *gorm.DB, tracer opentracing.Tracer) {
