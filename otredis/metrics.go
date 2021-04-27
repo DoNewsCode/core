@@ -1,4 +1,5 @@
 //go:generate mockgen -destination=./mocks/metrics.go github.com/go-kit/kit/metrics Gauge
+
 package otredis
 
 import (

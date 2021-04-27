@@ -3,6 +3,9 @@ package otgorm
 import (
 	"context"
 	"database/sql"
+	"testing"
+	"time"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	mock_metrics "github.com/DoNewsCode/core/otgorm/mocks"
@@ -10,9 +13,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
-	"time"
-
-	"testing"
 )
 
 type Mock struct {
