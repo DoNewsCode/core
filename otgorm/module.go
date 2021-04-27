@@ -42,7 +42,7 @@ type Module struct {
 type moduleIn struct {
 	di.In
 
-	Make      Maker
+	Maker     Maker
 	Env       contract.Env
 	Logger    log.Logger
 	Container contract.Container
@@ -55,7 +55,7 @@ func New(in moduleIn) Module {
 	var duration time.Duration = defaultInterval
 	in.Conf.Unmarshal("gormMetrics.interval", &duration)
 	return Module{
-		maker:     in.Make,
+		maker:     in.Maker,
 		env:       in.Env,
 		logger:    in.Logger,
 		container: in.Container,
