@@ -262,7 +262,7 @@ func TestMySQLStore(t *testing.T) {
 	c := core.New(
 		core.WithInline("log.level", "debug"),
 		core.WithInline("gorm.default.database", "mysql"),
-		core.WithInline("gorm.default.dsn", "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local"),
+		core.WithInline("gorm.default.dsn", os.Getenv("MYSQL_DSN")),
 	)
 	c.ProvideEssentials()
 	c.Provide(otgorm.Providers())

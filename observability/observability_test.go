@@ -1,6 +1,9 @@
 package observability
 
 import (
+	"os"
+	"testing"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/otgorm"
@@ -13,7 +16,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
-	"testing"
 )
 
 func TestProvideOpentracing(t *testing.T) {
@@ -76,7 +78,8 @@ func TestProvideRedisMetrics(t *testing.T) {
 
 func TestProvideKafkaWriterMetrics(t *testing.T) {
 	c := core.New(
-		core.WithInline("kafka.writer.default.brokers", []string{"127.0.0.1:9092"}),
+		core.WithInline("kafka.writer.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
+		core.WithInline("log.level", "none"),
 	)
 	c.ProvideEssentials()
 	c.Provide(Providers())
@@ -130,8 +133,9 @@ func TestProvideKafkaWriterMetrics(t *testing.T) {
 
 func TestProvideKafkaReaderMetrics(t *testing.T) {
 	c := core.New(
-		core.WithInline("kafka.reader.default.brokers", []string{"127.0.0.1:9092"}),
+		core.WithInline("kafka.reader.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
 		core.WithInline("kafka.reader.default.topic", "test"),
+		core.WithInline("log.level", "none"),
 	)
 	c.ProvideEssentials()
 	c.Provide(Providers())

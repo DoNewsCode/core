@@ -18,8 +18,8 @@ func TestTracing(t *testing.T) {
 	opentracing.SetGlobalTracer(tracer)
 	factory, cleanup := provideEsFactory(in{
 		Conf: config.MapAdapter{"es": map[string]Config{
-			"default":     {URL: []string{"http://localhost:9200"}},
-			"alternative": {URL: []string{"http://localhost:9200"}},
+			"default":     {URL: []string{os.Getenv("ELASTICSEARCH_ADDR")}},
+			"alternative": {URL: []string{os.Getenv("ELASTICSEARCH_ADDR")}},
 		}},
 		Logger: log.NewNopLogger(),
 		Tracer: tracer,

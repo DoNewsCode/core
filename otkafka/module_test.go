@@ -2,12 +2,14 @@ package otkafka
 
 import (
 	"context"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	mock_metrics "github.com/DoNewsCode/core/otkafka/mocks"
 	"github.com/golang/mock/gomock"
-	"testing"
-	"time"
 )
 
 func TestModule_ProvideRunGroup(t *testing.T) {
@@ -26,8 +28,8 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	mc.EXPECT().Add(gomock.Any()).MinTimes(1)
 
 	c := core.New(
-		core.WithInline("kafka.writer.default.brokers", []string{"127.0.0.1:9092"}),
-		core.WithInline("kafka.reader.default.brokers", []string{"127.0.0.1:9092"}),
+		core.WithInline("kafka.writer.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
+		core.WithInline("kafka.reader.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
 		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("kafkaMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
@@ -149,8 +151,8 @@ func TestCollector(t *testing.T) {
 	mc.EXPECT().Add(gomock.Any()).MinTimes(1)
 
 	c := core.New(
-		core.WithInline("kafka.writer.default.brokers", []string{"127.0.0.1:9092"}),
-		core.WithInline("kafka.reader.default.brokers", []string{"127.0.0.1:9092"}),
+		core.WithInline("kafka.writer.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
+		core.WithInline("kafka.reader.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
 		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("kafkaMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),

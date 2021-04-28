@@ -2,6 +2,7 @@ package otkafka
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -21,8 +22,8 @@ func TestTransport_RoundTrip(t *testing.T) {
 		In:     di.In{},
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
-				Brokers: []string{"127.0.0.1:9092"},
-				Topic:   "Test",
+				Brokers: []string{os.Getenv("KAFKA_ADDR")},
+				Topic:   "test",
 			},
 		}},
 		Logger: log.NewNopLogger(),

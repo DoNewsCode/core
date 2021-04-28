@@ -24,10 +24,10 @@ func TestNewMongoFactory(t *testing.T) {
 		In: dig.In{},
 		Conf: config.MapAdapter{"mongo": map[string]struct{ Uri string }{
 			"default": {
-				Uri: "mongodb://127.0.0.1:27017",
+				Uri: os.Getenv("MONGO_ADDR"),
 			},
 			"alternative": {
-				Uri: "mongodb://127.0.0.1:27017",
+				Uri: os.Getenv("MONGO_ADDR"),
 			},
 		}},
 		Tracer: nil,
