@@ -2,6 +2,7 @@ package otkafka
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
@@ -48,18 +49,22 @@ type in struct {
 	Tracer            opentracing.Tracer `optional:"true"`
 	Conf              contract.ConfigAccessor
 	Logger            log.Logger
+	ReaderStats       *ReaderStats `optional:"true"`
+	WriterStats       *WriterStats `optional:"true"`
 }
 
 // out is the result of provideKafkaFactory.
 type out struct {
 	di.Out
 
-	ReaderFactory ReaderFactory
-	WriterFactory WriterFactory
-	ReaderMaker   ReaderMaker
-	WriterMaker   WriterMaker
-	Reader        *kafka.Reader
-	Writer        *kafka.Writer
+	ReaderFactory   ReaderFactory
+	WriterFactory   WriterFactory
+	ReaderMaker     ReaderMaker
+	WriterMaker     WriterMaker
+	Reader          *kafka.Reader
+	Writer          *kafka.Writer
+	ReaderCollector *readerCollector
+	WriterCollector *writerCollector
 }
 
 // provideKafkaFactory creates the ReaderFactory and WriterFactory. It is
@@ -78,13 +83,28 @@ func provideKafkaFactory(p in) (out, func(), func(), error) {
 	if err2 != nil {
 		level.Warn(p.Logger).Log("err", err2)
 	}
+	var readerCollector *readerCollector
+	var writerCollector *writerCollector
+	if p.ReaderStats != nil || p.WriterStats != nil {
+		var interval time.Duration
+		p.Conf.Unmarshal("kafkaMetrics.interval", &interval)
+		if p.ReaderStats != nil {
+			readerCollector = newReaderCollector(rf, p.ReaderStats, interval)
+		}
+		if p.WriterStats != nil {
+			writerCollector = newWriterCollector(wf, p.WriterStats, interval)
+		}
+	}
+
 	return out{
-		ReaderMaker:   rf,
-		ReaderFactory: rf,
-		WriterMaker:   wf,
-		WriterFactory: wf,
-		Reader:        dr,
-		Writer:        dw,
+		ReaderMaker:     rf,
+		ReaderFactory:   rf,
+		WriterMaker:     wf,
+		WriterFactory:   wf,
+		Reader:          dr,
+		Writer:          dw,
+		ReaderCollector: readerCollector,
+		WriterCollector: writerCollector,
 	}, wc, rc, nil
 }
 
@@ -160,6 +180,10 @@ func provideWriterFactory(p in) (WriterFactory, func()) {
 	return WriterFactory{factory}, factory.Close
 }
 
+type metricsConf struct {
+	Interval config.Duration `json:"interval" yaml:"interval"`
+}
+
 type configOut struct {
 	di.Out
 
@@ -172,12 +196,19 @@ func provideConfig() configOut {
 			Owner: "kitkafka",
 			Data: map[string]interface{}{
 				"kafka": map[string]interface{}{
-					"reader": ReaderConfig{
-						Brokers: []string{"127.0.0.1:9092"},
+					"reader": map[string]interface{}{
+						"default": ReaderConfig{
+							Brokers: []string{"127.0.0.1:9092"},
+						},
 					},
-					"writer": WriterConfig{
-						Brokers: []string{"127.0.0.1:9092"},
+					"writer": map[string]interface{}{
+						"default": WriterConfig{
+							Brokers: []string{"127.0.0.1:9092"},
+						},
 					},
+				},
+				"kafkaMetrics": metricsConf{
+					Interval: config.Duration{Duration: 15 * time.Second},
 				},
 			},
 			Comment: "",
