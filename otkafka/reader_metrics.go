@@ -12,6 +12,7 @@ type readerCollector struct {
 	interval time.Duration
 }
 
+// ThreeStats is a gauge group struct.
 type ThreeStats struct {
 	Min metrics.Gauge
 	Max metrics.Gauge

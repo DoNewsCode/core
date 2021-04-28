@@ -31,6 +31,8 @@ the Maker, database configs and the default *gorm.DB instance.
 		Maker
 		Factory
 		*gorm.DB
+		*SQLite
+		*collector
 */
 func Providers() []interface{} {
 	return []interface{}{provideDatabaseFactory, provideConfig, provideDefaultDatabase, provideMemoryDatabase}
