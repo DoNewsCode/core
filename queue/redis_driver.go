@@ -250,8 +250,12 @@ func (r *RedisDriver) populateDefaults() {
 		return
 	}
 	if r.RedisClient == nil {
+		addr := "localhost:6379"
+		if os.Getenv("REDIS_ADDR") != "" {
+			addr = os.Getenv("REDIS_ADDR")
+		}
 		r.RedisClient = redis.NewUniversalClient(&redis.UniversalOptions{
-			Addrs: []string{os.Getenv("REDIS_ADDR")},
+			Addrs: []string{addr},
 		})
 	}
 	if r.Packer == nil {

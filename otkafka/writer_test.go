@@ -42,3 +42,8 @@ func TestWriter(t *testing.T) {
 		span.Finish()
 	}
 }
+
+func Test_fromWriterConfig(t *testing.T) {
+	writer := fromWriterConfig(WriterConfig{})
+	assert.Equal(t, os.Getenv("KAFKA_ADDR"), writer.Addr.String())
+}

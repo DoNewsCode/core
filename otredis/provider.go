@@ -98,8 +98,12 @@ func provideRedisFactory(p in) (out, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
 			}
+			addr := "localhost:6379"
+			if os.Getenv("REDIS_ADDR") != "" {
+				addr = os.Getenv("REDIS_ADDR")
+			}
 			base = RedisUniversalOptions{
-				Addrs: []string{os.Getenv("REDIS_ADDR")},
+				Addrs: []string{addr},
 			}
 		}
 		full = redis.UniversalOptions{
