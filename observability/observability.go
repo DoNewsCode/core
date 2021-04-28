@@ -24,6 +24,7 @@ func Providers() di.Deps {
 		ProvideOpentracing,
 		ProvideHistogramMetrics,
 		ProvideGORMMetrics,
+		ProvideRedisMetrics,
 		provideConfig,
 	}
 }

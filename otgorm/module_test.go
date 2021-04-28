@@ -3,6 +3,7 @@ package otgorm
 import (
 	"context"
 	"database/sql"
+	"testing"
 	"time"
 
 	"github.com/DoNewsCode/core"
@@ -12,8 +13,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
-
-	"testing"
 )
 
 type Mock struct {
@@ -145,7 +144,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		c2, _ = rawSQL.Conn(ctx)
 	})
 	go c.Serve(ctx)
-	<-time.After(100 * time.Millisecond)
+	<-time.After(10 * time.Millisecond)
 	cancel()
 	<-time.After(1000 * time.Millisecond)
 	c1.Close()
