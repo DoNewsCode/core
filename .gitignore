@@ -2,3 +2,4 @@
 core.iml
 .idea/*
 /.idea/
+.env
