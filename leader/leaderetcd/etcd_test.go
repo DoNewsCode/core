@@ -2,6 +2,7 @@ package leaderetcd
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core/key"
@@ -10,7 +11,10 @@ import (
 )
 
 func TestNewEtcdDriver(t *testing.T) {
-	client, _ := clientv3.New(clientv3.Config{Endpoints: []string{"localhost:2379"}})
+	if os.Getenv("ETCD_ADDR") == "" {
+		t.Skip("Set env ETCD_ADDR to run leaderetcd tests")
+	}
+	client, _ := clientv3.New(clientv3.Config{Endpoints: []string{os.Getenv("ETCD_ADDR")}})
 	e1 := NewEtcdDriver(client, key.New("test"))
 	e2 := NewEtcdDriver(client, key.New("test"))
 

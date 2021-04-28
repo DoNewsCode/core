@@ -1,5 +1,3 @@
-// +build integration
-
 package otmongo_test
 
 import (

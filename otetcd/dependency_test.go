@@ -1,6 +1,8 @@
 package otetcd
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core"
@@ -11,6 +13,14 @@ import (
 	"go.etcd.io/etcd/client/v3"
 	"gopkg.in/yaml.v3"
 )
+
+func TestMain(m *testing.M) {
+	if os.Getenv("ETCD_ADDR") == "" {
+		fmt.Println("Set env ETCD_ADDR to run otetcd tests")
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
 
 func TestEtcd(t *testing.T) {
 	c := core.New()

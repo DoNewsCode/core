@@ -1,5 +1,3 @@
-// +build integration
-
 package otkafka
 
 import (
@@ -9,6 +7,7 @@ import (
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 )
 
@@ -16,7 +15,7 @@ func TestWriter(t *testing.T) {
 	{
 		ctx := context.Background()
 		kw := kafka.Writer{
-			Addr:  kafka.TCP("localhost:9092"),
+			Addr:  kafka.TCP(os.Getenv("KAFKA_ADDR")),
 			Topic: "trace",
 		}
 		tracer := mocktracer.New()
@@ -31,7 +30,7 @@ func TestWriter(t *testing.T) {
 
 	{
 		ctx := context.Background()
-		kr := kafka.NewReader(kafka.ReaderConfig{Brokers: []string{"localhost:9092"}, Topic: "trace", GroupID: "test", MinBytes: 1, MaxBytes: 1})
+		kr := kafka.NewReader(kafka.ReaderConfig{Brokers: []string{os.Getenv("KAFKA_ADDR")}, Topic: "trace", GroupID: "test", MinBytes: 1, MaxBytes: 1})
 		tracer := mocktracer.New()
 		msg, err := kr.ReadMessage(ctx)
 		assert.NoError(t, err)

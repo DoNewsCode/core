@@ -4,6 +4,7 @@ package leaderredis
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -15,7 +16,10 @@ import (
 )
 
 func TestCampaign(t *testing.T) {
-	client := redis.NewUniversalClient(&redis.UniversalOptions{})
+	if os.Getenv("REDIS_ADDR") == "" {
+		t.Skip("Set env REDIS_ADDR to run leaderredis tests")
+	}
+	client := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: []string{os.Getenv("REDIS_ADDR")}})
 	driver := RedisDriver{
 		client: client,
 		keyer:  key.New(),

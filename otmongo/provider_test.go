@@ -1,12 +1,22 @@
 package otmongo
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
 )
+
+func TestMain(m *testing.M) {
+	if os.Getenv("MONGO_ADDR") == "" {
+		fmt.Println("Set env MONGO_ADDR to run otmongo tests")
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
 
 func TestNewMongoFactory(t *testing.T) {
 	t.Parallel()

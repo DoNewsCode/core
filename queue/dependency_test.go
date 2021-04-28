@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 	"time"
 )
@@ -15,7 +16,7 @@ import (
 type maker struct{}
 
 func (m maker) Make(name string) (redis.UniversalClient, error) {
-	return redis.NewUniversalClient(&redis.UniversalOptions{}), nil
+	return redis.NewUniversalClient(&redis.UniversalOptions{Addrs: []string{os.Getenv("REDIS_ADDR")}}), nil
 }
 
 func TestProvideDispatcher(t *testing.T) {

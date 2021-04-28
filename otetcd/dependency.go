@@ -2,6 +2,7 @@ package otetcd
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
@@ -94,7 +95,12 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid", name)
 			}
-			conf = Option{Endpoints: []string{"localhost:2379"}}
+			if os.Getenv("ETCD_ADDR") != "" {
+				conf = Option{Endpoints: []string{os.Getenv("ETCD_ADDR")}}
+			} else {
+				conf = Option{Endpoints: []string{"127.0.0.1:6379"}}
+			}
+
 		}
 		co := clientv3.Config{
 			Endpoints:            conf.Endpoints,

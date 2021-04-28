@@ -1,6 +1,7 @@
 package otkafka
 
 import (
+	"os"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -131,6 +132,9 @@ type ReaderConfig struct {
 type ReaderInterceptor func(name string, reader *kafka.ReaderConfig)
 
 func fromReaderConfig(config ReaderConfig) kafka.ReaderConfig {
+	if len(config.Brokers) == 0 {
+		config.Brokers = []string{os.Getenv("KAFKA_ADDR")}
+	}
 	return kafka.ReaderConfig{
 		Brokers:                config.Brokers,
 		GroupID:                config.GroupID,

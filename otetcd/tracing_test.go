@@ -1,5 +1,3 @@
-// +build integration
-
 package otetcd
 
 import (
@@ -10,6 +8,7 @@ import (
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
+	"os"
 	"testing"
 )
 
@@ -20,7 +19,7 @@ func TestTracing(t *testing.T) {
 		Logger: log.NewNopLogger(),
 		Conf: config.MapAdapter{"etcd": map[string]Option{
 			"default": {
-				Endpoints: []string{"localhost:2379"},
+				Endpoints: []string{os.Getenv("ETCD_ADDR")},
 			},
 		}},
 		Interceptor: func(name string, options *clientv3.Config) {

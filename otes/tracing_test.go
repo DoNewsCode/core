@@ -1,10 +1,9 @@
-// +build integration
-
 package otes
 
 import (
 	"context"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -32,7 +31,7 @@ func TestTracing(t *testing.T) {
 	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "es.query")
 	defer span.Finish()
 
-	res, code, err := client.Ping("http://localhost:9200").Do(ctx)
+	res, code, err := client.Ping(os.Getenv("ELASTICSEARCH_ADDR")).Do(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.NotNil(t, res)

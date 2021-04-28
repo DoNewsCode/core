@@ -1,6 +1,7 @@
 package otkafka
 
 import (
+	"os"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -83,6 +84,9 @@ type WriterConfig struct {
 }
 
 func fromWriterConfig(config WriterConfig) kafka.Writer {
+	if len(config.Brokers) == 0 {
+		config.Brokers = []string{os.Getenv("KAFKA_ADDR")}
+	}
 	return kafka.Writer{
 		Addr:         kafka.TCP(config.Brokers...),
 		Topic:        config.Topic,
