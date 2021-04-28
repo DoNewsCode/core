@@ -2,6 +2,7 @@ package otredis
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
@@ -97,7 +98,13 @@ func provideRedisFactory(p in) (out, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
 			}
-			base = RedisUniversalOptions{}
+			addr := "localhost:6379"
+			if os.Getenv("REDIS_ADDR") != "" {
+				addr = os.Getenv("REDIS_ADDR")
+			}
+			base = RedisUniversalOptions{
+				Addrs: []string{addr},
+			}
 		}
 		full = redis.UniversalOptions{
 			Addrs:              base.Addrs,
@@ -185,7 +192,7 @@ func provideConfig() configOut {
 			Data: map[string]interface{}{
 				"redis": map[string]RedisUniversalOptions{
 					"default": {
-						Addrs: []string{"127.0.0.1:6379"},
+						Addrs: []string{os.Getenv("REDIS_ADDR")},
 					},
 				},
 				"redisMetrics": metricsConf{

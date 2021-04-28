@@ -3,6 +3,7 @@ package otmongo
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
@@ -97,6 +98,9 @@ func provideMongoFactory(p in) (out, func()) {
 				return di.Pair{}, fmt.Errorf("mongo configuration %s not valid", name)
 			}
 			conf.Uri = "mongodb://127.0.0.1:27017"
+			if os.Getenv("MONGO_ADDR") != "" {
+				conf.Uri = os.Getenv("MONGO_ADDR")
+			}
 		}
 		opts := options.Client()
 		opts.ApplyURI(conf.Uri)

@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -12,8 +13,11 @@ import (
 )
 
 func TestRemote(t *testing.T) {
+	if os.Getenv("ETCD_ADDR") == "" {
+		t.Skip("Set env ETCD_ADDR to run remote tests")
+	}
 	cfg := &clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
+		Endpoints:   []string{os.Getenv("ETCD_ADDR")},
 		DialTimeout: 2 * time.Second,
 	}
 

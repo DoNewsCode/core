@@ -3,6 +3,8 @@ package otkafka_test
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/otkafka"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -18,13 +20,13 @@ kafka:
   reader:
     default:
       brokers:
-        - localhost:9092
+        - ` + os.Getenv("KAFKA_ADDR") + `
       topic:
         example
   writer:
     default:
       brokers:
-        - localhost:9092
+        - ` + os.Getenv("KAFKA_ADDR") + `
       topic:
         example
 `

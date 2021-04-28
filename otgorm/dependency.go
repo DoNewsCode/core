@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
@@ -258,6 +259,11 @@ type configOut struct {
 
 // ProvideConfig exports the default database configuration.
 func provideConfig() configOut {
+	var defaultDSN string
+	defaultDSN = "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local"
+	if os.Getenv("MYSQL_DSN") != "" {
+		defaultDSN = os.Getenv("MYSQL_DSN")
+	}
 	exported := []config.ExportedConfig{
 		{
 			Owner: "otgorm",
@@ -265,7 +271,7 @@ func provideConfig() configOut {
 				"gorm": map[string]databaseConf{
 					"default": {
 						Database:                                 "mysql",
-						Dsn:                                      "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local",
+						Dsn:                                      defaultDSN,
 						SkipDefaultTransaction:                   false,
 						FullSaveAssociations:                     false,
 						DryRun:                                   false,

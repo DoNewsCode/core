@@ -1,9 +1,9 @@
-// +build integration
-
 package leader
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -14,6 +14,14 @@ import (
 	"go.etcd.io/etcd/client/v3"
 	"go.uber.org/atomic"
 )
+
+func TestMain(m *testing.M) {
+	if os.Getenv("ETCD_ADDR") == "" {
+		fmt.Println("Set env ETCD_ADDR to run leader tests")
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
 
 func TestElection(t *testing.T) {
 	var dispatcher = &events.SyncDispatcher{}

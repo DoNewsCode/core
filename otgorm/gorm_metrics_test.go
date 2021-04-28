@@ -1,4 +1,3 @@
-//go:generate mockery --name=Gauge
 package otgorm
 
 import (

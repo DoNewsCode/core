@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 
@@ -249,7 +250,13 @@ func (r *RedisDriver) populateDefaults() {
 		return
 	}
 	if r.RedisClient == nil {
-		r.RedisClient = redis.NewUniversalClient(&redis.UniversalOptions{})
+		addr := "localhost:6379"
+		if os.Getenv("REDIS_ADDR") != "" {
+			addr = os.Getenv("REDIS_ADDR")
+		}
+		r.RedisClient = redis.NewUniversalClient(&redis.UniversalOptions{
+			Addrs: []string{addr},
+		})
 	}
 	if r.Packer == nil {
 		r.Packer = packer{}
