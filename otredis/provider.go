@@ -27,6 +27,7 @@ Maker, the default redis.UniversalClient and exported configs.
 		Maker
 		Factory
 		redis.UniversalClient
+		*collector
 */
 func Providers() []interface{} {
 	return []interface{}{provideRedisFactory, provideDefaultClient, provideConfig}

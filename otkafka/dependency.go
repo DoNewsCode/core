@@ -25,9 +25,13 @@ Providers is a set of dependencies including ReaderMaker, WriterMaker and export
 		WriterFactory
 		ReaderMaker
 		WriterMaker
+		*kafka.Reader
+		*kafka.Writer
+		*readerCollector
+		*writerCollector
 */
 func Providers() []interface{} {
-	return []interface{}{provideKafkaFactory, provideConfig}
+	return []interface{}{provideKafkaFactory,  provideConfig}
 }
 
 // WriterMaker models a WriterFactory

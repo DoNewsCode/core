@@ -21,37 +21,44 @@ func TestMain(m *testing.M) {
 }
 
 func setupTopic() {
-	var topics = []string{"trace", "test", "example"}
+	conn, err := kafka.Dial("tcp", os.Getenv("KAFKA_ADDR"))
+	if err != nil {
+		panic(err.Error())
+	}
+	defer conn.Close()
 
-	for _, topic := range topics {
-		conn, err := kafka.Dial("tcp", os.Getenv("KAFKA_ADDR"))
-		if err != nil {
-			panic(err.Error())
-		}
-		defer conn.Close()
+	controller, err := conn.Controller()
+	if err != nil {
+		panic(err.Error())
+	}
 
-		controller, err := conn.Controller()
-		if err != nil {
-			panic(err.Error())
-		}
-		var controllerConn *kafka.Conn
-		controllerConn, err = kafka.Dial("tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
-		if err != nil {
-			panic(err.Error())
-		}
-		defer controllerConn.Close()
+	var controllerConn *kafka.Conn
+	controllerConn, err = kafka.Dial("tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
+	if err != nil {
+		panic(err.Error())
+	}
+	defer controllerConn.Close()
 
-		topicConfigs := []kafka.TopicConfig{
-			kafka.TopicConfig{
-				Topic:             topic,
-				NumPartitions:     1,
-				ReplicationFactor: 1,
-			},
-		}
+	topicConfigs := []kafka.TopicConfig{
+		{
+			Topic:             "trace",
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		},
+		{
+			Topic:             "test",
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		},
+		{
+			Topic:             "example",
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		},
+	}
 
-		err = controllerConn.CreateTopics(topicConfigs...)
-		if err != nil {
-			panic(err.Error())
-		}
+	err = controllerConn.CreateTopics(topicConfigs...)
+	if err != nil {
+		panic(err.Error())
 	}
 }
