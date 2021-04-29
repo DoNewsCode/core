@@ -1,6 +1,21 @@
 
+<a name="v0.5.0"></a>
+## [v0.5.0](https://github.com/DoNewsCode/core/compare/v0.4.2...v0.5.0) (2021-04-28)
+
+### ✨ Features
+
+* Add redis connection metrics (close [#127](https://github.com/DoNewsCode/core/issues/127)) ([#128](https://github.com/DoNewsCode/core/issues/128)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* add mysql connection metrics ([#118](https://github.com/DoNewsCode/core/issues/118)) (@[谷溪](guxi99@gmail.com))
+* **unierr:** allow nil errors (close [#125](https://github.com/DoNewsCode/core/issues/125)) ([#126](https://github.com/DoNewsCode/core/issues/126)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+### 🐛 Bug Fixes
+
+* etcd default endpoint (@[Reasno](guxi99@gmail.com))
+* cases (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.4.2"></a>
-## [v0.4.2](https://github.com/DoNewsCode/core/compare/v0.4.1...v0.4.2) (2021-04-01)
+## [v0.4.2](https://github.com/DoNewsCode/core/compare/v0.4.1...v0.4.2) (2021-04-06)
 
 ### ♻️ Code Refactoring
 
