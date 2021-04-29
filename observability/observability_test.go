@@ -76,9 +76,11 @@ func TestProvideRedisMetrics(t *testing.T) {
 	})
 }
 
-func TestProvideKafkaWriterMetrics(t *testing.T) {
+func TestProvideKafkaMetrics(t *testing.T) {
 	c := core.New(
 		core.WithInline("kafka.writer.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
+		core.WithInline("kafka.reader.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
+		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("log.level", "none"),
 	)
 	c.ProvideEssentials()
@@ -129,17 +131,7 @@ func TestProvideKafkaWriterMetrics(t *testing.T) {
 		}
 		ws.Async.With(withValues...).Set(async)
 	})
-}
 
-func TestProvideKafkaReaderMetrics(t *testing.T) {
-	c := core.New(
-		core.WithInline("kafka.reader.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
-		core.WithInline("kafka.reader.default.topic", "test"),
-		core.WithInline("log.level", "none"),
-	)
-	c.ProvideEssentials()
-	c.Provide(Providers())
-	c.Provide(otkafka.Providers())
 	c.Invoke(func(r *kafka.Reader, rs *otkafka.ReaderStats) {
 		stats := r.Stats()
 		withValues := []string{

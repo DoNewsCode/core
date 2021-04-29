@@ -13,7 +13,6 @@ import (
 )
 
 func TestModule_ProvideRunGroup(t *testing.T) {
-
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)

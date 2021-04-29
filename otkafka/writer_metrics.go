@@ -1,9 +1,10 @@
 package otkafka
 
 import (
+	"time"
+
 	"github.com/go-kit/kit/metrics"
 	"github.com/segmentio/kafka-go"
-	"time"
 )
 
 type writerCollector struct {

@@ -106,6 +106,7 @@ func ProvideRedisMetrics(appName contract.AppName, env contract.Env) *otredis.Ga
 // It is meant to be consumed by the otkafka.Providers.
 func ProvideKafkaReaderMetrics(appName contract.AppName, env contract.Env) *otkafka.ReaderStats {
 	labels := []string{"reader", "client_id", "topic", "partition"}
+
 	return &otkafka.ReaderStats{
 		Dials: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
 			Namespace: appName.String(),
