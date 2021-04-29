@@ -21,6 +21,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	m := mock_metrics.NewMockGauge(ctrl)
 	m.EXPECT().With(gomock.Any()).Return(m).MinTimes(1)
 	m.EXPECT().Set(gomock.Any()).MinTimes(1)
+	m.EXPECT().Add(gomock.Any()).AnyTimes()
 
 	mc := mock_metrics.NewMockCounter(ctrl)
 	mc.EXPECT().With(gomock.Any()).Return(mc).MinTimes(1)
@@ -29,6 +30,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	c := core.New(
 		core.WithInline("kafka.writer.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
 		core.WithInline("kafka.reader.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
+		core.WithInline("kafka.writer.default.topic", "test"),
 		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("kafkaMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
@@ -37,8 +39,6 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		core.WithInline("cron.disable", "true"),
 	)
 	c.ProvideEssentials()
-	c.Provide(Providers())
-	c.AddModuleFunc(New)
 	c.Provide(di.Deps{func() *ReaderStats {
 		return &ReaderStats{
 			Dials:         mc,
@@ -127,6 +127,8 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 			},
 		}
 	}})
+	c.Provide(Providers())
+	c.AddModuleFunc(New)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -134,7 +136,6 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	<-time.After(10 * time.Millisecond)
 	cancel()
 	<-time.After(1000 * time.Millisecond)
-
 }
 
 func TestCollector(t *testing.T) {
@@ -144,6 +145,7 @@ func TestCollector(t *testing.T) {
 	m := mock_metrics.NewMockGauge(ctrl)
 	m.EXPECT().With(gomock.Any()).Return(m).MinTimes(1)
 	m.EXPECT().Set(gomock.Any()).MinTimes(1)
+	m.EXPECT().Add(gomock.Any()).AnyTimes()
 
 	mc := mock_metrics.NewMockCounter(ctrl)
 	mc.EXPECT().With(gomock.Any()).Return(mc).MinTimes(1)
@@ -160,7 +162,6 @@ func TestCollector(t *testing.T) {
 		core.WithInline("cron.disable", "true"),
 	)
 	c.ProvideEssentials()
-	c.Provide(Providers())
 	c.Provide(di.Deps{func() *ReaderStats {
 		return &ReaderStats{
 			Dials:         mc,
@@ -249,11 +250,11 @@ func TestCollector(t *testing.T) {
 			},
 		}
 	}})
+	c.Provide(Providers())
 
 	c.Invoke(func(rf ReaderFactory, s *ReaderStats) {
 		rc := newReaderCollector(rf, s, time.Nanosecond)
 		rc.collectConnectionStats()
-
 	})
 
 	c.Invoke(func(wf WriterFactory, s *WriterStats) {
