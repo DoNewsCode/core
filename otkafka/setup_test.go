@@ -2,11 +2,12 @@ package otkafka
 
 import (
 	"fmt"
-	"github.com/segmentio/kafka-go"
 	"net"
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/segmentio/kafka-go"
 )
 
 func TestMain(m *testing.M) {
