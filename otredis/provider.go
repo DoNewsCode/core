@@ -99,7 +99,7 @@ func provideRedisFactory(p in) (out, func()) {
 			}
 
 			base = RedisUniversalOptions{
-				Addrs: config.ENV_DEFAULT_REDIS_ADDRS,
+				Addrs: config.EnvDefaultRedisAddrs,
 			}
 		}
 		full = redis.UniversalOptions{
@@ -188,7 +188,7 @@ func provideConfig() configOut {
 			Data: map[string]interface{}{
 				"redis": map[string]RedisUniversalOptions{
 					"default": {
-						Addrs: config.ENV_DEFAULT_REDIS_ADDRS,
+						Addrs: config.EnvDefaultRedisAddrs,
 					},
 				},
 				"redisMetrics": metricsConf{

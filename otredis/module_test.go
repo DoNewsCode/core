@@ -34,7 +34,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	m.EXPECT().Set(gomock.Any()).MinTimes(1)
 
 	c := core.New(
-		core.WithInline("redis.default.addrs", config.ENV_DEFAULT_REDIS_ADDRS),
+		core.WithInline("redis.default.addrs", config.EnvDefaultRedisAddrs),
 		core.WithInline("redisMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
 	)

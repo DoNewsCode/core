@@ -57,7 +57,7 @@ func TestMain(m *testing.M) {
 
 func setUp() *QueueableDispatcher {
 	s := redis.NewUniversalClient(&redis.UniversalOptions{
-		Addrs: config.ENV_DEFAULT_REDIS_ADDRS,
+		Addrs: config.EnvDefaultRedisAddrs,
 	})
 	driver := RedisDriver{
 		Logger:      logging.NewLogger("logfmt"),
@@ -84,7 +84,7 @@ func tearDown() {
 		Waiting:  "waiting",
 		Timeout:  "timeout",
 	}
-	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: config.ENV_DEFAULT_REDIS_ADDRS})
+	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: config.EnvDefaultRedisAddrs})
 	redisClient.Del(context.Background(), channel.Delayed)
 	redisClient.Del(context.Background(), channel.Failed)
 	redisClient.Del(context.Background(), channel.Reserved)

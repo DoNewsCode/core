@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 func setupTopic() {
 	var topics = []string{"trace", "test", "example"}
 
-	conn, err := kafka.Dial("tcp", config.ENV_DEFAULT_KAFKA_ADDRS[0])
+	conn, err := kafka.Dial("tcp", config.EnvDefaultKafkaAddrs[0])
 	if err != nil {
 		panic(err.Error())
 	}

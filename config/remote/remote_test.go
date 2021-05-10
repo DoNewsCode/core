@@ -14,7 +14,7 @@ import (
 
 func TestRemote(t *testing.T) {
 	cfg := &clientv3.Config{
-		Endpoints:   config.ENV_DEFAULT_ETCD_ADDRS,
+		Endpoints:   config.EnvDefaultEtcdAddrs,
 		DialTimeout: 2 * time.Second,
 	}
 

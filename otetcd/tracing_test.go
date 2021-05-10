@@ -19,7 +19,7 @@ func TestTracing(t *testing.T) {
 		Logger: log.NewNopLogger(),
 		Conf: config.MapAdapter{"etcd": map[string]Option{
 			"default": {
-				Endpoints: config.ENV_DEFAULT_ETCD_ADDRS,
+				Endpoints: config.EnvDefaultEtcdAddrs,
 			},
 		}},
 		Interceptor: func(name string, options *clientv3.Config) {

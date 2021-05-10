@@ -17,8 +17,8 @@ func TestTracing(t *testing.T) {
 	opentracing.SetGlobalTracer(tracer)
 	factory, cleanup := provideEsFactory(in{
 		Conf: config.MapAdapter{"es": map[string]Config{
-			"default":     {URL: config.ENV_DEFAULT_ELASTICSEARCH_ADDRS},
-			"alternative": {URL: config.ENV_DEFAULT_ELASTICSEARCH_ADDRS},
+			"default":     {URL: config.EnvDefaultElasticsearchAddrs},
+			"alternative": {URL: config.EnvDefaultElasticsearchAddrs},
 		}},
 		Logger: log.NewNopLogger(),
 		Tracer: tracer,
@@ -30,7 +30,7 @@ func TestTracing(t *testing.T) {
 	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "es.query")
 	defer span.Finish()
 
-	res, code, err := client.Ping(config.ENV_DEFAULT_ELASTICSEARCH_ADDRS[0]).Do(ctx)
+	res, code, err := client.Ping(config.EnvDefaultElasticsearchAddrs[0]).Do(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.NotNil(t, res)

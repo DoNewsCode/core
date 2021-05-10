@@ -21,7 +21,7 @@ func TestTransport_RoundTrip(t *testing.T) {
 		In:     di.In{},
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
-				Brokers: config.ENV_DEFAULT_KAFKA_ADDRS,
+				Brokers: config.EnvDefaultKafkaAddrs,
 				Topic:   "Test",
 			},
 		}},

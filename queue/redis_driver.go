@@ -251,7 +251,7 @@ func (r *RedisDriver) populateDefaults() {
 	}
 	if r.RedisClient == nil {
 		r.RedisClient = redis.NewUniversalClient(&redis.UniversalOptions{
-			Addrs: config.ENV_DEFAULT_REDIS_ADDRS,
+			Addrs: config.EnvDefaultRedisAddrs,
 		})
 	}
 	if r.Packer == nil {

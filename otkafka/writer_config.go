@@ -85,7 +85,7 @@ type WriterConfig struct {
 
 func fromWriterConfig(conf WriterConfig) kafka.Writer {
 	if len(conf.Brokers) == 0 {
-		conf.Brokers = config.ENV_DEFAULT_KAFKA_ADDRS
+		conf.Brokers = config.EnvDefaultKafkaAddrs
 	}
 	return kafka.Writer{
 		Addr:         kafka.TCP(conf.Brokers...),

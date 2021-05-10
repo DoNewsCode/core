@@ -42,10 +42,10 @@ func TestProvideFactory(t *testing.T) {
 	out, cleanup := provideFactory(factoryIn{
 		Conf: config.MapAdapter{"etcd": map[string]Option{
 			"default": {
-				Endpoints: config.ENV_DEFAULT_ETCD_ADDRS,
+				Endpoints: config.EnvDefaultEtcdAddrs,
 			},
 			"alternative": {
-				Endpoints: config.ENV_DEFAULT_ETCD_ADDRS,
+				Endpoints: config.EnvDefaultEtcdAddrs,
 			},
 		}},
 		Logger: log.NewNopLogger(),

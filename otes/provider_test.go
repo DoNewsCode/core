@@ -17,8 +17,8 @@ func TestMain(m *testing.M) {
 func TestNewEsFactory(t *testing.T) {
 	esFactory, cleanup := provideEsFactory(in{
 		Conf: config.MapAdapter{"es": map[string]Config{
-			"default":     {URL: config.ENV_DEFAULT_ELASTICSEARCH_ADDRS},
-			"alternative": {URL: config.ENV_DEFAULT_ELASTICSEARCH_ADDRS},
+			"default":     {URL: config.EnvDefaultElasticsearchAddrs},
+			"alternative": {URL: config.EnvDefaultElasticsearchAddrs},
 		}},
 		Logger: log.NewNopLogger(),
 		Tracer: nil,
@@ -37,7 +37,7 @@ func TestNewEsFactoryWithOptions(t *testing.T) {
 	var called bool
 	esFactory, cleanup := provideEsFactory(in{
 		Conf: config.MapAdapter{"es": map[string]Config{
-			"default": {URL: config.ENV_DEFAULT_ELASTICSEARCH_ADDRS},
+			"default": {URL: config.EnvDefaultElasticsearchAddrs},
 		}},
 		Logger: log.NewNopLogger(),
 		Options: []elastic.ClientOptionFunc{

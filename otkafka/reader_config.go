@@ -133,7 +133,7 @@ type ReaderInterceptor func(name string, reader *kafka.ReaderConfig)
 
 func fromReaderConfig(conf ReaderConfig) kafka.ReaderConfig {
 	if len(conf.Brokers) == 0 {
-		conf.Brokers = config.ENV_DEFAULT_KAFKA_ADDRS
+		conf.Brokers = config.EnvDefaultKafkaAddrs
 	}
 	return kafka.ReaderConfig{
 		Brokers:                conf.Brokers,

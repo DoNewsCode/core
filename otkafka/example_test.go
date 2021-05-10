@@ -14,8 +14,8 @@ import (
 )
 
 func Example_reader() {
-	brokers := make([]string, len(config.ENV_DEFAULT_KAFKA_ADDRS))
-	for i, addr := range config.ENV_DEFAULT_KAFKA_ADDRS {
+	brokers := make([]string, len(config.EnvDefaultKafkaAddrs))
+	for i, addr := range config.EnvDefaultKafkaAddrs {
 		brokers[i] = fmt.Sprintf(`        - %s`, addr)
 	}
 	brokersStr := strings.Join(brokers, `

@@ -16,7 +16,7 @@ import (
 )
 
 func TestCampaign(t *testing.T) {
-	client := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: config.ENV_DEFAULT_REDIS_ADDRS})
+	client := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: config.EnvDefaultRedisAddrs})
 	driver := RedisDriver{
 		client: client,
 		keyer:  key.New(),

@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewEtcdDriver(t *testing.T) {
-	client, _ := clientv3.New(clientv3.Config{Endpoints: config.ENV_DEFAULT_ETCD_ADDRS})
+	client, _ := clientv3.New(clientv3.Config{Endpoints: config.EnvDefaultEtcdAddrs})
 	e1 := NewEtcdDriver(client, key.New("test"))
 	e2 := NewEtcdDriver(client, key.New("test"))
 

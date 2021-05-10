@@ -94,7 +94,7 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid", name)
 			}
-			conf = Option{Endpoints: config.ENV_DEFAULT_ETCD_ADDRS}
+			conf = Option{Endpoints: config.EnvDefaultEtcdAddrs}
 		}
 		co := clientv3.Config{
 			Endpoints:            conf.Endpoints,

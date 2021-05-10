@@ -41,5 +41,5 @@ func TestProvideConfigs(t *testing.T) {
 	k.Load(rawbytes.Provider(bytes), yaml.Parser())
 	k.Unmarshal("redis.default", &r)
 	assert.Equal(t, 0, r.DB)
-	assert.Equal(t, config.ENV_DEFAULT_REDIS_ADDRS, r.Addrs)
+	assert.Equal(t, config.EnvDefaultRedisAddrs, r.Addrs)
 }

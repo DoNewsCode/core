@@ -94,7 +94,7 @@ func provideEsFactory(p in) (out, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("elastic configuration %s not valid", name)
 			}
-			conf.URL = config.ENV_DEFAULT_ELASTICSEARCH_ADDRS
+			conf.URL = config.EnvDefaultElasticsearchAddrs
 		}
 		if p.Interceptor != nil {
 			p.Interceptor(name, &conf)
