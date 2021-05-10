@@ -1,7 +1,7 @@
 package otkafka
 
 import (
-	"os"
+	"github.com/DoNewsCode/core/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,5 +9,5 @@ import (
 
 func Test_fromReaderConfig(t *testing.T) {
 	reader := fromReaderConfig(ReaderConfig{})
-	assert.Equal(t, os.Getenv("KAFKA_ADDR"), reader.Brokers[0])
+	assert.Equal(t, config.ENV_DEFAULT_KAFKA_ADDRS, reader.Brokers)
 }

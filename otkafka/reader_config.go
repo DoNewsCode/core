@@ -1,9 +1,9 @@
 package otkafka
 
 import (
-	"os"
 	"time"
 
+	"github.com/DoNewsCode/core/config"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -131,30 +131,30 @@ type ReaderConfig struct {
 // during kafka.Reader's creation
 type ReaderInterceptor func(name string, reader *kafka.ReaderConfig)
 
-func fromReaderConfig(config ReaderConfig) kafka.ReaderConfig {
-	if len(config.Brokers) == 0 {
-		config.Brokers = []string{os.Getenv("KAFKA_ADDR")}
+func fromReaderConfig(conf ReaderConfig) kafka.ReaderConfig {
+	if len(conf.Brokers) == 0 {
+		conf.Brokers = config.ENV_DEFAULT_KAFKA_ADDRS
 	}
 	return kafka.ReaderConfig{
-		Brokers:                config.Brokers,
-		GroupID:                config.GroupID,
-		Topic:                  config.Topic,
-		Partition:              config.MaxAttempts,
-		MinBytes:               config.MinBytes,
-		MaxBytes:               config.MaxBytes,
-		MaxWait:                config.MaxWait,
-		ReadLagInterval:        config.ReadLagInterval,
-		HeartbeatInterval:      config.HeartbeatInterval,
-		CommitInterval:         config.CommitInterval,
-		PartitionWatchInterval: config.PartitionWatchInterval,
-		WatchPartitionChanges:  config.WatchPartitionChanges,
-		SessionTimeout:         config.SessionTimeout,
-		RebalanceTimeout:       config.RebalanceTimeout,
-		JoinGroupBackoff:       config.JoinGroupBackoff,
-		RetentionTime:          config.RetentionTime,
-		StartOffset:            config.StartOffset,
-		ReadBackoffMin:         config.ReadBackoffMin,
-		ReadBackoffMax:         config.ReadBackoffMax,
-		MaxAttempts:            config.MaxAttempts,
+		Brokers:                conf.Brokers,
+		GroupID:                conf.GroupID,
+		Topic:                  conf.Topic,
+		Partition:              conf.MaxAttempts,
+		MinBytes:               conf.MinBytes,
+		MaxBytes:               conf.MaxBytes,
+		MaxWait:                conf.MaxWait,
+		ReadLagInterval:        conf.ReadLagInterval,
+		HeartbeatInterval:      conf.HeartbeatInterval,
+		CommitInterval:         conf.CommitInterval,
+		PartitionWatchInterval: conf.PartitionWatchInterval,
+		WatchPartitionChanges:  conf.WatchPartitionChanges,
+		SessionTimeout:         conf.SessionTimeout,
+		RebalanceTimeout:       conf.RebalanceTimeout,
+		JoinGroupBackoff:       conf.JoinGroupBackoff,
+		RetentionTime:          conf.RetentionTime,
+		StartOffset:            conf.StartOffset,
+		ReadBackoffMin:         conf.ReadBackoffMin,
+		ReadBackoffMax:         conf.ReadBackoffMax,
+		MaxAttempts:            conf.MaxAttempts,
 	}
 }

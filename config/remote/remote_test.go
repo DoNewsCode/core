@@ -3,21 +3,18 @@ package remote
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/DoNewsCode/core/config"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 )
 
 func TestRemote(t *testing.T) {
-	if os.Getenv("ETCD_ADDR") == "" {
-		t.Skip("Set env ETCD_ADDR to run remote tests")
-	}
 	cfg := &clientv3.Config{
-		Endpoints:   []string{os.Getenv("ETCD_ADDR")},
+		Endpoints:   config.ENV_DEFAULT_ETCD_ADDRS,
 		DialTimeout: 2 * time.Second,
 	}
 

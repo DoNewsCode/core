@@ -2,19 +2,16 @@ package leaderetcd
 
 import (
 	"context"
-	"os"
 	"testing"
 
+	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/key"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 )
 
 func TestNewEtcdDriver(t *testing.T) {
-	if os.Getenv("ETCD_ADDR") == "" {
-		t.Skip("Set env ETCD_ADDR to run leaderetcd tests")
-	}
-	client, _ := clientv3.New(clientv3.Config{Endpoints: []string{os.Getenv("ETCD_ADDR")}})
+	client, _ := clientv3.New(clientv3.Config{Endpoints: config.ENV_DEFAULT_ETCD_ADDRS})
 	e1 := NewEtcdDriver(client, key.New("test"))
 	e2 := NewEtcdDriver(client, key.New("test"))
 

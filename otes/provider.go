@@ -3,7 +3,6 @@ package otes
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
@@ -95,11 +94,7 @@ func provideEsFactory(p in) (out, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("elastic configuration %s not valid", name)
 			}
-			defaultURL := "http://localhost:9200"
-			if os.Getenv("ELASTICSEARCH_ADDR") != "" {
-				defaultURL = os.Getenv("ELASTICSEARCH_ADDR")
-			}
-			conf.URL = []string{defaultURL}
+			conf.URL = config.ENV_DEFAULT_ELASTICSEARCH_ADDRS
 		}
 		if p.Interceptor != nil {
 			p.Interceptor(name, &conf)

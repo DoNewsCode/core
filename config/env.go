@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"strings"
 
 	"github.com/DoNewsCode/core/contract"
@@ -80,3 +81,18 @@ func NewEnvFromConf(conf contract.ConfigAccessor) Env {
 	envStr := conf.String("env")
 	return NewEnv(envStr)
 }
+
+func getDefaultAddrsFromEnv(env, defaultVal string) []string {
+	if v := os.Getenv(env); v != "" {
+		return strings.Split(v, ",")
+	}
+	return []string{defaultVal}
+}
+
+// Default multiple addresses from env
+var (
+	ENV_DEFAULT_ELASTICSEARCH_ADDRS = getDefaultAddrsFromEnv("ELASTICSEARCH_ADDR", "http://127.0.0.1:9200")
+	ENV_DEFAULT_ETCD_ADDRS          = getDefaultAddrsFromEnv("ETCD_ADDR", "127.0.0.1:2379")
+	ENV_DEFAULT_KAFKA_ADDRS         = getDefaultAddrsFromEnv("KAFKA_ADDR", "127.0.0.1:9092")
+	ENV_DEFAULT_REDIS_ADDRS         = getDefaultAddrsFromEnv("REDIS_ADDR", "127.0.0.1:6379")
+)

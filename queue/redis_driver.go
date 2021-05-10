@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"os"
 	"sync"
 	"time"
 
+	"github.com/DoNewsCode/core/config"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
@@ -250,12 +250,8 @@ func (r *RedisDriver) populateDefaults() {
 		return
 	}
 	if r.RedisClient == nil {
-		addr := "localhost:6379"
-		if os.Getenv("REDIS_ADDR") != "" {
-			addr = os.Getenv("REDIS_ADDR")
-		}
 		r.RedisClient = redis.NewUniversalClient(&redis.UniversalOptions{
-			Addrs: []string{addr},
+			Addrs: config.ENV_DEFAULT_REDIS_ADDRS,
 		})
 	}
 	if r.Packer == nil {

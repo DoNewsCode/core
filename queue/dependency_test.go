@@ -2,21 +2,21 @@ package queue
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
-	"time"
 )
 
 type maker struct{}
 
 func (m maker) Make(name string) (redis.UniversalClient, error) {
-	return redis.NewUniversalClient(&redis.UniversalOptions{Addrs: []string{os.Getenv("REDIS_ADDR")}}), nil
+	return redis.NewUniversalClient(&redis.UniversalOptions{Addrs: config.ENV_DEFAULT_REDIS_ADDRS}), nil
 }
 
 func TestProvideDispatcher(t *testing.T) {

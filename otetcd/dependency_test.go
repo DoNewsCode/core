@@ -1,7 +1,6 @@
 package otetcd
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -15,10 +14,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	if os.Getenv("ETCD_ADDR") == "" {
-		fmt.Println("Set env ETCD_ADDR to run otetcd tests")
-		os.Exit(0)
-	}
 	os.Exit(m.Run())
 }
 
@@ -47,10 +42,10 @@ func TestProvideFactory(t *testing.T) {
 	out, cleanup := provideFactory(factoryIn{
 		Conf: config.MapAdapter{"etcd": map[string]Option{
 			"default": {
-				Endpoints: []string{"localhost:2379"},
+				Endpoints: config.ENV_DEFAULT_ETCD_ADDRS,
 			},
 			"alternative": {
-				Endpoints: []string{"localhost:2379"},
+				Endpoints: config.ENV_DEFAULT_ETCD_ADDRS,
 			},
 		}},
 		Logger: log.NewNopLogger(),

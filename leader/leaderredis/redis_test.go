@@ -4,10 +4,10 @@ package leaderredis
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
+	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/key"
 	"github.com/DoNewsCode/core/leader"
@@ -16,10 +16,7 @@ import (
 )
 
 func TestCampaign(t *testing.T) {
-	if os.Getenv("REDIS_ADDR") == "" {
-		t.Skip("Set env REDIS_ADDR to run leaderredis tests")
-	}
-	client := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: []string{os.Getenv("REDIS_ADDR")}})
+	client := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: config.ENV_DEFAULT_REDIS_ADDRS})
 	driver := RedisDriver{
 		client: client,
 		keyer:  key.New(),

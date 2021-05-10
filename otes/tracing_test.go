@@ -3,7 +3,6 @@ package otes
 import (
 	"context"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -18,8 +17,8 @@ func TestTracing(t *testing.T) {
 	opentracing.SetGlobalTracer(tracer)
 	factory, cleanup := provideEsFactory(in{
 		Conf: config.MapAdapter{"es": map[string]Config{
-			"default":     {URL: []string{"http://localhost:9200"}},
-			"alternative": {URL: []string{"http://localhost:9200"}},
+			"default":     {URL: config.ENV_DEFAULT_ELASTICSEARCH_ADDRS},
+			"alternative": {URL: config.ENV_DEFAULT_ELASTICSEARCH_ADDRS},
 		}},
 		Logger: log.NewNopLogger(),
 		Tracer: tracer,
@@ -31,7 +30,7 @@ func TestTracing(t *testing.T) {
 	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "es.query")
 	defer span.Finish()
 
-	res, code, err := client.Ping(os.Getenv("ELASTICSEARCH_ADDR")).Do(ctx)
+	res, code, err := client.Ping(config.ENV_DEFAULT_ELASTICSEARCH_ADDRS[0]).Do(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.NotNil(t, res)
