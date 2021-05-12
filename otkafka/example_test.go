@@ -12,6 +12,7 @@ import (
 )
 
 func Example_reader() {
+	// todo set brokers from env, escape
 	var conf = `
 log:
   level: none
