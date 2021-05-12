@@ -3,12 +3,12 @@ package remote
 import (
 	"context"
 	"fmt"
-	"github.com/DoNewsCode/core/internal"
 	"os"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/DoNewsCode/core/internal"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 )

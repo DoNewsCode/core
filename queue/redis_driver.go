@@ -3,11 +3,11 @@ package queue
 import (
 	"context"
 	"fmt"
-	"github.com/DoNewsCode/core/internal"
 	"math/rand"
 	"sync"
 	"time"
 
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
