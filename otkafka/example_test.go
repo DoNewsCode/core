@@ -3,10 +3,8 @@ package otkafka_test
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/DoNewsCode/core"
-	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/otkafka"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
@@ -14,12 +12,6 @@ import (
 )
 
 func Example_reader() {
-	brokers := make([]string, len(config.EnvDefaultKafkaAddrs))
-	for i, addr := range config.EnvDefaultKafkaAddrs {
-		brokers[i] = fmt.Sprintf(`        - %s`, addr)
-	}
-	brokersStr := strings.Join(brokers, `
-`)
 	var conf = `
 log:
   level: none
@@ -27,15 +19,13 @@ kafka:
   reader:
     default:
       brokers:
-` + brokersStr + `
-      topic:
-        example
+		- 127.0.0.1:9200
+      topic: example
   writer:
     default:
       brokers:
-` + brokersStr + `
-      topic:
-        example
+		- 127.0.0.1:9200
+      topic: example
 `
 	c := core.Default(core.WithConfigStack(rawbytes.Provider([]byte(conf)), yaml.Parser()))
 	c.Provide(otkafka.Providers())

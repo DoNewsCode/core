@@ -3,11 +3,11 @@ package queue
 import (
 	"context"
 	"fmt"
+	"github.com/DoNewsCode/core/internal"
 	"math/rand"
 	"sync"
 	"time"
 
-	"github.com/DoNewsCode/core/config"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
@@ -15,9 +15,9 @@ import (
 
 // The Packer interface describes how to save the message in wire format
 type Packer interface {
-	// Compress serializes the message to bytes
+	// Marshal Compress serializes the message to bytes
 	Marshal(message interface{}) ([]byte, error)
-	// Decompress reverses the bytes to message
+	// Unmarshal Decompress reverses the bytes to message
 	Unmarshal(data []byte, message interface{}) error
 }
 
@@ -251,7 +251,7 @@ func (r *RedisDriver) populateDefaults() {
 	}
 	if r.RedisClient == nil {
 		r.RedisClient = redis.NewUniversalClient(&redis.UniversalOptions{
-			Addrs: config.EnvDefaultRedisAddrs,
+			Addrs: envDefaultRedisAddrs,
 		})
 	}
 	if r.Packer == nil {
@@ -288,3 +288,5 @@ func getRetryDuration(d time.Duration) time.Duration {
 	}
 	return d
 }
+
+var envDefaultRedisAddrs, envDefaultRedisAddrsIsSet = internal.GetDefaultAddrsFromEnv("REDIS_ADDR", "127.0.0.1:6379")

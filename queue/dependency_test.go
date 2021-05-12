@@ -16,7 +16,7 @@ import (
 type maker struct{}
 
 func (m maker) Make(name string) (redis.UniversalClient, error) {
-	return redis.NewUniversalClient(&redis.UniversalOptions{Addrs: config.EnvDefaultRedisAddrs}), nil
+	return redis.NewUniversalClient(&redis.UniversalOptions{Addrs: envDefaultRedisAddrs}), nil
 }
 
 func TestProvideDispatcher(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-redis/redis/v8"
@@ -99,7 +100,7 @@ func provideRedisFactory(p in) (out, func()) {
 			}
 
 			base = RedisUniversalOptions{
-				Addrs: config.EnvDefaultRedisAddrs,
+				Addrs: envDefaultRedisAddrs,
 			}
 		}
 		full = redis.UniversalOptions{
@@ -188,7 +189,7 @@ func provideConfig() configOut {
 			Data: map[string]interface{}{
 				"redis": map[string]RedisUniversalOptions{
 					"default": {
-						Addrs: config.EnvDefaultRedisAddrs,
+						Addrs: envDefaultRedisAddrs,
 					},
 				},
 				"redisMetrics": metricsConf{
@@ -200,3 +201,5 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: configs}
 }
+
+var envDefaultRedisAddrs, envDefaultRedisAddrsIsSet = internal.GetDefaultAddrsFromEnv("REDIS_ADDR", "127.0.0.1:6379")

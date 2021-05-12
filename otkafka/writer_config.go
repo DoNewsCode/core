@@ -3,7 +3,6 @@ package otkafka
 import (
 	"time"
 
-	"github.com/DoNewsCode/core/config"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -85,7 +84,7 @@ type WriterConfig struct {
 
 func fromWriterConfig(conf WriterConfig) kafka.Writer {
 	if len(conf.Brokers) == 0 {
-		conf.Brokers = config.EnvDefaultKafkaAddrs
+		conf.Brokers = envDefaultKafkaAddrs
 	}
 	return kafka.Writer{
 		Addr:         kafka.TCP(conf.Brokers...),

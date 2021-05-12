@@ -19,11 +19,11 @@ func TestProvideReaderFactory(t *testing.T) {
 		In: di.In{},
 		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
 			"default": {
-				Brokers: config.EnvDefaultKafkaAddrs,
+				Brokers: envDefaultKafkaAddrs,
 				Topic:   "Test",
 			},
 			"alternative": {
-				Brokers: []string{"127.0.0.1:9093"},
+				Brokers: envDefaultKafkaAddrs,
 				Topic:   "Test",
 			},
 		}},
@@ -43,11 +43,11 @@ func TestProvideWriterFactory(t *testing.T) {
 		In: di.In{},
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
-				Brokers: config.EnvDefaultKafkaAddrs,
+				Brokers: envDefaultKafkaAddrs,
 				Topic:   "Test",
 			},
 			"alternative": {
-				Brokers: config.EnvDefaultKafkaAddrs,
+				Brokers: envDefaultKafkaAddrs,
 				Topic:   "Test",
 			},
 		}},
@@ -67,11 +67,11 @@ func TestProvideKafka(t *testing.T) {
 		Logger: log.NewNopLogger(),
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
-				Brokers: config.EnvDefaultKafkaAddrs,
+				Brokers: envDefaultKafkaAddrs,
 				Topic:   "Test",
 			},
 			"alternative": {
-				Brokers: config.EnvDefaultKafkaAddrs,
+				Brokers: envDefaultKafkaAddrs,
 				Topic:   "Test",
 			},
 		}},

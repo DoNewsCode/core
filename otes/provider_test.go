@@ -1,6 +1,7 @@
 package otes
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -11,14 +12,19 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	if !envDefaultElasticsearchAddrsIsSet {
+		fmt.Println("Set env ELASTICSEARCH_ADDR to run otes tests")
+		os.Exit(0)
+	}
+
 	os.Exit(m.Run())
 }
 
 func TestNewEsFactory(t *testing.T) {
 	esFactory, cleanup := provideEsFactory(in{
 		Conf: config.MapAdapter{"es": map[string]Config{
-			"default":     {URL: config.EnvDefaultElasticsearchAddrs},
-			"alternative": {URL: config.EnvDefaultElasticsearchAddrs},
+			"default":     {URL: envDefaultElasticsearchAddrs},
+			"alternative": {URL: envDefaultElasticsearchAddrs},
 		}},
 		Logger: log.NewNopLogger(),
 		Tracer: nil,
@@ -37,7 +43,7 @@ func TestNewEsFactoryWithOptions(t *testing.T) {
 	var called bool
 	esFactory, cleanup := provideEsFactory(in{
 		Conf: config.MapAdapter{"es": map[string]Config{
-			"default": {URL: config.EnvDefaultElasticsearchAddrs},
+			"default": {URL: envDefaultElasticsearchAddrs},
 		}},
 		Logger: log.NewNopLogger(),
 		Options: []elastic.ClientOptionFunc{

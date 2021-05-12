@@ -4,19 +4,31 @@ package leaderredis
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/DoNewsCode/core/key"
 	"github.com/DoNewsCode/core/leader"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 )
 
+var envDefaultRedisAddrs, envDefaultRedisAddrsIsSet = internal.GetDefaultAddrsFromEnv("REDIS_ADDR", "127.0.0.1:6379")
+
+func TestMain(m *testing.M) {
+	if !envDefaultRedisAddrsIsSet {
+		fmt.Println("Set env REDIS_ADDR to run leaderredis tests")
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
+
 func TestCampaign(t *testing.T) {
-	client := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: config.EnvDefaultRedisAddrs})
+	client := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: envDefaultRedisAddrs})
 	driver := RedisDriver{
 		client: client,
 		keyer:  key.New(),

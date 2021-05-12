@@ -3,12 +3,12 @@ package queue
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/logging"
@@ -52,12 +52,17 @@ type MockEvent struct {
 }
 
 func TestMain(m *testing.M) {
+	if !envDefaultRedisAddrsIsSet {
+		fmt.Println("Set env REDIS_ADDR to run queue tests")
+		os.Exit(0)
+	}
+
 	os.Exit(m.Run())
 }
 
 func setUp() *QueueableDispatcher {
 	s := redis.NewUniversalClient(&redis.UniversalOptions{
-		Addrs: config.EnvDefaultRedisAddrs,
+		Addrs: envDefaultRedisAddrs,
 	})
 	driver := RedisDriver{
 		Logger:      logging.NewLogger("logfmt"),
@@ -84,7 +89,7 @@ func tearDown() {
 		Waiting:  "waiting",
 		Timeout:  "timeout",
 	}
-	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: config.EnvDefaultRedisAddrs})
+	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: envDefaultRedisAddrs})
 	redisClient.Del(context.Background(), channel.Delayed)
 	redisClient.Del(context.Background(), channel.Failed)
 	redisClient.Del(context.Background(), channel.Reserved)

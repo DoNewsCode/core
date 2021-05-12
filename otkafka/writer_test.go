@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DoNewsCode/core/config"
 	"github.com/go-kit/kit/log"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -17,7 +16,7 @@ func TestWriter(t *testing.T) {
 	{
 		ctx := context.Background()
 		kw := kafka.Writer{
-			Addr:  kafka.TCP(config.EnvDefaultKafkaAddrs...),
+			Addr:  kafka.TCP(envDefaultKafkaAddrs...),
 			Topic: "trace",
 		}
 		tracer := mocktracer.New()
@@ -32,7 +31,7 @@ func TestWriter(t *testing.T) {
 
 	{
 		ctx := context.Background()
-		kr := kafka.NewReader(kafka.ReaderConfig{Brokers: config.EnvDefaultKafkaAddrs, Topic: "trace", GroupID: "test", MinBytes: 1, MaxBytes: 1})
+		kr := kafka.NewReader(kafka.ReaderConfig{Brokers: envDefaultKafkaAddrs, Topic: "trace", GroupID: "test", MinBytes: 1, MaxBytes: 1})
 		tracer := mocktracer.New()
 		msg, err := kr.ReadMessage(ctx)
 		assert.NoError(t, err)
@@ -47,5 +46,5 @@ func TestWriter(t *testing.T) {
 
 func Test_fromWriterConfig(t *testing.T) {
 	writer := fromWriterConfig(WriterConfig{})
-	assert.Equal(t, strings.Join(config.EnvDefaultKafkaAddrs, ","), writer.Addr.String())
+	assert.Equal(t, strings.Join(envDefaultKafkaAddrs, ","), writer.Addr.String())
 }

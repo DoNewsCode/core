@@ -3,7 +3,6 @@ package otkafka
 import (
 	"time"
 
-	"github.com/DoNewsCode/core/config"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -133,7 +132,7 @@ type ReaderInterceptor func(name string, reader *kafka.ReaderConfig)
 
 func fromReaderConfig(conf ReaderConfig) kafka.ReaderConfig {
 	if len(conf.Brokers) == 0 {
-		conf.Brokers = config.EnvDefaultKafkaAddrs
+		conf.Brokers = envDefaultKafkaAddrs
 	}
 	return kafka.ReaderConfig{
 		Brokers:                conf.Brokers,
