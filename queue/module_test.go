@@ -2,12 +2,13 @@ package queue
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestModule_ProvideCommand(t *testing.T) {

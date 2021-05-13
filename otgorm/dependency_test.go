@@ -21,7 +21,7 @@ func TestProvideDBFactory(t *testing.T) {
 			},
 			"alternative": {
 				Database: "mysql",
-				Dsn:      "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local",
+				Dsn:      envDefaultMysqlDsn,
 			},
 		}},
 		Logger: log.NewNopLogger(),

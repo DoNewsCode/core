@@ -4,33 +4,36 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/otkafka"
-	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/knadh/koanf/providers/rawbytes"
+	"github.com/knadh/koanf/providers/confmap"
 	"github.com/segmentio/kafka-go"
 )
 
 func Example_reader() {
-	var config = `
-log:
-  level: none
-kafka:
-  reader:
-    default:
-      brokers:
-        - ` + os.Getenv("KAFKA_ADDR") + `
-      topic:
-        example
-  writer:
-    default:
-      brokers:
-        - ` + os.Getenv("KAFKA_ADDR") + `
-      topic:
-        example
-`
-	c := core.Default(core.WithConfigStack(rawbytes.Provider([]byte(config)), yaml.Parser()))
+	brokers := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
+	conf := map[string]interface{}{
+		"log": map[string]interface{}{
+			"level": "none",
+		},
+		"kafka": map[string]interface{}{
+			"reader": map[string]interface{}{
+				"default": otkafka.ReaderConfig{
+					Brokers: brokers,
+					Topic:   "example",
+				},
+			},
+			"writer": map[string]interface{}{
+				"default": otkafka.WriterConfig{
+					Brokers: brokers,
+					Topic:   "example",
+				},
+			},
+		},
+	}
+	c := core.Default(core.WithConfigStack(confmap.Provider(conf, "."), nil))
 	c.Provide(otkafka.Providers())
 	c.Invoke(func(writer *kafka.Writer) {
 		err := writer.WriteMessages(context.Background(), kafka.Message{Value: []byte(`hello`)})

@@ -2,11 +2,12 @@ package queue_test
 
 import (
 	"context"
+	"sync"
+	"testing"
+
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/queue"
-	"sync"
-	"testing"
 )
 
 func setUpInProcessQueueBenchmark(wg *sync.WaitGroup) (*queue.QueueableDispatcher, func()) {
