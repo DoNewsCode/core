@@ -3,11 +3,11 @@ package otmongo
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
@@ -97,10 +97,7 @@ func provideMongoFactory(p in) (out, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("mongo configuration %s not valid", name)
 			}
-			conf.Uri = "mongodb://127.0.0.1:27017"
-			if os.Getenv("MONGO_ADDR") != "" {
-				conf.Uri = os.Getenv("MONGO_ADDR")
-			}
+			conf.Uri = envDefaultMongoAddr
 		}
 		opts := options.Client()
 		opts.ApplyURI(conf.Uri)
@@ -148,7 +145,7 @@ func provideConfig() configOut {
 					Uri string `json:"uri" yaml:"uri"`
 				}{
 					"default": {
-						Uri: "",
+						Uri: envDefaultMongoAddr,
 					},
 				},
 			},
@@ -157,3 +154,5 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: configs}
 }
+
+var envDefaultMongoAddr, envDefaultMongoAddrIsSet = internal.GetDefaultAddrFromEnv("MONGO_ADDR", "mongodb://127.0.0.1:27017")

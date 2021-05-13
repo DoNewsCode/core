@@ -2,12 +2,12 @@ package otetcd
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing-contrib/go-grpc"
@@ -95,13 +95,7 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid", name)
 			}
-
-			defaultEndpoint := "127.0.0.1:2379"
-
-			if os.Getenv("ETCD_ADDR") != "" {
-				defaultEndpoint = os.Getenv("ETCD_ADDR")
-			}
-			conf = Option{Endpoints: []string{defaultEndpoint}}
+			conf = Option{Endpoints: envDefaultEtcdAddrs}
 		}
 		co := clientv3.Config{
 			Endpoints:            conf.Endpoints,
@@ -164,7 +158,7 @@ func provideConfig() configOut {
 				map[string]interface{}{
 					"etcd": map[string]Option{
 						"default": {
-							Endpoints:            []string{"127.0.0.1:2379"},
+							Endpoints:            envDefaultEtcdAddrs,
 							AutoSyncInterval:     config.Duration{},
 							DialTimeout:          config.Duration{},
 							DialKeepAliveTime:    config.Duration{},
@@ -191,3 +185,5 @@ func provideConfig() configOut {
 func duration(d config.Duration) time.Duration {
 	return d.Duration
 }
+
+var envDefaultEtcdAddrs, envDefaultEtcdAddrsIsSet = internal.GetDefaultAddrsFromEnv("ETCD_ADDR", "127.0.0.1:2379")
