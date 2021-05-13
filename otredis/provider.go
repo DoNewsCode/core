@@ -2,12 +2,12 @@ package otredis
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-redis/redis/v8"
@@ -98,12 +98,9 @@ func provideRedisFactory(p in) (out, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
 			}
-			addr := "localhost:6379"
-			if os.Getenv("REDIS_ADDR") != "" {
-				addr = os.Getenv("REDIS_ADDR")
-			}
+
 			base = RedisUniversalOptions{
-				Addrs: []string{addr},
+				Addrs: envDefaultRedisAddrs,
 			}
 		}
 		full = redis.UniversalOptions{
@@ -192,7 +189,7 @@ func provideConfig() configOut {
 			Data: map[string]interface{}{
 				"redis": map[string]RedisUniversalOptions{
 					"default": {
-						Addrs: []string{os.Getenv("REDIS_ADDR")},
+						Addrs: envDefaultRedisAddrs,
 					},
 				},
 				"redisMetrics": metricsConf{
@@ -204,3 +201,5 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: configs}
 }
+
+var envDefaultRedisAddrs, envDefaultRedisAddrsIsSet = internal.GetDefaultAddrsFromEnv("REDIS_ADDR", "127.0.0.1:6379")
