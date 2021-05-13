@@ -2,7 +2,6 @@ package processor
 
 import (
 	"context"
-
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otkafka"
 	"github.com/go-kit/kit/log"
@@ -11,48 +10,54 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// Processor dispatch Handler.
+// Processor dispatch BatchHandler.
 type Processor struct {
 	maker    otkafka.ReaderMaker
-	handlers map[string]SimpleHandler
+	handlers []*handler
 	logger   log.Logger
+	ctx      context.Context
+	closers  []func()
 }
 
-// SimpleHandler only include Info and Handle func.
-type SimpleHandler interface {
+// Handler only include Info and Handle func.
+type Handler interface {
 	// Info set the topic name and some config.
 	Info() *Info
 	// Handle for *kafka.Message.
 	Handle(ctx context.Context, msg *kafka.Message) (interface{}, error)
 }
 
-// Handler one more Batch method than SimpleHandler.
-type Handler interface {
-	SimpleHandler
-	// Batch processing the results returned by SimpleHandler.Handle.
+// BatchHandler one more Batch method than Handler.
+type BatchHandler interface {
+	Handler
+	// Batch processing the results returned by Handler.Handle.
 	Batch(ctx context.Context, data []interface{}) error
 }
 
-// HandleFunc type for SimpleHandler.Handle Func.
+// HandleFunc type for Handler.Handle Func.
 type HandleFunc func(ctx context.Context, msg *kafka.Message) (interface{}, error)
 
-// BatchFunc type for Handler.Batch Func.
+// BatchFunc type for BatchHandler.Batch Func.
 type BatchFunc func(ctx context.Context, data []interface{}) error
 
 type in struct {
 	di.In
 
-	Hs     []SimpleHandler `group:"H"`
+	Hs     []Handler `group:"H"`
 	Maker  otkafka.ReaderMaker
 	Logger log.Logger
 }
 
 // New create *Processor Module.
 func New(i in) (*Processor, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	e := &Processor{
 		maker:    i.Maker,
 		logger:   i.Logger,
-		handlers: map[string]SimpleHandler{},
+		handlers: []*handler{},
+		ctx:      ctx,
+		closers:  []func(){cancel},
 	}
 	if len(i.Hs) == 0 {
 		return nil, errors.New("empty handler list")
@@ -68,7 +73,7 @@ func New(i in) (*Processor, error) {
 type Out struct {
 	di.Out
 
-	Hs []SimpleHandler `group:"H,flatten"`
+	Hs []Handler `group:"H,flatten"`
 }
 
 // NewOut for create di.Out.
@@ -85,25 +90,48 @@ type Out struct {
 //				&HandlerB{logger: logger},
 //			)
 //		}
-func NewOut(handler ...SimpleHandler) Out {
+func NewOut(handler ...Handler) Out {
 	return Out{Hs: handler}
 }
 
-func (e *Processor) addHandler(h SimpleHandler) error {
+// addHandler create handler and add to Processor.handlers
+func (e *Processor) addHandler(h Handler) error {
 	name := h.Info().name()
-	_, err := e.maker.Make(name)
+	reader, err := e.maker.Make(name)
 	if err != nil {
 		return err
 	}
 
-	e.handlers[name] = h
+	var hd = &handler{
+		msgCh:      make(chan *kafka.Message, h.Info().chanSize()),
+		reader:     reader,
+		handleFunc: h.Handle,
+		info:       h.Info(),
+		ctx:        e.ctx,
+	}
+
+	batchHandler, isBatchHandler := h.(BatchHandler)
+	if isBatchHandler {
+		hd.batchCh = make(chan *batchInfo, h.Info().chanSize())
+		hd.batchFunc = batchHandler.Batch
+	}
+
+	e.handlers = append(e.handlers, hd)
+	e.closers = append(e.closers, func() {
+		if hd.msgCh != nil {
+			close(hd.msgCh)
+		}
+		if hd.batchCh != nil {
+			close(hd.batchCh)
+		}
+	})
 
 	return nil
 }
 
-// batchInfo data is the result of message processed by SimpleHandler.Handle.
+// batchInfo data is the result of message processed by Handler.Handle.
 //
-// When Handler.Batch is successfully called, then commit the message.
+// When BatchHandler.Batch is successfully called, then commit the message.
 type batchInfo struct {
 	message *kafka.Message
 	data    interface{}
@@ -111,79 +139,32 @@ type batchInfo struct {
 
 // ProvideRunGroup run workers:
 // 	1. Fetch message from *kafka.Reader.
-// 	2. Handle message by SimpleHandler.Handle.
-// 	3. Batch data by Handler.Batch. If batch success then commit message.
+// 	2. Handle message by Handler.Handle.
+// 	3. Batch data by BatchHandler.Batch. If batch success then commit message.
 func (e *Processor) ProvideRunGroup(group *run.Group) {
 	if len(e.handlers) == 0 {
 		return
 	}
-	ctx, cancel := context.WithCancel(context.Background())
 
 	var g run.Group
-	msgChs := make([]chan *kafka.Message, 0)
-	batchChs := make([]chan *batchInfo, 0)
 
-	for name, ooo := range e.handlers {
-		one := ooo
-
-		msgCh := make(chan *kafka.Message, one.Info().chanSize())
-		batchCh := make(chan *batchInfo, one.Info().chanSize())
-		msgChs = append(msgChs, msgCh)
-		batchChs = append(batchChs, batchCh)
-
-		reader, _ := e.maker.Make(name)
-
-		for i := 0; i < one.Info().readWorker(); i++ {
-			g.Add(func() error {
-				for {
-					select {
-					case <-ctx.Done():
-						return nil
-					default:
-						message, err := reader.FetchMessage(ctx)
-						if err != nil {
-							return err
-						}
-						if len(message.Value) > 0 {
-							msgCh <- &message
-						}
-					}
-				}
-			}, func(err error) {
-
-			})
+	for _, handler := range e.handlers {
+		for i := 0; i < handler.info.readWorker(); i++ {
+			g.Add(handler.read, func(err error) {})
 		}
 
-		for i := 0; i < one.Info().handleWorker(); i++ {
-			g.Add(func() error {
-				for {
-					select {
-					case msg := <-msgCh:
-						v, err := one.Handle(ctx, msg)
-						if err != nil {
-							return err
-						}
-						batchCh <- &batchInfo{message: msg, data: v}
-					case <-ctx.Done():
-						return nil
-					}
-				}
-			}, func(err error) {
-
-			})
+		for i := 0; i < handler.info.handleWorker(); i++ {
+			g.Add(handler.handle, func(err error) {})
 		}
 
-		if v, ok := one.(Handler); ok {
-			for i := 0; i < one.Info().batchWorker(); i++ {
-				g.Add(func() error {
-					err := e.batch(ctx, reader, batchCh, v.Batch, one.Info().batchSize())
-					if err != nil {
-						return err
-					}
-					return nil
-				}, func(err error) {
+		if handler.batchFunc != nil {
+			batchFunc := handler.batch
 
-				})
+			if handler.info.autoCommit() {
+				batchFunc = handler.batchIgnoreCommit
+			}
+			for i := 0; i < handler.info.batchWorker(); i++ {
+				g.Add(batchFunc, func(err error) {})
 			}
 		}
 
@@ -195,29 +176,98 @@ func (e *Processor) ProvideRunGroup(group *run.Group) {
 		}
 		return nil
 	}, func(err error) {
-		cancel()
-		for _, ch := range msgChs {
-			close(ch)
-		}
-		for _, ch := range batchChs {
-			close(ch)
+		for _, closer := range e.closers {
+			closer()
 		}
 	})
 
 }
 
-// batch Call Handler.Batch. It's graceful when shutdown.
-func (e *Processor) batch(ctx context.Context, reader *kafka.Reader, ch chan *batchInfo, batchFunc BatchFunc, batchSize int) error {
+// handler private processor
+// todo It's a bit messy
+type handler struct {
+	reader *kafka.Reader
+
+	batchCh chan *batchInfo
+	msgCh   chan *kafka.Message
+
+	handleFunc HandleFunc
+	batchFunc  BatchFunc
+
+	info *Info
+
+	ctx context.Context
+}
+
+// read fetch message from kafka
+func (h *handler) read() error {
+	for {
+		select {
+		default:
+			message, err := h.reader.FetchMessage(h.ctx)
+			if err != nil {
+				return err
+			}
+
+			if len(message.Value) > 0 {
+				h.msgCh <- &message
+			}
+			if h.info.autoCommit() {
+				if err := h.reader.CommitMessages(context.Background(), message); err != nil {
+					return err
+				}
+			}
+		case <-h.ctx.Done():
+			return nil
+		}
+	}
+}
+
+// handle call Handler.Handle
+func (h *handler) handle() error {
+	for {
+		select {
+		case msg, ok := <-h.msgCh:
+			if !ok {
+				continue
+			}
+			v, err := h.handleFunc(h.ctx, msg)
+			if err != nil {
+				return err
+			}
+			if h.batchFunc != nil {
+				if h.info.autoCommit() {
+					h.batchCh <- &batchInfo{data: v}
+				} else {
+					h.batchCh <- &batchInfo{message: msg, data: v}
+				}
+			} else {
+				if !h.info.autoCommit() {
+					if err := h.reader.CommitMessages(context.Background(), *msg); err != nil {
+						return err
+					}
+				}
+			}
+		case <-h.ctx.Done():
+			return nil
+		}
+	}
+}
+
+// batch Call BatchHandler.Batch and commit *kafka.Message.
+func (h *handler) batch() error {
 	var data = make([]interface{}, 0)
 	var messages = make([]kafka.Message, 0)
 
 	doFunc := func() error {
-		if err := batchFunc(ctx, data); err != nil {
+		if err := h.batchFunc(h.ctx, data); err != nil {
 			return err
 		}
-		if err := reader.CommitMessages(context.Background(), messages...); err != nil {
+
+		if err := h.reader.CommitMessages(context.Background(), messages...); err != nil {
 			return err
 		}
+
 		data = data[0:0]
 		messages = messages[0:0]
 		return nil
@@ -225,18 +275,59 @@ func (e *Processor) batch(ctx context.Context, reader *kafka.Reader, ch chan *ba
 
 	for {
 		select {
-		case v := <-ch:
+		case v, ok := <-h.batchCh:
+			if !ok {
+				continue
+			}
 			data = append(data, v.data)
 			messages = append(messages, *v.message)
-			if len(data) >= batchSize {
+			if len(data) >= h.info.batchSize() {
 				if err := doFunc(); err != nil {
 					return err
 				}
 			}
-		case <-ctx.Done():
-			for v := range ch {
+		case <-h.ctx.Done():
+			for v := range h.batchCh {
 				data = append(data, v.data)
 				messages = append(messages, *v.message)
+			}
+			if len(data) > 0 {
+				if err := doFunc(); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}
+}
+
+// batchIgnoreCommit Call BatchHandler.Batch, don't need to commit *kafka.Message.
+func (h *handler) batchIgnoreCommit() error {
+	var data = make([]interface{}, 0)
+
+	doFunc := func() error {
+		if err := h.batchFunc(h.ctx, data); err != nil {
+			return err
+		}
+		data = data[0:0]
+		return nil
+	}
+
+	for {
+		select {
+		case v, ok := <-h.batchCh:
+			if !ok {
+				continue
+			}
+			data = append(data, v.data)
+			if len(data) >= h.info.batchSize() {
+				if err := doFunc(); err != nil {
+					return err
+				}
+			}
+		case <-h.ctx.Done():
+			for v := range h.batchCh {
+				data = append(data, v.data)
 			}
 			if len(data) > 0 {
 				if err := doFunc(); err != nil {

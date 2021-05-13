@@ -1,8 +1,9 @@
 package processor
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInfo(t *testing.T) {
@@ -13,13 +14,15 @@ func TestInfo(t *testing.T) {
 		BatchSize:    0,
 		HandleWorker: 0,
 		ChanSize:     0,
+		AutoCommit:   false,
 	}
-	assert.Equal(t, i.name(), "default")
-	assert.Equal(t, i.readWorker(), 1)
-	assert.Equal(t, i.batchWorker(), 1)
-	assert.Equal(t, i.batchSize(), 1)
-	assert.Equal(t, i.handleWorker(), 1)
-	assert.Equal(t, i.chanSize(), 100)
+	assert.Equal(t, "default", i.name())
+	assert.Equal(t, 1, i.readWorker())
+	assert.Equal(t, 1, i.batchWorker())
+	assert.Equal(t, 1, i.batchSize())
+	assert.Equal(t, 1, i.handleWorker())
+	assert.Equal(t, 100, i.chanSize())
+	assert.Equal(t, false, i.autoCommit())
 
 	j := Info{
 		Name:         "test",
@@ -28,11 +31,13 @@ func TestInfo(t *testing.T) {
 		BatchSize:    10,
 		HandleWorker: 2,
 		ChanSize:     10,
+		AutoCommit:   true,
 	}
-	assert.Equal(t, j.name(), j.Name)
-	assert.Equal(t, j.readWorker(), j.ReadWorker)
-	assert.Equal(t, j.batchWorker(), j.BatchWorker)
-	assert.Equal(t, j.batchSize(), j.BatchSize)
-	assert.Equal(t, j.handleWorker(), j.HandleWorker)
-	assert.Equal(t, j.chanSize(), j.ChanSize)
+	assert.Equal(t, j.Name, j.name())
+	assert.Equal(t, j.ReadWorker, j.readWorker())
+	assert.Equal(t, j.BatchWorker, j.batchWorker())
+	assert.Equal(t, j.BatchSize, j.batchSize())
+	assert.Equal(t, j.HandleWorker, j.handleWorker())
+	assert.Equal(t, j.ChanSize, j.chanSize())
+	assert.Equal(t, j.AutoCommit, j.autoCommit())
 }

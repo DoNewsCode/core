@@ -1,6 +1,6 @@
 package processor
 
-// Info the info of Handler.
+// Info the info of BatchHandler.
 //
 // Note:
 //		If sequence is necessary, make sure that per worker count is one.
@@ -18,6 +18,11 @@ type Info struct {
 	HandleWorker int
 	// the size of the data channel.
 	ChanSize int
+
+	// auto commit *kafka.Message
+	// 	true: ignore Handler.Handle or BatchHandler.Batch error info, always commit.
+	// 	false: only when Handler.Handle or BatchHandler.Batch error is nil, then commit.
+	AutoCommit bool
 }
 
 func (i Info) name() string {
@@ -60,4 +65,8 @@ func (i *Info) chanSize() int {
 		return 100
 	}
 	return i.ChanSize
+}
+
+func (i *Info) autoCommit() bool {
+	return i.AutoCommit
 }
