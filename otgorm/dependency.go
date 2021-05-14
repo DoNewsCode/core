@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
@@ -261,11 +261,6 @@ type configOut struct {
 
 // ProvideConfig exports the default database configuration.
 func provideConfig() configOut {
-	var defaultDSN string
-	defaultDSN = "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local"
-	if os.Getenv("MYSQL_DSN") != "" {
-		defaultDSN = os.Getenv("MYSQL_DSN")
-	}
 	exported := []config.ExportedConfig{
 		{
 			Owner: "otgorm",
@@ -273,7 +268,7 @@ func provideConfig() configOut {
 				"gorm": map[string]databaseConf{
 					"default": {
 						Database:                                 "mysql",
-						Dsn:                                      defaultDSN,
+						Dsn:                                      envDefaultMysqlDsn,
 						SkipDefaultTransaction:                   false,
 						FullSaveAssociations:                     false,
 						DryRun:                                   false,
@@ -299,3 +294,5 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: exported}
 }
+
+var envDefaultMysqlDsn, envDefaultMysqlDsnIsSet = internal.GetDefaultAddrFromEnv("MYSQL_DSN", "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local")

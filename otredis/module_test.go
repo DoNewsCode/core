@@ -3,7 +3,6 @@ package otredis
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"os"
 	"testing"
 	"time"
@@ -11,14 +10,16 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	mock_metrics "github.com/DoNewsCode/core/otredis/mocks"
+	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
 )
 
 func TestMain(m *testing.M) {
-	if os.Getenv("REDIS_ADDR") == "" {
+	if !envDefaultRedisAddrsIsSet {
 		fmt.Println("Set env REDIS_ADDR to run otredis tests")
 		os.Exit(0)
 	}
+
 	os.Exit(m.Run())
 }
 
@@ -38,7 +39,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	m.EXPECT().Set(gomock.Any()).MinTimes(1)
 
 	c := core.New(
-		core.WithInline("redis.default.addrs", []string{os.Getenv("REDIS_ADDR")}),
+		core.WithInline("redis.default.addrs", envDefaultRedisAddrs),
 		core.WithInline("redisMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
 		core.WithInline("http.disable", "true"),

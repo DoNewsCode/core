@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/DoNewsCode/core/key"
 	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/stretchr/testify/assert"
@@ -15,8 +16,10 @@ import (
 	"go.uber.org/atomic"
 )
 
+var envDefaultEtcdAddrs, envDefaultEtcdAddrsIsSet = internal.GetDefaultAddrsFromEnv("ETCD_ADDR", "127.0.0.1:2379")
+
 func TestMain(m *testing.M) {
-	if os.Getenv("ETCD_ADDR") == "" {
+	if !envDefaultEtcdAddrsIsSet {
 		fmt.Println("Set env ETCD_ADDR to run leader tests")
 		os.Exit(0)
 	}
@@ -27,7 +30,7 @@ func TestElection(t *testing.T) {
 	var dispatcher = &events.SyncDispatcher{}
 	var e1, e2 Election
 
-	client, err := clientv3.New(clientv3.Config{Endpoints: []string{"localhost:2379"}})
+	client, err := clientv3.New(clientv3.Config{Endpoints: envDefaultEtcdAddrs})
 	assert.NoError(t, err)
 	e1 = Election{
 		dispatcher: dispatcher,

@@ -11,7 +11,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	if os.Getenv("MONGO_ADDR") == "" {
+	if !envDefaultMongoAddrIsSet {
 		fmt.Println("Set env MONGO_ADDR to run otmongo tests")
 		os.Exit(0)
 	}
@@ -24,10 +24,10 @@ func TestNewMongoFactory(t *testing.T) {
 		In: dig.In{},
 		Conf: config.MapAdapter{"mongo": map[string]struct{ Uri string }{
 			"default": {
-				Uri: os.Getenv("MONGO_ADDR"),
+				Uri: envDefaultMongoAddr,
 			},
 			"alternative": {
-				Uri: os.Getenv("MONGO_ADDR"),
+				Uri: envDefaultMongoAddr,
 			},
 		}},
 		Tracer: nil,

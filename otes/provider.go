@@ -3,11 +3,11 @@ package otes
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/olivere/elastic/v7"
@@ -95,11 +95,7 @@ func provideEsFactory(p in) (out, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("elastic configuration %s not valid", name)
 			}
-			defaultURL := "http://localhost:9200"
-			if os.Getenv("ELASTICSEARCH_ADDR") != "" {
-				defaultURL = os.Getenv("ELASTICSEARCH_ADDR")
-			}
-			conf.URL = []string{defaultURL}
+			conf.URL = envDefaultElasticsearchAddrs
 		}
 		if p.Interceptor != nil {
 			p.Interceptor(name, &conf)
@@ -169,7 +165,7 @@ func provideConfig() configOut {
 			Data: map[string]interface{}{
 				"es": map[string]Config{
 					"default": {
-						URL:    []string{"http://localhost:9200"},
+						URL:    envDefaultElasticsearchAddrs,
 						Shards: 1,
 					},
 				},
@@ -179,3 +175,5 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: configs}
 }
+
+var envDefaultElasticsearchAddrs, envDefaultElasticsearchAddrsIsSet = internal.GetDefaultAddrsFromEnv("ELASTICSEARCH_ADDR", "http://127.0.0.1:9200")

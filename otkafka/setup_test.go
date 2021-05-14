@@ -11,18 +11,19 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	if os.Getenv("KAFKA_ADDR") == "" {
+	if !envDefaultKafkaAddrsIsSet {
 		fmt.Println("Set env KAFKA_ADDR to run otkafka tests")
 		os.Exit(0)
 	}
-
 	setupTopic()
 
 	os.Exit(m.Run())
 }
 
 func setupTopic() {
-	conn, err := kafka.Dial("tcp", os.Getenv("KAFKA_ADDR"))
+	var topics = []string{"trace", "test", "example"}
+
+	conn, err := kafka.Dial("tcp", envDefaultKafkaAddrs[0])
 	if err != nil {
 		panic(err.Error())
 	}
@@ -32,7 +33,6 @@ func setupTopic() {
 	if err != nil {
 		panic(err.Error())
 	}
-
 	var controllerConn *kafka.Conn
 	controllerConn, err = kafka.Dial("tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
 	if err != nil {
@@ -40,22 +40,13 @@ func setupTopic() {
 	}
 	defer controllerConn.Close()
 
-	topicConfigs := []kafka.TopicConfig{
-		{
-			Topic:             "trace",
+	topicConfigs := make([]kafka.TopicConfig, 0)
+	for _, topic := range topics {
+		topicConfigs = append(topicConfigs, kafka.TopicConfig{
+			Topic:             topic,
 			NumPartitions:     1,
 			ReplicationFactor: 1,
-		},
-		{
-			Topic:             "test",
-			NumPartitions:     1,
-			ReplicationFactor: 1,
-		},
-		{
-			Topic:             "example",
-			NumPartitions:     1,
-			ReplicationFactor: 1,
-		},
+		})
 	}
 
 	err = controllerConn.CreateTopics(topicConfigs...)

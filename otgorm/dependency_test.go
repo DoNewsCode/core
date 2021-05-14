@@ -1,7 +1,6 @@
 package otgorm
 
 import (
-	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core"
@@ -22,7 +21,7 @@ func TestProvideDBFactory(t *testing.T) {
 			},
 			"alternative": {
 				Database: "mysql",
-				Dsn:      os.Getenv("MYSQL_DSN"),
+				Dsn:      envDefaultMysqlDsn,
 			},
 		}},
 		Logger: log.NewNopLogger(),
@@ -45,9 +44,9 @@ func TestGorm(t *testing.T) {
 		d1 Maker,
 		d2 Factory,
 		d3 struct {
-		di.In
-		Cfg []config.ExportedConfig `group:"config"`
-	},
+			di.In
+			Cfg []config.ExportedConfig `group:"config"`
+		},
 		d4 *gorm.DB,
 	) {
 		a := assert.New(t)

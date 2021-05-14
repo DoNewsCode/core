@@ -7,12 +7,12 @@ import (
 	"net/url"
 
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
-
-	"github.com/DoNewsCode/core/contract"
 )
 
 /*
@@ -161,11 +161,11 @@ func provideConfig() configOut {
 			Data: map[string]interface{}{
 				"s3": map[string]S3Config{
 					"default": {
-						AccessKey:    "",
-						AccessSecret: "",
-						Endpoint:     "",
-						Region:       "",
-						Bucket:       "",
+						AccessKey:    envDefaultS3AccessKey,
+						AccessSecret: envDefaultS3AccessSecret,
+						Endpoint:     envDefaultS3Endpoint,
+						Region:       envDefaultS3Region,
+						Bucket:       envDefaultS3Bucket,
 						CdnUrl:       "",
 					},
 				}},
@@ -174,3 +174,11 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: configs}
 }
+
+var (
+	envDefaultS3Endpoint, envDefaultS3EndpointIsSet = internal.GetDefaultAddrFromEnv("S3_ENDPOINT", "http://127.0.0.1:9000")
+	envDefaultS3AccessKey, _                        = internal.GetDefaultAddrFromEnv("S3_ACCESSKEY", "minioadmin")
+	envDefaultS3AccessSecret, _                     = internal.GetDefaultAddrFromEnv("S3_ACCESSSECRET", "minioadmin")
+	envDefaultS3Region, _                           = internal.GetDefaultAddrFromEnv("S3_REGION", "asia")
+	envDefaultS3Bucket, _                           = internal.GetDefaultAddrFromEnv("S3_BUCKET", "mybucket")
+)

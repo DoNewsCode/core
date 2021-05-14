@@ -52,7 +52,7 @@ func (m *Mock) ProvideMigration() []*Migration {
 }
 
 func TestMain(m *testing.M) {
-	if os.Getenv("MYSQL_DSN") == "" {
+	if !envDefaultMysqlDsnIsSet {
 		fmt.Println("Set env MYSQL_DSN to run otgorm tests")
 		os.Exit(0)
 	}

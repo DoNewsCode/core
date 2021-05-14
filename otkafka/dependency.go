@@ -7,6 +7,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
@@ -202,12 +203,12 @@ func provideConfig() configOut {
 				"kafka": map[string]interface{}{
 					"reader": map[string]interface{}{
 						"default": ReaderConfig{
-							Brokers: []string{"127.0.0.1:9092"},
+							Brokers: envDefaultKafkaAddrs,
 						},
 					},
 					"writer": map[string]interface{}{
 						"default": WriterConfig{
-							Brokers: []string{"127.0.0.1:9092"},
+							Brokers: envDefaultKafkaAddrs,
 						},
 					},
 				},
@@ -220,3 +221,5 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: configs}
 }
+
+var envDefaultKafkaAddrs, envDefaultKafkaAddrsIsSet = internal.GetDefaultAddrsFromEnv("KAFKA_ADDR", "127.0.0.1:9092")
