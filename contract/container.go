@@ -14,7 +14,7 @@ type Container interface {
 	ApplyRouter(router *mux.Router) int
 	ApplyGRPCServer(server *grpc.Server) int
 	ApplyCron(crontab *cron.Cron) int
-	ApplyRunGroup(g *run.Group)
+	ApplyRunGroup(g *run.Group) int
 	ApplyRootCommand(command *cobra.Command)
 	Shutdown()
 	Modules() ifilter.Collection

@@ -94,10 +94,11 @@ func (c *Container) Shutdown() {
 
 // ApplyRunGroup iterates through every RunProvider registered in the container,
 // and introduce the *run.Group to everyone.
-func (c *Container) ApplyRunGroup(g *run.Group) {
+func (c *Container) ApplyRunGroup(g *run.Group) int {
 	for _, p := range c.runProviders {
 		p(g)
 	}
+	return len(c.runProviders)
 }
 
 // Modules returns all modules in the container. This method is used to scan for

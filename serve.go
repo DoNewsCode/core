@@ -179,18 +179,13 @@ func newServeCmd(s serveIn) *cobra.Command {
 			}
 
 			serveCount := len(serves)
+
 			for _, serve := range serves {
-				// At least one serve: signalWatch
-				// It doesn't need to run alone
-				if serveCount == 1 {
-					l.Warn("there are no services to run, please check dependency and module")
-					return nil
-				}
 				execute, interrupt, err := serve(cmd.Context(), l)
 				if err != nil {
 					return err
 				}
-				if execute == nil || interrupt == nil {
+				if execute == nil {
 					serveCount--
 					continue
 				}
@@ -198,7 +193,13 @@ func newServeCmd(s serveIn) *cobra.Command {
 			}
 
 			// Additional run groups
-			s.Container.ApplyRunGroup(&g)
+			serveCount += s.Container.ApplyRunGroup(&g)
+
+			// At least one serve: signalWatch. It doesn't need to run alone
+			if serveCount <= 1 {
+				l.Warn("there are no services to run, please check dependency and module")
+				return nil
+			}
 
 			if err := g.Run(); err != nil {
 				return err
