@@ -1,9 +1,8 @@
-// +build integration
-
 package ots3
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -35,7 +34,11 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	manager := NewManager("minioadmin", "minioadmin", "http://localhost:9000", "asia", "mybucket")
+	if !envDefaultS3EndpointIsSet {
+		fmt.Println("Set env S3_ENDPOINT to run ots3 tests")
+		os.Exit(0)
+	}
+	manager := NewManager(envDefaultS3AccessKey, envDefaultS3AccessSecret, envDefaultS3Endpoint, envDefaultS3Region, envDefaultS3Bucket)
 	_ = manager.CreateBucket(context.Background(), "foo")
 	os.Exit(m.Run())
 }
@@ -64,7 +67,7 @@ func TestManager_CreateBucket(t *testing.T) {
 func TestManager_UploadFromUrl(t *testing.T) {
 	tracer := mocktracer.New()
 	m := setupManagerWithTracer(tracer)
-	_ = m.CreateBucket(context.Background(), "mybucket")
+	_ = m.CreateBucket(context.Background(), envDefaultS3Bucket)
 	newURL, err := m.UploadFromUrl(context.Background(), "https://avatars.githubusercontent.com/u/43054062")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newURL)
@@ -77,11 +80,11 @@ func setupManager() *Manager {
 
 func setupManagerWithTracer(tracer opentracing.Tracer) *Manager {
 	m := NewManager(
-		"minioadmin",
-		"minioadmin",
-		"http://localhost:9000",
-		"asia",
-		"mybucket",
+		envDefaultS3AccessKey,
+		envDefaultS3AccessSecret,
+		envDefaultS3Endpoint,
+		envDefaultS3Region,
+		envDefaultS3Bucket,
 		WithTracer(tracer),
 	)
 	return m

@@ -1,11 +1,12 @@
-// +build integration
-
 package queue
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
+	"os"
+	"testing"
 	"time"
 
 	"github.com/DoNewsCode/core/contract"
@@ -13,8 +14,6 @@ import (
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
-
-	"testing"
 )
 
 type MockListener func(ctx context.Context, event contract.Event) error
@@ -52,8 +51,19 @@ type MockEvent struct {
 	Called *bool
 }
 
+func TestMain(m *testing.M) {
+	if !envDefaultRedisAddrsIsSet {
+		fmt.Println("Set env REDIS_ADDR to run queue tests")
+		os.Exit(0)
+	}
+
+	os.Exit(m.Run())
+}
+
 func setUp() *QueueableDispatcher {
-	s := redis.NewUniversalClient(&redis.UniversalOptions{})
+	s := redis.NewUniversalClient(&redis.UniversalOptions{
+		Addrs: envDefaultRedisAddrs,
+	})
 	driver := RedisDriver{
 		Logger:      logging.NewLogger("logfmt"),
 		RedisClient: s,
@@ -79,7 +89,7 @@ func tearDown() {
 		Waiting:  "waiting",
 		Timeout:  "timeout",
 	}
-	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{})
+	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: envDefaultRedisAddrs})
 	redisClient.Del(context.Background(), channel.Delayed)
 	redisClient.Del(context.Background(), channel.Failed)
 	redisClient.Del(context.Background(), channel.Reserved)

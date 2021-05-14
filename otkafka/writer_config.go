@@ -82,17 +82,20 @@ type WriterConfig struct {
 	Async bool `json:"async" yaml:"async"`
 }
 
-func fromWriterConfig(config WriterConfig) kafka.Writer {
+func fromWriterConfig(conf WriterConfig) kafka.Writer {
+	if len(conf.Brokers) == 0 {
+		conf.Brokers = envDefaultKafkaAddrs
+	}
 	return kafka.Writer{
-		Addr:         kafka.TCP(config.Brokers...),
-		Topic:        config.Topic,
-		MaxAttempts:  config.MaxAttempts,
-		BatchSize:    config.BatchSize,
-		BatchBytes:   int64(config.BatchBytes),
-		BatchTimeout: config.BatchTimeout,
-		ReadTimeout:  config.ReadTimeout,
-		WriteTimeout: config.WriteTimeout,
-		RequiredAcks: kafka.RequiredAcks(config.RequiredAcks),
-		Async:        config.Async,
+		Addr:         kafka.TCP(conf.Brokers...),
+		Topic:        conf.Topic,
+		MaxAttempts:  conf.MaxAttempts,
+		BatchSize:    conf.BatchSize,
+		BatchBytes:   int64(conf.BatchBytes),
+		BatchTimeout: conf.BatchTimeout,
+		ReadTimeout:  conf.ReadTimeout,
+		WriteTimeout: conf.WriteTimeout,
+		RequiredAcks: kafka.RequiredAcks(conf.RequiredAcks),
+		Async:        conf.Async,
 	}
 }

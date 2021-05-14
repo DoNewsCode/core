@@ -1,13 +1,19 @@
 package otgorm
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/kit/log"
+	"github.com/oklog/run"
 	"github.com/spf13/cobra"
 )
+
+const defaultInterval = 15 * time.Second
 
 // MigrationProvider is an interface for database migrations. modules
 // implementing this interface are migration providers. migrations will be
@@ -29,16 +35,56 @@ type Module struct {
 	env       contract.Env
 	logger    log.Logger
 	container contract.Container
+	collector *collector
+	interval  time.Duration
 }
 
-// New creates Module
-func New(make Maker, env contract.Env, logger log.Logger, container contract.Container) Module {
+type moduleIn struct {
+	di.In
+
+	Maker     Maker
+	Env       contract.Env
+	Logger    log.Logger
+	Container contract.Container
+	Collector *collector
+	Conf      contract.ConfigAccessor
+}
+
+// New creates a Module.
+func New(in moduleIn) Module {
+	var duration time.Duration = defaultInterval
+	in.Conf.Unmarshal("gormMetrics.interval", &duration)
 	return Module{
-		maker:     make,
-		env:       env,
-		logger:    logger,
-		container: container,
+		maker:     in.Maker,
+		env:       in.Env,
+		logger:    in.Logger,
+		container: in.Container,
+		collector: in.Collector,
+		interval:  duration,
 	}
+}
+
+// ProvideRunGroup add a goroutine to periodically scan database connections and
+// report them to metrics collector such as prometheus.
+func (m Module) ProvideRunGroup(group *run.Group) {
+	if m.collector == nil {
+		return
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	ticker := time.NewTicker(m.interval)
+	group.Add(func() error {
+		for {
+			select {
+			case <-ticker.C:
+				m.collector.collectConnectionStats()
+			case <-ctx.Done():
+				ticker.Stop()
+				return nil
+			}
+		}
+	}, func(err error) {
+		cancel()
+	})
 }
 
 // ProvideCommand provides migration and seed command.

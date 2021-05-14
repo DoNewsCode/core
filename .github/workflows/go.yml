@@ -74,11 +74,14 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
+    - name: Environment Variables from Dotenv
+      uses: c-py/action-dotenv-to-setenv@v3
+
     - name: Build
       run: go build -v ./...
 
     - name: Test
-      run: go test -race -coverprofile=coverage.txt -covermode=atomic -tags integration ./...
+      run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
     - name: Upload coverage
       uses: codecov/codecov-action@v1

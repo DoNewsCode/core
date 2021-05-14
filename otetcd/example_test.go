@@ -1,5 +1,3 @@
-// +build integration
-
 package otetcd_test
 
 import (
