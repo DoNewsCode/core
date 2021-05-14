@@ -21,6 +21,7 @@ type testData struct {
 
 type testHandlerA struct {
 	data []*testData
+	lock sync.Mutex
 }
 
 func (h *testHandlerA) Info() *Info {
@@ -39,6 +40,8 @@ func (h *testHandlerA) Handle(ctx context.Context, msg *kafka.Message) (interfac
 }
 
 func (h *testHandlerA) Batch(ctx context.Context, data []interface{}) error {
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	for _, e := range data {
 		h.data = append(h.data, e.(*testData))
 	}
@@ -47,6 +50,7 @@ func (h *testHandlerA) Batch(ctx context.Context, data []interface{}) error {
 
 type testHandlerB struct {
 	data []*testData
+	lock sync.Mutex
 }
 
 func (h *testHandlerB) Info() *Info {
@@ -66,6 +70,8 @@ func (h *testHandlerB) Handle(ctx context.Context, msg *kafka.Message) (interfac
 }
 
 func (h *testHandlerB) Batch(ctx context.Context, data []interface{}) error {
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	for _, e := range data {
 		h.data = append(h.data, e.(*testData))
 	}
@@ -74,6 +80,7 @@ func (h *testHandlerB) Batch(ctx context.Context, data []interface{}) error {
 
 type testHandlerC struct {
 	data []*testData
+	lock sync.Mutex
 }
 
 func (h *testHandlerC) Info() *Info {
@@ -88,12 +95,15 @@ func (h *testHandlerC) Handle(ctx context.Context, msg *kafka.Message) (interfac
 	if err := json.Unmarshal(msg.Value, &e); err != nil {
 		return nil, err
 	}
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	h.data = append(h.data, e)
 	return nil, nil
 }
 
 type testHandlerD struct {
 	data []*testData
+	lock sync.Mutex
 }
 
 func (h *testHandlerD) Info() *Info {
@@ -109,6 +119,8 @@ func (h *testHandlerD) Handle(ctx context.Context, msg *kafka.Message) (interfac
 	if err := json.Unmarshal(msg.Value, &e); err != nil {
 		return nil, err
 	}
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	h.data = append(h.data, e)
 	return nil, nil
 }
@@ -144,10 +156,10 @@ func TestProcessor(t *testing.T) {
 	)
 	c.ProvideEssentials()
 	c.Provide(otkafka.Providers())
-	handlerA := &testHandlerA{[]*testData{}}
-	handlerB := &testHandlerB{[]*testData{}}
-	handlerC := &testHandlerC{[]*testData{}}
-	handlerD := &testHandlerD{[]*testData{}}
+	handlerA := &testHandlerA{[]*testData{}, sync.Mutex{}}
+	handlerB := &testHandlerB{[]*testData{}, sync.Mutex{}}
+	handlerC := &testHandlerC{[]*testData{}, sync.Mutex{}}
+	handlerD := &testHandlerD{[]*testData{}, sync.Mutex{}}
 	c.Provide(di.Deps{
 		func() Out {
 			return NewOut(
@@ -212,7 +224,7 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 	c.ProvideEssentials()
 	c.Provide(otkafka.Providers())
 
-	handlerA := &testHandlerA{[]*testData{}}
+	handlerA := &testHandlerA{[]*testData{}, sync.Mutex{}}
 	c.Provide(di.Deps{
 		func() Out {
 			return NewOut(
@@ -238,7 +250,7 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	g := sync.WaitGroup{}
-	
+
 	g.Add(1)
 	go func() {
 		err := c.Serve(ctx)
@@ -256,7 +268,10 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 			case <-ctx.Done():
 				return
 			default:
-				if len(handlerA.data) >= handlerA.Info().batchSize() {
+				handlerA.lock.Lock()
+				length := len(handlerA.data)
+				handlerA.lock.Unlock()
+				if length >= handlerA.Info().batchSize() {
 					cancel()
 					return
 				}
