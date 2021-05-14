@@ -16,7 +16,7 @@ import (
 )
 
 type testData struct {
-	Id int
+	ID int `json:"id"`
 }
 
 type testHandlerA struct {

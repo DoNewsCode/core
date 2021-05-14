@@ -70,6 +70,7 @@ func New(i in) (*Processor, error) {
 	return e, nil
 }
 
+// Out to provide Handler to in.Handlers.
 type Out struct {
 	di.Out
 
