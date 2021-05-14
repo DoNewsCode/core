@@ -63,6 +63,7 @@ func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (fun
 	}
 	router := mux.NewRouter()
 	if s.Container.ApplyRouter(router) == 0 {
+		logger.Info("no http service to apply")
 		return nil, nil, nil
 	}
 	s.HTTPServer.Handler = router
@@ -97,6 +98,7 @@ func (s serveIn) grpcServe(ctx context.Context, logger logging.LevelLogger) (fun
 		s.GRPCServer = grpc.NewServer()
 	}
 	if s.Container.ApplyGRPCServer(s.GRPCServer) == 0 {
+		logger.Info("no grpc service to apply")
 		return nil, nil, nil
 	}
 
@@ -131,6 +133,7 @@ func (s serveIn) cronServe(ctx context.Context, logger logging.LevelLogger) (fun
 	}
 
 	if s.Container.ApplyCron(s.Cron) == 0 {
+		logger.Info("no cron service to apply")
 		return nil, nil, nil
 	}
 	return func() error {
