@@ -200,7 +200,7 @@ func newServeCmd(s serveIn) *cobra.Command {
 
 			// At least one serve: signalWatch. It doesn't need to run alone
 			if serveCount <= 1 {
-				l.Warn("there are no services to run, please check dependency and module")
+				l.Warn("there are no services to run, please check module")
 				return nil
 			}
 

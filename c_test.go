@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"github.com/DoNewsCode/core/srvgrpc"
+	"github.com/DoNewsCode/core/srvhttp"
 	"io/ioutil"
 	"os"
 	"sync/atomic"
@@ -27,6 +29,9 @@ func TestC_Serve(t *testing.T) {
 		WithInline("grpc.addr", ":19999"),
 	)
 	c.ProvideEssentials()
+	c.AddModule(srvhttp.HealthCheckModule{})
+	c.AddModule(srvgrpc.HealthCheckModule{})
+
 	c.Invoke(func(dispatcher contract.Dispatcher) {
 		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
 			atomic.AddInt32(&called, 1)
@@ -62,6 +67,41 @@ func TestC_Serve(t *testing.T) {
 	assert.Equal(t, int32(4), atomic.LoadInt32(&called))
 }
 
+func TestC_NoServe(t *testing.T) {
+	var called int32
+	c := New()
+	c.ProvideEssentials()
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerStart{}), func(ctx context.Context, start contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			return nil
+		}))
+	})
+	c.Invoke(func(dispatcher contract.Dispatcher) {
+		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+			atomic.AddInt32(&called, 1)
+			return nil
+		}))
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	e := c.Serve(ctx)
+	assert.NoError(t, e)
+	assert.Equal(t, int32(0), atomic.LoadInt32(&called))
+}
+
 func TestC_ServeDisable(t *testing.T) {
 	var called int32
 	c := New(
@@ -70,6 +110,9 @@ func TestC_ServeDisable(t *testing.T) {
 		WithInline("cron.disable", "true"),
 	)
 	c.ProvideEssentials()
+	c.AddModule(srvhttp.HealthCheckModule{})
+	c.AddModule(srvgrpc.HealthCheckModule{})
+
 	c.Invoke(func(dispatcher contract.Dispatcher) {
 		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
 			atomic.AddInt32(&called, 1)
