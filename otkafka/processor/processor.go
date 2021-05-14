@@ -10,7 +10,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// Processor dispatch BatchHandler.
+// Processor dispatch Handler.
 type Processor struct {
 	maker    otkafka.ReaderMaker
 	handlers []*handler
@@ -43,9 +43,9 @@ type BatchFunc func(ctx context.Context, data []interface{}) error
 type in struct {
 	di.In
 
-	Hs     []Handler `group:"H"`
-	Maker  otkafka.ReaderMaker
-	Logger log.Logger
+	Handlers []Handler `group:"ProcessorHandler"`
+	Maker    otkafka.ReaderMaker
+	Logger   log.Logger
 }
 
 // New create *Processor Module.
@@ -59,10 +59,10 @@ func New(i in) (*Processor, error) {
 		ctx:      ctx,
 		closers:  []func(){cancel},
 	}
-	if len(i.Hs) == 0 {
+	if len(i.Handlers) == 0 {
 		return nil, errors.New("empty handler list")
 	}
-	for _, hh := range i.Hs {
+	for _, hh := range i.Handlers {
 		if err := e.addHandler(hh); err != nil {
 			return nil, err
 		}
@@ -73,12 +73,12 @@ func New(i in) (*Processor, error) {
 type Out struct {
 	di.Out
 
-	Hs []Handler `group:"H,flatten"`
+	Handlers []Handler `group:"ProcessorHandler,flatten"`
 }
 
-// NewOut for create di.Out.
+// NewOut create Out to provide Handler to in.Handlers.
 // 	Usage:
-// 		func newHandler(logger log.Logger) processor.Out {
+// 		func newHandlerA(logger log.Logger) processor.Out {
 //			return processor.NewOut(
 //				&HandlerA{logger: logger},
 //			)
@@ -90,8 +90,8 @@ type Out struct {
 //				&HandlerB{logger: logger},
 //			)
 //		}
-func NewOut(handler ...Handler) Out {
-	return Out{Hs: handler}
+func NewOut(handlers ...Handler) Out {
+	return Out{Handlers: handlers}
 }
 
 // addHandler create handler and add to Processor.handlers
