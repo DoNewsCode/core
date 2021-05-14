@@ -1,6 +1,8 @@
 package otmongo
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -8,16 +10,24 @@ import (
 	"go.uber.org/dig"
 )
 
+func TestMain(m *testing.M) {
+	if !envDefaultMongoAddrIsSet {
+		fmt.Println("Set env MONGO_ADDR to run otmongo tests")
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
+
 func TestNewMongoFactory(t *testing.T) {
 	t.Parallel()
 	factory, cleanup := provideMongoFactory(in{
 		In: dig.In{},
 		Conf: config.MapAdapter{"mongo": map[string]struct{ Uri string }{
 			"default": {
-				Uri: "mongodb://127.0.0.1:27017",
+				Uri: envDefaultMongoAddr,
 			},
 			"alternative": {
-				Uri: "mongodb://127.0.0.1:27017",
+				Uri: envDefaultMongoAddr,
 			},
 		}},
 		Tracer: nil,

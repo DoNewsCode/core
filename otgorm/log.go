@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// GormLogAdapter is an adapter between kitlog and gorm logger interface
+// GormLogAdapter is an adapter between kitlog and gorm Logger interface
 type GormLogAdapter struct {
 	Logging log.Logger
 }

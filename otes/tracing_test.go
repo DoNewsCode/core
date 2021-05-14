@@ -1,5 +1,3 @@
-// +build integration
-
 package otes
 
 import (
@@ -19,8 +17,8 @@ func TestTracing(t *testing.T) {
 	opentracing.SetGlobalTracer(tracer)
 	factory, cleanup := provideEsFactory(in{
 		Conf: config.MapAdapter{"es": map[string]Config{
-			"default":     {URL: []string{"http://localhost:9200"}},
-			"alternative": {URL: []string{"http://localhost:9200"}},
+			"default":     {URL: envDefaultElasticsearchAddrs},
+			"alternative": {URL: envDefaultElasticsearchAddrs},
 		}},
 		Logger: log.NewNopLogger(),
 		Tracer: tracer,
@@ -32,7 +30,7 @@ func TestTracing(t *testing.T) {
 	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "es.query")
 	defer span.Finish()
 
-	res, code, err := client.Ping("http://localhost:9200").Do(ctx)
+	res, code, err := client.Ping(envDefaultElasticsearchAddrs[0]).Do(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.NotNil(t, res)

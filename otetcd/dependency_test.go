@@ -1,6 +1,8 @@
 package otetcd
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core"
@@ -11,6 +13,15 @@ import (
 	"go.etcd.io/etcd/client/v3"
 	"gopkg.in/yaml.v3"
 )
+
+func TestMain(m *testing.M) {
+	if !envDefaultEtcdAddrsIsSet {
+		fmt.Println("Set env ETCD_ADDR to run otetcd tests")
+		os.Exit(0)
+	}
+
+	os.Exit(m.Run())
+}
 
 func TestEtcd(t *testing.T) {
 	c := core.New()
@@ -37,10 +48,10 @@ func TestProvideFactory(t *testing.T) {
 	out, cleanup := provideFactory(factoryIn{
 		Conf: config.MapAdapter{"etcd": map[string]Option{
 			"default": {
-				Endpoints: []string{"localhost:2379"},
+				Endpoints: envDefaultEtcdAddrs,
 			},
 			"alternative": {
-				Endpoints: []string{"localhost:2379"},
+				Endpoints: envDefaultEtcdAddrs,
 			},
 		}},
 		Logger: log.NewNopLogger(),

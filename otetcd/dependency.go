@@ -7,6 +7,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing-contrib/go-grpc"
@@ -41,13 +42,13 @@ type Maker interface {
 	Make(name string) (*clientv3.Client, error)
 }
 
-// Factory is a *di.Factory that creates redis.UniversalClient using a
+// Factory is a *di.Factory that creates *clientv3.Client using a
 // specific configuration entry.
 type Factory struct {
 	*di.Factory
 }
 
-// Make creates redis.UniversalClient using a specific configuration entry.
+// Make creates *clientv3.Client using a specific configuration entry.
 func (r Factory) Make(name string) (*clientv3.Client, error) {
 	client, err := r.Factory.Make(name)
 	if err != nil {
@@ -94,7 +95,7 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid", name)
 			}
-			conf = Option{Endpoints: []string{"localhost:2379"}}
+			conf = Option{Endpoints: envDefaultEtcdAddrs}
 		}
 		co := clientv3.Config{
 			Endpoints:            conf.Endpoints,
@@ -157,7 +158,7 @@ func provideConfig() configOut {
 				map[string]interface{}{
 					"etcd": map[string]Option{
 						"default": {
-							Endpoints:            []string{"127.0.0.1:2379"},
+							Endpoints:            envDefaultEtcdAddrs,
 							AutoSyncInterval:     config.Duration{},
 							DialTimeout:          config.Duration{},
 							DialKeepAliveTime:    config.Duration{},
@@ -184,3 +185,5 @@ func provideConfig() configOut {
 func duration(d config.Duration) time.Duration {
 	return d.Duration
 }
+
+var envDefaultEtcdAddrs, envDefaultEtcdAddrsIsSet = internal.GetDefaultAddrsFromEnv("ETCD_ADDR", "127.0.0.1:2379")

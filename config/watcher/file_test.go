@@ -15,7 +15,7 @@ import (
 func TestWatch(t *testing.T) {
 	t.Run("edit", func(t *testing.T) {
 		t.Parallel()
-		ch := make(chan struct{})
+		ch := make(chan struct{}, 2)
 		f, _ := ioutil.TempFile(".", "*")
 		defer os.Remove(f.Name())
 
@@ -26,7 +26,7 @@ func TestWatch(t *testing.T) {
 		defer cancel()
 
 		go w.Watch(ctx, func() error {
-			close(ch)
+			ch <- struct{}{}
 			return nil
 		})
 		time.Sleep(time.Second)
