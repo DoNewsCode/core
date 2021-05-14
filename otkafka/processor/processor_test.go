@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -173,16 +174,20 @@ func TestProcessor(t *testing.T) {
 	})
 
 	ctx, cancel := context.WithCancel(context.Background())
+	g := sync.WaitGroup{}
+	g.Add(1)
 	go func() {
 		err := c.Serve(ctx)
 		if err != nil {
 			t.Error(err)
 		}
+		g.Done()
 	}()
 
-	time.Sleep(2 * time.Second)
-	cancel()
 	time.Sleep(1 * time.Second)
+	cancel()
+
+	g.Wait()
 
 	assert.Equal(t, messageCount, len(handlerA.data))
 	assert.Equal(t, messageCount, len(handlerB.data))
@@ -202,7 +207,7 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 		core.WithInline("http.disable", "true"),
 		core.WithInline("grpc.disable", "true"),
 		core.WithInline("cron.disable", "true"),
-		core.WithInline("log.level", "debug"),
+		core.WithInline("log.level", "none"),
 	)
 	c.ProvideEssentials()
 	c.Provide(otkafka.Providers())
@@ -232,25 +237,33 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	g := sync.WaitGroup{}
+	
+	g.Add(1)
 	go func() {
 		err := c.Serve(ctx)
 		if err != nil {
 			t.Error(err)
 		}
+		g.Done()
 	}()
-loop:
-	for {
-		select {
-		case <-ctx.Done():
-			break loop
-		default:
-			if len(handlerA.data) >= handlerA.Info().batchSize() {
-				break loop
+
+	g.Add(1)
+	go func() {
+		defer g.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if len(handlerA.data) >= handlerA.Info().batchSize() {
+					cancel()
+					return
+				}
 			}
 		}
-	}
-	cancel()
-	time.Sleep(1 * time.Second)
+	}()
+	g.Wait()
 
 	assert.Equal(t, messageCount, len(handlerA.data))
 }
