@@ -3,7 +3,6 @@ package processor
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otkafka"
+	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,8 +20,7 @@ type testData struct {
 }
 
 type testHandlerA struct {
-	data []*testData
-	lock sync.Mutex
+	data chan *testData
 }
 
 func (h *testHandlerA) Info() *Info {
@@ -40,24 +39,20 @@ func (h *testHandlerA) Handle(ctx context.Context, msg *kafka.Message) (interfac
 }
 
 func (h *testHandlerA) Batch(ctx context.Context, data []interface{}) error {
-	h.lock.Lock()
-	defer h.lock.Unlock()
 	for _, e := range data {
-		h.data = append(h.data, e.(*testData))
+		h.data <- e.(*testData)
 	}
 	return nil
 }
 
 type testHandlerB struct {
-	data []*testData
-	lock sync.Mutex
+	data chan *testData
 }
 
 func (h *testHandlerB) Info() *Info {
 	return &Info{
-		Name:       "B",
-		BatchSize:  3,
-		AutoCommit: true,
+		Name:      "B",
+		BatchSize: 3,
 	}
 }
 
@@ -70,17 +65,14 @@ func (h *testHandlerB) Handle(ctx context.Context, msg *kafka.Message) (interfac
 }
 
 func (h *testHandlerB) Batch(ctx context.Context, data []interface{}) error {
-	h.lock.Lock()
-	defer h.lock.Unlock()
 	for _, e := range data {
-		h.data = append(h.data, e.(*testData))
+		h.data <- e.(*testData)
 	}
 	return nil
 }
 
 type testHandlerC struct {
-	data []*testData
-	lock sync.Mutex
+	data chan *testData
 }
 
 func (h *testHandlerC) Info() *Info {
@@ -95,22 +87,18 @@ func (h *testHandlerC) Handle(ctx context.Context, msg *kafka.Message) (interfac
 	if err := json.Unmarshal(msg.Value, &e); err != nil {
 		return nil, err
 	}
-	h.lock.Lock()
-	defer h.lock.Unlock()
-	h.data = append(h.data, e)
+	h.data <- e
 	return nil, nil
 }
 
 type testHandlerD struct {
-	data []*testData
-	lock sync.Mutex
+	data chan *testData
 }
 
 func (h *testHandlerD) Info() *Info {
 	return &Info{
-		Name:       "D",
-		BatchSize:  3,
-		AutoCommit: true,
+		Name:      "D",
+		BatchSize: 3,
 	}
 }
 
@@ -119,47 +107,101 @@ func (h *testHandlerD) Handle(ctx context.Context, msg *kafka.Message) (interfac
 	if err := json.Unmarshal(msg.Value, &e); err != nil {
 		return nil, err
 	}
-	h.lock.Lock()
-	defer h.lock.Unlock()
-	h.data = append(h.data, e)
+	h.data <- e
 	return nil, nil
+}
+
+type testHandlerE struct {
+	data chan *testData
+}
+
+func (h *testHandlerE) Info() *Info {
+	return &Info{
+		Name:              "default",
+		BatchSize:         3,
+		AutoBatchInterval: 1 * time.Second,
+	}
+}
+
+func (h *testHandlerE) Handle(ctx context.Context, msg *kafka.Message) (interface{}, error) {
+	e := &testData{}
+	if err := json.Unmarshal(msg.Value, &e); err != nil {
+		return nil, err
+	}
+	return e, nil
+}
+
+func (h *testHandlerE) Batch(ctx context.Context, data []interface{}) error {
+	for _, e := range data {
+		h.data <- e.(*testData)
+	}
+	return nil
+}
+
+type testHandlerF struct {
+	data chan *testData
+}
+
+func (h *testHandlerF) Info() *Info {
+	return &Info{
+		Name:      "default",
+		BatchSize: 3,
+	}
+}
+
+func (h *testHandlerF) Handle(ctx context.Context, msg *kafka.Message) (interface{}, error) {
+	e := &testData{}
+	if err := json.Unmarshal(msg.Value, &e); err != nil {
+		return nil, err
+	}
+	return e, nil
+}
+
+func (h *testHandlerF) Batch(ctx context.Context, data []interface{}) error {
+	return errors.New("test error")
 }
 
 func TestProcessor(t *testing.T) {
 	c := core.New(
 		core.WithInline("kafka.reader.A.brokers", envDefaultKafkaAddrs),
-		core.WithInline("kafka.reader.A.topic", "processor1"),
+		core.WithInline("kafka.reader.A.topic", "processor"),
 		core.WithInline("kafka.reader.A.groupID", "testA"),
-		core.WithInline("kafka.reader.A.startOffset", -1),
+		core.WithInline("kafka.reader.A.startOffset", kafka.LastOffset),
 
 		core.WithInline("kafka.reader.B.brokers", envDefaultKafkaAddrs),
-		core.WithInline("kafka.reader.B.topic", "processor1"),
+		core.WithInline("kafka.reader.B.topic", "processor"),
 		core.WithInline("kafka.reader.B.groupID", "testB"),
-		core.WithInline("kafka.reader.B.startOffset", -1),
+		core.WithInline("kafka.reader.B.startOffset", kafka.LastOffset),
 
 		core.WithInline("kafka.reader.C.brokers", envDefaultKafkaAddrs),
-		core.WithInline("kafka.reader.C.topic", "processor1"),
+		core.WithInline("kafka.reader.C.topic", "processor"),
 		core.WithInline("kafka.reader.C.groupID", "testC"),
-		core.WithInline("kafka.reader.C.startOffset", -1),
+		core.WithInline("kafka.reader.C.startOffset", kafka.LastOffset),
 
 		core.WithInline("kafka.reader.D.brokers", envDefaultKafkaAddrs),
-		core.WithInline("kafka.reader.D.topic", "processor1"),
+		core.WithInline("kafka.reader.D.topic", "processor"),
 		core.WithInline("kafka.reader.D.groupID", "testD"),
-		core.WithInline("kafka.reader.D.startOffset", -1),
+		core.WithInline("kafka.reader.D.startOffset", kafka.LastOffset),
 
-		core.WithInline("kafka.writer.default.brokers", envDefaultKafkaAddrs),
-		core.WithInline("kafka.writer.default.topic", "processor1"),
 		core.WithInline("http.disable", "true"),
 		core.WithInline("grpc.disable", "true"),
 		core.WithInline("cron.disable", "true"),
 		core.WithInline("log.level", "none"),
 	)
+
 	c.ProvideEssentials()
 	c.Provide(otkafka.Providers())
-	handlerA := &testHandlerA{[]*testData{}, sync.Mutex{}}
-	handlerB := &testHandlerB{[]*testData{}, sync.Mutex{}}
-	handlerC := &testHandlerC{[]*testData{}, sync.Mutex{}}
-	handlerD := &testHandlerD{[]*testData{}, sync.Mutex{}}
+	handlerA := &testHandlerA{make(chan *testData, 10)}
+	handlerB := &testHandlerB{make(chan *testData, 10)}
+	handlerC := &testHandlerC{make(chan *testData, 10)}
+	handlerD := &testHandlerD{make(chan *testData, 10)}
+	defer func() {
+		close(handlerA.data)
+		close(handlerB.data)
+		close(handlerC.data)
+		close(handlerD.data)
+	}()
+
 	c.Provide(di.Deps{
 		func() Out {
 			return NewOut(
@@ -172,34 +214,15 @@ func TestProcessor(t *testing.T) {
 	})
 	c.AddModuleFunc(New)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := c.Serve(ctx)
+	if err != nil {
+		t.Error(err)
+	}
+
 	var messageCount = 4
-
-	c.Invoke(func(w *kafka.Writer) {
-		testMessages := make([]kafka.Message, 0)
-		for i := 0; i < messageCount; i++ {
-			testMessages = append(testMessages, kafka.Message{Value: []byte(fmt.Sprintf(`{"id":%d}`, i))})
-		}
-		err := w.WriteMessages(context.Background(), testMessages...)
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	ctx, cancel := context.WithCancel(context.Background())
-	g := sync.WaitGroup{}
-	g.Add(1)
-	go func() {
-		err := c.Serve(ctx)
-		if err != nil {
-			t.Error(err)
-		}
-		g.Done()
-	}()
-
-	time.Sleep(1 * time.Second)
-	cancel()
-
-	g.Wait()
 
 	assert.Equal(t, messageCount, len(handlerA.data))
 	assert.Equal(t, messageCount, len(handlerB.data))
@@ -210,12 +233,10 @@ func TestProcessor(t *testing.T) {
 func TestProcessorGracefulShutdown(t *testing.T) {
 	c := core.New(
 		core.WithInline("kafka.reader.A.brokers", envDefaultKafkaAddrs),
-		core.WithInline("kafka.reader.A.topic", "processor2"),
+		core.WithInline("kafka.reader.A.topic", "processor"),
 		core.WithInline("kafka.reader.A.groupID", "testE"),
-		core.WithInline("kafka.reader.A.startOffset", -1),
+		core.WithInline("kafka.reader.A.startOffset", kafka.LastOffset),
 
-		core.WithInline("kafka.writer.default.brokers", envDefaultKafkaAddrs),
-		core.WithInline("kafka.writer.default.topic", "processor2"),
 		core.WithInline("http.disable", "true"),
 		core.WithInline("grpc.disable", "true"),
 		core.WithInline("cron.disable", "true"),
@@ -224,7 +245,8 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 	c.ProvideEssentials()
 	c.Provide(otkafka.Providers())
 
-	handlerA := &testHandlerA{[]*testData{}, sync.Mutex{}}
+	handlerA := &testHandlerA{make(chan *testData, 10)}
+	defer close(handlerA.data)
 	c.Provide(di.Deps{
 		func() Out {
 			return NewOut(
@@ -235,20 +257,7 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 
 	c.AddModuleFunc(New)
 
-	var messageCount = 4
-
-	c.Invoke(func(w *kafka.Writer) {
-		testMessages := make([]kafka.Message, 0)
-		for i := 0; i < messageCount; i++ {
-			testMessages = append(testMessages, kafka.Message{Value: []byte(fmt.Sprintf(`{"id":%d}`, i))})
-		}
-		err := w.WriteMessages(context.Background(), testMessages...)
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	g := sync.WaitGroup{}
 
 	g.Add(1)
@@ -261,17 +270,17 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 	}()
 
 	g.Add(1)
+
 	go func() {
 		defer g.Done()
+		count := 0
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			default:
-				handlerA.lock.Lock()
-				length := len(handlerA.data)
-				handlerA.lock.Unlock()
-				if length >= handlerA.Info().batchSize() {
+			case <-handlerA.data:
+				count++
+				if count >= 3 {
 					cancel()
 					return
 				}
@@ -280,5 +289,99 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 	}()
 	g.Wait()
 
-	assert.Equal(t, messageCount, len(handlerA.data))
+	assert.Equal(t, 1, len(handlerA.data))
+}
+
+func TestProcessorBatchInterval(t *testing.T) {
+	c := core.New(
+		core.WithInline("kafka.reader.default.brokers", envDefaultKafkaAddrs),
+		core.WithInline("kafka.reader.default.topic", "processor"),
+		core.WithInline("kafka.reader.default.groupID", "testF"),
+		core.WithInline("kafka.reader.default.startOffset", kafka.LastOffset),
+
+		core.WithInline("http.disable", "true"),
+		core.WithInline("grpc.disable", "true"),
+		core.WithInline("cron.disable", "true"),
+		core.WithInline("log.level", "none"),
+	)
+	c.ProvideEssentials()
+	c.Provide(otkafka.Providers())
+
+	handler := &testHandlerE{make(chan *testData, 10)}
+	defer close(handler.data)
+	c.Provide(di.Deps{
+		func() Out {
+			return NewOut(
+				handler,
+			)
+		},
+	})
+
+	c.AddModuleFunc(New)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	g := sync.WaitGroup{}
+	g.Add(1)
+	go func() {
+		err := c.Serve(ctx)
+		if err != nil {
+			t.Error(err)
+		}
+		g.Done()
+	}()
+	g.Add(1)
+	var count = 0
+	go func() {
+		defer g.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-handler.data:
+				count++
+				if count >= 4 {
+					return
+				}
+			}
+		}
+	}()
+
+	g.Wait()
+	assert.Equal(t, 4, count)
+}
+
+func TestProcessorBatchError(t *testing.T) {
+	c := core.New(
+		core.WithInline("kafka.reader.default.brokers", envDefaultKafkaAddrs),
+		core.WithInline("kafka.reader.default.topic", "processor"),
+		core.WithInline("kafka.reader.default.groupID", "testG"),
+		core.WithInline("kafka.reader.default.startOffset", kafka.LastOffset),
+
+		core.WithInline("http.disable", "true"),
+		core.WithInline("grpc.disable", "true"),
+		core.WithInline("cron.disable", "true"),
+		core.WithInline("log.level", "none"),
+	)
+	c.ProvideEssentials()
+	c.Provide(otkafka.Providers())
+
+	handler := &testHandlerF{make(chan *testData, 10)}
+	c.Provide(di.Deps{
+		func() Out {
+			return NewOut(
+				handler,
+			)
+		},
+	})
+
+	c.AddModuleFunc(New)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := c.Serve(ctx)
+	assert.Error(t, err)
+	assert.Equal(t, "test error", err.Error())
 }

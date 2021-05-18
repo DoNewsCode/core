@@ -1,13 +1,16 @@
 package processor
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
 	"testing"
 
+	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/internal"
+	"github.com/DoNewsCode/core/otkafka"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -19,6 +22,7 @@ func TestMain(m *testing.M) {
 		os.Exit(0)
 	}
 	setupTopic()
+	setupMessage()
 
 	os.Exit(m.Run())
 }
@@ -41,17 +45,14 @@ func setupTopic() {
 	}
 	defer controllerConn.Close()
 
-	topicConfigs := []kafka.TopicConfig{
-		{
-			Topic:             "processor1",
+	topics := []string{"processor"}
+	topicConfigs := make([]kafka.TopicConfig, len(topics))
+	for i, topic := range topics {
+		topicConfigs[i] = kafka.TopicConfig{
+			Topic:             topic,
 			NumPartitions:     1,
 			ReplicationFactor: 1,
-		},
-		{
-			Topic:             "processor2",
-			NumPartitions:     1,
-			ReplicationFactor: 1,
-		},
+		}
 	}
 
 	err = controllerConn.CreateTopics(topicConfigs...)
@@ -59,4 +60,26 @@ func setupTopic() {
 	if err != nil {
 		panic(err.Error())
 	}
+}
+
+func setupMessage() {
+	c := core.New(
+		core.WithInline("kafka.writer.default.brokers", envDefaultKafkaAddrs),
+		core.WithInline("kafka.writer.default.topic", "processor"),
+		core.WithInline("log.level", "none"),
+	)
+	c.ProvideEssentials()
+	c.Provide(otkafka.Providers())
+
+	c.Invoke(func(w *kafka.Writer) {
+		testMessages := make([]kafka.Message, 4)
+		for i := 0; i < 4; i++ {
+			testMessages[i] = kafka.Message{Value: []byte(fmt.Sprintf(`{"id":%d}`, i))}
+		}
+		err := w.WriteMessages(context.Background(), testMessages...)
+		if err != nil {
+			panic(err)
+		}
+	})
+
 }

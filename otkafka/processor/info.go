@@ -1,5 +1,7 @@
 package processor
 
+import "time"
+
 // Info the info of BatchHandler.
 //
 // Note:
@@ -7,25 +9,28 @@ package processor
 //		Multiple goroutines cannot guarantee the order in which data is processed.
 type Info struct {
 	// used to get reader from otkafka.ReaderMaker.
+	// default: "default"
 	Name string
 	// reader workers count.
+	// default: 1
 	ReadWorker int
 	// batch workers count.
+	// default: 1
 	BatchWorker int
 	// data size for batch processing.
+	// default: 1
 	BatchSize int
 	// handler workers count.
 	HandleWorker int
 	// the size of the data channel.
+	// default: 100
 	ChanSize int
-
-	// auto commit *kafka.Message
-	// 	true: ignore Handler.Handle or BatchHandler.Batch error info, always commit.
-	// 	false: only when Handler.Handle or BatchHandler.Batch error is nil, then commit.
-	AutoCommit bool
+	// run the batchFunc automatically at specified intervals, avoid not executing without reaching BatchSize
+	// default: 30s
+	AutoBatchInterval time.Duration
 }
 
-func (i Info) name() string {
+func (i *Info) name() string {
 	if i.Name == "" {
 		return "default"
 	}
@@ -67,6 +72,9 @@ func (i *Info) chanSize() int {
 	return i.ChanSize
 }
 
-func (i *Info) autoCommit() bool {
-	return i.AutoCommit
+func (i *Info) autoBatchInterval() time.Duration {
+	if i.AutoBatchInterval < 10 {
+		return 30 * time.Second
+	}
+	return i.AutoBatchInterval
 }

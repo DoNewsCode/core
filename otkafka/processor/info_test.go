@@ -2,6 +2,7 @@ package processor
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -14,7 +15,6 @@ func TestInfo(t *testing.T) {
 		BatchSize:    0,
 		HandleWorker: 0,
 		ChanSize:     0,
-		AutoCommit:   false,
 	}
 	assert.Equal(t, "default", i.name())
 	assert.Equal(t, 1, i.readWorker())
@@ -22,16 +22,16 @@ func TestInfo(t *testing.T) {
 	assert.Equal(t, 1, i.batchSize())
 	assert.Equal(t, 1, i.handleWorker())
 	assert.Equal(t, 100, i.chanSize())
-	assert.Equal(t, false, i.autoCommit())
+	assert.Equal(t, 30*time.Second, i.autoBatchInterval())
 
 	j := Info{
-		Name:         "test",
-		ReadWorker:   2,
-		BatchWorker:  2,
-		BatchSize:    10,
-		HandleWorker: 2,
-		ChanSize:     10,
-		AutoCommit:   true,
+		Name:              "test",
+		ReadWorker:        2,
+		BatchWorker:       2,
+		BatchSize:         10,
+		HandleWorker:      2,
+		ChanSize:          10,
+		AutoBatchInterval: 10 * time.Second,
 	}
 	assert.Equal(t, j.Name, j.name())
 	assert.Equal(t, j.ReadWorker, j.readWorker())
@@ -39,5 +39,5 @@ func TestInfo(t *testing.T) {
 	assert.Equal(t, j.BatchSize, j.batchSize())
 	assert.Equal(t, j.HandleWorker, j.handleWorker())
 	assert.Equal(t, j.ChanSize, j.chanSize())
-	assert.Equal(t, j.AutoCommit, j.autoCommit())
+	assert.Equal(t, j.AutoBatchInterval, j.autoBatchInterval())
 }
