@@ -88,7 +88,7 @@ func TestError(t *testing.T) {
 	assert.Error(t, err)
 
 	cfg = &clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
+		Endpoints:   []string{os.Getenv("ETCD_ADDR")},
 		DialTimeout: 2 * time.Second,
 	}
 	r = Provider("config-test1", cfg)
