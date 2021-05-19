@@ -6,6 +6,7 @@ import (
 	"github.com/DoNewsCode/core/srvhttp"
 	"io/ioutil"
 	"os"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -166,8 +167,14 @@ func TestC_Default(t *testing.T) {
 }
 
 func TestC_Remote(t *testing.T) {
+	addr := os.Getenv("ETCD_ADDR")
+	if addr == "" {
+		t.Skipf("set ETCD_ADDR for run remote test")
+	}
+
+	envEtcdAddrs := strings.Split(addr, ",")
 	cfg := clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
+		Endpoints:   envEtcdAddrs,
 		DialTimeout: 2 * time.Second,
 	}
 	_ = remote.Provider("config.yaml", &cfg)
