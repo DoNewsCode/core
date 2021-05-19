@@ -166,22 +166,22 @@ func TestProcessor(t *testing.T) {
 		core.WithInline("kafka.reader.A.brokers", envDefaultKafkaAddrs),
 		core.WithInline("kafka.reader.A.topic", "processor"),
 		core.WithInline("kafka.reader.A.groupID", "testA"),
-		core.WithInline("kafka.reader.A.startOffset", kafka.LastOffset),
+		core.WithInline("kafka.reader.A.startOffset", kafka.FirstOffset),
 
 		core.WithInline("kafka.reader.B.brokers", envDefaultKafkaAddrs),
 		core.WithInline("kafka.reader.B.topic", "processor"),
 		core.WithInline("kafka.reader.B.groupID", "testB"),
-		core.WithInline("kafka.reader.B.startOffset", kafka.LastOffset),
+		core.WithInline("kafka.reader.B.startOffset", kafka.FirstOffset),
 
 		core.WithInline("kafka.reader.C.brokers", envDefaultKafkaAddrs),
 		core.WithInline("kafka.reader.C.topic", "processor"),
 		core.WithInline("kafka.reader.C.groupID", "testC"),
-		core.WithInline("kafka.reader.C.startOffset", kafka.LastOffset),
+		core.WithInline("kafka.reader.C.startOffset", kafka.FirstOffset),
 
 		core.WithInline("kafka.reader.D.brokers", envDefaultKafkaAddrs),
 		core.WithInline("kafka.reader.D.topic", "processor"),
 		core.WithInline("kafka.reader.D.groupID", "testD"),
-		core.WithInline("kafka.reader.D.startOffset", kafka.LastOffset),
+		core.WithInline("kafka.reader.D.startOffset", kafka.FirstOffset),
 
 		core.WithInline("http.disable", "true"),
 		core.WithInline("grpc.disable", "true"),
@@ -191,10 +191,10 @@ func TestProcessor(t *testing.T) {
 
 	c.ProvideEssentials()
 	c.Provide(otkafka.Providers())
-	handlerA := &testHandlerA{make(chan *testData, 10)}
-	handlerB := &testHandlerB{make(chan *testData, 10)}
-	handlerC := &testHandlerC{make(chan *testData, 10)}
-	handlerD := &testHandlerD{make(chan *testData, 10)}
+	handlerA := &testHandlerA{make(chan *testData, 100)}
+	handlerB := &testHandlerB{make(chan *testData, 100)}
+	handlerC := &testHandlerC{make(chan *testData, 100)}
+	handlerD := &testHandlerD{make(chan *testData, 100)}
 	defer func() {
 		close(handlerA.data)
 		close(handlerB.data)
@@ -235,7 +235,7 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 		core.WithInline("kafka.reader.A.brokers", envDefaultKafkaAddrs),
 		core.WithInline("kafka.reader.A.topic", "processor"),
 		core.WithInline("kafka.reader.A.groupID", "testE"),
-		core.WithInline("kafka.reader.A.startOffset", kafka.LastOffset),
+		core.WithInline("kafka.reader.A.startOffset", kafka.FirstOffset),
 
 		core.WithInline("http.disable", "true"),
 		core.WithInline("grpc.disable", "true"),
@@ -245,7 +245,7 @@ func TestProcessorGracefulShutdown(t *testing.T) {
 	c.ProvideEssentials()
 	c.Provide(otkafka.Providers())
 
-	handlerA := &testHandlerA{make(chan *testData, 10)}
+	handlerA := &testHandlerA{make(chan *testData, 100)}
 	defer close(handlerA.data)
 	c.Provide(di.Deps{
 		func() Out {
@@ -297,7 +297,7 @@ func TestProcessorBatchInterval(t *testing.T) {
 		core.WithInline("kafka.reader.default.brokers", envDefaultKafkaAddrs),
 		core.WithInline("kafka.reader.default.topic", "processor"),
 		core.WithInline("kafka.reader.default.groupID", "testF"),
-		core.WithInline("kafka.reader.default.startOffset", kafka.LastOffset),
+		core.WithInline("kafka.reader.default.startOffset", kafka.FirstOffset),
 
 		core.WithInline("http.disable", "true"),
 		core.WithInline("grpc.disable", "true"),
@@ -307,7 +307,7 @@ func TestProcessorBatchInterval(t *testing.T) {
 	c.ProvideEssentials()
 	c.Provide(otkafka.Providers())
 
-	handler := &testHandlerE{make(chan *testData, 10)}
+	handler := &testHandlerE{make(chan *testData, 100)}
 	defer close(handler.data)
 	c.Provide(di.Deps{
 		func() Out {
@@ -357,7 +357,7 @@ func TestProcessorBatchError(t *testing.T) {
 		core.WithInline("kafka.reader.default.brokers", envDefaultKafkaAddrs),
 		core.WithInline("kafka.reader.default.topic", "processor"),
 		core.WithInline("kafka.reader.default.groupID", "testG"),
-		core.WithInline("kafka.reader.default.startOffset", kafka.LastOffset),
+		core.WithInline("kafka.reader.default.startOffset", kafka.FirstOffset),
 
 		core.WithInline("http.disable", "true"),
 		core.WithInline("grpc.disable", "true"),
@@ -367,7 +367,7 @@ func TestProcessorBatchError(t *testing.T) {
 	c.ProvideEssentials()
 	c.Provide(otkafka.Providers())
 
-	handler := &testHandlerF{make(chan *testData, 10)}
+	handler := &testHandlerF{make(chan *testData, 100)}
 	c.Provide(di.Deps{
 		func() Out {
 			return NewOut(

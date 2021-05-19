@@ -100,27 +100,23 @@ func (e *Processor) addHandler(h Handler) error {
 		return err
 	}
 
-	if  reader.Config().GroupID == ""{
-		return errors.New("")
-	}
-
-	batchFunc := func(ctx context.Context, data []interface{}) error {
-		return nil
-	}
-	batchHandler, isBatchHandler := h.(BatchHandler)
-	if isBatchHandler {
-		batchFunc = batchHandler.Batch
+	if reader.Config().GroupID == "" {
+		return errors.New("kafka reader must ")
 	}
 
 	var hd = &handler{
 		msgCh:      make(chan *kafka.Message, h.Info().chanSize()),
 		reader:     reader,
 		handleFunc: h.Handle,
-		batchFunc:  batchFunc,
 		info:       h.Info(),
 		once:       sync.Once{},
-		batchCh:    make(chan *batchInfo, h.Info().chanSize()),
-		ticker:     time.NewTicker(h.Info().autoBatchInterval()),
+	}
+
+	batchHandler, isBatchHandler := h.(BatchHandler)
+	if isBatchHandler {
+		hd.batchFunc = batchHandler.Batch
+		hd.batchCh = make(chan *batchInfo, h.Info().chanSize())
+		hd.ticker = time.NewTicker(h.Info().autoBatchInterval())
 	}
 
 	e.handlers = append(e.handlers, hd)
@@ -234,7 +230,14 @@ func (h *handler) handle(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			h.batchCh <- &batchInfo{message: msg, data: v}
+			if h.batchCh != nil {
+				h.batchCh <- &batchInfo{message: msg, data: v}
+			}
+			if h.batchFunc == nil {
+				if err := h.commit(*msg); err != nil {
+					return err
+				}
+			}
 		case <-ctx.Done():
 			return ctx.Err()
 		}
