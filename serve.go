@@ -2,6 +2,9 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"github.com/go-kit/kit/log/level"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"net"
 	"net/http"
 	"os"
@@ -66,6 +69,12 @@ func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (fun
 		logger.Info("no http service to apply")
 		return nil, nil, nil
 	}
+	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		tpl, _ := route.GetPathTemplate()
+		level.Debug(logger).Log("service", "http", "path", tpl)
+		return nil
+	})
+
 	s.HTTPServer.Handler = router
 
 	httpAddr := s.Config.String("http.addr")
@@ -95,11 +104,22 @@ func (s serveIn) grpcServe(ctx context.Context, logger logging.LevelLogger) (fun
 		return nil, nil, nil
 	}
 	if s.GRPCServer == nil {
-		s.GRPCServer = grpc.NewServer()
+		opts := []grpc.ServerOption{
+			grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
+			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
+		}
+		s.GRPCServer = grpc.NewServer(opts...)
 	}
 	if s.Container.ApplyGRPCServer(s.GRPCServer) == 0 {
 		logger.Info("no grpc service to apply")
 		return nil, nil, nil
+	}
+
+	for module, info := range s.GRPCServer.GetServiceInfo() {
+		for _, method := range info.Methods {
+			//logger.Debugf("grpc path: %s/%s", module, method.Name)
+			level.Debug(logger).Log("service", "grpc", "path", fmt.Sprintf("%s/%s", module, method.Name))
+		}
 	}
 
 	grpcAddr := s.Config.String("grpc.addr")
