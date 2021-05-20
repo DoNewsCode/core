@@ -19,6 +19,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
+	github.com/klauspost/compress v1.12.2 // indirect
 	github.com/knadh/koanf v0.15.0
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/oklog/run v1.1.0
@@ -30,7 +31,7 @@ require (
 	github.com/prometheus/client_golang v1.9.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/xid v1.2.1
-	github.com/segmentio/kafka-go v0.4.10
+	github.com/segmentio/kafka-go v0.4.16
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible

@@ -2,8 +2,6 @@ package core
 
 import (
 	"context"
-	"github.com/DoNewsCode/core/srvgrpc"
-	"github.com/DoNewsCode/core/srvhttp"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -17,6 +15,8 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/otgorm"
+	"github.com/DoNewsCode/core/srvgrpc"
+	"github.com/DoNewsCode/core/srvhttp"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"

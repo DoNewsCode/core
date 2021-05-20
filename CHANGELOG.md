@@ -1,6 +1,16 @@
 
+<a name="v0.6.0"></a>
+## [v0.6.0](https://github.com/DoNewsCode/core/compare/v0.5.0...v0.6.0) (2021-05-19)
+
+### ✨ Features
+
+* add otkafka processor ([#134](https://github.com/DoNewsCode/core/issues/134)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* Add kafka metrics ([#130](https://github.com/DoNewsCode/core/issues/130)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* cluster address in env (close [#131](https://github.com/DoNewsCode/core/issues/131)) ([#133](https://github.com/DoNewsCode/core/issues/133)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+
 <a name="v0.5.0"></a>
-## [v0.5.0](https://github.com/DoNewsCode/core/compare/v0.4.2...v0.5.0) (2021-04-28)
+## [v0.5.0](https://github.com/DoNewsCode/core/compare/v0.4.2...v0.5.0) (2021-04-29)
 
 ### ✨ Features
 
@@ -10,7 +20,6 @@
 
 ### 🐛 Bug Fixes
 
-* etcd default endpoint (@[Reasno](guxi99@gmail.com))
 * cases (@[谷溪](guxi99@gmail.com))
 
 
