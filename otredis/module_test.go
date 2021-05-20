@@ -42,6 +42,9 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		core.WithInline("redis.default.addrs", envDefaultRedisAddrs),
 		core.WithInline("redisMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
+		core.WithInline("http.disable", "true"),
+		core.WithInline("grpc.disable", "true"),
+		core.WithInline("cron.disable", "true"),
 	)
 	c.ProvideEssentials()
 	c.Provide(di.Deps{func() *Gauges {
