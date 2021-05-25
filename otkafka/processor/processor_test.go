@@ -221,7 +221,8 @@ func TestProcessor(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
+	assert.NotZero(t, len(handlerA.data))
+	assert.NotZero(t, len(handlerB.data))
 	assert.Equal(t, 0, len(handlerA.data)%3)
 	assert.Equal(t, 0, len(handlerB.data)%3)
 	assert.Equal(t, 4, len(handlerC.data))
