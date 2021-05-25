@@ -192,6 +192,13 @@ func newServeCmd(s serveIn) *cobra.Command {
 				g run.Group
 				l = logging.WithLevel(s.Logger)
 			)
+			if len(s.Container.Modules()) == 0 {
+				l.Warn("there are no modules to run, please provide")
+				return nil
+			}
+			for _, m := range s.Container.Modules() {
+				l.Debugf("load module: %T", m)
+			}
 
 			// Add serve and signalWatch
 			serves := []runGroupFunc{
