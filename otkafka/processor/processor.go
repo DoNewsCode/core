@@ -2,7 +2,6 @@ package processor
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/DoNewsCode/core/di"
@@ -109,7 +108,6 @@ func (e *Processor) addHandler(h Handler) error {
 		reader:     reader,
 		handleFunc: h.Handle,
 		info:       h.Info(),
-		once:       sync.Once{},
 	}
 
 	batchHandler, isBatchHandler := h.(BatchHandler)
@@ -152,7 +150,6 @@ func (e *Processor) ProvideRunGroup(group *run.Group) {
 				return handler.read(ctx)
 			}, func(err error) {
 				cancel()
-				handler.close()
 			})
 		}
 
@@ -161,7 +158,6 @@ func (e *Processor) ProvideRunGroup(group *run.Group) {
 				return handler.handle(ctx)
 			}, func(err error) {
 				cancel()
-				handler.close()
 			})
 		}
 
@@ -171,11 +167,9 @@ func (e *Processor) ProvideRunGroup(group *run.Group) {
 					return handler.batch(ctx)
 				}, func(err error) {
 					cancel()
-					handler.close()
 				})
 			}
 		}
-
 	}
 
 	group.Add(func() error {
@@ -189,6 +183,13 @@ func (e *Processor) ProvideRunGroup(group *run.Group) {
 
 }
 
+// ProvideCloser implements container.CloserProvider for the Module.
+func (e *Processor) ProvideCloser() {
+	for _, h := range e.handlers {
+		h.close()
+	}
+}
+
 // handler private processor
 // todo It's a bit messy
 type handler struct {
@@ -199,7 +200,6 @@ type handler struct {
 	batchFunc  BatchFunc
 	info       *Info
 	ticker     *time.Ticker
-	once       sync.Once
 }
 
 // read fetch message from kafka
@@ -294,29 +294,21 @@ func (h *handler) batch(ctx context.Context) error {
 				return err
 			}
 		case <-ctx.Done():
-			for v := range h.batchCh {
-				appendData(v)
-			}
-			if err := doFunc(); err != nil {
-				return err
-			}
 			return ctx.Err()
 		}
 	}
 }
 
 func (h *handler) close() {
-	h.once.Do(func() {
-		if h.msgCh != nil {
-			close(h.msgCh)
-		}
-		if h.batchCh != nil {
-			close(h.batchCh)
-		}
-		if h.ticker != nil {
-			h.ticker.Stop()
-		}
-	})
+	if h.msgCh != nil {
+		close(h.msgCh)
+	}
+	if h.batchCh != nil {
+		close(h.batchCh)
+	}
+	if h.ticker != nil {
+		h.ticker.Stop()
+	}
 }
 
 func (h *handler) commit(messages ...kafka.Message) error {
