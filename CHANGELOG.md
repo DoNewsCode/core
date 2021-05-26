@@ -1,4 +1,12 @@
 
+<a name="v0.6.1"></a>
+## [v0.6.1](https://github.com/DoNewsCode/core/compare/v0.6.0...v0.6.1) (2021-05-25)
+
+### 🐛 Bug Fixes
+
+* otkafka processor error (close [#135](https://github.com/DoNewsCode/core/issues/135)) ([#136](https://github.com/DoNewsCode/core/issues/136)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+
 <a name="v0.6.0"></a>
 ## [v0.6.0](https://github.com/DoNewsCode/core/compare/v0.5.0...v0.6.0) (2021-05-19)
 
