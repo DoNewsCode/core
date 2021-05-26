@@ -117,7 +117,6 @@ func (s serveIn) grpcServe(ctx context.Context, logger logging.LevelLogger) (fun
 
 	for module, info := range s.GRPCServer.GetServiceInfo() {
 		for _, method := range info.Methods {
-			//logger.Debugf("grpc path: %s/%s", module, method.Name)
 			level.Debug(logger).Log("service", "grpc", "path", fmt.Sprintf("%s/%s", module, method.Name))
 		}
 	}
