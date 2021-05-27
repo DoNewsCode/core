@@ -72,7 +72,8 @@ func TestError(t *testing.T) {
 	)
 
 	cfg := &clientv3.Config{
-		Endpoints: []string{},
+		Endpoints:   []string{},
+		DialTimeout: 2 * time.Second,
 	}
 
 	r = Provider("config.yaml", cfg)
@@ -88,7 +89,7 @@ func TestError(t *testing.T) {
 	assert.Error(t, err)
 
 	cfg = &clientv3.Config{
-		Endpoints:   []string{os.Getenv("ETCD_ADDR")},
+		Endpoints:   envDefaultEtcdAddrs,
 		DialTimeout: 2 * time.Second,
 	}
 	r = Provider("config-test1", cfg)

@@ -52,10 +52,23 @@ func (m *Mock) ProvideMigration() []*Migration {
 }
 
 func TestMain(m *testing.M) {
-	if !envDefaultMysqlDsnIsSet {
-		fmt.Println("Set env MYSQL_DSN to run otgorm tests")
+	drivers := map[string]bool{
+		"MYSQL_DSN":      envDefaultMysqlDsnIsSet,
+		"CLICKHOUSE_DSN": envDefaultClickhouseDsnIsSet,
+		"POSTGRES_DSN":   envDefaultPostgresDsnIsSet,
+		"SQLSERVER_DSN":  envDefaultSqlserverDsnIsSet,
+	}
+	var missingEnvs []string
+	for envName, isSet := range drivers {
+		if !isSet {
+			missingEnvs = append(missingEnvs, envName)
+		}
+	}
+	if len(missingEnvs) > 0 {
+		fmt.Printf("Set env %s to run otgorm tests\n", missingEnvs)
 		os.Exit(0)
 	}
+
 	os.Exit(m.Run())
 }
 
