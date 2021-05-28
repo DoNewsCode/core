@@ -303,6 +303,3 @@ func provideConfig() configOut {
 }
 
 var envDefaultMysqlDsn, envDefaultMysqlDsnIsSet = internal.GetDefaultAddrFromEnv("MYSQL_DSN", "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local")
-var envDefaultClickhouseDsn, envDefaultClickhouseDsnIsSet = internal.GetDefaultAddrFromEnv("CLICKHOUSE_DSN", "tcp://127.0.0.1:9942?database=gorm&username=gorm&password=gorm&read_timeout=10&write_timeout=20")
-var envDefaultPostgresDsn, envDefaultPostgresDsnIsSet = internal.GetDefaultAddrFromEnv("POSTGRES_DSN", "user=gorm password=gorm dbname=gorm host=127.0.0.1 port=9920 sslmode=disable TimeZone=Asia/Shanghai")
-var envDefaultSqlserverDsn, envDefaultSqlserverDsnIsSet = internal.GetDefaultAddrFromEnv("SQLSERVER_DSN", "sqlserver://gorm:LoremIpsum86@127.0.0.1:9930?database=gorm")

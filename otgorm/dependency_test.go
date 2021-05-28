@@ -14,25 +14,13 @@ import (
 
 func TestProvideDBFactory(t *testing.T) {
 	gorms := map[string]databaseConf{
-		"sqlite": {
+		"default": {
 			Database: "sqlite",
 			Dsn:      ":memory:",
 		},
-		"mysql": {
+		"alternative": {
 			Database: "mysql",
 			Dsn:      envDefaultMysqlDsn,
-		},
-		"postgres": {
-			Database: "postgres",
-			Dsn:      envDefaultPostgresDsn,
-		},
-		"sqlserver": {
-			Database: "sqlserver",
-			Dsn:      envDefaultSqlserverDsn,
-		},
-		"clickhouse": {
-			Database: "clickhouse",
-			Dsn:      envDefaultClickhouseDsn,
 		},
 	}
 	factory, cleanup := provideDBFactory(databaseIn{
