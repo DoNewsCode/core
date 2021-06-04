@@ -13,27 +13,29 @@ import (
 )
 
 func TestProvideDBFactory(t *testing.T) {
+	gorms := map[string]databaseConf{
+		"default": {
+			Database: "sqlite",
+			Dsn:      ":memory:",
+		},
+		"alternative": {
+			Database: "mysql",
+			Dsn:      envDefaultMysqlDsn,
+		},
+	}
 	factory, cleanup := provideDBFactory(databaseIn{
-		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
-			"default": {
-				Database: "sqlite",
-				Dsn:      ":memory:",
-			},
-			"alternative": {
-				Database: "mysql",
-				Dsn:      envDefaultMysqlDsn,
-			},
-		}},
+		Conf:   config.MapAdapter{"gorm": gorms},
 		Logger: log.NewNopLogger(),
 		Tracer: nil,
 	})
-	alt, err := factory.Make("alternative")
-	assert.NoError(t, err)
-	assert.NotNil(t, alt)
-	def, err := factory.Make("default")
-	assert.NoError(t, err)
-	assert.NotNil(t, def)
-	cleanup()
+	defer cleanup()
+	for driverName := range gorms {
+		t.Run(driverName, func(t *testing.T) {
+			db, err := factory.Make(driverName)
+			assert.NoError(t, err)
+			assert.NotNil(t, db)
+		})
+	}
 }
 
 func TestGorm(t *testing.T) {
@@ -44,9 +46,9 @@ func TestGorm(t *testing.T) {
 		d1 Maker,
 		d2 Factory,
 		d3 struct {
-			di.In
-			Cfg []config.ExportedConfig `group:"config"`
-		},
+		di.In
+		Cfg []config.ExportedConfig `group:"config"`
+	},
 		d4 *gorm.DB,
 	) {
 		a := assert.New(t)

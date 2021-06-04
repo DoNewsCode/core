@@ -13,8 +13,11 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/opentracing/opentracing-go"
+	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
+	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
@@ -136,11 +139,15 @@ type databaseOut struct {
 // provideDialector provides a gorm.Dialector. Mean to be used as an intermediate
 // step to create *gorm.DB
 func provideDialector(conf *databaseConf) (gorm.Dialector, error) {
-	if conf.Database == "mysql" {
-		return mysql.Open(conf.Dsn), nil
+	drivers := map[string]func(dsn string) gorm.Dialector{
+		"mysql":      mysql.Open,
+		"sqlite":     sqlite.Open,
+		"postgres":   postgres.Open,
+		"sqlserver":  sqlserver.Open,
+		"clickhouse": clickhouse.Open,
 	}
-	if conf.Database == "sqlite" {
-		return sqlite.Open(conf.Dsn), nil
+	if driver, ok := drivers[conf.Database]; ok {
+		return driver(conf.Dsn), nil
 	}
 	return nil, fmt.Errorf("unknow database type %s", conf.Database)
 }
