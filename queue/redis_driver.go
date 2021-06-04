@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/internal"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 )

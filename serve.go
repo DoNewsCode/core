@@ -2,8 +2,8 @@ package core
 
 import (
 	"context"
-	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/cronopts"
+	"github.com/DoNewsCode/core/events"
 	"net"
 	"net/http"
 	"os"
@@ -14,7 +14,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
