@@ -3,7 +3,7 @@ package otes
 import (
 	"fmt"
 
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 )
 
 // ElasticLogAdapter is an adapter between kitlog and elastic logger interface

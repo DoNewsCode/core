@@ -14,7 +14,7 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/logging"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
