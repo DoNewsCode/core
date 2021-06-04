@@ -169,7 +169,7 @@ func TestC_Default(t *testing.T) {
 func TestC_Remote(t *testing.T) {
 	addr := os.Getenv("ETCD_ADDR")
 	if addr == "" {
-		t.Skipf("set ETCD_ADDR for run remote test")
+		t.Skip("set ETCD_ADDR for run remote test")
 	}
 
 	envEtcdAddrs := strings.Split(addr, ",")
