@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -123,11 +124,14 @@ func TestC_Default(t *testing.T) {
 }
 
 func TestC_Remote(t *testing.T) {
-	if os.Getenv("ETCD_ADDR") == "" {
-		t.Skip("Set ETCD_ADDR to enable remote tests")
+	addr := os.Getenv("ETCD_ADDR")
+	if addr == "" {
+		t.Skip("set ETCD_ADDR for run remote test")
 	}
+
+	envEtcdAddrs := strings.Split(addr, ",")
 	cfg := clientv3.Config{
-		Endpoints:   []string{os.Getenv("ETCD_ADDR")},
+		Endpoints:   envEtcdAddrs,
 		DialTimeout: 2 * time.Second,
 	}
 	_ = remote.Provider("config.yaml", &cfg)

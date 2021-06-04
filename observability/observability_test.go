@@ -80,7 +80,7 @@ func TestProvideRedisMetrics(t *testing.T) {
 func TestProvideKafkaMetrics(t *testing.T) {
 	addr := os.Getenv("KAFKA_ADDR")
 	if addr == "" {
-		t.Skipf("set KAFKA_ADDR for run kafka metrics test")
+		t.Skip("set KAFKA_ADDR for run kafka metrics test")
 	}
 	addrs := strings.Split(addr, ",")
 	c := core.New(
