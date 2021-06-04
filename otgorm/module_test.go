@@ -56,6 +56,7 @@ func TestMain(m *testing.M) {
 		fmt.Println("Set env MYSQL_DSN to run otgorm tests")
 		os.Exit(0)
 	}
+
 	os.Exit(m.Run())
 }
 
