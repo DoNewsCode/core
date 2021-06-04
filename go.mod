@@ -3,6 +3,7 @@ module github.com/DoNewsCode/core
 go 1.14
 
 require (
+	github.com/ClickHouse/clickhouse-go v1.4.5 // indirect
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
 	github.com/Reasno/ifilter v0.1.2
 	github.com/aws/aws-sdk-go v1.37.16
@@ -18,6 +19,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/hashicorp/go-version v1.3.0 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/klauspost/compress v1.12.2 // indirect
 	github.com/knadh/koanf v0.15.0
@@ -41,7 +43,6 @@ require (
 	go.uber.org/atomic v1.7.0
 	go.uber.org/dig v1.10.0
 	go.uber.org/zap v1.16.0
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210309074719-68d13333faf2 // indirect
@@ -49,7 +50,10 @@ require (
 	google.golang.org/grpc v1.35.0
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+	gorm.io/driver/clickhouse v0.1.0
 	gorm.io/driver/mysql v1.0.4
+	gorm.io/driver/postgres v1.1.0
 	gorm.io/driver/sqlite v1.1.4
-	gorm.io/gorm v1.20.12
+	gorm.io/driver/sqlserver v1.0.7
+	gorm.io/gorm v1.21.10
 )
