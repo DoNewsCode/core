@@ -24,27 +24,29 @@ import (
 
 // Manager manages S3 uploads.
 type Manager struct {
-	bucket       string
-	sess         *session.Session
-	tracer       opentracing.Tracer
-	doer         contract.HttpDoer
-	pathPrefix   string
-	keyer        contract.Keyer
-	locationFunc func(location string) (url string)
+	bucket        string
+	sess          *session.Session
+	tracer        opentracing.Tracer
+	doer          contract.HttpDoer
+	pathPrefix    string
+	keyer         contract.Keyer
+	locationFunc  func(location string) (url string)
+	autoExtension bool
 }
 
 // Config contains a various of configurations for Manager. It is mean to be modified by Option.
 type Config struct {
-	accessKey    string
-	accessSecret string
-	region       string
-	bucket       string
-	sess         *session.Session
-	tracer       opentracing.Tracer
-	doer         contract.HttpDoer
-	keyer        contract.Keyer
-	pathPrefix   string
-	locationFunc func(location string) (url string)
+	accessKey     string
+	accessSecret  string
+	region        string
+	bucket        string
+	sess          *session.Session
+	tracer        opentracing.Tracer
+	doer          contract.HttpDoer
+	keyer         contract.Keyer
+	pathPrefix    string
+	locationFunc  func(location string) (url string)
+	autoExtension bool
 }
 
 // Option is the type of functional options to alter Config.
@@ -86,6 +88,13 @@ func WithLocationFunc(f func(location string) (url string)) Option {
 	}
 }
 
+// WithAutoExtension is an option that auto splice extension, default is true.
+func WithAutoExtension(auto bool) Option {
+	return func(c *Config) {
+		c.autoExtension = auto
+	}
+}
+
 // NewManager creates a new S3 manager
 func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts ...Option) *Manager {
 	c := &Config{
@@ -94,6 +103,7 @@ func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts .
 		locationFunc: func(location string) (url string) {
 			return location
 		},
+		autoExtension: true,
 	}
 	for _, f := range opts {
 		f(c)
@@ -109,13 +119,14 @@ func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts .
 	sess := session.Must(session.NewSession(s3Config))
 	c.keyer.Key("/")
 	m := &Manager{
-		bucket:       bucket,
-		sess:         sess,
-		tracer:       c.tracer,
-		doer:         c.doer,
-		pathPrefix:   c.pathPrefix,
-		keyer:        c.keyer,
-		locationFunc: c.locationFunc,
+		bucket:        bucket,
+		sess:          sess,
+		tracer:        c.tracer,
+		doer:          c.doer,
+		pathPrefix:    c.pathPrefix,
+		keyer:         c.keyer,
+		locationFunc:  c.locationFunc,
+		autoExtension: c.autoExtension,
 	}
 
 	// add opentracing capabilities if opt in
@@ -133,10 +144,12 @@ func (m *Manager) Upload(ctx context.Context, name string, reader io.Reader) (ne
 	uploader := s3manager.NewUploader(m.sess)
 	var extension = ""
 	var buf = bytes.NewBuffer(nil)
-	var tee = io.TeeReader(reader, buf)
-	mi, err := mimetype.DetectReader(tee)
-	if err == nil {
-		extension = mi.Extension()
+	if m.autoExtension {
+		var tee = io.TeeReader(reader, buf)
+		mi, err := mimetype.DetectReader(tee)
+		if err == nil {
+			extension = mi.Extension()
+		}
 	}
 
 	k := key.KeepOdd(m.keyer).Key("/", name+extension)

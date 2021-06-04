@@ -67,6 +67,7 @@ jobs:
         ports:
           - 9000:9000
         options: --name minio-server
+
     steps:
     - uses: actions/checkout@v2
 
@@ -75,10 +76,19 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
+    - uses: actions/cache@v2
+      id: cache-go-mod
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('go.mod') }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ matrix.go-version }}
+
     - name: Environment Variables from Dotenv
       uses: c-py/action-dotenv-to-setenv@v3
 
     - name: Build
+      if: steps.cache-go-mod.outputs.cache-hit != 'true'
       run: go build -v ./...
 
     - name: Test
