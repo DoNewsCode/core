@@ -133,9 +133,6 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"),
 		core.WithInline("gormMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
-		core.WithInline("http.disable", "true"),
-		core.WithInline("grpc.disable", "true"),
-		core.WithInline("cron.disable", "true"),
 	)
 	c.ProvideEssentials()
 	c.Provide(di.Deps{func() *Gauges {
