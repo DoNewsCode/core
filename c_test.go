@@ -123,6 +123,9 @@ func TestC_Default(t *testing.T) {
 }
 
 func TestC_Remote(t *testing.T) {
+	if os.Getenv("ETCD_ADDR") == "" {
+		t.Skip("Set ETCD_ADDR to enable remote tests")
+	}
 	cfg := clientv3.Config{
 		Endpoints:   []string{os.Getenv("ETCD_ADDR")},
 		DialTimeout: 2 * time.Second,
