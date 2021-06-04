@@ -3,7 +3,7 @@ package otkafka
 import (
 	"fmt"
 
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 )
 
 // KafkaLogAdapter is an log adapter bridging kitlog and kafka.

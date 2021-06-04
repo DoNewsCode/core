@@ -8,7 +8,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 	"gopkg.in/yaml.v3"

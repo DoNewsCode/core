@@ -11,6 +11,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-kit/kit v0.10.0
+	github.com/go-kit/log v0.1.0
 	github.com/go-redis/redis/v8 v8.6.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.5.0
