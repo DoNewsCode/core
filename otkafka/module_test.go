@@ -2,7 +2,6 @@ package otkafka
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -28,11 +27,11 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	mc.EXPECT().Add(gomock.Any()).MinTimes(1)
 
 	c := core.New(
-		core.WithInline("kafka.writer.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
-		core.WithInline("kafka.reader.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
+		core.WithInline("kafka.writer.default.brokers", envDefaultKafkaAddrs),
+		core.WithInline("kafka.reader.default.brokers", envDefaultKafkaAddrs),
 		core.WithInline("kafka.writer.default.topic", "test"),
 		core.WithInline("kafka.reader.default.topic", "test"),
-		core.WithInline("kafkaMetrics.interval", "1ms"),
+		core.WithInline("kafkaMetrics.interval", "10ms"),
 		core.WithInline("log.level", "none"),
 		core.WithInline("http.disable", "true"),
 		core.WithInline("grpc.disable", "true"),
@@ -130,12 +129,9 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	c.Provide(Providers())
 	c.AddModuleFunc(New)
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go c.Serve(ctx)
-	<-time.After(10 * time.Millisecond)
-	cancel()
-	<-time.After(1000 * time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	c.Serve(ctx)
 }
 
 func TestCollector(t *testing.T) {
@@ -152,8 +148,8 @@ func TestCollector(t *testing.T) {
 	mc.EXPECT().Add(gomock.Any()).MinTimes(1)
 
 	c := core.New(
-		core.WithInline("kafka.writer.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
-		core.WithInline("kafka.reader.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
+		core.WithInline("kafka.writer.default.brokers", envDefaultKafkaAddrs),
+		core.WithInline("kafka.reader.default.brokers", envDefaultKafkaAddrs),
 		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("kafkaMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
