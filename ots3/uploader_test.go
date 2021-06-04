@@ -30,6 +30,7 @@ func TestNewManager(t *testing.T) {
 			return ""
 		}),
 		WithKeyer(key.New()),
+		WithAutoExtension(true),
 	))
 }
 
