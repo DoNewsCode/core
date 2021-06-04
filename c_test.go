@@ -100,7 +100,7 @@ func TestC_NoServe(t *testing.T) {
 	defer cancel()
 	e := c.Serve(ctx)
 	assert.NoError(t, e)
-	assert.Equal(t, int32(0), atomic.LoadInt32(&called))
+	assert.Equal(t, int32(4), atomic.LoadInt32(&called))
 }
 
 func TestC_ServeDisable(t *testing.T) {

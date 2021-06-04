@@ -18,7 +18,6 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/gorilla/mux"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
@@ -65,10 +64,8 @@ func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (fun
 		s.HTTPServer = &http.Server{}
 	}
 	router := mux.NewRouter()
-	if s.Container.ApplyRouter(router) == 0 {
-		logger.Info("no http service to apply")
-		return nil, nil, nil
-	}
+	s.Container.ApplyRouter(router)
+
 	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		tpl, _ := route.GetPathTemplate()
 		level.Debug(logger).Log("service", "http", "path", tpl)
@@ -104,16 +101,9 @@ func (s serveIn) grpcServe(ctx context.Context, logger logging.LevelLogger) (fun
 		return nil, nil, nil
 	}
 	if s.GRPCServer == nil {
-		opts := []grpc.ServerOption{
-			grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
-			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
-		}
-		s.GRPCServer = grpc.NewServer(opts...)
+		s.GRPCServer = grpc.NewServer()
 	}
-	if s.Container.ApplyGRPCServer(s.GRPCServer) == 0 {
-		logger.Info("no grpc service to apply")
-		return nil, nil, nil
-	}
+	s.Container.ApplyGRPCServer(s.GRPCServer)
 
 	for module, info := range s.GRPCServer.GetServiceInfo() {
 		for _, method := range info.Methods {
@@ -150,11 +140,8 @@ func (s serveIn) cronServe(ctx context.Context, logger logging.LevelLogger) (fun
 	if s.Cron == nil {
 		s.Cron = cron.New(cron.WithLogger(cronopts.CronLogAdapter{Logging: s.Logger}))
 	}
+	s.Container.ApplyCron(s.Cron)
 
-	if s.Container.ApplyCron(s.Cron) == 0 {
-		logger.Info("no cron service to apply")
-		return nil, nil, nil
-	}
 	return func() error {
 			logger.Infof("cron runner started")
 			s.Cron.Run()
@@ -191,10 +178,7 @@ func newServeCmd(s serveIn) *cobra.Command {
 				g run.Group
 				l = logging.WithLevel(s.Logger)
 			)
-			if len(s.Container.Modules()) == 0 {
-				l.Warn("there are no modules to run, please provide")
-				return nil
-			}
+
 			for _, m := range s.Container.Modules() {
 				l.Debugf("load module: %T", m)
 			}
@@ -207,28 +191,19 @@ func newServeCmd(s serveIn) *cobra.Command {
 				s.signalWatch,
 			}
 
-			serveCount := len(serves)
-
 			for _, serve := range serves {
 				execute, interrupt, err := serve(cmd.Context(), l)
 				if err != nil {
 					return err
 				}
 				if execute == nil {
-					serveCount--
 					continue
 				}
 				g.Add(execute, interrupt)
 			}
 
 			// Additional run groups
-			serveCount += s.Container.ApplyRunGroup(&g)
-
-			// At least one serve: signalWatch. It doesn't need to run alone
-			if serveCount <= 1 {
-				l.Warn("there are no services to run, please check module")
-				return nil
-			}
+			s.Container.ApplyRunGroup(&g)
 
 			if err := g.Run(); err != nil {
 				return err
