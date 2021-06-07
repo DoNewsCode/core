@@ -55,7 +55,7 @@ func New(p ConfigIn) (Module, error) {
 func (m Module) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
 	group.Add(func() error {
-		m.conf.BindDispatcher(m.dispatcher)
+		m.conf.dispatcher = m.dispatcher
 		return m.conf.Watch(ctx)
 	}, func(err error) {
 		cancel()

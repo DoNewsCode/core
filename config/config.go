@@ -99,12 +99,6 @@ func (k *KoanfAdapter) Reload() error {
 	return nil
 }
 
-// BindDispatcher binds a contract.Dispatcher to the KoanfAdapter. When the config is reloaded,
-// this dispatcher will be used to dispatch "ReloadedEvent".
-func (k *KoanfAdapter) BindDispatcher(dispatcher contract.Dispatcher) {
-	k.dispatcher = dispatcher
-}
-
 // Watch uses the internal watcher to watch the configuration reload signals.
 // This function should be registered in the run group. If the watcher is nil,
 // this call will block until context expired.
