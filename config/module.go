@@ -19,6 +19,7 @@ import (
 )
 
 // Module is the configuration module that bundles the reload watcher and exportConfig commands.
+// This module triggers ReloadedEvent on configuration change.
 type Module struct {
 	conf            *KoanfAdapter
 	exportedConfigs []ExportedConfig
