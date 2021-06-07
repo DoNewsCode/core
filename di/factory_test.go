@@ -1,7 +1,9 @@
 package di
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -39,4 +41,33 @@ func TestFactory(t *testing.T) {
 
 	f.Close()
 	assert.Contains(t, closed, "foo", "bar")
+}
+
+func BenchmarkFactory_slowConn(b *testing.B) {
+	f := NewFactory(func(name string) (Pair, error) {
+		// Simulate a slow construction
+		time.Sleep(100 * time.Millisecond)
+		return Pair{
+			Conn:   &name,
+			Closer: func() {},
+		}, nil
+	})
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			f.Make(randomString(10))
+		}
+	})
+}
+
+const (
+	chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+)
+
+func randomString(l uint) string {
+	s := make([]byte, l)
+	for i := 0; i < int(l); i++ {
+		s[i] = chars[rand.Intn(len(chars))]
+	}
+	return string(s)
 }

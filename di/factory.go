@@ -70,6 +70,10 @@ func (f *Factory) Close() {
 		}(name)
 	}
 	wg.Wait()
+	// Delete all. f.cache can be reused afterwards.
+	for name := range f.cache {
+		delete(f.cache, name)
+	}
 }
 
 // CloseConn closes a specific connection in the factory.
