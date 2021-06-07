@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/events"
 	"github.com/knadh/koanf"
 	"github.com/mitchellh/mapstructure"
 )
@@ -83,7 +84,7 @@ func NewConfig(options ...Option) (*KoanfAdapter, error) {
 // reloading.
 func (k *KoanfAdapter) Reload() error {
 	if k.dispatcher != nil {
-		defer k.dispatcher.Dispatch(context.Background(), ReloadedEvent{k})
+		defer k.dispatcher.Dispatch(context.Background(), events.Of(ReloadedEvent{k}))
 	}
 
 	k.rwlock.Lock()

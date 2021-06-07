@@ -109,8 +109,8 @@ func TestModule_Watch(t *testing.T) {
 		defer cancel()
 
 		dispatcher := &events.SyncDispatcher{}
-		dispatcher.Subscribe(events.Listen([]contract.Event{ReloadedEvent{}}, func(ctx context.Context, event contract.Event) error {
-			data := event.Data().(*KoanfAdapter)
+		dispatcher.Subscribe(events.Listen(events.From(ReloadedEvent{}), func(ctx context.Context, event contract.Event) error {
+			data := event.Data().(ReloadedEvent).NewConf.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil
@@ -124,8 +124,8 @@ func TestModule_Watch(t *testing.T) {
 		defer cancel()
 
 		dispatcher := &events.SyncDispatcher{}
-		dispatcher.Subscribe(events.Listen([]contract.Event{ReloadedEvent{}}, func(ctx context.Context, event contract.Event) error {
-			data := event.Data().(*KoanfAdapter)
+		dispatcher.Subscribe(events.Listen(events.From(ReloadedEvent{}), func(ctx context.Context, event contract.Event) error {
+			data := event.Data().(ReloadedEvent).NewConf.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil
