@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/DoNewsCode/core/di"
 	"gopkg.in/yaml.v3"
 
@@ -21,6 +22,7 @@ import (
 type Module struct {
 	conf            *KoanfAdapter
 	exportedConfigs []ExportedConfig
+	dispatcher      contract.Dispatcher
 }
 
 // ConfigIn is the injection parameter for config.New.
@@ -28,7 +30,8 @@ type ConfigIn struct {
 	di.In
 
 	Conf            contract.ConfigAccessor
-	ExportedConfigs []ExportedConfig `group:"config"`
+	Dispatcher      contract.Dispatcher `optional:"true"`
+	ExportedConfigs []ExportedConfig    `group:"config"`
 }
 
 // New creates a new config module. It contains the init command.
@@ -41,6 +44,7 @@ func New(p ConfigIn) (Module, error) {
 		return Module{}, fmt.Errorf("expects a *config.KoanfAdapter instance, but %T given", p.Conf)
 	}
 	return Module{
+		dispatcher:      p.Dispatcher,
 		conf:            adapter,
 		exportedConfigs: p.ExportedConfigs,
 	}, nil
@@ -50,6 +54,7 @@ func New(p ConfigIn) (Module, error) {
 func (m Module) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
 	group.Add(func() error {
+		m.conf.BindDispatcher(m.dispatcher)
 		return m.conf.Watch(ctx)
 	}, func(err error) {
 		cancel()
