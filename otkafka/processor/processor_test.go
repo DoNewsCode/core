@@ -183,6 +183,9 @@ func TestProcessor(t *testing.T) {
 		core.WithInline("kafka.reader.D.groupID", "testD"),
 		core.WithInline("kafka.reader.D.startOffset", kafka.FirstOffset),
 
+		core.WithInline("http.disable", "true"),
+		core.WithInline("grpc.disable", "true"),
+		core.WithInline("cron.disable", "true"),
 		core.WithInline("log.level", "none"),
 	)
 	defer c.Shutdown()
@@ -233,6 +236,9 @@ func TestProcessorBatchInterval(t *testing.T) {
 		core.WithInline("kafka.reader.default.groupID", "testE"),
 		core.WithInline("kafka.reader.default.startOffset", kafka.FirstOffset),
 
+		core.WithInline("http.disable", "true"),
+		core.WithInline("grpc.disable", "true"),
+		core.WithInline("cron.disable", "true"),
 		core.WithInline("log.level", "none"),
 	)
 	defer c.Shutdown()
@@ -293,6 +299,9 @@ func TestProcessorBatchError(t *testing.T) {
 		core.WithInline("kafka.reader.default.groupID", "testF"),
 		core.WithInline("kafka.reader.default.startOffset", kafka.FirstOffset),
 
+		core.WithInline("http.disable", "true"),
+		core.WithInline("grpc.disable", "true"),
+		core.WithInline("cron.disable", "true"),
 		core.WithInline("log.level", "none"),
 	)
 	defer c.Shutdown()
