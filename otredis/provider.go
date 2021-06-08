@@ -69,6 +69,7 @@ type in struct {
 	Interceptor RedisConfigurationInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer            `optional:"true"`
 	Gauges      *Gauges                       `optional:"true"`
+	Dispatcher  contract.Dispatcher           `optional:"true"`
 }
 
 // out is the result of provideRedisFactory.
@@ -88,13 +89,15 @@ func provideRedisFactory(p in) (out, func()) {
 			base RedisUniversalOptions
 			full redis.UniversalOptions
 		)
-		if err := p.Conf.Unmarshal(fmt.Sprintf("redis.%s", name), &base); err != nil && name != "default" {
-			return di.Pair{}, fmt.Errorf("redis configuration %s not valid: %w", name, err)
-		} else if name == "default" {
+		if err := p.Conf.Unmarshal(fmt.Sprintf("redis.%s", name), &base); err != nil {
+			if name != "default" {
+				return di.Pair{}, fmt.Errorf("redis configuration %s not valid: %w", name, err)
+			}
 			base = RedisUniversalOptions{
 				Addrs: envDefaultRedisAddrs,
 			}
 		}
+
 		full = redis.UniversalOptions{
 			Addrs:              base.Addrs,
 			DB:                 base.DB,
@@ -143,7 +146,7 @@ func provideRedisFactory(p in) (out, func()) {
 		}, nil
 	})
 	redisFactory := Factory{factory}
-
+	redisFactory.SubscribeReloadEventFrom(p.Dispatcher)
 	var collector *collector
 	if p.Gauges != nil {
 		var interval time.Duration

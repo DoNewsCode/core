@@ -53,6 +53,9 @@ func (f *Factory) Make(name string) (interface{}, error) {
 // SubscribeReloadEventFrom subscribes to the reload events from dispatcher and then notifies the di
 // factory to clear its cache and shutdown all connections gracefully.
 func (f *Factory) SubscribeReloadEventFrom(dispatcher contract.Dispatcher) {
+	if dispatcher == nil {
+		return
+	}
 	f.reloadOnce.Do(func() {
 		dispatcher.Subscribe(events.Listen(events.From(events.OnReload{}), func(ctx context.Context, event contract.Event) error {
 			f.Close()

@@ -9,7 +9,6 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"go.etcd.io/etcd/client/v3"
@@ -65,6 +64,7 @@ type factoryIn struct {
 	Conf        contract.ConfigAccessor
 	Interceptor EtcdConfigInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer    `optional:"true"`
+	Dispatcher  contract.Dispatcher   `optional:"true"`
 }
 
 // FactoryOut is the result of Provide.
@@ -78,22 +78,14 @@ type FactoryOut struct {
 // provideFactory creates Factory. It is a valid
 // dependency for package core.
 func provideFactory(p factoryIn) (FactoryOut, func()) {
-	var err error
-	var dbConfs map[string]Option
-
-	err = p.Conf.Unmarshal("etcd", &dbConfs)
-	if err != nil {
-		level.Warn(p.Logger).Log("err", err)
-	}
 
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			ok   bool
 			conf Option
 		)
-		if conf, ok = dbConfs[name]; !ok {
+		if err := p.Conf.Unmarshal(fmt.Sprintf("etcd.%s", name), &conf); err != nil {
 			if name != "default" {
-				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid", name)
+				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid: %w", name, err)
 			}
 			conf = Option{Endpoints: envDefaultEtcdAddrs}
 		}
@@ -133,6 +125,7 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 		}, nil
 	})
 	etcdFactory := Factory{factory}
+	etcdFactory.SubscribeReloadEventFrom(p.Dispatcher)
 	out := FactoryOut{
 		Maker:   etcdFactory,
 		Factory: etcdFactory,

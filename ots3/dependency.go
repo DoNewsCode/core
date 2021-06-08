@@ -11,7 +11,6 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -57,9 +56,10 @@ type Maker interface {
 type in struct {
 	di.In
 
-	Logger log.Logger
-	Conf   contract.ConfigAccessor
-	Tracer opentracing.Tracer `optional:"true"`
+	Logger     log.Logger
+	Conf       contract.ConfigAccessor
+	Tracer     opentracing.Tracer  `optional:"true"`
+	Dispatcher contract.Dispatcher `optional:"true"`
 }
 
 // out is the di output of provideFactory.
@@ -86,25 +86,17 @@ func (s Factory) Make(name string) (*Manager, error) {
 
 // provideFactory creates *Factory and *ots3.Manager. It is a valid dependency for package core.
 func provideFactory(p in) out {
-	var (
-		err       error
-		s3configs map[string]S3Config
-	)
-	err = p.Conf.Unmarshal("s3", &s3configs)
-	if err != nil {
-		level.Warn(p.Logger).Log("err", err)
-	}
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
-		var (
-			ok   bool
-			conf S3Config
-		)
-		if conf, ok = s3configs[name]; !ok {
+
+		var conf S3Config
+
+		if err := p.Conf.Unmarshal(fmt.Sprintf("s3.%s", name), &conf); err != nil {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("s3 configuration %s not found", name)
 			}
 			conf = S3Config{}
 		}
+
 		manager := NewManager(
 			conf.AccessKey,
 			conf.AccessSecret,
@@ -125,7 +117,10 @@ func provideFactory(p in) out {
 			Conn:   manager,
 		}, nil
 	})
+
 	s3Factory := Factory{factory}
+	s3Factory.SubscribeReloadEventFrom(p.Dispatcher)
+
 	return out{
 		Factory: s3Factory,
 		Maker:   &s3Factory,
