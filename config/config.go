@@ -8,17 +8,19 @@ import (
 	"sync"
 
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/events"
 	"github.com/knadh/koanf"
 	"github.com/mitchellh/mapstructure"
 )
 
 // KoanfAdapter is a implementation of contract.Config based on Koanf (https://github.com/knadh/koanf).
 type KoanfAdapter struct {
-	layers    []ProviderSet
-	watcher   contract.ConfigWatcher
-	delimiter string
-	rwlock    sync.RWMutex
-	K         *koanf.Koanf
+	layers     []ProviderSet
+	watcher    contract.ConfigWatcher
+	dispatcher contract.Dispatcher
+	delimiter  string
+	rwlock     sync.RWMutex
+	K          *koanf.Koanf
 }
 
 // ProviderSet is a configuration layer formed by a parser and a provider.
@@ -53,6 +55,13 @@ func WithDelimiter(delimiter string) Option {
 	}
 }
 
+// WithDispatcher changes the default dispatcher of Koanf.
+func WithDispatcher(dispatcher contract.Dispatcher) Option {
+	return func(option *KoanfAdapter) {
+		option.dispatcher = dispatcher
+	}
+}
+
 // NewConfig creates a new *KoanfAdapter.
 func NewConfig(options ...Option) (*KoanfAdapter, error) {
 	adapter := KoanfAdapter{delimiter: "."}
@@ -74,6 +83,10 @@ func NewConfig(options ...Option) (*KoanfAdapter, error) {
 // an error occurred, Reload will return early and abort the rest of the
 // reloading.
 func (k *KoanfAdapter) Reload() error {
+	if k.dispatcher != nil {
+		defer k.dispatcher.Dispatch(context.Background(), events.Of(ReloadedEvent{k}))
+	}
+
 	k.rwlock.Lock()
 	defer k.rwlock.Unlock()
 

@@ -1,12 +1,17 @@
 package config
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/events"
+	"github.com/knadh/koanf/providers/confmap"
+	"github.com/oklog/run"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -96,4 +101,53 @@ func TestModule_ProvideCommand(t *testing.T) {
 			assert.Equal(t, expectedString, string(testTarget))
 		})
 	}
+}
+
+func TestModule_Watch(t *testing.T) {
+	t.Run("test without module", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		dispatcher := &events.SyncDispatcher{}
+		dispatcher.Subscribe(events.Listen(events.From(ReloadedEvent{}), func(ctx context.Context, event contract.Event) error {
+			data := event.Data().(ReloadedEvent).NewConf.(*KoanfAdapter)
+			assert.Equal(t, "bar", data.String("foo"))
+			cancel()
+			return nil
+		}))
+		conf, _ := NewConfig(WithDispatcher(dispatcher), WithProviderLayer(confmap.Provider(map[string]interface{}{"foo": "bar"}, "."), nil))
+		conf.Watch(ctx)
+	})
+
+	t.Run("test with module", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		dispatcher := &events.SyncDispatcher{}
+		dispatcher.Subscribe(events.Listen(events.From(ReloadedEvent{}), func(ctx context.Context, event contract.Event) error {
+			data := event.Data().(ReloadedEvent).NewConf.(*KoanfAdapter)
+			assert.Equal(t, "bar", data.String("foo"))
+			cancel()
+			return nil
+		}))
+
+		conf, _ := NewConfig(WithProviderLayer(confmap.Provider(map[string]interface{}{"foo": "bar"}, "."), nil), WithWatcher(&MockWatcher{}))
+		module, _ := New(ConfigIn{
+			Conf:       conf,
+			Dispatcher: dispatcher,
+		})
+		var g run.Group
+		g.Add(func() error {
+			<-ctx.Done()
+			return nil
+		}, func(err error) {})
+		module.ProvideRunGroup(&g)
+		g.Run()
+	})
+}
+
+type MockWatcher struct{}
+
+func (m *MockWatcher) Watch(ctx context.Context, reload func() error) error {
+	return reload()
 }
