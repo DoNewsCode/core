@@ -2,6 +2,7 @@ package di
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"testing"
 	"time"
@@ -43,6 +44,35 @@ func TestFactory(t *testing.T) {
 
 	f.Close()
 	assert.Contains(t, closed, "foo", "bar")
+}
+
+func TestFactory_nilCloser(t *testing.T) {
+	t.Parallel()
+
+	f := NewFactory(func(name string) (Pair, error) {
+		nameCopy := name
+		return Pair{
+			Conn:   &nameCopy,
+			Closer: nil,
+		}, nil
+	})
+
+	f.Make("foo")
+
+	f.CloseConn("foo")
+
+	f.Close()
+}
+
+func TestFactory_malfunctionConstructor(t *testing.T) {
+	t.Parallel()
+
+	f := NewFactory(func(name string) (Pair, error) {
+		return Pair{}, errors.New("failed")
+	})
+
+	_, err := f.Make("foo")
+	assert.Error(t, err)
 }
 
 func TestFactory_Watch(t *testing.T) {
