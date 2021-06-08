@@ -147,8 +147,8 @@ func provideConfig() configOut {
 	return configOut{
 		Config: []config.ExportedConfig{
 			{
-				"otetcd",
-				map[string]interface{}{
+				Owner: "otetcd",
+				Data: map[string]interface{}{
 					"etcd": map[string]Option{
 						"default": {
 							Endpoints:            envDefaultEtcdAddrs,
@@ -169,7 +169,7 @@ func provideConfig() configOut {
 						},
 					},
 				},
-				"The configuration for ETCD.",
+				Comment: "The configuration for ETCD.",
 			},
 		},
 	}

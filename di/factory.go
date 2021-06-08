@@ -18,7 +18,7 @@ type Pair struct {
 
 // Factory is a concurrent safe, generic factory for databases and connections.
 type Factory struct {
-	group       *singleflight.Group
+	group       singleflight.Group
 	cache       sync.Map
 	constructor func(name string) (Pair, error)
 	reloadOnce  sync.Once
@@ -28,7 +28,6 @@ type Factory struct {
 func NewFactory(constructor func(name string) (Pair, error)) *Factory {
 	return &Factory{
 		constructor: constructor,
-		group:       &singleflight.Group{},
 	}
 }
 
