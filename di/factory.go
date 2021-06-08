@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
 )
@@ -16,8 +18,8 @@ type Pair struct {
 
 // Factory is a concurrent safe, generic factory for databases and connections.
 type Factory struct {
-	mutex       sync.Mutex
-	cache       map[string]Pair
+	group       *singleflight.Group
+	cache       sync.Map
 	constructor func(name string) (Pair, error)
 	reloadOnce  sync.Once
 }
@@ -25,9 +27,8 @@ type Factory struct {
 // NewFactory creates a new factory.
 func NewFactory(constructor func(name string) (Pair, error)) *Factory {
 	return &Factory{
-		mutex:       sync.Mutex{},
-		cache:       make(map[string]Pair),
 		constructor: constructor,
+		group:       &singleflight.Group{},
 	}
 }
 
@@ -36,18 +37,21 @@ func NewFactory(constructor func(name string) (Pair, error)) *Factory {
 func (f *Factory) Make(name string) (interface{}, error) {
 	var err error
 
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	if slot, ok := f.cache[name]; ok && slot.Conn != nil {
+	conn, err, _ := f.group.Do(name, func() (interface{}, error) {
+		if slot, ok := f.cache.Load(name); ok {
+			return slot.(Pair).Conn, nil
+		}
+		slot, err := f.constructor(name)
+		if err != nil {
+			return nil, err
+		}
+		f.cache.Store(name, slot)
 		return slot.Conn, nil
-	}
-
-	if f.cache[name], err = f.constructor(name); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
-
-	return f.cache[name].Conn, nil
+	return conn, nil
 }
 
 // SubscribeReloadEventFrom subscribes to the reload events from dispatcher and then notifies the di
@@ -66,41 +70,39 @@ func (f *Factory) SubscribeReloadEventFrom(dispatcher contract.Dispatcher) {
 
 // List lists created instance in the factory.
 func (f *Factory) List() map[string]Pair {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-	return f.cache
+	var out = make(map[string]Pair)
+	f.cache.Range(func(key, value interface{}) bool {
+		out[key.(string)] = value.(Pair)
+		return true
+	})
+	return out
 }
 
 // Close closes every connection created by the factory. Connections are closed
 // concurrently.
 func (f *Factory) Close() {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
 	var wg sync.WaitGroup
-	for name := range f.cache {
-		if f.cache[name].Closer == nil {
-			continue
+	f.cache.Range(func(key, value interface{}) bool {
+		defer f.cache.Delete(key)
+
+		if value.(Pair).Closer == nil {
+			return true
 		}
 		wg.Add(1)
-		go func(name string) {
-			f.cache[name].Closer()
+		go func(value Pair) {
+			value.Closer()
 			wg.Done()
-		}(name)
-	}
+		}(value.(Pair))
+		return true
+	})
 	wg.Wait()
-	// Delete all. f.cache can be reused afterwards.
-	for name := range f.cache {
-		delete(f.cache, name)
-	}
 }
 
 // CloseConn closes a specific connection in the factory.
 func (f *Factory) CloseConn(name string) {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-	if pair, ok := f.cache[name]; ok && pair.Closer != nil {
-		f.cache[name].Closer()
-		delete(f.cache, name)
+	if value, loaded := f.cache.LoadAndDelete(name); loaded {
+		if value.(Pair).Closer != nil {
+			value.(Pair).Closer()
+		}
 	}
 }
