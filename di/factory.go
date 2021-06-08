@@ -1,7 +1,11 @@
 package di
 
 import (
+	"context"
 	"sync"
+
+	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/events"
 )
 
 // Pair is a tuple representing a connection and a closer function
@@ -12,9 +16,11 @@ type Pair struct {
 
 // Factory is a concurrent safe, generic factory for databases and connections.
 type Factory struct {
-	mutex       sync.Mutex
-	cache       map[string]Pair
-	constructor func(name string) (Pair, error)
+	mutex          sync.Mutex
+	cache          map[string]Pair
+	constructor    func(name string) (Pair, error)
+	reloadChan     <-chan events.OnReload
+	reloadChanOnce sync.Once
 }
 
 // NewFactory creates a new factory.
@@ -43,6 +49,32 @@ func (f *Factory) Make(name string) (interface{}, error) {
 	}
 
 	return f.cache[name].Conn, nil
+}
+
+// Watch subscribes to the reload events from dispatcher and then notifies the di
+// factory to clear its cache and shutdown all connections gracefully.
+func (f *Factory) Watch(ctx context.Context, dispatcher contract.Dispatcher) error {
+	f.reloadChanOnce.Do(func() {
+		var ch = make(chan events.OnReload)
+		dispatcher.Subscribe(events.Listen(events.From(events.OnReload{}), func(ctx context.Context, event contract.Event) error {
+			select {
+			case ch <- event.Data().(events.OnReload):
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}))
+		f.reloadChan = ch
+	})
+
+	for {
+		select {
+		case <-f.reloadChan:
+			f.Close()
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
 
 // List lists created instance in the factory.

@@ -1,10 +1,12 @@
 package di
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 	"time"
 
+	"github.com/DoNewsCode/core/events"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,6 +43,44 @@ func TestFactory(t *testing.T) {
 
 	f.Close()
 	assert.Contains(t, closed, "foo", "bar")
+}
+
+func TestFactory_Watch(t *testing.T) {
+	t.Parallel()
+
+	var (
+		mockConf = "foo"
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	f := NewFactory(func(_ string) (Pair, error) {
+		return Pair{
+			Conn:   mockConf,
+			Closer: func() {},
+		}, nil
+	})
+	dispatcher := events.SyncDispatcher{}
+	go func() {
+		f.Watch(ctx, &dispatcher)
+	}()
+
+	foo, err := f.Make("default")
+	assert.NoError(t, err)
+	assert.Equal(t, "foo", foo.(string))
+
+	mockConf = "bar"
+
+	foo, err = f.Make("default")
+	assert.NoError(t, err)
+	assert.Equal(t, "foo", foo.(string))
+
+	time.Sleep(3 * time.Second)
+	_ = dispatcher.Dispatch(ctx, events.Of(events.OnReload{}))
+
+	time.Sleep(3 * time.Second)
+	foo, err = f.Make("default")
+	assert.NoError(t, err)
+	assert.Equal(t, "bar", foo.(string))
 }
 
 func BenchmarkFactory_slowConn(b *testing.B) {
