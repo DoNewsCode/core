@@ -271,8 +271,14 @@ type channelWatcher struct {
 }
 
 func (c *channelWatcher) Watch(ctx context.Context, reload func() error) error {
-	<-c.ch
-	return reload()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-c.ch:
+			reload()
+		}
+	}
 }
 
 func TestModule_hotReload(t *testing.T) {
