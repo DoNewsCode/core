@@ -339,7 +339,10 @@ func TestModule_hotReload(t *testing.T) {
 	conf["kafka"].(map[string]interface{})["reader"].(map[string]interface{})["default"].(map[string]interface{})["topic"] = "bar"
 	overwriteFile(path, conf)
 	cw.ch <- struct{}{}
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
+	if os.Getenv("GITHUB_JOB") != "" {
+		time.Sleep(10 * time.Second)
+	}
 
 	// Test reloaded values
 	c.Invoke(func(f ReaderFactory) {
