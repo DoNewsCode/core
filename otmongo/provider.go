@@ -87,9 +87,9 @@ func provideMongoFactory(p in) (out, func()) {
 			conf struct{ URI string }
 		)
 		if err := p.Conf.Unmarshal(fmt.Sprintf("mongo.%s", name), &conf); err != nil {
-			if name != "default" {
-				return di.Pair{}, fmt.Errorf("mongo configuration %s not valid: %w", name, err)
-			}
+			return di.Pair{}, fmt.Errorf("mongo configuration %s not valid: %w", name, err)
+		}
+		if conf.URI == "" {
 			conf.URI = envDefaultMongoAddr
 		}
 

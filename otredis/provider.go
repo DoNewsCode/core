@@ -90,9 +90,9 @@ func provideRedisFactory(p in) (out, func()) {
 			full redis.UniversalOptions
 		)
 		if err := p.Conf.Unmarshal(fmt.Sprintf("redis.%s", name), &base); err != nil {
-			if name != "default" {
-				return di.Pair{}, fmt.Errorf("redis configuration %s not valid: %w", name, err)
-			}
+			return di.Pair{}, fmt.Errorf("redis configuration %s not valid: %w", name, err)
+		}
+		if len(base.Addrs) == 0 {
 			base = RedisUniversalOptions{
 				Addrs: envDefaultRedisAddrs,
 			}

@@ -84,10 +84,10 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 			conf Option
 		)
 		if err := p.Conf.Unmarshal(fmt.Sprintf("etcd.%s", name), &conf); err != nil {
-			if name != "default" {
-				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid: %w", name, err)
-			}
-			conf = Option{Endpoints: envDefaultEtcdAddrs}
+			return di.Pair{}, fmt.Errorf("etcd configuration %s not valid: %w", name, err)
+		}
+		if len(conf.Endpoints) == 0 {
+			conf.Endpoints = envDefaultEtcdAddrs
 		}
 		co := clientv3.Config{
 			Endpoints:            conf.Endpoints,
