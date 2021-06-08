@@ -43,7 +43,7 @@ type moduleIn struct {
 func New(in moduleIn) Module {
 	var duration time.Duration = defaultInterval
 	in.Conf.Unmarshal("kafkaMetrics.interval", &duration)
-	return Module{
+	m := Module{
 		readerMaker:     in.ReaderMaker,
 		writerMaker:     in.WriterMaker,
 		env:             in.Env,
@@ -54,6 +54,13 @@ func New(in moduleIn) Module {
 		interval:        duration,
 		dispatcher:      in.Dispatcher,
 	}
+	if m.canHotReloadReader() {
+		m.readerMaker.(ReaderFactory).SubscribeReloadEventFrom(m.dispatcher)
+	}
+	if m.canHotReloadWriter() {
+		m.writerMaker.(WriterFactory).SubscribeReloadEventFrom(m.dispatcher)
+	}
+	return m
 }
 
 // ProvideRunGroup add a goroutine to periodically scan kafka's reader&writer info and
@@ -81,23 +88,6 @@ func (m Module) ProvideRunGroup(group *run.Group) {
 			cancel()
 		})
 		return
-	}
-
-	if m.canHotReloadWriter() {
-		ctx, cancel := context.WithCancel(context.Background())
-		group.Add(func() error {
-			return m.writerMaker.(WriterFactory).Watch(ctx, m.dispatcher)
-		}, func(err error) {
-			cancel()
-		})
-	}
-	if m.canHotReloadReader() {
-		ctx, cancel := context.WithCancel(context.Background())
-		group.Add(func() error {
-			return m.readerMaker.(ReaderFactory).Watch(ctx, m.dispatcher)
-		}, func(err error) {
-			cancel()
-		})
 	}
 }
 

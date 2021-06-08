@@ -61,7 +61,7 @@ func TestFactory_Watch(t *testing.T) {
 	})
 	dispatcher := events.SyncDispatcher{}
 	go func() {
-		f.Watch(ctx, &dispatcher)
+		f.SubscribeReloadEventFrom(&dispatcher)
 	}()
 
 	foo, err := f.Make("default")

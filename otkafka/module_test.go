@@ -267,7 +267,8 @@ func TestCollector(t *testing.T) {
 }
 
 type channelWatcher struct {
-	ch chan struct{}
+	ch          chan struct{}
+	afterReload chan struct{}
 }
 
 func (c *channelWatcher) Watch(ctx context.Context, reload func() error) error {
@@ -277,6 +278,7 @@ func (c *channelWatcher) Watch(ctx context.Context, reload func() error) error {
 			return ctx.Err()
 		case <-c.ch:
 			reload()
+			c.afterReload <- struct{}{}
 		}
 	}
 }
@@ -288,6 +290,7 @@ func TestModule_hotReload(t *testing.T) {
 	defer cancel()
 	cw := &channelWatcher{}
 	cw.ch = make(chan struct{})
+	cw.afterReload = make(chan struct{})
 
 	conf := map[string]interface{}{
 		"http": map[string]bool{
@@ -339,10 +342,7 @@ func TestModule_hotReload(t *testing.T) {
 	conf["kafka"].(map[string]interface{})["reader"].(map[string]interface{})["default"].(map[string]interface{})["topic"] = "bar"
 	overwriteFile(path, conf)
 	cw.ch <- struct{}{}
-	time.Sleep(3 * time.Second)
-	if os.Getenv("GITHUB_JOB") != "" {
-		time.Sleep(10 * time.Second)
-	}
+	<-cw.afterReload
 
 	// Test reloaded values
 	c.Invoke(func(f ReaderFactory) {
