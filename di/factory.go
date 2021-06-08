@@ -19,7 +19,6 @@ type Factory struct {
 	mutex       sync.Mutex
 	cache       map[string]Pair
 	constructor func(name string) (Pair, error)
-	reloadChan  <-chan events.OnReload
 	reloadOnce  sync.Once
 }
 
@@ -55,12 +54,10 @@ func (f *Factory) Make(name string) (interface{}, error) {
 // factory to clear its cache and shutdown all connections gracefully.
 func (f *Factory) SubscribeReloadEventFrom(dispatcher contract.Dispatcher) {
 	f.reloadOnce.Do(func() {
-		var ch = make(chan events.OnReload)
 		dispatcher.Subscribe(events.Listen(events.From(events.OnReload{}), func(ctx context.Context, event contract.Event) error {
 			f.Close()
 			return nil
 		}))
-		f.reloadChan = ch
 	})
 }
 
