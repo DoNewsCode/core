@@ -276,6 +276,8 @@ func (c *channelWatcher) Watch(ctx context.Context, reload func() error) error {
 }
 
 func TestModule_hotReload(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	cw := &channelWatcher{}
@@ -331,7 +333,7 @@ func TestModule_hotReload(t *testing.T) {
 	conf["kafka"].(map[string]interface{})["reader"].(map[string]interface{})["default"].(map[string]interface{})["topic"] = "bar"
 	overwriteFile(path, conf)
 	cw.ch <- struct{}{}
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	// Test reloaded values
 	c.Invoke(func(f ReaderFactory) {
