@@ -84,18 +84,17 @@ type out struct {
 func provideMongoFactory(p in) (out, func()) {
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			dbConf struct{ Uri string }
-			conf   struct{ Uri string }
+			conf struct{ URI string }
 		)
-		if err := p.Conf.Unmarshal(fmt.Sprintf("mongo.%s", name), &dbConf); err != nil {
+		if err := p.Conf.Unmarshal(fmt.Sprintf("mongo.%s", name), &conf); err != nil {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("mongo configuration %s not valid: %w", name, err)
 			}
-			conf.Uri = envDefaultMongoAddr
+			conf.URI = envDefaultMongoAddr
 		}
 
 		opts := options.Client()
-		opts.ApplyURI(conf.Uri)
+		opts.ApplyURI(conf.URI)
 		if p.Tracer != nil {
 			opts.Monitor = NewMonitor(p.Tracer)
 		}
