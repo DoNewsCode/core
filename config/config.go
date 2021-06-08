@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"sync"
@@ -10,6 +9,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
 	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/providers/confmap"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -222,22 +222,22 @@ func (m MapAdapter) Float64(s string) float64 {
 }
 
 func (m MapAdapter) Unmarshal(path string, o interface{}) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = errors.New(fmt.Sprintf("%v", r))
-		}
-	}()
-	var out interface{}
-	out = m
-	if path != "" {
-		out = m[path]
+	k := koanf.New(".")
+	if err := k.Load(confmap.Provider(m, "."), nil); err != nil {
+		return err
 	}
-	val := reflect.ValueOf(o)
-	if !val.Elem().CanSet() {
-		return errors.New("target cannot be set")
-	}
-	val.Elem().Set(reflect.ValueOf(out))
-	return
+	return k.UnmarshalWithConf(path, o, koanf.UnmarshalConf{
+		Tag: "json",
+		DecoderConfig: &mapstructure.DecoderConfig{
+			Result:           o,
+			ErrorUnused:      true,
+			WeaklyTypedInput: true,
+			DecodeHook: mapstructure.ComposeDecodeHookFunc(
+				mapstructure.StringToTimeDurationHookFunc(),
+				stringToConfigDurationHookFunc(),
+			),
+		},
+	})
 }
 
 func (m MapAdapter) Route(s string) contract.ConfigAccessor {

@@ -83,23 +83,14 @@ type out struct {
 // provideRedisFactory creates Factory and redis.UniversalClient. It is a valid
 // dependency for package core.
 func provideRedisFactory(p in) (out, func()) {
-	var err error
-	var dbConfs map[string]RedisUniversalOptions
-	err = p.Conf.Unmarshal("redis", &dbConfs)
-	if err != nil {
-		level.Warn(p.Logger).Log("err", err)
-	}
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			ok   bool
 			base RedisUniversalOptions
 			full redis.UniversalOptions
 		)
-		if base, ok = dbConfs[name]; !ok {
-			if name != "default" {
-				return di.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
-			}
-
+		if err := p.Conf.Unmarshal(fmt.Sprintf("redis.%s", name), &base); err != nil && name != "default" {
+			return di.Pair{}, fmt.Errorf("redis configuration %s not valid: %w", name, err)
+		} else if name == "default" {
 			base = RedisUniversalOptions{
 				Addrs: envDefaultRedisAddrs,
 			}
