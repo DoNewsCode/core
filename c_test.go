@@ -15,6 +15,8 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/otgorm"
+	"github.com/DoNewsCode/core/srvgrpc"
+	"github.com/DoNewsCode/core/srvhttp"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -28,6 +30,9 @@ func TestC_Serve(t *testing.T) {
 		WithInline("grpc.addr", ":19999"),
 	)
 	c.ProvideEssentials()
+	c.AddModule(srvhttp.HealthCheckModule{})
+	c.AddModule(srvgrpc.HealthCheckModule{})
+
 	c.Invoke(func(dispatcher contract.Dispatcher) {
 		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
 			atomic.AddInt32(&called, 1)
@@ -71,6 +76,9 @@ func TestC_ServeDisable(t *testing.T) {
 		WithInline("cron.disable", "true"),
 	)
 	c.ProvideEssentials()
+	c.AddModule(srvhttp.HealthCheckModule{})
+	c.AddModule(srvgrpc.HealthCheckModule{})
+
 	c.Invoke(func(dispatcher contract.Dispatcher) {
 		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
 			atomic.AddInt32(&called, 1)

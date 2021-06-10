@@ -13,10 +13,10 @@ import (
 type Container interface {
 	ApplyRouter(router *mux.Router)
 	ApplyGRPCServer(server *grpc.Server)
-	Shutdown()
-	ApplyRunGroup(g *run.Group)
-	Modules() ifilter.Collection
 	ApplyCron(crontab *cron.Cron)
+	ApplyRunGroup(g *run.Group)
 	ApplyRootCommand(command *cobra.Command)
+	Shutdown()
+	Modules() ifilter.Collection
 	AddModule(module interface{})
 }
