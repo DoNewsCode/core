@@ -40,9 +40,6 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("kafkaMetrics.interval", "10ms"),
 		core.WithInline("log.level", "none"),
-		core.WithInline("http.disable", "true"),
-		core.WithInline("grpc.disable", "true"),
-		core.WithInline("cron.disable", "true"),
 	)
 	c.ProvideEssentials()
 	c.Provide(di.Deps{func() *ReaderStats {
@@ -160,9 +157,6 @@ func TestCollector(t *testing.T) {
 		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("kafkaMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
-		core.WithInline("http.disable", "true"),
-		core.WithInline("grpc.disable", "true"),
-		core.WithInline("cron.disable", "true"),
 	)
 	c.ProvideEssentials()
 	c.Provide(di.Deps{func() *ReaderStats {
