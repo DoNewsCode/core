@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 	c := core.New(
 		core.WithInline("log.level", "error"),
 		core.WithInline("gorm.default.database", "mysql"),
-		core.WithInline("gorm.default.dsn", os.Getenv("MYSQL_DSN")),
+		core.WithInline("gorm.default.dsn", envDefaultMysqlDsn),
 	)
 	c.ProvideEssentials()
 	c.Provide(otgorm.Providers())

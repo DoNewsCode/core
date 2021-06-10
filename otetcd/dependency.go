@@ -8,8 +8,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/internal"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
 	"github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"go.etcd.io/etcd/client/v3"
@@ -65,6 +64,7 @@ type factoryIn struct {
 	Conf        contract.ConfigAccessor
 	Interceptor EtcdConfigInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer    `optional:"true"`
+	Dispatcher  contract.Dispatcher   `optional:"true"`
 }
 
 // FactoryOut is the result of Provide.
@@ -78,24 +78,16 @@ type FactoryOut struct {
 // provideFactory creates Factory. It is a valid
 // dependency for package core.
 func provideFactory(p factoryIn) (FactoryOut, func()) {
-	var err error
-	var dbConfs map[string]Option
-
-	err = p.Conf.Unmarshal("etcd", &dbConfs)
-	if err != nil {
-		level.Warn(p.Logger).Log("err", err)
-	}
 
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			ok   bool
 			conf Option
 		)
-		if conf, ok = dbConfs[name]; !ok {
-			if name != "default" {
-				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid", name)
-			}
-			conf = Option{Endpoints: envDefaultEtcdAddrs}
+		if err := p.Conf.Unmarshal(fmt.Sprintf("etcd.%s", name), &conf); err != nil {
+			return di.Pair{}, fmt.Errorf("etcd configuration %s not valid: %w", name, err)
+		}
+		if len(conf.Endpoints) == 0 {
+			conf.Endpoints = envDefaultEtcdAddrs
 		}
 		co := clientv3.Config{
 			Endpoints:            conf.Endpoints,
@@ -133,6 +125,7 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 		}, nil
 	})
 	etcdFactory := Factory{factory}
+	etcdFactory.SubscribeReloadEventFrom(p.Dispatcher)
 	out := FactoryOut{
 		Maker:   etcdFactory,
 		Factory: etcdFactory,
@@ -154,8 +147,8 @@ func provideConfig() configOut {
 	return configOut{
 		Config: []config.ExportedConfig{
 			{
-				"otetcd",
-				map[string]interface{}{
+				Owner: "otetcd",
+				Data: map[string]interface{}{
 					"etcd": map[string]Option{
 						"default": {
 							Endpoints:            envDefaultEtcdAddrs,
@@ -176,7 +169,7 @@ func provideConfig() configOut {
 						},
 					},
 				},
-				"The configuration for ETCD.",
+				Comment: "The configuration for ETCD.",
 			},
 		},
 	}

@@ -199,10 +199,6 @@ func TestMapAdapter_Unmarshal(t *gotesting.T) {
 	assert.Equal(t, map[string]interface{}{
 		"bar": "baz",
 	}, target)
-
-	var badTarget struct{}
-	err = m.Unmarshal("foo", &badTarget)
-	assert.Error(t, err)
 }
 
 func prepareTestSubject(t *gotesting.T) *KoanfAdapter {

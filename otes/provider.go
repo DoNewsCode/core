@@ -8,8 +8,8 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/internal"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/olivere/elastic/v7"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/dig"
@@ -65,6 +65,7 @@ type in struct {
 	Interceptor EsConfigInterceptor        `optional:"true"`
 	Tracer      opentracing.Tracer         `optional:"true"`
 	Options     []elastic.ClientOptionFunc `optional:"true"`
+	Dispatcher  contract.Dispatcher        `optional:"true"`
 }
 
 // out is the result of Provide.
@@ -79,21 +80,14 @@ type out struct {
 // Provide creates Factory and *elastic.Client. It is a valid dependency for
 // package core.
 func provideEsFactory(p in) (out, func()) {
-	var err error
-	var esConfigs map[string]Config
-	err = p.Conf.Unmarshal("es", &esConfigs)
-	if err != nil {
-		level.Warn(p.Logger).Log("err", err)
-	}
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			ok      bool
 			conf    Config
 			options []elastic.ClientOptionFunc
 		)
-		if conf, ok = esConfigs[name]; !ok {
+		if err := p.Conf.Unmarshal(fmt.Sprintf("es.%s", name), &conf); err != nil {
 			if name != "default" {
-				return di.Pair{}, fmt.Errorf("elastic configuration %s not valid", name)
+				return di.Pair{}, fmt.Errorf("elastic configuration %s not valid: %w", name, err)
 			}
 			conf.URL = envDefaultElasticsearchAddrs
 		}
@@ -141,6 +135,7 @@ func provideEsFactory(p in) (out, func()) {
 		}, nil
 	})
 	f := Factory{factory}
+	f.SubscribeReloadEventFrom(p.Dispatcher)
 	return out{
 		Factory: f,
 		Maker:   f,

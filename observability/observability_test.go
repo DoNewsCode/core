@@ -2,6 +2,7 @@ package observability
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core"
@@ -9,7 +10,7 @@ import (
 	"github.com/DoNewsCode/core/otgorm"
 	"github.com/DoNewsCode/core/otkafka"
 	"github.com/DoNewsCode/core/otredis"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
@@ -77,9 +78,14 @@ func TestProvideRedisMetrics(t *testing.T) {
 }
 
 func TestProvideKafkaMetrics(t *testing.T) {
+	addr := os.Getenv("KAFKA_ADDR")
+	if addr == "" {
+		t.Skip("set KAFKA_ADDR for run kafka metrics test")
+	}
+	addrs := strings.Split(addr, ",")
 	c := core.New(
-		core.WithInline("kafka.writer.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
-		core.WithInline("kafka.reader.default.brokers", []string{os.Getenv("KAFKA_ADDR")}),
+		core.WithInline("kafka.writer.default.brokers", addrs),
+		core.WithInline("kafka.reader.default.brokers", addrs),
 		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("log.level", "none"),
 	)

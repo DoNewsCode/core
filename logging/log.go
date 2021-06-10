@@ -2,7 +2,7 @@
 Package logging provides a kitlog compatible logger.
 
 This package is mostly a thin wrapper around kitlog
-(http://github.com/go-kit/kit/log). kitlog provides a minimalist, contextual,
+(http://github.com/go-kit/log). kitlog provides a minimalist, contextual,
 fully composable logger. However it is too unopinionated, hence requiring some
 efforts and coordination to set up a good practise.
 
@@ -26,9 +26,9 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/DoNewsCode/core/contract"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
-	"github.com/go-kit/kit/log/term"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"github.com/go-kit/log/term"
 )
 
 var _ LevelLogger = (*levelLogger)(nil)

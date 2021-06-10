@@ -8,8 +8,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/internal"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
 	"github.com/opentracing/opentracing-go"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -67,6 +66,7 @@ type in struct {
 	Conf        contract.ConfigAccessor
 	Interceptor MongoConfigInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer     `optional:"true"`
+	Dispatcher  contract.Dispatcher    `optional:"true"`
 }
 
 // out is the result of Provide. The official mongo package doesn't
@@ -82,25 +82,19 @@ type out struct {
 // Provide creates Factory and *mongo.Client. It is a valid dependency for
 // package core.
 func provideMongoFactory(p in) (out, func()) {
-	var err error
-	var dbConfs map[string]struct{ Uri string }
-	err = p.Conf.Unmarshal("mongo", &dbConfs)
-	if err != nil {
-		level.Warn(p.Logger).Log("err", err)
-	}
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			ok   bool
-			conf struct{ Uri string }
+			conf struct{ URI string }
 		)
-		if conf, ok = dbConfs[name]; !ok {
-			if name != "default" {
-				return di.Pair{}, fmt.Errorf("mongo configuration %s not valid", name)
-			}
-			conf.Uri = envDefaultMongoAddr
+		if err := p.Conf.Unmarshal(fmt.Sprintf("mongo.%s", name), &conf); err != nil {
+			return di.Pair{}, fmt.Errorf("mongo configuration %s not valid: %w", name, err)
 		}
+		if conf.URI == "" {
+			conf.URI = envDefaultMongoAddr
+		}
+
 		opts := options.Client()
-		opts.ApplyURI(conf.Uri)
+		opts.ApplyURI(conf.URI)
 		if p.Tracer != nil {
 			opts.Monitor = NewMonitor(p.Tracer)
 		}
@@ -119,6 +113,7 @@ func provideMongoFactory(p in) (out, func()) {
 		}, nil
 	})
 	f := Factory{factory}
+	f.SubscribeReloadEventFrom(p.Dispatcher)
 	return out{
 		Factory: f,
 		Maker:   f,

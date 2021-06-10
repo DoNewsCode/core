@@ -27,7 +27,7 @@ func ExampleKeepOdd() {
 	// [foo bar]
 }
 
-func ExampleKeyManager_Key() {
+func Example_key() {
 	keyer := key.New("module", "foo", "service", "bar")
 	fmt.Println(keyer.Key("."))
 	// Output:

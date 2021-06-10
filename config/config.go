@@ -2,23 +2,25 @@ package config
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"sync"
 
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/events"
 	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/providers/confmap"
 	"github.com/mitchellh/mapstructure"
 )
 
 // KoanfAdapter is a implementation of contract.Config based on Koanf (https://github.com/knadh/koanf).
 type KoanfAdapter struct {
-	layers    []ProviderSet
-	watcher   contract.ConfigWatcher
-	delimiter string
-	rwlock    sync.RWMutex
-	K         *koanf.Koanf
+	layers     []ProviderSet
+	watcher    contract.ConfigWatcher
+	dispatcher contract.Dispatcher
+	delimiter  string
+	rwlock     sync.RWMutex
+	K          *koanf.Koanf
 }
 
 // ProviderSet is a configuration layer formed by a parser and a provider.
@@ -53,6 +55,13 @@ func WithDelimiter(delimiter string) Option {
 	}
 }
 
+// WithDispatcher changes the default dispatcher of Koanf.
+func WithDispatcher(dispatcher contract.Dispatcher) Option {
+	return func(option *KoanfAdapter) {
+		option.dispatcher = dispatcher
+	}
+}
+
 // NewConfig creates a new *KoanfAdapter.
 func NewConfig(options ...Option) (*KoanfAdapter, error) {
 	adapter := KoanfAdapter{delimiter: "."}
@@ -74,6 +83,10 @@ func NewConfig(options ...Option) (*KoanfAdapter, error) {
 // an error occurred, Reload will return early and abort the rest of the
 // reloading.
 func (k *KoanfAdapter) Reload() error {
+	if k.dispatcher != nil {
+		defer k.dispatcher.Dispatch(context.Background(), events.Of(events.OnReload{NewConf: k}))
+	}
+
 	k.rwlock.Lock()
 	defer k.rwlock.Unlock()
 
@@ -209,22 +222,22 @@ func (m MapAdapter) Float64(s string) float64 {
 }
 
 func (m MapAdapter) Unmarshal(path string, o interface{}) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = errors.New(fmt.Sprintf("%v", r))
-		}
-	}()
-	var out interface{}
-	out = m
-	if path != "" {
-		out = m[path]
+	k := koanf.New(".")
+	if err := k.Load(confmap.Provider(m, "."), nil); err != nil {
+		return err
 	}
-	val := reflect.ValueOf(o)
-	if !val.Elem().CanSet() {
-		return errors.New("target cannot be set")
-	}
-	val.Elem().Set(reflect.ValueOf(out))
-	return
+	return k.UnmarshalWithConf(path, o, koanf.UnmarshalConf{
+		Tag: "json",
+		DecoderConfig: &mapstructure.DecoderConfig{
+			Result:           o,
+			ErrorUnused:      true,
+			WeaklyTypedInput: true,
+			DecodeHook: mapstructure.ComposeDecodeHookFunc(
+				mapstructure.StringToTimeDurationHookFunc(),
+				stringToConfigDurationHookFunc(),
+			),
+		},
+	})
 }
 
 func (m MapAdapter) Route(s string) contract.ConfigAccessor {
