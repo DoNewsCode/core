@@ -11,7 +11,6 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/opentracing/opentracing-go"
 	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
@@ -124,6 +123,7 @@ type databaseIn struct {
 	GormConfigInterceptor GormConfigInterceptor `optional:"true"`
 	Tracer                opentracing.Tracer    `optional:"true"`
 	Gauges                *Gauges               `optional:"true"`
+	Dispatcher            contract.Dispatcher   `optional:"true"`
 }
 
 // databaseOut is the result of provideDatabaseFactory. *gorm.DB is not a interface
@@ -208,6 +208,7 @@ func provideDatabaseFactory(p databaseIn) (databaseOut, func(), error) {
 		p.Conf.Unmarshal("gormMetrics.interval", &interval)
 		collector = newCollector(factory, p.Gauges, interval)
 	}
+	factory.SubscribeReloadEventFrom(p.Dispatcher)
 
 	return databaseOut{
 		Factory:   factory,
@@ -223,23 +224,17 @@ func provideDefaultDatabase(maker Maker) (*gorm.DB, error) {
 func provideDBFactory(p databaseIn) (Factory, func()) {
 	logger := log.With(p.Logger, "tag", "database")
 
-	var dbConfs map[string]databaseConf
-	err := p.Conf.Unmarshal("gorm", &dbConfs)
-	if err != nil {
-		level.Warn(logger).Log("err", err)
-	}
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			dialector gorm.Dialector
 			conf      databaseConf
-			ok        bool
 			conn      *gorm.DB
 			cleanup   func()
 		)
-		if conf, ok = dbConfs[name]; !ok {
-			return di.Pair{}, confNotFoundErr(fmt.Sprintf("database configuration %s not found", name))
+		if err := p.Conf.Unmarshal(fmt.Sprintf("gorm.%s", name), &conf); err != nil {
+			return di.Pair{}, fmt.Errorf("database configuration %s not valid: %w", name, err)
 		}
-		dialector, err = provideDialector(&conf)
+		dialector, err := provideDialector(&conf)
 		if err != nil {
 			return di.Pair{}, err
 		}
@@ -257,6 +252,7 @@ func provideDBFactory(p databaseIn) (Factory, func()) {
 		}, err
 	})
 	dbFactory := Factory{factory}
+	dbFactory.SubscribeReloadEventFrom(p.Dispatcher)
 	return dbFactory, dbFactory.Close
 }
 

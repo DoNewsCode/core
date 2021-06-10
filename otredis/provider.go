@@ -69,6 +69,7 @@ type in struct {
 	Interceptor RedisConfigurationInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer            `optional:"true"`
 	Gauges      *Gauges                       `optional:"true"`
+	Dispatcher  contract.Dispatcher           `optional:"true"`
 }
 
 // out is the result of provideRedisFactory.
@@ -83,27 +84,20 @@ type out struct {
 // provideRedisFactory creates Factory and redis.UniversalClient. It is a valid
 // dependency for package core.
 func provideRedisFactory(p in) (out, func()) {
-	var err error
-	var dbConfs map[string]RedisUniversalOptions
-	err = p.Conf.Unmarshal("redis", &dbConfs)
-	if err != nil {
-		level.Warn(p.Logger).Log("err", err)
-	}
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			ok   bool
 			base RedisUniversalOptions
 			full redis.UniversalOptions
 		)
-		if base, ok = dbConfs[name]; !ok {
-			if name != "default" {
-				return di.Pair{}, fmt.Errorf("redis configuration %s not valid", name)
-			}
-
+		if err := p.Conf.Unmarshal(fmt.Sprintf("redis.%s", name), &base); err != nil {
+			return di.Pair{}, fmt.Errorf("redis configuration %s not valid: %w", name, err)
+		}
+		if len(base.Addrs) == 0 {
 			base = RedisUniversalOptions{
 				Addrs: envDefaultRedisAddrs,
 			}
 		}
+
 		full = redis.UniversalOptions{
 			Addrs:              base.Addrs,
 			DB:                 base.DB,
@@ -152,7 +146,7 @@ func provideRedisFactory(p in) (out, func()) {
 		}, nil
 	})
 	redisFactory := Factory{factory}
-
+	redisFactory.SubscribeReloadEventFrom(p.Dispatcher)
 	var collector *collector
 	if p.Gauges != nil {
 		var interval time.Duration

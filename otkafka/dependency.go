@@ -116,19 +116,14 @@ func provideKafkaFactory(p in) (out, func(), func(), error) {
 // provideReaderFactory creates the ReaderFactory. It is valid
 // dependency option for package core.
 func provideReaderFactory(p in) (ReaderFactory, func()) {
-	var err error
-	var dbConfs map[string]ReaderConfig
-	err = p.Conf.Unmarshal("kafka.reader", &dbConfs)
-	if err != nil {
-		_ = level.Warn(p.Logger).Log("err", err)
-	}
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			ok           bool
+			err          error
 			readerConfig ReaderConfig
 		)
-		if readerConfig, ok = dbConfs[name]; !ok {
-			return di.Pair{}, fmt.Errorf("kafka reader configuration %s not valid", name)
+		err = p.Conf.Unmarshal(fmt.Sprintf("kafka.reader.%s", name), &readerConfig)
+		if err != nil {
+			return di.Pair{}, fmt.Errorf("kafka reader configuration %s not valid: %w", name, err)
 		}
 
 		// converts to the kafka.ReaderConfig from github.com/segmentio/kafka-go
@@ -152,19 +147,15 @@ func provideReaderFactory(p in) (ReaderFactory, func()) {
 // provideWriterFactory creates WriterFactory. It is a valid injection
 // option for package core.
 func provideWriterFactory(p in) (WriterFactory, func()) {
-	var err error
-	var dbConfs map[string]WriterConfig
-	err = p.Conf.Unmarshal("kafka.writer", &dbConfs)
-	if err != nil {
-		_ = level.Warn(p.Logger).Log("err", err)
-	}
+
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			ok           bool
+			err          error
 			writerConfig WriterConfig
 		)
-		if writerConfig, ok = dbConfs[name]; !ok {
-			return di.Pair{}, fmt.Errorf("kafka writer configuration %s not valid", name)
+		err = p.Conf.Unmarshal(fmt.Sprintf("kafka.writer.%s", name), &writerConfig)
+		if err != nil {
+			return di.Pair{}, fmt.Errorf("kafka writer configuration %s not valid: %w", name, err)
 		}
 		writer := fromWriterConfig(writerConfig)
 		logger := log.With(p.Logger, "tag", "kafka")
