@@ -1,8 +1,13 @@
 package di
 
 import (
+	"context"
+	"errors"
+	"math/rand"
 	"testing"
+	"time"
 
+	"github.com/DoNewsCode/core/events"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,4 +44,100 @@ func TestFactory(t *testing.T) {
 
 	f.Close()
 	assert.Contains(t, closed, "foo", "bar")
+}
+
+func TestFactory_nilCloser(t *testing.T) {
+	t.Parallel()
+
+	f := NewFactory(func(name string) (Pair, error) {
+		nameCopy := name
+		return Pair{
+			Conn:   &nameCopy,
+			Closer: nil,
+		}, nil
+	})
+
+	f.Make("foo")
+
+	f.CloseConn("foo")
+
+	f.Close()
+}
+
+func TestFactory_malfunctionConstructor(t *testing.T) {
+	t.Parallel()
+
+	f := NewFactory(func(name string) (Pair, error) {
+		return Pair{}, errors.New("failed")
+	})
+
+	_, err := f.Make("foo")
+	assert.Error(t, err)
+}
+
+func TestFactory_Watch(t *testing.T) {
+	t.Parallel()
+
+	var (
+		mockConf = "foo"
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	f := NewFactory(func(_ string) (Pair, error) {
+		return Pair{
+			Conn:   mockConf,
+			Closer: func() {},
+		}, nil
+	})
+	dispatcher := events.SyncDispatcher{}
+	go func() {
+		f.SubscribeReloadEventFrom(&dispatcher)
+	}()
+
+	foo, err := f.Make("default")
+	assert.NoError(t, err)
+	assert.Equal(t, "foo", foo.(string))
+
+	mockConf = "bar"
+
+	foo, err = f.Make("default")
+	assert.NoError(t, err)
+	assert.Equal(t, "foo", foo.(string))
+
+	time.Sleep(3 * time.Second)
+	_ = dispatcher.Dispatch(ctx, events.Of(events.OnReload{}))
+
+	time.Sleep(3 * time.Second)
+	foo, err = f.Make("default")
+	assert.NoError(t, err)
+	assert.Equal(t, "bar", foo.(string))
+}
+
+func BenchmarkFactory_slowConn(b *testing.B) {
+	f := NewFactory(func(name string) (Pair, error) {
+		// Simulate a slow construction
+		time.Sleep(100 * time.Millisecond)
+		return Pair{
+			Conn:   &name,
+			Closer: func() {},
+		}, nil
+	})
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			f.Make(randomString(10))
+		}
+	})
+}
+
+const (
+	chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+)
+
+func randomString(l uint) string {
+	s := make([]byte, l)
+	for i := 0; i < int(l); i++ {
+		s[i] = chars[rand.Intn(len(chars))]
+	}
+	return string(s)
 }

@@ -134,6 +134,9 @@ func fromReaderConfig(conf ReaderConfig) kafka.ReaderConfig {
 	if len(conf.Brokers) == 0 {
 		conf.Brokers = envDefaultKafkaAddrs
 	}
+	if len(conf.Topic) == 0 {
+		conf.Topic = "default"
+	}
 	return kafka.ReaderConfig{
 		Brokers:                conf.Brokers,
 		GroupID:                conf.GroupID,

@@ -39,3 +39,9 @@ func From(events ...interface{}) []contract.Event {
 	}
 	return out
 }
+
+// OnReload is an event that triggers the configuration reloads
+type OnReload struct {
+	// NewConf is the latest configuration after the reload.
+	NewConf contract.ConfigAccessor
+}
