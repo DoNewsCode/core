@@ -1,7 +1,6 @@
 package srvhttp
 
 import (
-	"github.com/DoNewsCode/core"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -10,13 +9,8 @@ import (
 )
 
 func TestDebugModule(t *testing.T) {
-	c := core.New()
-	defer c.Shutdown()
-
-	c.AddModule(DebugModule{})
-
 	router := mux.NewRouter()
-	c.ApplyRouter(router)
+	DebugModule{}.ProvideHTTP(router)
 
 	paths := []string{
 		"/debug/pprof/cmdline",
