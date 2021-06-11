@@ -1,4 +1,20 @@
 
+<a name="v0.7.0"></a>
+## [v0.7.0](https://github.com/DoNewsCode/core/compare/v0.6.1...v0.7.0) (2021-06-11)
+
+### ✨ Features
+
+* Serve run ([#137](https://github.com/DoNewsCode/core/issues/137)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* Add more gorm-driver ([#138](https://github.com/DoNewsCode/core/issues/138)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* **config:** support configuration ReloadedEvent ([#142](https://github.com/DoNewsCode/core/issues/142)) (@[谷溪](guxi99@gmail.com))
+* **di:** support config reloading at factory level ([#143](https://github.com/DoNewsCode/core/issues/143)) (@[谷溪](guxi99@gmail.com))
+
+### 🐛 Bug Fixes
+
+* Incorrect loading of the pprof.Index ([#145](https://github.com/DoNewsCode/core/issues/145)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* **tests:** allow test to pass when no env is provided. ([#141](https://github.com/DoNewsCode/core/issues/141)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.6.1"></a>
 ## [v0.6.1](https://github.com/DoNewsCode/core/compare/v0.6.0...v0.6.1) (2021-05-25)
 
