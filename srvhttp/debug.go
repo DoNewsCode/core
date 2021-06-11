@@ -1,7 +1,6 @@
 package srvhttp
 
 import (
-	"net/http"
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
@@ -14,10 +13,10 @@ type DebugModule struct{}
 // ProvideHTTP implements container.HTTPProvider
 func (d DebugModule) ProvideHTTP(router *mux.Router) {
 	m := mux.NewRouter()
-	m.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
-	m.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
-	m.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
-	m.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
-	m.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+	m.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	m.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	m.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	m.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	m.PathPrefix("/debug/pprof/").HandlerFunc(pprof.Index)
 	router.PathPrefix("/debug/").Handler(m)
 }
