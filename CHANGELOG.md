@@ -1,4 +1,8 @@
 
+<a name="v0.7.1"></a>
+## [v0.7.1](https://github.com/DoNewsCode/core/compare/v0.7.0...v0.7.1) (0001-01-01)
+
+
 <a name="v0.7.0"></a>
 ## [v0.7.0](https://github.com/DoNewsCode/core/compare/v0.6.1...v0.7.0) (2021-06-11)
 
