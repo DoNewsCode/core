@@ -76,7 +76,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	clientSpan, ctx := opentracing.StartSpanFromContextWithTracer(req.Context(), c.tracer, "HTTP Client")
 	defer clientSpan.Finish()
 
-	req.WithContext(ctx)
+	req = req.WithContext(ctx)
 
 	ext.SpanKindRPCClient.Set(clientSpan)
 	ext.HTTPUrl.Set(clientSpan, req.RequestURI)
