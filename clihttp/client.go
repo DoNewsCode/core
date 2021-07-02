@@ -73,8 +73,10 @@ func NewClient(tracer opentracing.Tracer, options ...Option) *Client {
 
 // Do sends the request.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	clientSpan := c.tracer.StartSpan("HTTP Client")
+	clientSpan, ctx := opentracing.StartSpanFromContextWithTracer(req.Context(), c.tracer, "HTTP Client")
 	defer clientSpan.Finish()
+
+	req = req.WithContext(ctx)
 
 	ext.SpanKindRPCClient.Set(clientSpan)
 	ext.HTTPUrl.Set(clientSpan, req.RequestURI)

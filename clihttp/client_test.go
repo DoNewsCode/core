@@ -1,6 +1,7 @@
 package clihttp
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -61,5 +62,18 @@ func TestClient_race(t *testing.T) {
 			_, _ = client.Do(r)
 		})
 	}
+}
 
+func TestClient_context(t *testing.T) {
+	ctx := context.Background()
+	tracer := mocktracer.New()
+	span1, ctx := opentracing.StartSpanFromContextWithTracer(ctx, tracer, "span1")
+	span1.SetBaggageItem("foo", "bar")
+	span1.Finish()
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://baidu.com", nil)
+
+	client := NewClient(tracer)
+	_, _ = client.Do(req)
+	assert.Len(t, tracer.FinishedSpans(), 2)
+	assert.Equal(t, "bar", tracer.FinishedSpans()[1].BaggageItem("foo"))
 }
