@@ -1,3 +1,13 @@
+
+<a name="v0.7.1"></a>
+## [v0.7.1](https://github.com/DoNewsCode/core/compare/v0.7.0...v0.7.1) (2021-07-02)
+
+### 🐛 Bug Fixes
+
+* provide the correct env value ([#146](https://github.com/DoNewsCode/core/issues/146)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* **clihttp:** fix context passing in http client ([#147](https://github.com/DoNewsCode/core/issues/147)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.7.0"></a>
 ## [v0.7.0](https://github.com/DoNewsCode/core/compare/v0.6.1...v0.7.0) (2021-06-11)
 
