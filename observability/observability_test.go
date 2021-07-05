@@ -33,10 +33,7 @@ func TestProvideOpentracing(t *testing.T) {
 }
 
 func TestProvideHistogramMetrics(t *testing.T) {
-	Out := ProvideHistogramMetrics(
-		config.AppName("foo"),
-		config.EnvTesting,
-	)
+	Out := ProvideHistogramMetrics()
 	assert.NotNil(t, Out)
 }
 
