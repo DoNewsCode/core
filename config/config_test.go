@@ -18,7 +18,7 @@ import (
 
 func TestKoanfAdapter_Route(t *gotesting.T) {
 	t.Parallel()
-	ka := prepareJsonTestSubject(t)
+	ka := prepareJSONTestSubject(t)
 	assert.Implements(t, MapAdapter{}, ka.Route("foo"))
 	assert.Implements(t, MapAdapter{}, ka.Route("foo"))
 }
@@ -30,7 +30,7 @@ func TestKoanfAdapter_race(t *gotesting.T) {
 		}
 	}()
 	t.Parallel()
-	ka := prepareJsonTestSubject(t)
+	ka := prepareJSONTestSubject(t)
 	for i := 0; i < 100; i++ {
 		go ka.Reload()
 		ka.String("string")
@@ -81,37 +81,37 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 
 func TestKoanfAdapter_Bool(t *gotesting.T) {
 	t.Parallel()
-	k := prepareJsonTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.True(t, k.Bool("bool"))
 }
 
 func TestKoanfAdapter_String(t *gotesting.T) {
 	t.Parallel()
-	k := prepareJsonTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.Equal(t, "string", k.String("string"))
 }
 
 func TestKoanfAdapter_Strings(t *gotesting.T) {
 	t.Parallel()
-	k := prepareJsonTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.Equal(t, []string{"foo", "bar"}, k.Strings("strings"))
 }
 
 func TestKoanfAdapter_Float64(t *gotesting.T) {
 	t.Parallel()
-	k := prepareJsonTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.Equal(t, 1.0, k.Float64("float"))
 }
 
 func TestKoanfAdapter_Get(t *gotesting.T) {
 	t.Parallel()
-	k := prepareJsonTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.Equal(t, 1.0, k.Get("float"))
 }
 
 func TestKoanfAdapter_Unmarshal_Json(t *gotesting.T) {
 	t.Parallel()
-	ka := prepareJsonTestSubject(t)
+	ka := prepareJSONTestSubject(t)
 	var target string
 	err := ka.Unmarshal("foo.bar", &target)
 	assert.NoError(t, err)
@@ -219,7 +219,7 @@ func TestMapAdapter_Unmarshal(t *gotesting.T) {
 	}, target)
 }
 
-func prepareJsonTestSubject(t *gotesting.T) *KoanfAdapter {
+func prepareJSONTestSubject(t *gotesting.T) *KoanfAdapter {
 	k := koanf.New(".")
 	if err := k.Load(file.Provider("testdata/mock.json"), json.Parser()); err != nil {
 		t.Fatalf("error loading config: %v", err)
