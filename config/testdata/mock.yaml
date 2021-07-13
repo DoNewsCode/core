@@ -1,0 +1,11 @@
+foo:
+    bar: baz
+bool: true
+string: string
+int: 42
+strings:
+    - foo
+    - bar
+float: 1
+duration_string: 1s
+duration_number: 1

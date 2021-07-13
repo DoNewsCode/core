@@ -266,12 +266,13 @@ func stringToConfigDurationHookFunc() mapstructure.DecodeHookFunc {
 			return data, nil
 		}
 		var val string
-		if f.Kind() == reflect.Float64 {
+		switch f.Kind() {
+		case reflect.Float64, reflect.Int:
 			val = fmt.Sprintf("%v", data)
-		} else if f.Kind() == reflect.String {
+		case reflect.String:
 			val = fmt.Sprintf(`"%v"`, data)
-		} else {
-			return nil, fmt.Errorf("expected a %s, should be float64 or string, got '%s'", t.String(), f.String())
+		default:
+			return nil, fmt.Errorf("expected a %s, should be float64/int/string, got '%s'", t.String(), f.String())
 		}
 		d := Duration{}
 		err := d.UnmarshalJSON([]byte(val))

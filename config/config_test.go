@@ -18,7 +18,7 @@ import (
 
 func TestKoanfAdapter_Route(t *gotesting.T) {
 	t.Parallel()
-	ka := prepareTestSubject(t)
+	ka := prepareJSONTestSubject(t)
 	assert.Implements(t, MapAdapter{}, ka.Route("foo"))
 	assert.Implements(t, MapAdapter{}, ka.Route("foo"))
 }
@@ -30,7 +30,7 @@ func TestKoanfAdapter_race(t *gotesting.T) {
 		}
 	}()
 	t.Parallel()
-	ka := prepareTestSubject(t)
+	ka := prepareJSONTestSubject(t)
 	for i := 0; i < 100; i++ {
 		go ka.Reload()
 		ka.String("string")
@@ -81,37 +81,55 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 
 func TestKoanfAdapter_Bool(t *gotesting.T) {
 	t.Parallel()
-	k := prepareTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.True(t, k.Bool("bool"))
 }
 
 func TestKoanfAdapter_String(t *gotesting.T) {
 	t.Parallel()
-	k := prepareTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.Equal(t, "string", k.String("string"))
 }
 
 func TestKoanfAdapter_Strings(t *gotesting.T) {
 	t.Parallel()
-	k := prepareTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.Equal(t, []string{"foo", "bar"}, k.Strings("strings"))
 }
 
 func TestKoanfAdapter_Float64(t *gotesting.T) {
 	t.Parallel()
-	k := prepareTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.Equal(t, 1.0, k.Float64("float"))
 }
 
 func TestKoanfAdapter_Get(t *gotesting.T) {
 	t.Parallel()
-	k := prepareTestSubject(t)
+	k := prepareJSONTestSubject(t)
 	assert.Equal(t, 1.0, k.Get("float"))
 }
 
-func TestKoanfAdapter_Unmarshal(t *gotesting.T) {
+func TestKoanfAdapter_Unmarshal_Json(t *gotesting.T) {
 	t.Parallel()
-	ka := prepareTestSubject(t)
+	ka := prepareJSONTestSubject(t)
+	var target string
+	err := ka.Unmarshal("foo.bar", &target)
+	assert.NoError(t, err)
+	assert.Equal(t, "baz", target)
+
+	var r Duration
+	err = ka.Unmarshal("duration_string", &r)
+	assert.NoError(t, err)
+	assert.Equal(t, r, Duration{1 * time.Second})
+
+	err = ka.Unmarshal("duration_number", &r)
+	assert.NoError(t, err)
+	assert.Equal(t, r, Duration{1 * time.Nanosecond})
+}
+
+func TestKoanfAdapter_Unmarshal_Yaml(t *gotesting.T) {
+	t.Parallel()
+	ka := prepareYamlTestSubject(t)
 	var target string
 	err := ka.Unmarshal("foo.bar", &target)
 	assert.NoError(t, err)
@@ -201,9 +219,18 @@ func TestMapAdapter_Unmarshal(t *gotesting.T) {
 	}, target)
 }
 
-func prepareTestSubject(t *gotesting.T) *KoanfAdapter {
+func prepareJSONTestSubject(t *gotesting.T) *KoanfAdapter {
 	k := koanf.New(".")
 	if err := k.Load(file.Provider("testdata/mock.json"), json.Parser()); err != nil {
+		t.Fatalf("error loading config: %v", err)
+	}
+	ka := KoanfAdapter{K: k}
+	return &ka
+}
+
+func prepareYamlTestSubject(t *gotesting.T) *KoanfAdapter {
+	k := koanf.New(".")
+	if err := k.Load(file.Provider("testdata/mock.yaml"), yaml.Parser()); err != nil {
 		t.Fatalf("error loading config: %v", err)
 	}
 	ka := KoanfAdapter{K: k}
