@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
-	"github.com/go-kit/log"
+	"github.com/go-kit/kit/log"
 	"github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 )

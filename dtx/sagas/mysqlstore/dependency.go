@@ -6,8 +6,8 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/dtx/sagas"
 	"github.com/DoNewsCode/core/otgorm"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
 )
 
