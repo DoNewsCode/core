@@ -3,7 +3,7 @@ package otredis
 import (
 	"context"
 	"fmt"
-	"github.com/go-kit/log"
+	"github.com/go-kit/kit/log"
 )
 
 // RedisLogAdapter is an adapter between kitlog and redis logger interface

@@ -6,7 +6,7 @@ import (
 
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otkafka"
-	"github.com/go-kit/log"
+	"github.com/go-kit/kit/log"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"

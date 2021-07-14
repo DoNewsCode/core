@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
-	"github.com/go-kit/log"
+	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"

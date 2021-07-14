@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/DoNewsCode/core/config"
-	"github.com/go-kit/log"
+	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,9 +46,9 @@ func TestGorm(t *testing.T) {
 		d1 Maker,
 		d2 Factory,
 		d3 struct {
-		di.In
-		Cfg []config.ExportedConfig `group:"config"`
-	},
+			di.In
+			Cfg []config.ExportedConfig `group:"config"`
+		},
 		d4 *gorm.DB,
 	) {
 		a := assert.New(t)
