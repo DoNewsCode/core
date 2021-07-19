@@ -1,4 +1,13 @@
 
+<a name="v0.7.2"></a>
+## [v0.7.2](https://github.com/DoNewsCode/core/compare/v0.7.1...v0.7.2) (2021-07-13)
+
+### 🐛 Bug Fixes
+
+* config.Duration support int for yaml ([#149](https://github.com/DoNewsCode/core/issues/149)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* generic metrics should not have a namespace ([#148](https://github.com/DoNewsCode/core/issues/148)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+
 <a name="v0.7.1"></a>
 ## [v0.7.1](https://github.com/DoNewsCode/core/compare/v0.7.0...v0.7.1) (2021-07-02)
 

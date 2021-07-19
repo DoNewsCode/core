@@ -3,9 +3,9 @@ package queue
 import (
 	"context"
 	"fmt"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"golang.org/x/sync/errgroup"
 	"reflect"
 	"runtime"

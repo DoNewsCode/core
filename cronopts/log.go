@@ -2,8 +2,8 @@
 package cronopts
 
 import (
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 )
 
 // CronLogAdapter is an adapter between kitlog and cron logger interface

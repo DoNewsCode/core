@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
-	"github.com/go-kit/log"
+	"github.com/go-kit/kit/log"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
