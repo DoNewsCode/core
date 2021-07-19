@@ -1,4 +1,12 @@
 
+<a name="v0.7.3"></a>
+## [v0.7.3](https://github.com/DoNewsCode/core/compare/v0.7.2...v0.7.3) (2021-07-19)
+
+### 🐛 Bug Fixes
+
+* row close ([#152](https://github.com/DoNewsCode/core/issues/152)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+
 <a name="v0.7.2"></a>
 ## [v0.7.2](https://github.com/DoNewsCode/core/compare/v0.7.1...v0.7.2) (2021-07-13)
 
