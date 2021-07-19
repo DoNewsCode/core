@@ -78,6 +78,7 @@ func (s *MySQLStore) UncommittedSagas(ctx context.Context) ([]sagas.Log, error) 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var correlationID string
 		rows.Scan(&correlationID)
@@ -122,6 +123,7 @@ func (s *MySQLStore) unacknowledgedSteps(ctx context.Context, correlationID stri
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var log sagas.Log
 		var nullFinishedAt sql.NullTime
@@ -147,6 +149,7 @@ func (s *MySQLStore) unacknowledgedSteps(ctx context.Context, correlationID stri
 	if err != nil {
 		return nil, err
 	}
+	defer excludeRows.Close()
 	for excludeRows.Next() {
 		var stepName string
 		_ = excludeRows.Scan(&stepName)
