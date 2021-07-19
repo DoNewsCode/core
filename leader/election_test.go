@@ -30,8 +30,10 @@ func TestElection(t *testing.T) {
 	var dispatcher = &events.SyncDispatcher{}
 	var e1, e2 Election
 
-	client, err := clientv3.New(clientv3.Config{Endpoints: envDefaultEtcdAddrs})
+	client, err := clientv3.New(clientv3.Config{Endpoints: envDefaultEtcdAddrs, DialTimeout: 2 * time.Second})
 	assert.NoError(t, err)
+	defer client.Close()
+
 	e1 = Election{
 		dispatcher: dispatcher,
 		status:     &Status{isLeader: &atomic.Bool{}},
