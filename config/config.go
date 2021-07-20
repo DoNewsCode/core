@@ -83,10 +83,6 @@ func NewConfig(options ...Option) (*KoanfAdapter, error) {
 // an error occurred, Reload will return early and abort the rest of the
 // reloading.
 func (k *KoanfAdapter) Reload() error {
-	if k.dispatcher != nil {
-		defer k.dispatcher.Dispatch(context.Background(), events.Of(events.OnReload{NewConf: k}))
-	}
-
 	k.rwlock.Lock()
 	defer k.rwlock.Unlock()
 
@@ -96,6 +92,11 @@ func (k *KoanfAdapter) Reload() error {
 			return fmt.Errorf("unable to load config %w", err)
 		}
 	}
+
+	if k.dispatcher != nil {
+		k.dispatcher.Dispatch(context.Background(), events.Of(events.OnReload{NewConf: k}))
+	}
+
 	return nil
 }
 

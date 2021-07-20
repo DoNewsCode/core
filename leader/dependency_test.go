@@ -7,7 +7,6 @@ import (
 	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
-	"gopkg.in/yaml.v3"
 )
 
 type mockMaker struct {
@@ -82,6 +81,5 @@ func TestDetermineDriver(t *testing.T) {
 
 func Test_provideConfig(t *testing.T) {
 	conf := provideConfig()
-	_, err := yaml.Marshal(conf.Config)
-	assert.NoError(t, err)
+	assert.NotNil(t, conf)
 }
