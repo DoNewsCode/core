@@ -65,8 +65,8 @@ func (m Module) ProvideRunGroup(group *run.Group) {
 // ProvideCommand provides the config related command.
 func (m Module) ProvideCommand(command *cobra.Command) {
 	var (
-		outputFile string
-		style      string
+		targetFilePath string
+		style          string
 	)
 	initCmd := &cobra.Command{
 		Use:   "init [module]",
@@ -99,8 +99,8 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 				}
 				exportedConfigs = copy
 			}
-			os.MkdirAll(filepath.Dir(outputFile), os.ModePerm)
-			targetFile, err = os.OpenFile(outputFile,
+			os.MkdirAll(filepath.Dir(targetFilePath), os.ModePerm)
+			targetFile, err = os.OpenFile(targetFilePath,
 				handler.flags(), os.ModePerm)
 			if err != nil {
 				return errors.Wrap(err, "failed to open config file")
@@ -121,26 +121,93 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 			return nil
 		},
 	}
-	initCmd.Flags().StringVarP(
-		&outputFile,
+
+	verifyCmd := &cobra.Command{
+		Use:   "verify [module]",
+		Short: "verify the config file is correct.",
+		Long:  "verify the config file is correct based on the methods exported by modules.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var (
+				handler         handler
+				targetFile      *os.File
+				exportedConfigs []ExportedConfig
+				confMap         map[string]interface{}
+				err             error
+			)
+			handler, err = getHandler(style)
+			if err != nil {
+				return err
+			}
+			if len(args) == 0 {
+				exportedConfigs = m.exportedConfigs
+			}
+			if len(args) >= 1 {
+				var copy = make([]ExportedConfig, 0)
+				for i := range m.exportedConfigs {
+					for j := 0; j < len(args); j++ {
+						if args[j] == m.exportedConfigs[i].Owner {
+							copy = append(copy, m.exportedConfigs[i])
+							break
+						}
+					}
+				}
+				exportedConfigs = copy
+			}
+			os.MkdirAll(filepath.Dir(targetFilePath), os.ModePerm)
+			targetFile, err = os.OpenFile(targetFilePath,
+				handler.flags(), os.ModePerm)
+			if err != nil {
+				return errors.Wrap(err, "failed to open config file")
+			}
+			defer targetFile.Close()
+			bytes, err := ioutil.ReadAll(targetFile)
+			if err != nil {
+				return errors.Wrap(err, "failed to read config file")
+			}
+			err = handler.unmarshal(bytes, &confMap)
+			if err != nil {
+				return errors.Wrap(err, "failed to unmarshal config file")
+			}
+			for _, config := range exportedConfigs {
+				if config.Validate == nil {
+					continue
+				}
+				if err := config.Validate(confMap); err != nil {
+					return errors.Wrap(err, "invalid config")
+				}
+			}
+			return nil
+		},
+	}
+
+	configCmd := &cobra.Command{
+		Use:   "config",
+		Short: "manage configuration",
+		Long:  "manage configuration, such as export a copy of default config.",
+	}
+	configCmd.PersistentFlags().StringVarP(
+		&targetFilePath,
 		"outputFile",
 		"o",
 		"./config/config.yaml",
-		"The output file of exported config",
+		"The output file of exported config (alias of targetFile)",
 	)
-	initCmd.Flags().StringVarP(
+	configCmd.PersistentFlags().StringVarP(
+		&targetFilePath,
+		"targetFile",
+		"t",
+		"./config/config.yaml",
+		"The targeted config file",
+	)
+	configCmd.PersistentFlags().StringVarP(
 		&style,
 		"style",
 		"s",
 		"yaml",
 		"The output file style",
 	)
-	configCmd := &cobra.Command{
-		Use:   "config",
-		Short: "manage configuration",
-		Long:  "manage configuration, such as export a copy of default config.",
-	}
 	configCmd.AddCommand(initCmd)
+	configCmd.AddCommand(verifyCmd)
 	command.AddCommand(configCmd)
 }
 
