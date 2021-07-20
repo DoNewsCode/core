@@ -44,6 +44,11 @@ func New(p ConfigIn) (Module, error) {
 	if adapter, ok = p.Conf.(*KoanfAdapter); !ok {
 		return Module{}, fmt.Errorf("expects a *config.KoanfAdapter instance, but %T given", p.Conf)
 	}
+
+	if err := loadValidators(adapter, p.ExportedConfigs); err != nil {
+		return Module{}, err
+	}
+
 	return Module{
 		dispatcher:      p.Dispatcher,
 		conf:            adapter,
@@ -209,6 +214,21 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 	configCmd.AddCommand(initCmd)
 	configCmd.AddCommand(verifyCmd)
 	command.AddCommand(configCmd)
+}
+
+func loadValidators(k *KoanfAdapter, exportedConfigs []ExportedConfig) error {
+	for _, config := range exportedConfigs {
+		if config.Validate == nil {
+			continue
+		}
+		k.validators = append(k.validators, config.Validate)
+	}
+	for _, f := range k.validators {
+		if err := f(k.K.All()); err != nil {
+			return fmt.Errorf("invalid config: %w", err)
+		}
+	}
+	return nil
 }
 
 func getHandler(style string) (handler, error) {

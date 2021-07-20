@@ -6,5 +6,9 @@ type ExportedConfig struct {
 	Owner    string
 	Data     map[string]interface{}
 	Comment  string
-	Validate func(data map[string]interface{}) error
+	Validate Validator
 }
+
+// Validator is a method to verify if config is valid. If it is not valid, the
+// returned error should contain a human readable description of why.
+type Validator func(data map[string]interface{}) error
