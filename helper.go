@@ -58,30 +58,22 @@ func getBool(data map[string]interface{}, key ...string) (bool, error) {
 
 // isValidLevel tests if the given input is valid level config.
 func isValidLevel(levelCfg string) bool {
-	switch levelCfg {
-	case "debug":
-		return true
-	case "info":
-		return true
-	case "warn":
-		return true
-	case "error":
-		return true
-	case "none":
-		return true
-	default:
-		return false
+	validLevel := []string{"debug", "info", "warn", "error", "none"}
+	for i := range validLevel {
+		if validLevel[i] == levelCfg {
+			return true
+		}
 	}
+	return false
 }
 
 // isValidLevel tests if the given input is valid format config.
 func isValidFormat(format string) bool {
-	switch format {
-	case "json":
-		return true
-	case "logfmt":
-		return true
-	default:
-		return false
+	validFormat := []string{"json", "logfmt"}
+	for i := range validFormat {
+		if validFormat[i] == format {
+			return true
+		}
 	}
+	return false
 }
