@@ -101,7 +101,7 @@ func (k *KoanfAdapter) Reload() error {
 	}
 
 	for _, f := range k.validators {
-		if err := f(tmp.All()); err != nil {
+		if err := f(tmp.Raw()); err != nil {
 			return fmt.Errorf("validation failed: %w", err)
 		}
 	}

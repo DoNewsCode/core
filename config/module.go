@@ -224,7 +224,7 @@ func loadValidators(k *KoanfAdapter, exportedConfigs []ExportedConfig) error {
 		k.validators = append(k.validators, config.Validate)
 	}
 	for _, f := range k.validators {
-		if err := f(k.K.All()); err != nil {
+		if err := f(k.K.Raw()); err != nil {
 			return fmt.Errorf("invalid config: %w", err)
 		}
 	}

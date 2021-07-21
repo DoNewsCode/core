@@ -1,7 +1,9 @@
 package core
 
 import (
+	"fmt"
 	stdlog "log"
+	"net"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
@@ -117,13 +119,13 @@ func provideDefaultConfig() []config.ExportedConfig {
 				"name": "app",
 			},
 			Comment: "The name of the application",
-		},
-		{
-			Owner: "core",
-			Data: map[string]interface{}{
-				"version": "0.1.0",
+			Validate: func(data map[string]interface{}) error {
+				_, err := getString(data, "name")
+				if err != nil {
+					return fmt.Errorf("the name field is not valid: %w", err)
+				}
+				return nil
 			},
-			Comment: "The version of the application",
 		},
 		{
 			Owner: "core",
@@ -131,6 +133,17 @@ func provideDefaultConfig() []config.ExportedConfig {
 				"env": "local",
 			},
 			Comment: "The environment of the application, one of production, development, staging, testing or local",
+			Validate: func(data map[string]interface{}) error {
+				str, err := getString(data, "env")
+				if err != nil {
+					return fmt.Errorf("the env field is not valid: %w", err)
+				}
+				if config.NewEnv(str) != config.EnvUnknown {
+					return nil
+				}
+				return fmt.Errorf(
+					"the env field must be one of \"production\", \"development\", \"staging\", \"testing\" or \"local\", got %s", str)
+			},
 		},
 		{
 			Owner: "core",
@@ -141,6 +154,23 @@ func provideDefaultConfig() []config.ExportedConfig {
 				},
 			},
 			Comment: "The http address",
+			Validate: func(data map[string]interface{}) error {
+				disable, err := getBool(data, "http", "disable")
+				if err != nil {
+					return fmt.Errorf("the http.disable field is not valid: %w", err)
+				}
+				if disable {
+					return nil
+				}
+				str, err := getString(data, "http", "addr")
+				if err != nil {
+					return fmt.Errorf("the http.addr field is not valid: %w", err)
+				}
+				if _, err := net.ResolveTCPAddr("tcp", str); err != nil {
+					return fmt.Errorf("the http.addr field must be an valid address like :8080, got %s", str)
+				}
+				return nil
+			},
 		},
 		{
 			Owner: "core",
@@ -151,6 +181,23 @@ func provideDefaultConfig() []config.ExportedConfig {
 				},
 			},
 			Comment: "The gRPC address",
+			Validate: func(data map[string]interface{}) error {
+				disable, err := getBool(data, "grpc", "disable")
+				if err != nil {
+					return fmt.Errorf("the grpc.disable field is not valid: %w", err)
+				}
+				if disable {
+					return nil
+				}
+				str, err := getString(data, "grpc", "addr")
+				if err != nil {
+					return fmt.Errorf("the grpc.addr field is not valid: %w", err)
+				}
+				if _, err := net.ResolveTCPAddr("tcp", str); err != nil {
+					return fmt.Errorf("the grpc.addr field must be an valid address like :9090, got %s", str)
+				}
+				return nil
+			},
 		},
 		{
 			Owner: "core",
@@ -160,6 +207,13 @@ func provideDefaultConfig() []config.ExportedConfig {
 				},
 			},
 			Comment: "The cron job runner",
+			Validate: func(data map[string]interface{}) error {
+				_, err := getBool(data, "cron", "disable")
+				if err != nil {
+					return fmt.Errorf("the cron.disable field is not valid: %w", err)
+				}
+				return nil
+			},
 		},
 		{
 			Owner: "core",
@@ -167,6 +221,23 @@ func provideDefaultConfig() []config.ExportedConfig {
 				"log": map[string]interface{}{"level": "debug", "format": "logfmt"},
 			},
 			Comment: "The global logging level and format",
+			Validate: func(data map[string]interface{}) error {
+				lvl, err := getString(data, "log", "level")
+				if err != nil {
+					return fmt.Errorf("the log.level field is not valid: %w", err)
+				}
+				if !isValidLevel(lvl) {
+					return fmt.Errorf("allowed levels are \"debug\", \"info\", \"warn\", \"error\", or \"none\", got \"%s\"", lvl)
+				}
+				format, err := getString(data, "log", "format")
+				if err != nil {
+					return fmt.Errorf("the log.format field is not valid: %w", err)
+				}
+				if !isValidFormat(format) {
+					return fmt.Errorf("the log format is not supported")
+				}
+				return nil
+			},
 		},
 	}
 }
