@@ -25,7 +25,7 @@ func setup() *cobra.Command {
 		conf: config,
 		exportedConfigs: []ExportedConfig{
 			{
-				"fooOwner",
+				"foo",
 				map[string]interface{}{
 					"foo": "bar",
 				},
@@ -38,7 +38,7 @@ func setup() *cobra.Command {
 				},
 			},
 			{
-				"bazOwner",
+				"baz",
 				map[string]interface{}{
 					"baz": "qux",
 				},
