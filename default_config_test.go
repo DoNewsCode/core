@@ -94,6 +94,18 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		t.Error("disabled transport should not have addr requirement")
 	})
 
+	t.Run("transport not map", func(t *testing.T) {
+		conf := provideDefaultConfig()
+		for _, c := range conf {
+			if c.Validate != nil {
+				err := c.Validate(map[string]interface{}{
+					"grpc": ":8080",
+				})
+				assert.Error(t, err)
+			}
+		}
+	})
+
 	t.Run("wrong type", func(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
