@@ -25,7 +25,7 @@ func setup() *cobra.Command {
 		conf: config,
 		exportedConfigs: []ExportedConfig{
 			{
-				"foo",
+				"fooOwner",
 				map[string]interface{}{
 					"foo": "bar",
 				},
@@ -38,7 +38,7 @@ func setup() *cobra.Command {
 				},
 			},
 			{
-				"baz",
+				"bazOwner",
 				map[string]interface{}{
 					"baz": "qux",
 				},
@@ -98,6 +98,12 @@ func TestModule_ProvideCommand_initCmd(t *testing.T) {
 			"./testdata/module_test.json",
 			[]string{"config", "init", "--outputFile", "./testdata/module_test.json", "--style", "json"},
 			"./testdata/module_test_expected.json",
+		},
+		{
+			"partial json",
+			"./testdata/module_test_partial.json",
+			[]string{"config", "init", "--outputFile", "./testdata/module_test_partial.json", "--style", "json"},
+			"./testdata/module_test_partial_expected.json",
 		},
 	}
 	for _, c := range cases {

@@ -308,10 +308,10 @@ func (y jsonHandler) write(file *os.File, configs []ExportedConfig, confMap map[
 		confMap = make(map[string]interface{})
 	}
 	for _, exportedConfig := range configs {
-		if _, ok := confMap[exportedConfig.Owner]; ok {
-			continue
-		}
 		for k := range exportedConfig.Data {
+			if _, ok := confMap[k]; ok {
+				continue
+			}
 			confMap[k] = exportedConfig.Data[k]
 		}
 	}
