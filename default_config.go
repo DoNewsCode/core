@@ -18,7 +18,6 @@ import (
 
 const defaultConfig = `
 name: app
-version: 0.1.0
 env: local
 http:
   addr: :8080
