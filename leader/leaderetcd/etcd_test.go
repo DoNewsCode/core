@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/DoNewsCode/core/internal"
 	"github.com/DoNewsCode/core/key"
@@ -23,7 +24,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewEtcdDriver(t *testing.T) {
-	client, _ := clientv3.New(clientv3.Config{Endpoints: envDefaultEtcdAddrs})
+	client, err := clientv3.New(clientv3.Config{Endpoints: envDefaultEtcdAddrs, DialTimeout: 2 * time.Second})
+	assert.NoError(t, err)
+	defer client.Close()
+
 	e1 := NewEtcdDriver(client, key.New("test"))
 	e2 := NewEtcdDriver(client, key.New("test"))
 
