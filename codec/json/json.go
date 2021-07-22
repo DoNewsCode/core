@@ -46,6 +46,8 @@ func NewCodec(opts ...Option) Codec {
 	return codec
 }
 
+// WithIndent allows the codec to indent json output while marshalling. It is
+// useful when the json output is meant for humans to read.
 func WithIndent(indent string) Option {
 	return func(codec *Codec) {
 		codec.indent = indent
