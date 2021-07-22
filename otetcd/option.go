@@ -6,6 +6,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"time"
 )
 
 // Option is a type that holds all of available etcd configurations.
@@ -69,4 +70,12 @@ type Option struct {
 
 	// PermitWithoutStream when set will allow client to send keepalive pings to server without any active streams(RPCs).
 	PermitWithoutStream bool `json:"permitWithoutStream" yaml:"permitWithoutStream"`
+}
+
+// GetDialTimeout provide default timeout duration, avoid program blocking.
+func (o *Option) dialTimeout() config.Duration {
+	if o.DialTimeout.IsZero() {
+		return config.Duration{Duration: 10 * time.Second}
+	}
+	return o.DialTimeout
 }

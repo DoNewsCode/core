@@ -9,7 +9,6 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/oklog/run"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v3"
 )
 
 type sagas struct {
@@ -49,8 +48,7 @@ func TestNew(t *testing.T) {
 
 func Test_provideConfig(t *testing.T) {
 	conf := provideConfig()
-	_, err := yaml.Marshal(conf.Config)
-	assert.NoError(t, err)
+	assert.NotNil(t, conf)
 }
 
 func timeout(duration time.Duration, g *run.Group) {

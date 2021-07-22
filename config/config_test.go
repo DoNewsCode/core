@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -217,6 +218,17 @@ func TestMapAdapter_Unmarshal(t *gotesting.T) {
 	assert.Equal(t, map[string]interface{}{
 		"bar": "baz",
 	}, target)
+}
+
+func TestKoanfAdapter_Reload(t *gotesting.T) {
+	t.Parallel()
+	conf, err := NewConfig(
+		WithValidators(func(data map[string]interface{}) error {
+			return errors.New("bad config")
+		}),
+	)
+	assert.Error(t, err)
+	assert.Nil(t, conf)
 }
 
 func prepareJSONTestSubject(t *gotesting.T) *KoanfAdapter {

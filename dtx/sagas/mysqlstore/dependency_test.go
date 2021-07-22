@@ -7,7 +7,6 @@ import (
 	"github.com/DoNewsCode/core/dtx/sagas"
 	"github.com/DoNewsCode/core/otgorm"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"
 )
 
@@ -39,6 +38,5 @@ func TestProviders(t *testing.T) {
 
 func Test_provideConfig(t *testing.T) {
 	conf := provideConfig()
-	_, err := yaml.Marshal(conf.Config)
-	assert.NoError(t, err)
+	assert.NotNil(t, conf)
 }

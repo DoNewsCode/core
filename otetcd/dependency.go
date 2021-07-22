@@ -92,7 +92,7 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 		co := clientv3.Config{
 			Endpoints:            conf.Endpoints,
 			AutoSyncInterval:     duration(conf.AutoSyncInterval),
-			DialTimeout:          duration(conf.DialTimeout),
+			DialTimeout:          duration(conf.dialTimeout()),
 			DialKeepAliveTime:    duration(conf.DialKeepAliveTime),
 			DialKeepAliveTimeout: duration(conf.DialKeepAliveTimeout),
 			MaxCallSendMsgSize:   conf.MaxCallSendMsgSize,
