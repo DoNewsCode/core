@@ -18,8 +18,7 @@ import (
 )
 
 func setup() *cobra.Command {
-	os.Remove("./testdata/module_test.yaml")
-	os.Remove("./testdata/module_test.json")
+
 	var config, _ = NewConfig()
 	var mod = Module{
 		conf: config,
@@ -55,8 +54,15 @@ func setup() *cobra.Command {
 	return rootCmd
 }
 
+func tearDown() {
+	os.Remove("./testdata/module_test.yaml")
+	os.Remove("./testdata/module_test.json")
+	ioutil.WriteFile("./testdata/module_test_partial.json", []byte("{\n  \"foo\": \"bar\"\n}"), os.ModePerm)
+	ioutil.WriteFile("./testdata/module_test_partial.yaml", []byte("# A mock config\nfoo: bar\n"), os.ModePerm)
+}
+
 func TestModule_ProvideCommand_initCmd(t *testing.T) {
-	rootCmd := setup()
+
 	cases := []struct {
 		name     string
 		output   string
@@ -69,12 +75,7 @@ func TestModule_ProvideCommand_initCmd(t *testing.T) {
 			[]string{"config", "init", "foo", "--outputFile", "./testdata/module_test.yaml"},
 			"./testdata/module_test_foo_expected.yaml",
 		},
-		{
-			"baz yaml",
-			"./testdata/module_test.yaml",
-			[]string{"config", "init", "baz", "--outputFile", "./testdata/module_test.yaml"},
-			"./testdata/module_test_baz_expected.yaml",
-		},
+
 		{
 			"old yaml",
 			"./testdata/module_test.yaml",
@@ -88,12 +89,6 @@ func TestModule_ProvideCommand_initCmd(t *testing.T) {
 			"./testdata/module_test_foo_expected.json",
 		},
 		{
-			"baz json",
-			"./testdata/module_test.json",
-			[]string{"config", "init", "baz", "--outputFile", "./testdata/module_test.json", "--style", "json"},
-			"./testdata/module_test_baz_expected.json",
-		},
-		{
 			"old json",
 			"./testdata/module_test.json",
 			[]string{"config", "init", "--outputFile", "./testdata/module_test.json", "--style", "json"},
@@ -105,9 +100,17 @@ func TestModule_ProvideCommand_initCmd(t *testing.T) {
 			[]string{"config", "init", "--outputFile", "./testdata/module_test_partial.json", "--style", "json"},
 			"./testdata/module_test_partial_expected.json",
 		},
+		{
+			"partial yaml",
+			"./testdata/module_test_partial.yaml",
+			[]string{"config", "init", "baz", "--outputFile", "./testdata/module_test_partial.yaml"},
+			"./testdata/module_test_partial_expected.yaml",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			rootCmd := setup()
+			defer tearDown()
 			rootCmd.SetArgs(c.args)
 			rootCmd.Execute()
 			testTarget, _ := ioutil.ReadFile(c.output)

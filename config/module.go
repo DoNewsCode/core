@@ -260,11 +260,14 @@ func (y appendHandler) unmarshal(bytes []byte, o interface{}) error {
 
 func (y appendHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error {
 out:
-	for _, config := range configs {
+	for i, config := range configs {
 		for k := range config.Data {
 			if _, ok := confMap[k]; ok {
 				continue out
 			}
+		}
+		if i != 0 {
+			fmt.Fprintln(file, "")
 		}
 		bytes, err := y.codec.Marshal(config.Data)
 		if err != nil {
@@ -277,10 +280,6 @@ out:
 			}
 		}
 		_, err = file.Write(bytes)
-		if err != nil {
-			return err
-		}
-		_, err = fmt.Fprintln(file)
 		if err != nil {
 			return err
 		}
@@ -297,6 +296,9 @@ func (r rewriteHandler) flags() int {
 }
 
 func (r rewriteHandler) unmarshal(bytes []byte, o interface{}) error {
+	if len(bytes) == 0 {
+		bytes = []byte("{}")
+	}
 	return r.codec.Unmarshal(bytes, o)
 }
 
@@ -320,5 +322,6 @@ func (r rewriteHandler) write(file *os.File, configs []ExportedConfig, confMap m
 	if _, err := file.Write(data); err != nil {
 		return err
 	}
+	fmt.Fprintln(file)
 	return err
 }
