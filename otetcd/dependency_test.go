@@ -11,7 +11,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
-	"gopkg.in/yaml.v3"
 )
 
 func TestMain(m *testing.M) {
@@ -68,6 +67,5 @@ func TestProvideFactory(t *testing.T) {
 
 func Test_provideConfig(t *testing.T) {
 	conf := provideConfig()
-	_, err := yaml.Marshal(conf.Config)
-	assert.NoError(t, err)
+	assert.NotNil(t, conf)
 }
