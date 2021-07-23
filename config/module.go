@@ -3,14 +3,14 @@ package config
 import (
 	"context"
 	"fmt"
-	"github.com/DoNewsCode/core/codec/json"
-	"github.com/DoNewsCode/core/codec/yaml"
-	"github.com/DoNewsCode/core/di"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/DoNewsCode/core/codec/json"
+	"github.com/DoNewsCode/core/codec/yaml"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
