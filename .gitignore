@@ -3,3 +3,4 @@ core.iml
 .idea/*
 /.idea/
 .env
+config/testdata/module_test_partial.json
