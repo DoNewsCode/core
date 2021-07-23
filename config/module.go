@@ -2,17 +2,15 @@ package config
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-
-	"github.com/DoNewsCode/core/di"
-	"gopkg.in/yaml.v3"
-
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/DoNewsCode/core/codec/json"
+	"github.com/DoNewsCode/core/codec/yaml"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -234,34 +232,44 @@ func loadValidators(k *KoanfAdapter, exportedConfigs []ExportedConfig) error {
 func getHandler(style string) (handler, error) {
 	switch style {
 	case "json":
-		return jsonHandler{}, nil
+		return rewriteHandler{codec: json.NewCodec(json.WithIndent("  "))}, nil
 	case "yaml":
-		return yamlHandler{}, nil
+		return appendHandler{codec: yaml.Codec{}}, nil
 	default:
 		return nil, fmt.Errorf("unsupported config style %s", style)
 	}
 }
 
-type yamlHandler struct {
+type handler interface {
+	flags() int
+	unmarshal(bytes []byte, o interface{}) error
+	write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error
 }
 
-func (y yamlHandler) flags() int {
+type appendHandler struct {
+	codec contract.Codec
+}
+
+func (y appendHandler) flags() int {
 	return os.O_APPEND | os.O_CREATE | os.O_RDWR
 }
 
-func (y yamlHandler) unmarshal(bytes []byte, o interface{}) error {
-	return yaml.Unmarshal(bytes, o)
+func (y appendHandler) unmarshal(bytes []byte, o interface{}) error {
+	return y.codec.Unmarshal(bytes, o)
 }
 
-func (y yamlHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error {
+func (y appendHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error {
 out:
-	for _, config := range configs {
+	for i, config := range configs {
 		for k := range config.Data {
 			if _, ok := confMap[k]; ok {
 				continue out
 			}
 		}
-		bytes, err := yaml.Marshal(config.Data)
+		if i != 0 {
+			fmt.Fprintln(file, "")
+		}
+		bytes, err := y.codec.Marshal(config.Data)
 		if err != nil {
 			return err
 		}
@@ -275,35 +283,26 @@ out:
 		if err != nil {
 			return err
 		}
-		_, err = fmt.Fprintln(file)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-type handler interface {
-	flags() int
-	unmarshal(bytes []byte, o interface{}) error
-	write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error
+type rewriteHandler struct {
+	codec contract.Codec
 }
 
-type jsonHandler struct {
-}
-
-func (y jsonHandler) flags() int {
+func (r rewriteHandler) flags() int {
 	return os.O_CREATE | os.O_RDWR
 }
 
-func (y jsonHandler) unmarshal(bytes []byte, o interface{}) error {
+func (r rewriteHandler) unmarshal(bytes []byte, o interface{}) error {
 	if len(bytes) == 0 {
-		return nil
+		bytes = []byte("{}")
 	}
-	return json.Unmarshal(bytes, o)
+	return r.codec.Unmarshal(bytes, o)
 }
 
-func (y jsonHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error {
+func (r rewriteHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error {
 	if confMap == nil {
 		confMap = make(map[string]interface{})
 	}
@@ -316,8 +315,13 @@ func (y jsonHandler) write(file *os.File, configs []ExportedConfig, confMap map[
 		}
 	}
 	file.Seek(0, 0)
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	err := encoder.Encode(confMap)
+	data, err := r.codec.Marshal(confMap)
+	if err != nil {
+		return err
+	}
+	if _, err := file.Write(data); err != nil {
+		return err
+	}
+	fmt.Fprintln(file)
 	return err
 }
