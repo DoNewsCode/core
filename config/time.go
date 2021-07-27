@@ -64,7 +64,7 @@ func (d Duration) MarshalText() ([]byte, error) {
 	return []byte(d.String()), nil
 }
 
-// UnmarshalText implements yaml.Unmarshaler
+// UnmarshalText implements encoding.TextUnmarshaler
 func (d *Duration) UnmarshalText(text []byte) error {
 	var err error
 	d.Duration, err = time.ParseDuration(string(text))
