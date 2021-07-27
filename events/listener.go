@@ -2,11 +2,14 @@ package events
 
 import (
 	"context"
+	"github.com/DoNewsCode/core/contract"
 )
 
+var _ contract.Listener = (*ListenerFunc)(nil)
+
 // Listen creates a functional listener in one line.
-func Listen(topic interface{}, callback func(ctx context.Context, event interface{}) error) ListenerFunc {
-	return ListenerFunc{
+func Listen(topic interface{}, callback func(ctx context.Context, event interface{}) error) *ListenerFunc {
+	return &ListenerFunc{
 		topic:    topic,
 		callback: callback,
 	}
@@ -19,10 +22,12 @@ type ListenerFunc struct {
 	callback func(ctx context.Context, event interface{}) error
 }
 
-func (f ListenerFunc) Listen() interface{} {
+// Listen implements contract.Listener
+func (f *ListenerFunc) Listen() interface{} {
 	return f.topic
 }
 
-func (f ListenerFunc) Process(ctx context.Context, event interface{}) error {
+// Process implements contract.Listener
+func (f *ListenerFunc) Process(ctx context.Context, event interface{}) error {
 	return f.callback(ctx, event)
 }
