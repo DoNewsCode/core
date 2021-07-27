@@ -11,30 +11,41 @@ import (
 	"github.com/DoNewsCode/core/events"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/oklog/run"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
 
 func setup() *cobra.Command {
-	os.Remove("./testdata/module_test.yaml")
-	os.Remove("./testdata/module_test.json")
+
 	var config, _ = NewConfig()
-	var mod = Module{conf: config, exportedConfigs: []ExportedConfig{
-		{
-			"foo",
-			map[string]interface{}{
-				"foo": "bar",
+	var mod = Module{
+		conf: config,
+		exportedConfigs: []ExportedConfig{
+			{
+				"foo",
+				map[string]interface{}{
+					"foo": "bar",
+				},
+				"A mock config",
+				func(data map[string]interface{}) error {
+					if _, ok := data["foo"]; !ok {
+						return errors.New("bad config")
+					}
+					return nil
+				},
 			},
-			"A mock config",
-		},
-		{
-			"baz",
-			map[string]interface{}{
-				"baz": "qux",
+			{
+				"baz",
+				map[string]interface{}{
+					"baz": "qux",
+				},
+				"Other mock config",
+				nil,
 			},
-			"Other mock config",
 		},
-	}}
+		dispatcher: nil,
+	}
 	rootCmd := &cobra.Command{
 		Use: "root",
 	}
@@ -42,8 +53,15 @@ func setup() *cobra.Command {
 	return rootCmd
 }
 
-func TestModule_ProvideCommand(t *testing.T) {
-	rootCmd := setup()
+func tearDown() {
+	os.Remove("./testdata/module_test.yaml")
+	os.Remove("./testdata/module_test.json")
+	ioutil.WriteFile("./testdata/module_test_partial.json", []byte("{\n  \"foo\": \"bar\"\n}"), os.ModePerm)
+	ioutil.WriteFile("./testdata/module_test_partial.yaml", []byte("# A mock config\nfoo: bar\n"), os.ModePerm)
+}
+
+func TestModule_ProvideCommand_initCmd(t *testing.T) {
+
 	cases := []struct {
 		name     string
 		output   string
@@ -56,12 +74,7 @@ func TestModule_ProvideCommand(t *testing.T) {
 			[]string{"config", "init", "foo", "--outputFile", "./testdata/module_test.yaml"},
 			"./testdata/module_test_foo_expected.yaml",
 		},
-		{
-			"baz yaml",
-			"./testdata/module_test.yaml",
-			[]string{"config", "init", "baz", "--outputFile", "./testdata/module_test.yaml"},
-			"./testdata/module_test_baz_expected.yaml",
-		},
+
 		{
 			"old yaml",
 			"./testdata/module_test.yaml",
@@ -75,20 +88,28 @@ func TestModule_ProvideCommand(t *testing.T) {
 			"./testdata/module_test_foo_expected.json",
 		},
 		{
-			"baz json",
-			"./testdata/module_test.json",
-			[]string{"config", "init", "baz", "--outputFile", "./testdata/module_test.json", "--style", "json"},
-			"./testdata/module_test_baz_expected.json",
-		},
-		{
 			"old json",
 			"./testdata/module_test.json",
 			[]string{"config", "init", "--outputFile", "./testdata/module_test.json", "--style", "json"},
 			"./testdata/module_test_expected.json",
 		},
+		{
+			"partial json",
+			"./testdata/module_test_partial.json",
+			[]string{"config", "init", "--outputFile", "./testdata/module_test_partial.json", "--style", "json"},
+			"./testdata/module_test_partial_expected.json",
+		},
+		{
+			"partial yaml",
+			"./testdata/module_test_partial.yaml",
+			[]string{"config", "init", "baz", "--outputFile", "./testdata/module_test_partial.yaml"},
+			"./testdata/module_test_partial_expected.yaml",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			rootCmd := setup()
+			defer tearDown()
 			rootCmd.SetArgs(c.args)
 			rootCmd.Execute()
 			testTarget, _ := ioutil.ReadFile(c.output)
@@ -98,6 +119,52 @@ func TestModule_ProvideCommand(t *testing.T) {
 				expectedString = strings.ReplaceAll(expectedString, "\r", "")
 			}
 			assert.Equal(t, expectedString, string(testTarget))
+		})
+	}
+}
+
+func TestModule_ProvideCommand_verifyCmd(t *testing.T) {
+	rootCmd := setup()
+	cases := []struct {
+		name  string
+		args  []string
+		isErr bool
+	}{
+		{
+			"bad config",
+			[]string{"config", "verify", "--targetFile", "./testdata/module_test_empty.yaml"},
+			true,
+		},
+		{
+			"bad config with module",
+			[]string{"config", "verify", "foo", "--targetFile", "./testdata/module_test_empty.yaml"},
+			true,
+		},
+		{
+			"bad config with good module selected",
+			[]string{"config", "verify", "baz", "--targetFile", "./testdata/module_test_empty.yaml"},
+			false,
+		},
+		{
+			"good config",
+			[]string{"config", "verify", "--targetFile", "./testdata/module_test_gold.yaml"},
+			false,
+		},
+		{
+			"good config with module",
+			[]string{"config", "verify", "foo", "--targetFile", "./testdata/module_test_gold.yaml"},
+			false,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			rootCmd.SetArgs(c.args)
+			err := rootCmd.Execute()
+			if c.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

@@ -21,20 +21,20 @@ func TestClient_Do(t *testing.T) {
 	}{
 		{
 			"normal",
-			func() *http.Request { r, _ := http.NewRequest("GET", "https://baidu.com", nil); return r }(),
+			func() *http.Request { r, _ := http.NewRequest("GET", "https://example.com/", nil); return r }(),
 			[]Option{},
 		},
 		{
 			"large request",
 			func() *http.Request {
-				r, _ := http.NewRequest("POST", "https://baidu.com", strings.NewReader(strings.Repeat("t", 10)))
+				r, _ := http.NewRequest("POST", "https://example.com/", strings.NewReader(strings.Repeat("t", 10)))
 				return r
 			}(),
 			[]Option{WithRequestLogThreshold(1)},
 		},
 		{
 			"large response",
-			func() *http.Request { r, _ := http.NewRequest("GET", "https://baidu.com", nil); return r }(),
+			func() *http.Request { r, _ := http.NewRequest("GET", "https://example.com/", nil); return r }(),
 			[]Option{WithResponseLogThreshold(1)},
 		},
 	}
@@ -58,7 +58,7 @@ func TestClient_race(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		t.Run("", func(t *testing.T) {
 			t.Parallel()
-			r, _ := http.NewRequest("GET", "https://baidu.com", nil)
+			r, _ := http.NewRequest("GET", "https://example.com/", nil)
 			_, _ = client.Do(r)
 		})
 	}
@@ -70,7 +70,7 @@ func TestClient_context(t *testing.T) {
 	span1, ctx := opentracing.StartSpanFromContextWithTracer(ctx, tracer, "span1")
 	span1.SetBaggageItem("foo", "bar")
 	span1.Finish()
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://baidu.com", nil)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://example.com/", nil)
 
 	client := NewClient(tracer)
 	_, _ = client.Do(req)

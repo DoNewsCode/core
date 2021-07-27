@@ -16,6 +16,7 @@ import (
 // KoanfAdapter is a implementation of contract.Config based on Koanf (https://github.com/knadh/koanf).
 type KoanfAdapter struct {
 	layers     []ProviderSet
+	validators []Validator
 	watcher    contract.ConfigWatcher
 	dispatcher contract.Dispatcher
 	delimiter  string
@@ -62,6 +63,13 @@ func WithDispatcher(dispatcher contract.Dispatcher) Option {
 	}
 }
 
+// WithValidators changes the validators of Koanf.
+func WithValidators(validators ...Validator) Option {
+	return func(option *KoanfAdapter) {
+		option.validators = validators
+	}
+}
+
 // NewConfig creates a new *KoanfAdapter.
 func NewConfig(options ...Option) (*KoanfAdapter, error) {
 	adapter := KoanfAdapter{delimiter: "."}
@@ -83,19 +91,29 @@ func NewConfig(options ...Option) (*KoanfAdapter, error) {
 // an error occurred, Reload will return early and abort the rest of the
 // reloading.
 func (k *KoanfAdapter) Reload() error {
-	if k.dispatcher != nil {
-		defer k.dispatcher.Dispatch(context.Background(), events.OnReload, events.OnReloadPayload{NewConf: k})
-	}
-
-	k.rwlock.Lock()
-	defer k.rwlock.Unlock()
+	var tmp = koanf.New(".")
 
 	for i := len(k.layers) - 1; i >= 0; i-- {
-		err := k.K.Load(k.layers[i].Provider, k.layers[i].Parser)
+		err := tmp.Load(k.layers[i].Provider, k.layers[i].Parser)
 		if err != nil {
 			return fmt.Errorf("unable to load config %w", err)
 		}
 	}
+
+	for _, f := range k.validators {
+		if err := f(tmp.Raw()); err != nil {
+			return fmt.Errorf("validation failed: %w", err)
+		}
+	}
+
+	k.rwlock.Lock()
+	k.K = tmp
+	k.rwlock.Unlock()
+
+	if k.dispatcher != nil {
+		k.dispatcher.Dispatch(context.Background(), events.OnReload, events.OnReloadPayload{NewConf: k})
+	}
+
 	return nil
 }
 

@@ -136,18 +136,18 @@ func TestC_Remote(t *testing.T) {
 	if addr == "" {
 		t.Skip("set ETCD_ADDR for run remote test")
 	}
-
+	key := "core.yaml"
 	envEtcdAddrs := strings.Split(addr, ",")
 	cfg := clientv3.Config{
 		Endpoints:   envEtcdAddrs,
 		DialTimeout: 2 * time.Second,
 	}
-	_ = remote.Provider("config.yaml", &cfg)
-	if err := put(cfg, "config.yaml", "name: remote"); err != nil {
+	_ = remote.Provider(key, &cfg)
+	if err := put(cfg, key, "name: remote"); err != nil {
 		t.Fatal(err)
 	}
 
-	c := New(WithRemoteYamlFile("config.yaml", cfg))
+	c := New(WithRemoteYamlFile(key, cfg))
 	c.ProvideEssentials()
 	assert.Equal(t, "remote", c.String("name"))
 }
