@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/oklog/run"
@@ -176,8 +175,8 @@ func TestModule_Watch(t *testing.T) {
 		defer cancel()
 
 		dispatcher := &events.SyncDispatcher{}
-		dispatcher.Subscribe(events.Listen(events.From(events.OnReload{}), func(ctx context.Context, event contract.Event) error {
-			data := event.Data().(events.OnReload).NewConf.(*KoanfAdapter)
+		dispatcher.Subscribe(events.Listen(events.OnReload, func(ctx context.Context, event interface{}) error {
+			data := event.(events.OnReloadPayload).NewConf.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil
@@ -191,8 +190,8 @@ func TestModule_Watch(t *testing.T) {
 		defer cancel()
 
 		dispatcher := &events.SyncDispatcher{}
-		dispatcher.Subscribe(events.Listen(events.From(events.OnReload{}), func(ctx context.Context, event contract.Event) error {
-			data := event.Data().(events.OnReload).NewConf.(*KoanfAdapter)
+		dispatcher.Subscribe(events.Listen(events.OnReload, func(ctx context.Context, event interface{}) error {
+			data := event.(events.OnReloadPayload).NewConf.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil

@@ -27,7 +27,7 @@ type TX struct {
 	dispatcher    contract.Dispatcher
 	correlationID string
 	session       Log
-	rollbacks     map[string]rollbackEvent
+	rollbacks     map[string]onRollbackPayload
 	undoErr       *multierror.Error
 	completed     bool
 }
@@ -40,8 +40,8 @@ func (tx *TX) Commit(ctx context.Context) error {
 
 // Rollback rollbacks the current transaction.
 func (tx *TX) Rollback(ctx context.Context) error {
-	for _, event := range tx.rollbacks {
-		err := tx.dispatcher.Dispatch(ctx, event)
+	for name, event := range tx.rollbacks {
+		err := tx.dispatcher.Dispatch(ctx, onRollback(name), event)
 		if err != nil {
 			tx.undoErr = multierror.Append(tx.undoErr, err)
 		}

@@ -111,7 +111,7 @@ func (k *KoanfAdapter) Reload() error {
 	k.rwlock.Unlock()
 
 	if k.dispatcher != nil {
-		k.dispatcher.Dispatch(context.Background(), events.Of(events.OnReload{NewConf: k}))
+		k.dispatcher.Dispatch(context.Background(), events.OnReload, events.OnReloadPayload{NewConf: k})
 	}
 
 	return nil

@@ -60,7 +60,7 @@ func (f *Factory) SubscribeReloadEventFrom(dispatcher contract.Dispatcher) {
 		return
 	}
 	f.reloadOnce.Do(func() {
-		dispatcher.Subscribe(events.Listen(events.From(events.OnReload{}), func(ctx context.Context, event contract.Event) error {
+		dispatcher.Subscribe(events.Listen(events.OnReload, func(ctx context.Context, event interface{}) error {
 			f.Close()
 			return nil
 		}))

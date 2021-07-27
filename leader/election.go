@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/DoNewsCode/core/contract"
-	"github.com/DoNewsCode/core/events"
 	"go.uber.org/atomic"
 )
 
@@ -46,7 +45,7 @@ func (e *Election) Campaign(ctx context.Context) error {
 	}
 	e.status.isLeader.Store(true)
 	// trigger events
-	e.dispatcher.Dispatch(ctx, events.Of(e.status))
+	e.dispatcher.Dispatch(ctx, OnStatusChanged, OnStatusChangedPayload{Status: e.status})
 	return nil
 }
 
@@ -56,7 +55,7 @@ func (e *Election) Resign(ctx context.Context) error {
 		return ErrNotALeader
 	}
 	// trigger events
-	defer e.dispatcher.Dispatch(ctx, events.Of(e.status))
+	defer e.dispatcher.Dispatch(ctx, OnStatusChanged, OnStatusChangedPayload{Status: e.status})
 	defer e.status.isLeader.Store(false)
 	return e.driver.Resign(ctx)
 }

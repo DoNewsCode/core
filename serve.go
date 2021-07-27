@@ -13,7 +13,6 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/cronopts"
 	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -83,11 +82,13 @@ func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (fun
 			logger.Infof("http service is listening at %s", ln.Addr())
 			s.Dispatcher.Dispatch(
 				ctx,
-				events.Of(OnHTTPServerStart{s.HTTPServer, ln}),
+				OnHTTPServerStart,
+				OnHTTPServerStartPayload{s.HTTPServer, ln},
 			)
 			defer s.Dispatcher.Dispatch(
 				ctx,
-				events.Of(OnHTTPServerShutdown{s.HTTPServer, ln}),
+				OnHTTPServerShutdown,
+				OnHTTPServerShutdownPayload{s.HTTPServer, ln},
 			)
 			return s.HTTPServer.Serve(ln)
 		}, func(err error) {
@@ -120,11 +121,13 @@ func (s serveIn) grpcServe(ctx context.Context, logger logging.LevelLogger) (fun
 			logger.Infof("gRPC service is listening at %s", ln.Addr())
 			s.Dispatcher.Dispatch(
 				ctx,
-				events.Of(OnGRPCServerStart{s.GRPCServer, ln}),
+				OnGRPCServerStart,
+				OnGRPCServerStartPayload{s.GRPCServer, ln},
 			)
 			defer s.Dispatcher.Dispatch(
 				ctx,
-				events.Of(OnGRPCServerShutdown{s.GRPCServer, ln}),
+				OnGRPCServerShutdown,
+				OnGRPCServerShutdownPayload{s.GRPCServer, ln},
 			)
 			return s.GRPCServer.Serve(ln)
 		}, func(err error) {
