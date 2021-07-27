@@ -34,30 +34,30 @@ func TestC_Serve(t *testing.T) {
 	c.AddModule(srvgrpc.HealthCheckModule{})
 
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnHTTPServerStart, func(ctx context.Context, start interface{}) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19998", start.Data().(OnHTTPServerStart).Listener.Addr().String())
+			assert.Equal(t, "[::]:19998", start.(OnHTTPServerStartPayload).Listener.Addr().String())
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnHTTPServerShutdown, func(ctx context.Context, shutdown interface{}) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19998", shutdown.Data().(OnHTTPServerShutdown).Listener.Addr().String())
+			assert.Equal(t, "[::]:19998", shutdown.(OnHTTPServerShutdownPayload).Listener.Addr().String())
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerStart{}), func(ctx context.Context, start contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnGRPCServerStart, func(ctx context.Context, start interface{}) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19999", start.Data().(OnGRPCServerStart).Listener.Addr().String())
+			assert.Equal(t, "[::]:19999", start.(OnGRPCServerStartPayload).Listener.Addr().String())
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnGRPCServerShutdown, func(ctx context.Context, shutdown interface{}) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19999", shutdown.Data().(OnGRPCServerShutdown).Listener.Addr().String())
+			assert.Equal(t, "[::]:19999", shutdown.(OnGRPCServerShutdownPayload).Listener.Addr().String())
 			return nil
 		}))
 	})
@@ -80,25 +80,25 @@ func TestC_ServeDisable(t *testing.T) {
 	c.AddModule(srvgrpc.HealthCheckModule{})
 
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnHTTPServerStart, func(ctx context.Context, start interface{}) error {
 			atomic.AddInt32(&called, 1)
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnHTTPServerShutdown, func(ctx context.Context, shutdown interface{}) error {
 			atomic.AddInt32(&called, 1)
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerStart{}), func(ctx context.Context, start contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnGRPCServerStart, func(ctx context.Context, start interface{}) error {
 			atomic.AddInt32(&called, 1)
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnGRPCServerShutdown, func(ctx context.Context, shutdown interface{}) error {
 			atomic.AddInt32(&called, 1)
 			return nil
 		}))

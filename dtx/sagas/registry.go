@@ -83,7 +83,7 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 		store:         r.Store,
 		dispatcher:    r.dispatcher,
 		correlationID: cid,
-		rollbacks:     make(map[string]rollbackEvent),
+		rollbacks:     make(map[string]onRollbackPayload),
 	}
 	ctx = context.WithValue(ctx, dtx.CorrelationID, cid)
 	ctx = context.WithValue(ctx, TxContextKey, tx)
@@ -113,9 +113,9 @@ func (r *Registry) StartTX(ctx context.Context) (*TX, context.Context) {
 //  addOrder(ctx, request)
 func (r *Registry) AddStep(step *Step) func(context.Context, interface{}) (interface{}, error) {
 	r.dispatcher.Subscribe(events.Listen(
-		[]contract.Event{rollbackEvent{name: step.Name, request: []byte{}}},
-		func(ctx context.Context, event contract.Event) error {
-			request := event.Data()
+		onRollback(step.Name),
+		func(ctx context.Context, event interface{}) error {
+			request := event.(onRollbackPayload).request
 			logID := xid.New().String()
 			tx := TxFromContext(ctx)
 
@@ -125,11 +125,11 @@ func (r *Registry) AddStep(step *Step) func(context.Context, interface{}) (inter
 				StartedAt:     time.Now(),
 				LogType:       Undo,
 				StepName:      step.Name,
-				StepParam:     event.Data(),
+				StepParam:     event.(onRollbackPayload),
 			}
-			if _, ok := event.Data().([]byte); step.DecodeParam != nil && ok {
+			if _, ok := request.([]byte); step.DecodeParam != nil && ok {
 				var err error
-				request, err = step.DecodeParam(event.Data().([]byte))
+				request, err = step.DecodeParam(request.([]byte))
 				if err != nil {
 					return errors.Wrap(err, "unable to encode step parameter")
 				}
@@ -164,7 +164,7 @@ func (r *Registry) AddStep(step *Step) func(context.Context, interface{}) (inter
 		}
 
 		must(tx.store.Log(ctx, stepLog))
-		tx.rollbacks[step.Name] = rollbackEvent{name: step.Name, request: data}
+		tx.rollbacks[step.Name] = onRollbackPayload{request: data}
 		response, err = step.Do(ctx, request)
 		must(tx.store.Ack(ctx, logID, err))
 		return response, err
@@ -187,6 +187,6 @@ func (r *Registry) Recover(ctx context.Context) {
 		}
 		ctx = context.WithValue(ctx, dtx.CorrelationID, tx.correlationID)
 		ctx = context.WithValue(ctx, TxContextKey, &tx)
-		_ = r.dispatcher.Dispatch(ctx, rollbackEvent{name: log.StepName, request: log.StepParam})
+		_ = r.dispatcher.Dispatch(ctx, onRollback(log.StepName), onRollbackPayload{request: log.StepParam})
 	}
 }

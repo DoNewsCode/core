@@ -105,7 +105,7 @@ func TestFactory_Watch(t *testing.T) {
 	assert.Equal(t, "foo", foo.(string))
 
 	time.Sleep(3 * time.Second)
-	_ = dispatcher.Dispatch(ctx, events.Of(events.OnReload{}))
+	_ = dispatcher.Dispatch(ctx, events.OnReload, events.OnReloadPayload{})
 
 	time.Sleep(3 * time.Second)
 	foo, err = f.Make("default")
