@@ -100,3 +100,17 @@ func TestDuration_IsZero(t *testing.T) {
 		})
 	}
 }
+
+func TestDuration_UnmarshalText(t *testing.T) {
+	var d Duration
+	err := d.UnmarshalText([]byte("1s"))
+	assert.NoError(t, err)
+	assert.Equal(t, Duration{time.Second}, d)
+}
+
+func TestDuration_MarshalText(t *testing.T) {
+	d := Duration{time.Second}
+	b, err := d.MarshalText()
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("1s"), b)
+}
