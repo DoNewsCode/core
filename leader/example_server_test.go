@@ -34,8 +34,8 @@ func Example_server() {
 	c.Provide(leader.Providers())
 	c.Invoke(func(dispatcher contract.Dispatcher) {
 		// This listener will be called twice. Once on becoming the leader and once on resigning the leader.
-		dispatcher.Subscribe(events.Listen(events.From(&leader.Status{}), func(ctx context.Context, event contract.Event) error {
-			fmt.Println(event.Data().(*leader.Status).IsLeader())
+		dispatcher.Subscribe(events.Listen(leader.OnStatusChanged, func(ctx context.Context, event interface{}) error {
+			fmt.Println(event.(leader.OnStatusChangedPayload).Status.IsLeader())
 			return nil
 		}))
 	})

@@ -34,30 +34,30 @@ func TestC_Serve(t *testing.T) {
 	c.AddModule(srvgrpc.HealthCheckModule{})
 
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnHTTPServerStart, func(ctx context.Context, start interface{}) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19998", start.Data().(OnHTTPServerStart).Listener.Addr().String())
+			assert.Equal(t, "[::]:19998", start.(OnHTTPServerStartPayload).Listener.Addr().String())
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnHTTPServerShutdown, func(ctx context.Context, shutdown interface{}) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19998", shutdown.Data().(OnHTTPServerShutdown).Listener.Addr().String())
+			assert.Equal(t, "[::]:19998", shutdown.(OnHTTPServerShutdownPayload).Listener.Addr().String())
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerStart{}), func(ctx context.Context, start contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnGRPCServerStart, func(ctx context.Context, start interface{}) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19999", start.Data().(OnGRPCServerStart).Listener.Addr().String())
+			assert.Equal(t, "[::]:19999", start.(OnGRPCServerStartPayload).Listener.Addr().String())
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnGRPCServerShutdown, func(ctx context.Context, shutdown interface{}) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19999", shutdown.Data().(OnGRPCServerShutdown).Listener.Addr().String())
+			assert.Equal(t, "[::]:19999", shutdown.(OnGRPCServerShutdownPayload).Listener.Addr().String())
 			return nil
 		}))
 	})
@@ -80,25 +80,25 @@ func TestC_ServeDisable(t *testing.T) {
 	c.AddModule(srvgrpc.HealthCheckModule{})
 
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerStart{}), func(ctx context.Context, start contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnHTTPServerStart, func(ctx context.Context, start interface{}) error {
 			atomic.AddInt32(&called, 1)
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnHTTPServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnHTTPServerShutdown, func(ctx context.Context, shutdown interface{}) error {
 			atomic.AddInt32(&called, 1)
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerStart{}), func(ctx context.Context, start contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnGRPCServerStart, func(ctx context.Context, start interface{}) error {
 			atomic.AddInt32(&called, 1)
 			return nil
 		}))
 	})
 	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(events.From(OnGRPCServerShutdown{}), func(ctx context.Context, shutdown contract.Event) error {
+		dispatcher.Subscribe(events.Listen(OnGRPCServerShutdown, func(ctx context.Context, shutdown interface{}) error {
 			atomic.AddInt32(&called, 1)
 			return nil
 		}))
@@ -136,18 +136,18 @@ func TestC_Remote(t *testing.T) {
 	if addr == "" {
 		t.Skip("set ETCD_ADDR for run remote test")
 	}
-
+	key := "core.yaml"
 	envEtcdAddrs := strings.Split(addr, ",")
 	cfg := clientv3.Config{
 		Endpoints:   envEtcdAddrs,
 		DialTimeout: 2 * time.Second,
 	}
-	_ = remote.Provider("config.yaml", &cfg)
-	if err := put(cfg, "config.yaml", "name: remote"); err != nil {
+	_ = remote.Provider(key, &cfg)
+	if err := put(cfg, key, "name: remote"); err != nil {
 		t.Fatal(err)
 	}
 
-	c := New(WithRemoteYamlFile("config.yaml", cfg))
+	c := New(WithRemoteYamlFile(key, cfg))
 	c.ProvideEssentials()
 	assert.Equal(t, "remote", c.String("name"))
 }

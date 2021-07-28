@@ -10,15 +10,15 @@ import (
 // SyncDispatcher is a contract.Dispatcher implementation that dispatches events synchronously.
 // SyncDispatcher is safe for concurrent use.
 type SyncDispatcher struct {
-	registry map[string][]contract.Listener
+	registry map[interface{}][]contract.Listener
 	rwLock   sync.RWMutex
 }
 
 // Dispatch dispatches events synchronously. If any listener returns an error,
 // abort the process immediately and return that error to caller.
-func (d *SyncDispatcher) Dispatch(ctx context.Context, event contract.Event) error {
+func (d *SyncDispatcher) Dispatch(ctx context.Context, topic interface{}, event interface{}) error {
 	d.rwLock.RLock()
-	listeners, ok := d.registry[event.Type()]
+	listeners, ok := d.registry[topic]
 	d.rwLock.RUnlock()
 
 	if !ok {
@@ -38,9 +38,7 @@ func (d *SyncDispatcher) Subscribe(listener contract.Listener) {
 	defer d.rwLock.Unlock()
 
 	if d.registry == nil {
-		d.registry = make(map[string][]contract.Listener)
+		d.registry = make(map[interface{}][]contract.Listener)
 	}
-	for _, e := range listener.Listen() {
-		d.registry[e.Type()] = append(d.registry[e.Type()], listener)
-	}
+	d.registry[listener.Listen()] = append(d.registry[listener.Listen()], listener)
 }

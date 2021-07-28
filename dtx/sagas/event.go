@@ -1,14 +1,11 @@
 package sagas
 
-type rollbackEvent struct {
-	name    string
+type event string
+
+func onRollback(name string) event {
+	return event(name)
+}
+
+type onRollbackPayload struct {
 	request interface{}
-}
-
-func (s rollbackEvent) Type() string {
-	return s.name
-}
-
-func (s rollbackEvent) Data() interface{} {
-	return s.request
 }
