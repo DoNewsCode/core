@@ -110,5 +110,4 @@ jobs:
           version: v1.41
           args: --disable errcheck
           skip-go-installation: true
-          skip-pkg-cache: true
           only-new-issues: true
