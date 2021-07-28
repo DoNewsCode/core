@@ -14,7 +14,6 @@ import (
 
 type mockModel struct {
 	gorm.Model
-	value string
 }
 
 func TestHook(t *testing.T) {

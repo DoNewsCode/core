@@ -128,7 +128,7 @@ func TestMySQLStore(t *testing.T) {
 					StepError:  nil,
 				})
 				assert.NoError(t, err)
-				err = store.Ack(ctx, "3", errors.New("foo error"))
+				_ = store.Ack(ctx, "3", errors.New("foo error"))
 				err = store.Log(ctx, sagas.Log{
 					ID:         "4",
 					StartedAt:  time.Now(),
@@ -181,7 +181,7 @@ func TestMySQLStore(t *testing.T) {
 					StepError:  nil,
 				})
 				assert.NoError(t, err)
-				err = store.Ack(ctx, "4", nil)
+				_ = store.Ack(ctx, "4", nil)
 				logs, err := store.UnacknowledgedSteps(ctx, "foo")
 				assert.NoError(t, err)
 				assert.Len(t, logs, 0)
@@ -212,7 +212,7 @@ func TestMySQLStore(t *testing.T) {
 					StepError:  nil,
 				})
 				assert.NoError(t, err)
-				err = store.Ack(ctx, "3", errors.New("foo error"))
+				_ = store.Ack(ctx, "3", errors.New("foo error"))
 				logs, err := store.UncommittedSagas(ctx)
 				assert.NoError(t, err)
 				assert.Len(t, logs, 1)
@@ -255,7 +255,7 @@ func TestMySQLStore(t *testing.T) {
 					StepError:  nil,
 				})
 				assert.NoError(t, err)
-				err = store.Ack(ctx, "9", errors.New("bar"))
+				_ = store.Ack(ctx, "9", errors.New("bar"))
 				logs, err := store.UnacknowledgedSteps(ctx, "multiple steps")
 				assert.NoError(t, err)
 				assert.Len(t, logs, 2)

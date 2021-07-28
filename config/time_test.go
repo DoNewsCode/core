@@ -75,7 +75,7 @@ func TestDuration_MarshalJSON(t *testing.T) {
 			data, err := json.Marshal(c.value)
 			assert.NoError(t, err)
 			assert.Equal(t, c.expectedJSON, string(data))
-			data, err = yaml.Marshal(c.value)
+			data, _ = yaml.Marshal(c.value)
 			assert.Equal(t, c.expectedYaml, string(data))
 		})
 	}

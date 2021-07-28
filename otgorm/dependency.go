@@ -68,12 +68,6 @@ type GormConfigInterceptor func(name string, conf *gorm.Config)
 // SQLite is an alias of gorm.DB. This is useful when injecting test db.
 type SQLite gorm.DB
 
-type confNotFoundErr string
-
-func (c confNotFoundErr) Error() string {
-	return string(c)
-}
-
 type databaseConf struct {
 	Database                                 string `json:"database" yaml:"database"`
 	Dsn                                      string `json:"dsn" yaml:"dsn"`
