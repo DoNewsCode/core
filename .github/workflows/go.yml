@@ -109,5 +109,4 @@ jobs:
         with:
           version: v1.41
           args: --disable errcheck
-          skip-go-installation: true
           only-new-issues: true
