@@ -51,7 +51,7 @@ func (e *Election) Campaign(ctx context.Context) error {
 
 // Resign gives up the leadership.
 func (e *Election) Resign(ctx context.Context) error {
-	if e.status.isLeader.Load() != true {
+	if !e.status.isLeader.Load() {
 		return ErrNotALeader
 	}
 	// trigger events

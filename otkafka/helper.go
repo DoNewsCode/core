@@ -2,6 +2,7 @@ package otkafka
 
 import (
 	"context"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/segmentio/kafka-go"

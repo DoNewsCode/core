@@ -3,9 +3,10 @@ package otredis
 import (
 	"bytes"
 	"context"
+	"testing"
+
 	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestRedisLogAdapter_Printf(t *testing.T) {

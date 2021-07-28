@@ -3,6 +3,7 @@ package config_test
 import (
 	"flag"
 	"fmt"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/basicflag"

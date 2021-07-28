@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+
 	"github.com/DoNewsCode/core/contract"
 )
 
