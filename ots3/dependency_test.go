@@ -1,11 +1,12 @@
 package ots3
 
 import (
+	"testing"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestNewUploadManagerFactory(t *testing.T) {

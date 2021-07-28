@@ -2,6 +2,7 @@ package text_test
 
 import (
 	"fmt"
+
 	"github.com/DoNewsCode/core/text"
 )
 

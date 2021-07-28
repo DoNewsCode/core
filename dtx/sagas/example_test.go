@@ -108,7 +108,7 @@ func Example() {
 		Cost:    resp.(OrderResponse).Cost,
 	})
 	if err != nil {
-		tx.Rollback(ctx)
+		_ = tx.Rollback(ctx)
 	}
 	tx.Commit(ctx)
 	fmt.Println(resp.(PaymentResponse).Success)

@@ -3,6 +3,7 @@ package otkafka
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/opentracing/opentracing-go"
@@ -54,7 +55,7 @@ func (w *Writer) WriteMessages(ctx context.Context, msgs ...kafka.Message) error
 	if err != nil && w.logger != nil {
 		_ = level.Warn(w.logger).Log("err", fmt.Sprintf("unable to inject tracing context: %s", err.Error()))
 	} else {
-		_ = level.Debug(w.logger).Log("msg", fmt.Sprintf("trace injected"))
+		_ = level.Debug(w.logger).Log("msg", "trace injected")
 	}
 
 	for i := range msgs {

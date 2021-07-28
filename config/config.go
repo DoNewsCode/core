@@ -265,11 +265,11 @@ func (m MapAdapter) Route(s string) contract.ConfigAccessor {
 		v = m[s]
 	}
 
-	switch v.(type) {
+	switch x := v.(type) {
 	case map[string]interface{}:
-		return MapAdapter(v.(map[string]interface{}))
+		return MapAdapter(x)
 	case MapAdapter:
-		return v.(MapAdapter)
+		return x
 	default:
 		panic(fmt.Sprintf("value at path %s is not a valid Router", s))
 	}

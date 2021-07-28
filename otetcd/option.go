@@ -3,10 +3,11 @@ package otetcd
 import (
 	"context"
 	"crypto/tls"
+	"time"
+
 	"github.com/DoNewsCode/core/config"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"time"
 )
 
 // Option is a type that holds all of available etcd configurations.

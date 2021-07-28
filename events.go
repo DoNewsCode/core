@@ -1,9 +1,10 @@
 package core
 
 import (
-	"google.golang.org/grpc"
 	"net"
 	"net/http"
+
+	"google.golang.org/grpc"
 )
 
 type event string

@@ -44,7 +44,8 @@ func TestClient_Do(t *testing.T) {
 			t.Parallel()
 			tracer := mocktracer.New()
 			client := NewClient(tracer, c.Option...)
-			_, _ = client.Do(c.request)
+			resp, _ := client.Do(c.request)
+			defer resp.Body.Close()
 			assert.NotEmpty(t, tracer.FinishedSpans())
 		})
 	}
@@ -59,7 +60,8 @@ func TestClient_race(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			t.Parallel()
 			r, _ := http.NewRequest("GET", "https://example.com/", nil)
-			_, _ = client.Do(r)
+			resp, _ := client.Do(r)
+			defer resp.Body.Close()
 		})
 	}
 }
@@ -73,7 +75,8 @@ func TestClient_context(t *testing.T) {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://example.com/", nil)
 
 	client := NewClient(tracer)
-	_, _ = client.Do(req)
+	resp, _ := client.Do(req)
+	defer resp.Body.Close()
 	assert.Len(t, tracer.FinishedSpans(), 2)
 	assert.Equal(t, "bar", tracer.FinishedSpans()[1].BaggageItem("foo"))
 }

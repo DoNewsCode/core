@@ -2,10 +2,11 @@ package cronopts
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestCronLogAdapter_Info(t *testing.T) {
