@@ -31,12 +31,40 @@ func TestDuration_UnmarshalJSON(t *testing.T) {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			v1 := Duration{}
-			yaml.Unmarshal([]byte(c.value), &v1)
-			assert.Equal(t, c.expected, v1)
-			v2 := Duration{}
-			json.Unmarshal([]byte(c.value), &v2)
-			assert.Equal(t, c.expected, v2)
+			d := Duration{}
+			err := json.Unmarshal([]byte(c.value), &d)
+			assert.NoError(t, err)
+			assert.Equal(t, c.expected, d)
+		})
+	}
+}
+
+func TestDuration_UnmarshalYaml(t *testing.T) {
+	var cases = []struct {
+		name     string
+		value    string
+		expected Duration
+	}{
+		{
+			"simple",
+			`"5s"`,
+			Duration{5 * time.Second},
+		},
+		{
+			"float",
+			`65000000000.0`,
+			Duration{5*time.Second + time.Minute},
+		},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			d := Duration{}
+			err := yaml.Unmarshal([]byte(c.value), &d)
+			assert.NoError(t, err)
+			assert.Equal(t, c.expected, d)
 		})
 	}
 }
@@ -93,6 +121,7 @@ func TestDuration_IsZero(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			d := Duration{tt.val}
 			if got := d.IsZero(); got != tt.want {
 				t.Errorf("IsZero() = %v, want %v", got, tt.want)
