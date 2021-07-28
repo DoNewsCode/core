@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gogo/protobuf/proto"
-	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type Headerer interface {
@@ -79,11 +79,11 @@ func encode(w http.ResponseWriter, any interface{}, code int) {
 		encoder := json.NewEncoder(w)
 		_ = encoder.Encode(x)
 	case proto.Message:
-		marshaller := jsonpb.Marshaler{
-			EmitDefaults: true,
-			OrigName:     true,
-		}
-		_ = marshaller.Marshal(w, x)
+		bytes, _ := protojson.MarshalOptions{
+			EmitUnpopulated: true,
+			UseProtoNames:   true,
+		}.Marshal(x)
+		w.Write(bytes)
 	case error:
 		encoder := json.NewEncoder(w)
 		_ = encoder.Encode(map[string]string{
