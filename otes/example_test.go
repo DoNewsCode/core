@@ -2,6 +2,7 @@ package otes_test
 
 import (
 	"fmt"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/otes"
 	"github.com/olivere/elastic/v7"

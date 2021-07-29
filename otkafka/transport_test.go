@@ -16,7 +16,7 @@ import (
 func TestTransport_RoundTrip(t *testing.T) {
 	tracer := mocktracer.New()
 
-	factory, cleanup := provideWriterFactory(in{
+	factory, cleanup := provideWriterFactory(factoryIn{
 		Tracer: tracer,
 		In:     di.In{},
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{

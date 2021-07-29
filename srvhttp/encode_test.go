@@ -2,11 +2,12 @@ package srvhttp
 
 import (
 	"bytes"
+	"net/http"
+	"testing"
+
 	"github.com/DoNewsCode/core/unierr"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"testing"
 )
 
 type MockWriter struct {

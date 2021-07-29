@@ -2,10 +2,11 @@ package otkafka
 
 import (
 	"context"
+	"testing"
+
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestHelper_no_parent(t *testing.T) {

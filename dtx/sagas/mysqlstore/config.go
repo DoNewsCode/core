@@ -1,9 +1,10 @@
 package mysqlstore
 
 import (
+	"time"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
-	"time"
 )
 
 type configOut struct {

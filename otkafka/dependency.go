@@ -45,8 +45,8 @@ type ReaderMaker interface {
 	Make(name string) (*kafka.Reader, error)
 }
 
-// in is a injection parameter for provideReaderFactory.
-type in struct {
+// factoryIn is a injection parameter for provideReaderFactory.
+type factoryIn struct {
 	di.In
 
 	ReaderInterceptor ReaderInterceptor  `optional:"true"`
@@ -58,8 +58,8 @@ type in struct {
 	WriterStats       *WriterStats `optional:"true"`
 }
 
-// out is the result of provideKafkaFactory.
-type out struct {
+// factoryOut is the result of provideKafkaFactory.
+type factoryOut struct {
 	di.Out
 
 	ReaderFactory   ReaderFactory
@@ -77,7 +77,7 @@ type out struct {
 // core's DI container, use provideKafkaFactory over provideReaderFactory and
 // provideWriterFactory. Not only provideKafkaFactory provides both reader and
 // writer, but also only provideKafkaFactory exports default Kafka configuration.
-func provideKafkaFactory(p in) (out, func(), func(), error) {
+func provideKafkaFactory(p factoryIn) (factoryOut, func(), func(), error) {
 	rf, rc := provideReaderFactory(p)
 	wf, wc := provideWriterFactory(p)
 	dr, err1 := rf.Make("default")
@@ -101,7 +101,7 @@ func provideKafkaFactory(p in) (out, func(), func(), error) {
 		}
 	}
 
-	return out{
+	return factoryOut{
 		ReaderMaker:     rf,
 		ReaderFactory:   rf,
 		WriterMaker:     wf,
@@ -115,7 +115,7 @@ func provideKafkaFactory(p in) (out, func(), func(), error) {
 
 // provideReaderFactory creates the ReaderFactory. It is valid
 // dependency option for package core.
-func provideReaderFactory(p in) (ReaderFactory, func()) {
+func provideReaderFactory(p factoryIn) (ReaderFactory, func()) {
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			err          error
@@ -146,7 +146,7 @@ func provideReaderFactory(p in) (ReaderFactory, func()) {
 
 // provideWriterFactory creates WriterFactory. It is a valid injection
 // option for package core.
-func provideWriterFactory(p in) (WriterFactory, func()) {
+func provideWriterFactory(p factoryIn) (WriterFactory, func()) {
 
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (

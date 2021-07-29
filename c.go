@@ -8,8 +8,10 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 
 	"github.com/DoNewsCode/core/codec/yaml"
 	"github.com/DoNewsCode/core/config"
@@ -412,6 +414,8 @@ func (c *C) AddModuleFunc(constructor interface{}) {
 func (c *C) Invoke(function interface{}) {
 	err := c.di.Invoke(function)
 	if err != nil {
+		re := regexp.MustCompile(` missing dependencies for function "reflect"\.makeFuncStub \(.+?\):`)
+		err = errors.New(re.ReplaceAllString(err.Error(), ""))
 		panic(err)
 	}
 }

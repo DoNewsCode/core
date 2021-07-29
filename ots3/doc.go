@@ -37,7 +37,7 @@ To use package ots3 with package core:
 	})
 
 Adding the module created by mods3.New is optional. This module provides an "/upload" path
-for the http router. If this is not relevant, just leave it out.
+for the http router. If this is not relevant, just leave it factoryOut.
 
 Sometimes there are valid reasons to connect to more than one s3 server. Inject
 mods3.Maker to factory a *ots3.Manager with a specific configuration entry.

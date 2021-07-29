@@ -27,7 +27,7 @@ type ReaderConfig struct {
 	// set.
 	QueueCapacity int `json:"queue_capacity" yaml:"queue_capacity"`
 
-	// Min and max number of bytes to fetch from kafka in each request.
+	// Min and max number of bytes to fetch from kafka factoryIn each request.
 	MinBytes int `json:"minBytes" yaml:"minBytes"`
 	MaxBytes int `json:"maxBytes" yaml:"maxBytes"`
 
