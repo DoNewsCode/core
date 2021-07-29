@@ -10,7 +10,7 @@ import (
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/stretchr/testify/assert"
-	yaml2 "gopkg.factoryIn/yaml.v3"
+	yaml2 "gopkg.in/yaml.v3"
 )
 
 func TestNewRedisFactory(t *testing.T) {
