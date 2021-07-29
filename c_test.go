@@ -178,6 +178,31 @@ func TestC_Provide(t *testing.T) {
 	})
 }
 
+type a struct{}
+type b struct{}
+
+func mockConstructor(b b) (a, func(), error) {
+	return a{}, func() {}, nil
+}
+
+func TestNew_missingDependencyErrorMessage(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Log(r)
+			if strings.Contains(r.(error).Error(), "\"reflect\".makeFuncStub") {
+				t.Error("should not contain reflection stub")
+			}
+			return
+		}
+		t.Error("test should panic")
+	}()
+	c := New()
+	c.Provide(di.Deps{mockConstructor})
+	c.Invoke(func(a a) error {
+		return nil
+	})
+}
+
 func put(cfg clientv3.Config, key, val string) error {
 	client, err := clientv3.New(cfg)
 	if err != nil {
