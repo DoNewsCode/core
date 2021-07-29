@@ -2,8 +2,6 @@ package otes
 
 import (
 	"fmt"
-	"net/http"
-
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
@@ -13,6 +11,7 @@ import (
 	"github.com/olivere/elastic/v7"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/dig"
+	"net/http"
 )
 
 /*
@@ -124,9 +123,11 @@ func provideEsFactory(p in) (out, func()) {
 
 		client, err := elastic.NewClient(options...)
 		if err != nil {
-			return di.Pair{}, err
+			client, err = elastic.NewSimpleClient(options...)
+			if err != nil {
+				return di.Pair{}, err
+			}
 		}
-
 		return di.Pair{
 			Conn: client,
 			Closer: func() {

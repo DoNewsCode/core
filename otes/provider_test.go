@@ -21,44 +21,60 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewEsFactory(t *testing.T) {
-	esFactory, cleanup := provideEsFactory(in{
-		Conf: config.MapAdapter{"es": map[string]Config{
-			"default":     {URL: envDefaultElasticsearchAddrs},
-			"alternative": {URL: envDefaultElasticsearchAddrs},
-		}},
-		Logger: log.NewNopLogger(),
-		Tracer: nil,
+	t.Run("noraml construction", func(t *testing.T) {
+		esFactory, cleanup := provideEsFactory(in{
+			Conf: config.MapAdapter{"es": map[string]Config{
+				"default":     {URL: envDefaultElasticsearchAddrs},
+				"alternative": {URL: envDefaultElasticsearchAddrs},
+			}},
+			Logger: log.NewNopLogger(),
+			Tracer: nil,
+		})
+		def, err := esFactory.Maker.Make("default")
+		assert.NoError(t, err)
+		assert.NotNil(t, def)
+		alt, err := esFactory.Maker.Make("alternative")
+		assert.NoError(t, err)
+		assert.NotNil(t, alt)
+		assert.NotNil(t, cleanup)
+		cleanup()
 	})
-	def, err := esFactory.Maker.Make("default")
-	assert.NoError(t, err)
-	assert.NotNil(t, def)
-	alt, err := esFactory.Maker.Make("alternative")
-	assert.NoError(t, err)
-	assert.NotNil(t, alt)
-	assert.NotNil(t, cleanup)
-	cleanup()
-}
-
-func TestNewEsFactoryWithOptions(t *testing.T) {
-	var called bool
-	esFactory, cleanup := provideEsFactory(in{
-		Conf: config.MapAdapter{"es": map[string]Config{
-			"default": {URL: envDefaultElasticsearchAddrs},
-		}},
-		Logger: log.NewNopLogger(),
-		Options: []elastic.ClientOptionFunc{
-			func(client *elastic.Client) error {
-				called = true
-				return nil
+	t.Run("with options", func(t *testing.T) {
+		var called bool
+		esFactory, cleanup := provideEsFactory(in{
+			Conf: config.MapAdapter{"es": map[string]Config{
+				"default": {URL: envDefaultElasticsearchAddrs},
+			}},
+			Logger: log.NewNopLogger(),
+			Options: []elastic.ClientOptionFunc{
+				func(client *elastic.Client) error {
+					called = true
+					return nil
+				},
 			},
-		},
-		Tracer: nil,
+			Tracer: nil,
+		})
+		def, err := esFactory.Maker.Make("default")
+		assert.NoError(t, err)
+		assert.NotNil(t, def)
+		assert.True(t, called)
+		cleanup()
 	})
-	def, err := esFactory.Maker.Make("default")
-	assert.NoError(t, err)
-	assert.NotNil(t, def)
-	assert.True(t, called)
-	cleanup()
+
+	t.Run("should not connect to ES", func(t *testing.T) {
+		esFactory, cleanup := provideEsFactory(in{
+			Conf: config.MapAdapter{"es": map[string]Config{
+				// elasticsearch server doesn't exist at this port
+				"default": {URL: []string{"http://127.0.0.1:9999"}},
+			}},
+			Logger: log.NewNopLogger(),
+			Tracer: nil,
+		})
+		def, err := esFactory.Maker.Make("default")
+		assert.NoError(t, err)
+		assert.NotNil(t, def)
+		cleanup()
+	})
 }
 
 func TestProvideConfigs(t *testing.T) {
