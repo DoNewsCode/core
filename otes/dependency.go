@@ -14,6 +14,8 @@ import (
 	"net/http"
 )
 
+var envDefaultElasticsearchAddrs, envDefaultElasticsearchAddrsIsSet = internal.GetDefaultAddrsFromEnv("ELASTICSEARCH_ADDR", "http://127.0.0.1:9200")
+
 /*
 Providers returns a set of dependency providers. It includes the Maker, the
 default *elastic.Client and exported configs.
@@ -35,28 +37,8 @@ func Providers() di.Deps {
 // last minute modification to es configurations.
 type EsConfigInterceptor func(name string, opt *Config)
 
-// Maker models Factory
-type Maker interface {
-	Make(name string) (*elastic.Client, error)
-}
-
-// Factory is a *di.Factory that creates *elastic.Client using a specific
-// configuration entry.
-type Factory struct {
-	*di.Factory
-}
-
-// Make creates *elastic.Client using a specific configuration entry.
-func (r Factory) Make(name string) (*elastic.Client, error) {
-	client, err := r.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(*elastic.Client), nil
-}
-
-// in is the injection parameter for Provide.
-type in struct {
+// factoryIn is the injection parameter for Provide.
+type factoryIn struct {
 	dig.In
 
 	Logger      log.Logger
@@ -67,8 +49,8 @@ type in struct {
 	Dispatcher  contract.Dispatcher        `optional:"true"`
 }
 
-// out is the result of Provide.
-type out struct {
+// factoryOut is the result of Provide.
+type factoryOut struct {
 	dig.Out
 
 	Factory        Factory
@@ -78,7 +60,7 @@ type out struct {
 
 // Provide creates Factory and *elastic.Client. It is a valid dependency for
 // package core.
-func provideEsFactory(p in) (out, func()) {
+func provideEsFactory(p factoryIn) (factoryOut, func()) {
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			conf    Config
@@ -137,7 +119,7 @@ func provideEsFactory(p in) (out, func()) {
 	})
 	f := Factory{factory}
 	f.SubscribeReloadEventFrom(p.Dispatcher)
-	return out{
+	return factoryOut{
 		Factory: f,
 		Maker:   f,
 	}, factory.Close
@@ -171,5 +153,3 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: configs}
 }
-
-var envDefaultElasticsearchAddrs, envDefaultElasticsearchAddrsIsSet = internal.GetDefaultAddrsFromEnv("ELASTICSEARCH_ADDR", "http://127.0.0.1:9200")

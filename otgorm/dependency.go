@@ -41,26 +41,6 @@ func Providers() []interface{} {
 	return []interface{}{provideDatabaseFactory, provideConfig, provideDefaultDatabase, provideMemoryDatabase}
 }
 
-// Factory is the *di.Factory that creates *gorm.DB under a specific
-// configuration entry.
-type Factory struct {
-	*di.Factory
-}
-
-// Make creates *gorm.DB under a specific configuration entry.
-func (d Factory) Make(name string) (*gorm.DB, error) {
-	db, err := d.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return db.(*gorm.DB), nil
-}
-
-// Maker models Factory
-type Maker interface {
-	Make(name string) (*gorm.DB, error)
-}
-
 // GormConfigInterceptor is a function that allows user to Make last minute
 // change to *gorm.Config when constructing *gorm.DB.
 type GormConfigInterceptor func(name string, conf *gorm.Config)

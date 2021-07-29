@@ -14,7 +14,7 @@ import (
 )
 
 func TestNewRedisFactory(t *testing.T) {
-	redisOut, cleanup := provideRedisFactory(in{
+	redisOut, cleanup := provideRedisFactory(factoryIn{
 		Conf: config.MapAdapter{"redis": map[string]RedisUniversalOptions{
 			"default":     {},
 			"alternative": {},

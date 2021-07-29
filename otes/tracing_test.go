@@ -15,7 +15,7 @@ import (
 func TestTracing(t *testing.T) {
 	tracer := mocktracer.New()
 	opentracing.SetGlobalTracer(tracer)
-	factory, cleanup := provideEsFactory(in{
+	factory, cleanup := provideEsFactory(factoryIn{
 		Conf: config.MapAdapter{"es": map[string]Config{
 			"default":     {URL: envDefaultElasticsearchAddrs},
 			"alternative": {URL: envDefaultElasticsearchAddrs},
