@@ -2,18 +2,18 @@ package otgorm
 
 import (
 	"context"
+	"testing"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/go-kit/kit/log"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
-	"testing"
 )
 
 type mockModel struct {
 	gorm.Model
-	value string
 }
 
 func TestHook(t *testing.T) {

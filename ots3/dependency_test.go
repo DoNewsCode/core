@@ -1,15 +1,16 @@
 package ots3
 
 import (
+	"testing"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestNewUploadManagerFactory(t *testing.T) {
-	s3out := provideFactory(in{
+	s3out := provideFactory(factoryIn{
 		Conf: config.MapAdapter{"s3": map[string]S3Config{
 			"default":     {},
 			"alternative": {},

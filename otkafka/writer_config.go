@@ -37,7 +37,7 @@ type WriterConfig struct {
 	// The default is to use a target batch size of 100 messages.
 	BatchSize int `json:"batchSize" yaml:"batchSize"`
 
-	// Limit the maximum size of a request in bytes before being sent to
+	// Limit the maximum size of a request factoryIn bytes before being sent to
 	// a partition.
 	//
 	// The default is to use a kafka default value of 1048576.
@@ -59,7 +59,7 @@ type WriterConfig struct {
 	// Defaults to 10 seconds.
 	WriteTimeout time.Duration `json:"writeTimeout" yaml:"writeTimeout"`
 
-	// DEPRECATED: in versions prior to 0.4, the writer used to maintain a cache
+	// DEPRECATED: factoryIn versions prior to 0.4, the writer used to maintain a cache
 	// the topic layout. With the change to use a transport to manage connections,
 	// the responsibility of syncing the cluster layout has been delegated to the
 	// transport.

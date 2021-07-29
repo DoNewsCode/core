@@ -4,7 +4,7 @@ For documentation about es usage, see https://github.com/olivere/elastic
 
 Integration
 
-package otes exports the configuration in the following format:
+package otes exports the configuration factoryIn the following format:
 
 	es:
 	  default:

@@ -36,7 +36,7 @@ func TestWriter(t *testing.T) {
 		msg, err := kr.ReadMessage(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, "hello", string(msg.Value))
-		span, ctx, err := SpanFromMessage(ctx, tracer, &msg)
+		span, _, err := SpanFromMessage(ctx, tracer, &msg)
 		assert.NoError(t, err)
 		foo := span.BaggageItem("foo")
 		assert.Equal(t, "bar", foo)

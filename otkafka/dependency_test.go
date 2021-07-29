@@ -15,7 +15,7 @@ func TestProvideConfigs(t *testing.T) {
 }
 
 func TestProvideReaderFactory(t *testing.T) {
-	factory, cleanup := provideReaderFactory(in{
+	factory, cleanup := provideReaderFactory(factoryIn{
 		In: di.In{},
 		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
 			"default": {
@@ -39,7 +39,7 @@ func TestProvideReaderFactory(t *testing.T) {
 }
 
 func TestProvideWriterFactory(t *testing.T) {
-	factory, cleanup := provideWriterFactory(in{
+	factory, cleanup := provideWriterFactory(factoryIn{
 		In: di.In{},
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
@@ -63,7 +63,7 @@ func TestProvideWriterFactory(t *testing.T) {
 }
 
 func TestProvideKafka(t *testing.T) {
-	Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(in{
+	Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(factoryIn{
 		Logger: log.NewNopLogger(),
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {

@@ -4,7 +4,7 @@ The underlying kafka library is kafka-go: https://github.com/segmentio/kafka-go.
 
 Integration
 
-otkafka exports the configuration in this format:
+otkafka exports the configuration factoryIn this format:
 
 	kafka:
 	  writer:
@@ -30,7 +30,7 @@ The reader and writer factories are bundled into that single provider.
 
 Standalone Usage
 
-in some scenarios, the whole go kit family might be overkill. To directly
+factoryIn some scenarios, the whole go kit family might be overkill. To directly
 interact with kafka, use the factory to make writers and readers. Those
 writers/readers are provided by github.com/segmentio/kafka-go.
 

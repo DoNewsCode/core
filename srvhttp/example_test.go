@@ -41,6 +41,7 @@ func ExampleResponseEncoder_EncodeResponse() {
 	handler(w, req)
 
 	resp := w.Result()
+	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	fmt.Println(resp.StatusCode)
@@ -63,6 +64,7 @@ func ExampleResponseEncoder_EncodeError() {
 	handler(w, req)
 
 	resp := w.Result()
+	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	fmt.Println(resp.StatusCode)

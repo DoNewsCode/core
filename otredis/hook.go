@@ -2,10 +2,11 @@ package otredis
 
 import (
 	"context"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
 	"strconv"
 	"strings"
+
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"

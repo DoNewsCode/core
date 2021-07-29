@@ -73,13 +73,18 @@ func Example_minimal() {
 		})
 	}))
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go c.Serve(ctx)
 
 	// Giver server sometime to be ready.
 	time.Sleep(time.Second)
 
 	// Let's try if the server works.
-	resp, _ := http.Get("http://localhost:8080/")
+	resp, err := http.Get("http://localhost:8080/")
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 	bytes, _ := ioutil.ReadAll(resp.Body)
 	cancel()
 

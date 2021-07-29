@@ -17,7 +17,7 @@ type MockListener struct {
 }
 
 func (T MockListener) Listen() (topic interface{}) {
-	return MockEvent{}
+	return T.topic
 }
 
 func (T MockListener) Process(ctx context.Context, event interface{}) error {

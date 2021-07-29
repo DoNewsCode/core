@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 
 func TestNewMongoFactory(t *testing.T) {
 	t.Parallel()
-	factory, cleanup := provideMongoFactory(in{
+	factory, cleanup := provideMongoFactory(factoryIn{
 		In: dig.In{},
 		Conf: config.MapAdapter{"mongo": map[string]struct{ Uri string }{
 			"default": {

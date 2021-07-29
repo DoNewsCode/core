@@ -13,17 +13,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var (
-	// marshalOptions is a configurable JSON format marshaller.
-	marshalOptions = protojson.MarshalOptions{
-		EmitUnpopulated: true,
-	}
-	// unmarshalOptions is a configurable JSON format parser.
-	unmarshalOptions = protojson.UnmarshalOptions{
-		DiscardUnknown: true,
-	}
-)
-
 // Codec is a Codec implementation with json.
 type Codec struct {
 	prefix           string
@@ -37,7 +26,15 @@ type Option func(*Codec)
 
 // NewCodec creates a new json codec
 func NewCodec(opts ...Option) Codec {
-	var codec Codec
+	var (
+		codec          Codec
+		marshalOptions = protojson.MarshalOptions{
+			EmitUnpopulated: true,
+		}
+		unmarshalOptions = protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		}
+	)
 	codec.marshalOptions = marshalOptions
 	codec.unmarshalOptions = unmarshalOptions
 	for _, f := range opts {
