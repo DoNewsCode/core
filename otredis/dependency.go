@@ -36,32 +36,12 @@ func Providers() []interface{} {
 // RedisConfigurationInterceptor intercepts the redis.UniversalOptions before
 // creating the client so you can make amendment to it. Useful because some
 // configuration can not be mapped to a text representation. For example, you
-// cannot add OnConnect callback in a configuration file, but you can add it
+// cannot add OnConnect callback factoryIn a configuration file, but you can add it
 // here.
 type RedisConfigurationInterceptor func(name string, opts *redis.UniversalOptions)
 
-// Maker is models Factory
-type Maker interface {
-	Make(name string) (redis.UniversalClient, error)
-}
-
-// Factory is a *di.Factory that creates redis.UniversalClient using a
-// specific configuration entry.
-type Factory struct {
-	*di.Factory
-}
-
-// Make creates redis.UniversalClient using a specific configuration entry.
-func (r Factory) Make(name string) (redis.UniversalClient, error) {
-	client, err := r.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(redis.UniversalClient), nil
-}
-
-// in is the injection parameter for provideRedisFactory.
-type in struct {
+// factoryIn is the injection parameter for provideRedisFactory.
+type factoryIn struct {
 	di.In
 
 	Logger      log.Logger
@@ -72,8 +52,8 @@ type in struct {
 	Dispatcher  contract.Dispatcher           `optional:"true"`
 }
 
-// out is the result of provideRedisFactory.
-type out struct {
+// factoryOut is the result of provideRedisFactory.
+type factoryOut struct {
 	di.Out
 
 	Maker     Maker
@@ -83,7 +63,7 @@ type out struct {
 
 // provideRedisFactory creates Factory and redis.UniversalClient. It is a valid
 // dependency for package core.
-func provideRedisFactory(p in) (out, func()) {
+func provideRedisFactory(p factoryIn) (factoryOut, func()) {
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			base RedisUniversalOptions
@@ -153,7 +133,7 @@ func provideRedisFactory(p in) (out, func()) {
 		p.Conf.Unmarshal("redisMetrics.interval", &interval)
 		collector = newCollector(redisFactory, p.Gauges, interval)
 	}
-	redisOut := out{
+	redisOut := factoryOut{
 		Maker:     redisFactory,
 		Factory:   redisFactory,
 		Collector: collector,

@@ -6,7 +6,7 @@ package otredis works with redis cluster, redis sentinel and single redis instan
 
 Integration
 
-package otredis exports the configuration in the following format:
+package otredis exports the configuration factoryIn the following format:
 	redis:
 	    default:
 	        addrs:

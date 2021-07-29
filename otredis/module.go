@@ -22,7 +22,7 @@ type Module struct {
 	interval  time.Duration
 }
 
-type moduleIn struct {
+type ModuleIn struct {
 	di.In
 
 	Maker     Maker
@@ -34,7 +34,7 @@ type moduleIn struct {
 }
 
 // New creates a Module.
-func New(in moduleIn) Module {
+func New(in ModuleIn) Module {
 	var duration time.Duration = defaultInterval
 	in.Conf.Unmarshal("redisMetrics.interval", &duration)
 	return Module{

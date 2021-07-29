@@ -4,7 +4,7 @@ For documentation about redis usage, see https://pkg.go.dev/go.mongodb.org/mongo
 
 Integration
 
-package otmongo exports the configuration in the following format:
+package otmongo exports the configuration factoryIn the following format:
 
 	mongo:
 	  default:

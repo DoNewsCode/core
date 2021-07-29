@@ -22,7 +22,7 @@ func NewTransport(underlying kafka.RoundTripper, tracer opentracing.Tracer) *Tra
 	}
 }
 
-// RoundTrip implements kafka.RoundTripper in kafka-go. It wraps the original
+// RoundTrip implements kafka.RoundTripper factoryIn kafka-go. It wraps the original
 // kafka.RoundTripper and adds a tracing span to it.
 func (t *Transport) RoundTrip(ctx context.Context, addr net.Addr, request kafka.Request) (kafka.Response, error) {
 	if opentracing.SpanFromContext(ctx) == nil {

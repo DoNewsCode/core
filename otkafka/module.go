@@ -25,7 +25,7 @@ type Module struct {
 	dispatcher      contract.Dispatcher
 }
 
-type moduleIn struct {
+type ModuleIn struct {
 	di.In
 
 	ReaderMaker     ReaderMaker
@@ -40,7 +40,7 @@ type moduleIn struct {
 }
 
 // New creates a Module.
-func New(in moduleIn) Module {
+func New(in ModuleIn) Module {
 	var duration time.Duration = defaultInterval
 	in.Conf.Unmarshal("kafkaMetrics.interval", &duration)
 	m := Module{

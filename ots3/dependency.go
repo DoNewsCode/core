@@ -47,13 +47,8 @@ type S3Config struct {
 	CdnUrl       string `json:"cdnUrl" yaml:"cdnUrl"`
 }
 
-// Maker is an interface for *Factory. Used as a type hint for injection.
-type Maker interface {
-	Make(name string) (*Manager, error)
-}
-
-// in is the injection parameter for provideFactory.
-type in struct {
+// factoryIn is the injection parameter for provideFactory.
+type factoryIn struct {
 	di.In
 
 	Logger     log.Logger
@@ -62,30 +57,16 @@ type in struct {
 	Dispatcher contract.Dispatcher `optional:"true"`
 }
 
-// out is the di output of provideFactory.
-type out struct {
+// factoryOut is the di output of provideFactory.
+type factoryOut struct {
 	di.Out
 
 	Factory Factory
 	Maker   Maker
 }
 
-// Factory can be used to connect to multiple s3 servers.
-type Factory struct {
-	*di.Factory
-}
-
-// Make creates a s3 manager under the given name.
-func (s Factory) Make(name string) (*Manager, error) {
-	client, err := s.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(*Manager), nil
-}
-
 // provideFactory creates *Factory and *ots3.Manager. It is a valid dependency for package core.
-func provideFactory(p in) out {
+func provideFactory(p factoryIn) factoryOut {
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 
 		var conf S3Config
@@ -121,7 +102,7 @@ func provideFactory(p in) out {
 	s3Factory := Factory{factory}
 	s3Factory.SubscribeReloadEventFrom(p.Dispatcher)
 
-	return out{
+	return factoryOut{
 		Factory: s3Factory,
 		Maker:   &s3Factory,
 	}

@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewEsFactory(t *testing.T) {
-	esFactory, cleanup := provideEsFactory(in{
+	esFactory, cleanup := provideEsFactory(factoryIn{
 		Conf: config.MapAdapter{"es": map[string]Config{
 			"default":     {URL: envDefaultElasticsearchAddrs},
 			"alternative": {URL: envDefaultElasticsearchAddrs},
@@ -41,7 +41,7 @@ func TestNewEsFactory(t *testing.T) {
 
 func TestNewEsFactoryWithOptions(t *testing.T) {
 	var called bool
-	esFactory, cleanup := provideEsFactory(in{
+	esFactory, cleanup := provideEsFactory(factoryIn{
 		Conf: config.MapAdapter{"es": map[string]Config{
 			"default": {URL: envDefaultElasticsearchAddrs},
 		}},

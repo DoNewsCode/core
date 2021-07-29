@@ -15,6 +15,8 @@ import (
 	"go.uber.org/dig"
 )
 
+var envDefaultMongoAddr, envDefaultMongoAddrIsSet = internal.GetDefaultAddrFromEnv("MONGO_ADDR", "mongodb://127.0.0.1:27017")
+
 /*
 Providers returns a set of dependency providers. It includes the Maker, the
 default mongo.Client and exported configs.
@@ -34,32 +36,12 @@ func Providers() di.Deps {
 
 // MongoConfigInterceptor is an injection type hint that allows user to make last
 // minute modification to mongo configuration. This is useful when some
-// configuration cannot be easily expressed in a text form. For example, the
+// configuration cannot be easily expressed factoryIn a text form. For example, the
 // options.ContextDialer.
 type MongoConfigInterceptor func(name string, clientOptions *options.ClientOptions)
 
-// Maker models Factory
-type Maker interface {
-	Make(name string) (*mongo.Client, error)
-}
-
-// Factory is a *di.Factory that creates *mongo.Client using a specific
-// configuration entry.
-type Factory struct {
-	*di.Factory
-}
-
-// Make creates *mongo.Client using a specific configuration entry.
-func (r Factory) Make(name string) (*mongo.Client, error) {
-	client, err := r.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(*mongo.Client), nil
-}
-
-// in is the injection parameter for Provide.
-type in struct {
+// factoryIn is the injection parameter for Provide.
+type factoryIn struct {
 	dig.In
 
 	Logger      log.Logger
@@ -69,10 +51,10 @@ type in struct {
 	Dispatcher  contract.Dispatcher    `optional:"true"`
 }
 
-// out is the result of Provide. The official mongo package doesn't
+// factoryOut is the result of Provide. The official mongo package doesn't
 // provide a proper interface type. It is up to the users to define their own
 // mongodb repository interface.
-type out struct {
+type factoryOut struct {
 	dig.Out
 
 	Factory Factory
@@ -81,7 +63,7 @@ type out struct {
 
 // Provide creates Factory and *mongo.Client. It is a valid dependency for
 // package core.
-func provideMongoFactory(p in) (out, func()) {
+func provideMongoFactory(p factoryIn) (factoryOut, func()) {
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			conf struct{ URI string }
@@ -114,7 +96,7 @@ func provideMongoFactory(p in) (out, func()) {
 	})
 	f := Factory{factory}
 	f.SubscribeReloadEventFrom(p.Dispatcher)
-	return out{
+	return factoryOut{
 		Factory: f,
 		Maker:   f,
 	}, factory.Close
@@ -149,5 +131,3 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: configs}
 }
-
-var envDefaultMongoAddr, envDefaultMongoAddrIsSet = internal.GetDefaultAddrFromEnv("MONGO_ADDR", "mongodb://127.0.0.1:27017")

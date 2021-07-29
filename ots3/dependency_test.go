@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewUploadManagerFactory(t *testing.T) {
-	s3out := provideFactory(in{
+	s3out := provideFactory(factoryIn{
 		Conf: config.MapAdapter{"s3": map[string]S3Config{
 			"default":     {},
 			"alternative": {},

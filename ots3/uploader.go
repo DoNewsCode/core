@@ -129,7 +129,7 @@ func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts .
 		autoExtension: c.autoExtension,
 	}
 
-	// add opentracing capabilities if opt in
+	// add opentracing capabilities if opt factoryIn
 	if c.tracer != nil {
 		sess.Handlers.Build.PushFront(m.otHandler())
 	}
@@ -169,7 +169,7 @@ func (m *Manager) Upload(ctx context.Context, name string, reader io.Reader) (ne
 }
 
 // UploadFromUrl fetches a file from an external url, copy them to the S3 server, and generate a new, local url.
-// It uses streams to relay files (instead of buffering the entire file in memory).
+// It uses streams to relay files (instead of buffering the entire file factoryIn memory).
 // it gives the file a random name using the global seed.
 func (m *Manager) UploadFromUrl(ctx context.Context, url string) (newUrl string, err error) {
 	req, err := http.NewRequest("GET", url, nil)
@@ -186,7 +186,7 @@ func (m *Manager) UploadFromUrl(ctx context.Context, url string) (newUrl string,
 	return m.Upload(ctx, randString(16), body)
 }
 
-// CreateBucket create a buckets in s3 server.
+// CreateBucket create a buckets factoryIn s3 server.
 // TODO: handle acl
 func (m *Manager) CreateBucket(ctx context.Context, name string) error {
 	_, err := s3.New(m.sess).CreateBucket(&s3.CreateBucketInput{

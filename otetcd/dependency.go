@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+var envDefaultEtcdAddrs, envDefaultEtcdAddrsIsSet = internal.GetDefaultAddrsFromEnv("ETCD_ADDR", "127.0.0.1:2379")
+
 /*
 Providers returns a set of dependencies including the Maker, the default *clientv3.Client and the exported configs.
 	Depends On:
@@ -35,26 +37,6 @@ func Providers() []interface{} {
 // last minute modification to etcd configurations. This is useful when some
 // configuration can not be expressed in yaml/json. For example, the *tls.Config.
 type EtcdConfigInterceptor func(name string, options *clientv3.Config)
-
-// Maker is models Factory
-type Maker interface {
-	Make(name string) (*clientv3.Client, error)
-}
-
-// Factory is a *di.Factory that creates *clientv3.Client using a
-// specific configuration entry.
-type Factory struct {
-	*di.Factory
-}
-
-// Make creates *clientv3.Client using a specific configuration entry.
-func (r Factory) Make(name string) (*clientv3.Client, error) {
-	client, err := r.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(*clientv3.Client), nil
-}
 
 // factoryIn is the injection parameter for provideFactory.
 type factoryIn struct {
@@ -178,5 +160,3 @@ func provideConfig() configOut {
 func duration(d config.Duration) time.Duration {
 	return d.Duration
 }
-
-var envDefaultEtcdAddrs, envDefaultEtcdAddrsIsSet = internal.GetDefaultAddrsFromEnv("ETCD_ADDR", "127.0.0.1:2379")
