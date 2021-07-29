@@ -1,8 +1,9 @@
 package observability
 
 import (
-	"github.com/DoNewsCode/core/otkafka"
 	"sync"
+
+	"github.com/DoNewsCode/core/otkafka"
 
 	"github.com/DoNewsCode/core/otgorm"
 	"github.com/DoNewsCode/core/otredis"

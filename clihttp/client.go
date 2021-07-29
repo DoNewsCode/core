@@ -106,7 +106,7 @@ func (c *Client) logRequest(req *http.Request, span opentracing.Span) {
 		span.LogKV("error", errors.Wrap(err, "cannot get request body"))
 		return
 	}
-	length, _ := strconv.Atoi(req.Header.Get(http.CanonicalHeaderKey("Content-Length")))
+	length, _ := strconv.Atoi(req.Header.Get("Content-Length"))
 	if length > c.requestLogThreshold {
 		ext.Error.Set(span, true)
 		span.LogKV("request", "elided: Content-Length too large")
@@ -128,7 +128,7 @@ func (c *Client) logResponse(response *http.Response, span opentracing.Span) {
 	if response.Body == nil {
 		return
 	}
-	length, _ := strconv.Atoi(response.Header.Get(http.CanonicalHeaderKey("Content-Length")))
+	length, _ := strconv.Atoi(response.Header.Get("Content-Length"))
 	if length > c.responseLogThreshold {
 		span.LogKV("response", "elided: Content-Length too large")
 		return

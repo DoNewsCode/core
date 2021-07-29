@@ -36,11 +36,6 @@ type Manager struct {
 
 // Config contains a various of configurations for Manager. It is mean to be modified by Option.
 type Config struct {
-	accessKey     string
-	accessSecret  string
-	region        string
-	bucket        string
-	sess          *session.Session
 	tracer        opentracing.Tracer
 	doer          contract.HttpDoer
 	keyer         contract.Keyer
@@ -176,7 +171,7 @@ func (m *Manager) UploadFromUrl(ctx context.Context, url string) (newUrl string,
 	if err != nil {
 		return "", errors.Wrap(err, "cannot build request")
 	}
-	req.WithContext(ctx)
+	req = req.WithContext(ctx)
 	resp, err := m.doer.Do(req)
 	if err != nil {
 		return "", errors.Wrap(err, "cannot fetch image")
