@@ -25,6 +25,7 @@ type Module struct {
 	dispatcher      contract.Dispatcher
 }
 
+// ModuleIn contains the input parameters needed for creating the new module.
 type ModuleIn struct {
 	di.In
 

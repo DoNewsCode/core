@@ -22,6 +22,7 @@ type Module struct {
 	interval  time.Duration
 }
 
+// ModuleIn contains the input parameters needed for creating the new module.
 type ModuleIn struct {
 	di.In
 
