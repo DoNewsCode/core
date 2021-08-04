@@ -2,10 +2,19 @@ package otkafka
 
 import (
 	"net"
+	"os"
 	"strconv"
+	"testing"
 
 	"github.com/segmentio/kafka-go"
 )
+
+func TestMain(m *testing.M) {
+	if os.Getenv("KAFKA_ADDR") != "" {
+		setupTopic(os.Getenv("KAFKA_ADDR"))
+	}
+	os.Exit(m.Run())
+}
 
 func setupTopic(addr string) {
 	var topics = []string{"trace", "test", "example"}
