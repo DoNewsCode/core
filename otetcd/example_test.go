@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/otetcd"
@@ -11,6 +12,10 @@ import (
 )
 
 func Example() {
+	if os.Getenv("ETCD_ADDR") == "" {
+		fmt.Println("set ETCD_ADDR to run example")
+		return
+	}
 	c := core.New()
 	c.ProvideEssentials()
 	c.Provide(otetcd.Providers())

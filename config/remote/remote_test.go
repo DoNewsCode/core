@@ -4,28 +4,23 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/DoNewsCode/core/internal"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 )
 
-var envDefaultEtcdAddrs, envDefaultEtcdAddrsIsSet = internal.GetDefaultAddrsFromEnv("ETCD_ADDR", "127.0.0.1:2379")
-
-func TestMain(m *testing.M) {
-	if !envDefaultEtcdAddrsIsSet {
-		fmt.Println("Set env ETCD_ADDR to run remote tests")
-		os.Exit(0)
-	}
-	os.Exit(m.Run())
-}
-
 func TestRemote(t *testing.T) {
+	if os.Getenv("ETCD_ADDR") == "" {
+		t.Skip("set ETCD_ADDR to run TestRemote")
+		return
+	}
+	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
 	cfg := &clientv3.Config{
-		Endpoints:   envDefaultEtcdAddrs,
+		Endpoints:   addrs,
 		DialTimeout: 2 * time.Second,
 	}
 
@@ -66,6 +61,11 @@ func TestRemote(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
+	if os.Getenv("ETCD_ADDR") == "" {
+		t.Skip("set ETCD_ADDR to run TestError")
+		return
+	}
+	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
 	var (
 		r   *Remote
 		err error
@@ -89,7 +89,7 @@ func TestError(t *testing.T) {
 	assert.Error(t, err)
 
 	cfg = &clientv3.Config{
-		Endpoints:   envDefaultEtcdAddrs,
+		Endpoints:   addrs,
 		DialTimeout: 2 * time.Second,
 	}
 	r = Provider("config-test1", cfg)

@@ -1,6 +1,7 @@
 package otgorm
 
 import (
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core"
@@ -13,6 +14,10 @@ import (
 )
 
 func TestProvideDBFactory(t *testing.T) {
+	if os.Getenv("MYSQL_DSN") == "" {
+		t.Skip("set MYSQL_DSN to run TestProvideDBFactory")
+		return
+	}
 	gorms := map[string]databaseConf{
 		"default": {
 			Database: "sqlite",
@@ -20,10 +25,10 @@ func TestProvideDBFactory(t *testing.T) {
 		},
 		"alternative": {
 			Database: "mysql",
-			Dsn:      envDefaultMysqlDsn,
+			Dsn:      os.Getenv("MYSQL_DSN"),
 		},
 	}
-	factory, cleanup := provideDBFactory(databaseIn{
+	factory, cleanup := provideDBFactory(factoryIn{
 		Conf:   config.MapAdapter{"gorm": gorms},
 		Logger: log.NewNopLogger(),
 		Tracer: nil,

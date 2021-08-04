@@ -9,14 +9,11 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/opentracing/opentracing-go"
 	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
-	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
@@ -74,7 +71,7 @@ type metricsConf struct {
 // provideMemoryDatabase provides a sqlite database in memory mode. This is
 // useful for testing.
 func provideMemoryDatabase() *SQLite {
-	factory, _ := provideDBFactory(databaseIn{
+	factory, _ := provideDBFactory(factoryIn{
 		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
 			"memory": {
 				Database: "sqlite",
@@ -88,16 +85,17 @@ func provideMemoryDatabase() *SQLite {
 	return (*SQLite)(memoryDatabase)
 }
 
-// databaseIn is the injection parameter for provideDatabaseFactory.
-type databaseIn struct {
+// factoryIn is the injection parameter for provideDatabaseFactory.
+type factoryIn struct {
 	di.In
 
 	Conf                  contract.ConfigAccessor
 	Logger                log.Logger
-	GormConfigInterceptor GormConfigInterceptor `optional:"true"`
-	Tracer                opentracing.Tracer    `optional:"true"`
-	Gauges                *Gauges               `optional:"true"`
-	Dispatcher            contract.Dispatcher   `optional:"true"`
+	GormConfigInterceptor GormConfigInterceptor                      `optional:"true"`
+	Tracer                opentracing.Tracer                         `optional:"true"`
+	Gauges                *Gauges                                    `optional:"true"`
+	Dispatcher            contract.Dispatcher                        `optional:"true"`
+	Drivers               map[string]func(dsn string) gorm.Dialector `optional:"true"`
 }
 
 // databaseOut is the result of provideDatabaseFactory. *gorm.DB is not a interface
@@ -112,14 +110,7 @@ type databaseOut struct {
 
 // provideDialector provides a gorm.Dialector. Mean to be used as an intermediate
 // step to create *gorm.DB
-func provideDialector(conf *databaseConf) (gorm.Dialector, error) {
-	drivers := map[string]func(dsn string) gorm.Dialector{
-		"mysql":      mysql.Open,
-		"sqlite":     sqlite.Open,
-		"postgres":   postgres.Open,
-		"sqlserver":  sqlserver.Open,
-		"clickhouse": clickhouse.Open,
-	}
+func provideDialector(conf *databaseConf, drivers map[string]func(dsn string) gorm.Dialector) (gorm.Dialector, error) {
 	if driver, ok := drivers[conf.Database]; ok {
 		return driver(conf.Dsn), nil
 	}
@@ -173,7 +164,7 @@ func provideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 
 // provideDatabaseFactory creates the Factory. It is a valid dependency for
 // package core.
-func provideDatabaseFactory(p databaseIn) (databaseOut, func(), error) {
+func provideDatabaseFactory(p factoryIn) (databaseOut, func(), error) {
 	var collector *collector
 
 	factory, cleanup := provideDBFactory(p)
@@ -195,7 +186,7 @@ func provideDefaultDatabase(maker Maker) (*gorm.DB, error) {
 	return maker.Make("default")
 }
 
-func provideDBFactory(p databaseIn) (Factory, func()) {
+func provideDBFactory(p factoryIn) (Factory, func()) {
 	logger := log.With(p.Logger, "tag", "database")
 
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
@@ -205,10 +196,18 @@ func provideDBFactory(p databaseIn) (Factory, func()) {
 			conn      *gorm.DB
 			cleanup   func()
 		)
+		p := p
 		if err := p.Conf.Unmarshal(fmt.Sprintf("gorm.%s", name), &conf); err != nil {
 			return di.Pair{}, fmt.Errorf("database configuration %s not valid: %w", name, err)
 		}
-		dialector, err := provideDialector(&conf)
+		if p.Drivers == nil {
+			p.Drivers = map[string]func(dsn string) gorm.Dialector{
+				"mysql":      mysql.Open,
+				"sqlite":     sqlite.Open,
+				"clickhouse": clickhouse.Open,
+			}
+		}
+		dialector, err := provideDialector(&conf, p.Drivers)
 		if err != nil {
 			return di.Pair{}, err
 		}
@@ -245,7 +244,7 @@ func provideConfig() configOut {
 				"gorm": map[string]databaseConf{
 					"default": {
 						Database:                                 "mysql",
-						Dsn:                                      envDefaultMysqlDsn,
+						Dsn:                                      "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local",
 						SkipDefaultTransaction:                   false,
 						FullSaveAssociations:                     false,
 						DryRun:                                   false,
@@ -271,5 +270,3 @@ func provideConfig() configOut {
 	}
 	return configOut{Config: exported}
 }
-
-var envDefaultMysqlDsn, envDefaultMysqlDsnIsSet = internal.GetDefaultAddrFromEnv("MYSQL_DSN", "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local")

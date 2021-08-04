@@ -1,10 +1,13 @@
 package leader
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
-	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
+	"github.com/DoNewsCode/core/key"
+	"github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 )
@@ -19,7 +22,15 @@ func (m *mockMaker) Make(name string) (*clientv3.Client, error) {
 }
 
 func TestDetermineDriver(t *testing.T) {
-	driver := &leaderetcd2.EtcdDriver{}
+	if os.Getenv("ETCD_ADDR") == "" {
+		t.Skip("set ETCD_ADDR to run TestDetermineDriver")
+		return
+	}
+	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
+	client, _ := clientv3.New(clientv3.Config{
+		Endpoints: addrs,
+	})
+	driver := leaderetcd.NewEtcdDriver(client, key.New())
 	p := in{}
 	p.Driver = driver
 	determineDriver(&p)

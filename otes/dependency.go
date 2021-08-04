@@ -5,7 +5,6 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/olivere/elastic/v7"
@@ -13,8 +12,6 @@ import (
 	"go.uber.org/dig"
 	"net/http"
 )
-
-var envDefaultElasticsearchAddrs, envDefaultElasticsearchAddrsIsSet = internal.GetDefaultAddrsFromEnv("ELASTICSEARCH_ADDR", "http://127.0.0.1:9200")
 
 /*
 Providers returns a set of dependency providers. It includes the Maker, the
@@ -70,7 +67,7 @@ func provideEsFactory(p factoryIn) (factoryOut, func()) {
 			if name != "default" {
 				return di.Pair{}, fmt.Errorf("elastic configuration %s not valid: %w", name, err)
 			}
-			conf.URL = envDefaultElasticsearchAddrs
+			conf.URL = []string{"http://127.0.0.1:9200"}
 		}
 		if p.Interceptor != nil {
 			p.Interceptor(name, &conf)
@@ -143,7 +140,7 @@ func provideConfig() configOut {
 			Data: map[string]interface{}{
 				"es": map[string]Config{
 					"default": {
-						URL:    envDefaultElasticsearchAddrs,
+						URL:    []string{"http://127.0.0.1:9200"},
 						Shards: 1,
 					},
 				},

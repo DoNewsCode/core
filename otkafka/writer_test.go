@@ -2,6 +2,7 @@ package otkafka
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -13,10 +14,16 @@ import (
 )
 
 func TestWriter(t *testing.T) {
+	if os.Getenv("KAFKA_ADDR") == "" {
+		t.Skip("set KAFKA_ADDR to run TestModule_ProvideRunGroup")
+		return
+	}
+	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
+
 	{
 		ctx := context.Background()
 		kw := kafka.Writer{
-			Addr:  kafka.TCP(envDefaultKafkaAddrs...),
+			Addr:  kafka.TCP(addrs...),
 			Topic: "trace",
 		}
 		tracer := mocktracer.New()
@@ -31,7 +38,7 @@ func TestWriter(t *testing.T) {
 
 	{
 		ctx := context.Background()
-		kr := kafka.NewReader(kafka.ReaderConfig{Brokers: envDefaultKafkaAddrs, Topic: "trace", GroupID: "test", MinBytes: 1, MaxBytes: 1})
+		kr := kafka.NewReader(kafka.ReaderConfig{Brokers: addrs, Topic: "trace", GroupID: "test", MinBytes: 1, MaxBytes: 1})
 		tracer := mocktracer.New()
 		msg, err := kr.ReadMessage(ctx)
 		assert.NoError(t, err)
@@ -46,5 +53,5 @@ func TestWriter(t *testing.T) {
 
 func Test_fromWriterConfig(t *testing.T) {
 	writer := fromWriterConfig(WriterConfig{})
-	assert.Equal(t, strings.Join(envDefaultKafkaAddrs, ","), writer.Addr.String())
+	assert.Equal(t, "127.0.0.1:9092", writer.Addr.String())
 }

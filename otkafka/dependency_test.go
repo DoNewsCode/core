@@ -1,6 +1,8 @@
 package otkafka
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -15,15 +17,20 @@ func TestProvideConfigs(t *testing.T) {
 }
 
 func TestProvideReaderFactory(t *testing.T) {
+	if os.Getenv("KAFKA_ADDR") == "" {
+		t.Skip("set KAFKA_ADDR to run TestProvideReaderFactory")
+		return
+	}
+	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideReaderFactory(factoryIn{
 		In: di.In{},
 		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
 			"default": {
-				Brokers: envDefaultKafkaAddrs,
+				Brokers: addrs,
 				Topic:   "Test",
 			},
 			"alternative": {
-				Brokers: envDefaultKafkaAddrs,
+				Brokers: addrs,
 				Topic:   "Test",
 			},
 		}},
@@ -39,15 +46,20 @@ func TestProvideReaderFactory(t *testing.T) {
 }
 
 func TestProvideWriterFactory(t *testing.T) {
+	if os.Getenv("KAFKA_ADDR") == "" {
+		t.Skip("set KAFKA_ADDR to run TestProvideReaderFactory")
+		return
+	}
+	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideWriterFactory(factoryIn{
 		In: di.In{},
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
-				Brokers: envDefaultKafkaAddrs,
+				Brokers: addrs,
 				Topic:   "Test",
 			},
 			"alternative": {
-				Brokers: envDefaultKafkaAddrs,
+				Brokers: addrs,
 				Topic:   "Test",
 			},
 		}},
@@ -67,11 +79,11 @@ func TestProvideKafka(t *testing.T) {
 		Logger: log.NewNopLogger(),
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
-				Brokers: envDefaultKafkaAddrs,
+				Brokers: nil,
 				Topic:   "Test",
 			},
 			"alternative": {
-				Brokers: envDefaultKafkaAddrs,
+				Brokers: nil,
 				Topic:   "Test",
 			},
 		}},

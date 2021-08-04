@@ -1,29 +1,16 @@
 package otkafka
 
 import (
-	"fmt"
 	"net"
-	"os"
 	"strconv"
-	"testing"
 
 	"github.com/segmentio/kafka-go"
 )
 
-func TestMain(m *testing.M) {
-	if !envDefaultKafkaAddrsIsSet {
-		fmt.Println("Set env KAFKA_ADDR to run otkafka tests")
-		os.Exit(0)
-	}
-	setupTopic()
-
-	os.Exit(m.Run())
-}
-
-func setupTopic() {
+func setupTopic(addr string) {
 	var topics = []string{"trace", "test", "example"}
 
-	conn, err := kafka.Dial("tcp", envDefaultKafkaAddrs[0])
+	conn, err := kafka.Dial("tcp", addr)
 	if err != nil {
 		panic(err.Error())
 	}

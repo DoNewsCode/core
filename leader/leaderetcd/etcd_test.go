@@ -2,29 +2,23 @@ package leaderetcd
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/DoNewsCode/core/internal"
 	"github.com/DoNewsCode/core/key"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 )
 
-var envDefaultEtcdAddrs, envDefaultEtcdAddrsIsSet = internal.GetDefaultAddrsFromEnv("ETCD_ADDR", "127.0.0.1:2379")
-
-func TestMain(m *testing.M) {
-	if !envDefaultEtcdAddrsIsSet {
-		fmt.Println("Set env ETCD_ADDR to run leaderetcd tests")
-		os.Exit(0)
-	}
-	os.Exit(m.Run())
-}
-
 func TestNewEtcdDriver(t *testing.T) {
-	client, err := clientv3.New(clientv3.Config{Endpoints: envDefaultEtcdAddrs, DialTimeout: 2 * time.Second})
+	if os.Getenv("ETCD_ADDR") == "" {
+		t.Skip("set ETCD_ADDR to run TestNewEtcdDriver")
+		return
+	}
+	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
+	client, err := clientv3.New(clientv3.Config{Endpoints: addrs, DialTimeout: 2 * time.Second})
 	assert.NoError(t, err)
 	defer client.Close()
 

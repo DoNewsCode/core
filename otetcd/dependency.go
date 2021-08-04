@@ -7,15 +7,12 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
 )
-
-var envDefaultEtcdAddrs, envDefaultEtcdAddrsIsSet = internal.GetDefaultAddrsFromEnv("ETCD_ADDR", "127.0.0.1:2379")
 
 /*
 Providers returns a set of dependencies including the Maker, the default *clientv3.Client and the exported configs.
@@ -69,7 +66,7 @@ func provideFactory(p factoryIn) (FactoryOut, func()) {
 			return di.Pair{}, fmt.Errorf("etcd configuration %s not valid: %w", name, err)
 		}
 		if len(conf.Endpoints) == 0 {
-			conf.Endpoints = envDefaultEtcdAddrs
+			conf.Endpoints = []string{"127.0.0.1:2379"}
 		}
 		co := clientv3.Config{
 			Endpoints:            conf.Endpoints,
@@ -133,7 +130,7 @@ func provideConfig() configOut {
 				Data: map[string]interface{}{
 					"etcd": map[string]Option{
 						"default": {
-							Endpoints:            envDefaultEtcdAddrs,
+							Endpoints:            []string{"127.0.0.1:2379"},
 							AutoSyncInterval:     config.Duration{},
 							DialTimeout:          config.Duration{},
 							DialKeepAliveTime:    config.Duration{},

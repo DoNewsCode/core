@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,8 +20,12 @@ import (
 )
 
 func TestModule_ProvideRunGroup(t *testing.T) {
+	if os.Getenv("KAFKA_ADDR") == "" {
+		t.Skip("set KAFKA_ADDR to run TestModule_ProvideRunGroup")
+		return
+	}
+	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	t.Parallel()
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -34,8 +39,8 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	mc.EXPECT().Add(gomock.Any()).MinTimes(1)
 
 	c := core.New(
-		core.WithInline("kafka.writer.default.brokers", envDefaultKafkaAddrs),
-		core.WithInline("kafka.reader.default.brokers", envDefaultKafkaAddrs),
+		core.WithInline("kafka.writer.default.brokers", addrs),
+		core.WithInline("kafka.reader.default.brokers", addrs),
 		core.WithInline("kafka.writer.default.topic", "test"),
 		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("kafkaMetrics.interval", "10ms"),
@@ -139,6 +144,12 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 }
 
 func TestCollector(t *testing.T) {
+	if os.Getenv("KAFKA_ADDR") == "" {
+		t.Skip("set KAFKA_ADDR to run TestCollector")
+		return
+	}
+	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -152,8 +163,8 @@ func TestCollector(t *testing.T) {
 	mc.EXPECT().Add(gomock.Any()).MinTimes(1)
 
 	c := core.New(
-		core.WithInline("kafka.writer.default.brokers", envDefaultKafkaAddrs),
-		core.WithInline("kafka.reader.default.brokers", envDefaultKafkaAddrs),
+		core.WithInline("kafka.writer.default.brokers", addrs),
+		core.WithInline("kafka.reader.default.brokers", addrs),
 		core.WithInline("kafka.reader.default.topic", "test"),
 		core.WithInline("kafkaMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
@@ -278,6 +289,11 @@ func (c *channelWatcher) Watch(ctx context.Context, reload func() error) error {
 }
 
 func TestModule_hotReload(t *testing.T) {
+	if os.Getenv("KAFKA_ADDR") == "" {
+		t.Skip("set KAFKA_ADDR to run TestModule_ProvideRunGroup")
+		return
+	}
+	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	t.Parallel()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -299,13 +315,13 @@ func TestModule_hotReload(t *testing.T) {
 		"kafka": map[string]interface{}{
 			"reader": map[string]interface{}{
 				"default": map[string]interface{}{
-					"brokers": envDefaultKafkaAddrs,
+					"brokers": addrs,
 					"topic":   "foo",
 				},
 			},
 			"writer": map[string]interface{}{
 				"default": map[string]interface{}{
-					"brokers": envDefaultKafkaAddrs,
+					"brokers": addrs,
 					"topic":   "foo",
 				},
 			},
