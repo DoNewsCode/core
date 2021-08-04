@@ -11,9 +11,6 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/log"
 	"github.com/opentracing/opentracing-go"
-	"gorm.io/driver/clickhouse"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
@@ -91,11 +88,11 @@ type factoryIn struct {
 
 	Conf                  contract.ConfigAccessor
 	Logger                log.Logger
-	GormConfigInterceptor GormConfigInterceptor                      `optional:"true"`
-	Tracer                opentracing.Tracer                         `optional:"true"`
-	Gauges                *Gauges                                    `optional:"true"`
-	Dispatcher            contract.Dispatcher                        `optional:"true"`
-	Drivers               map[string]func(dsn string) gorm.Dialector `optional:"true"`
+	GormConfigInterceptor GormConfigInterceptor `optional:"true"`
+	Tracer                opentracing.Tracer    `optional:"true"`
+	Gauges                *Gauges               `optional:"true"`
+	Dispatcher            contract.Dispatcher   `optional:"true"`
+	Drivers               Drivers               `optional:"true"`
 }
 
 // databaseOut is the result of provideDatabaseFactory. *gorm.DB is not a interface
@@ -110,7 +107,7 @@ type databaseOut struct {
 
 // provideDialector provides a gorm.Dialector. Mean to be used as an intermediate
 // step to create *gorm.DB
-func provideDialector(conf *databaseConf, drivers map[string]func(dsn string) gorm.Dialector) (gorm.Dialector, error) {
+func provideDialector(conf *databaseConf, drivers Drivers) (gorm.Dialector, error) {
 	if driver, ok := drivers[conf.Database]; ok {
 		return driver(conf.Dsn), nil
 	}
@@ -201,11 +198,7 @@ func provideDBFactory(p factoryIn) (Factory, func()) {
 			return di.Pair{}, fmt.Errorf("database configuration %s not valid: %w", name, err)
 		}
 		if p.Drivers == nil {
-			p.Drivers = map[string]func(dsn string) gorm.Dialector{
-				"mysql":      mysql.Open,
-				"sqlite":     sqlite.Open,
-				"clickhouse": clickhouse.Open,
-			}
+			p.Drivers = getDefaultDrivers()
 		}
 		dialector, err := provideDialector(&conf, p.Drivers)
 		if err != nil {
