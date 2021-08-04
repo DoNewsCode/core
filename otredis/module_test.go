@@ -2,8 +2,8 @@ package otredis
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,16 +14,12 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func TestMain(m *testing.M) {
-	if !envDefaultRedisAddrsIsSet {
-		fmt.Println("Set env REDIS_ADDR to run otredis tests")
-		os.Exit(0)
-	}
-
-	os.Exit(m.Run())
-}
-
 func TestModule_ProvideRunGroup(t *testing.T) {
+	if os.Getenv("REDIS_ADDR") == "" {
+		t.Skip("set REDIS_ADDR to run TestModule_ProvideRunGroup")
+		return
+	}
+	addrs := strings.Split(os.Getenv("REDIS_ADDR"), ",")
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
@@ -39,7 +35,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	m.EXPECT().Set(gomock.Any()).MinTimes(1)
 
 	c := core.New(
-		core.WithInline("redis.default.addrs", envDefaultRedisAddrs),
+		core.WithInline("redis.default.addrs", addrs),
 		core.WithInline("redisMetrics.interval", "1ms"),
 		core.WithInline("log.level", "none"),
 	)

@@ -132,7 +132,7 @@ type ReaderInterceptor func(name string, reader *kafka.ReaderConfig)
 
 func fromReaderConfig(conf ReaderConfig) kafka.ReaderConfig {
 	if len(conf.Brokers) == 0 {
-		conf.Brokers = envDefaultKafkaAddrs
+		conf.Brokers = []string{"127.0.0.1:9092"}
 	}
 	if len(conf.Topic) == 0 {
 		conf.Topic = "default"

@@ -2,6 +2,8 @@ package otkafka
 
 import (
 	"context"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -14,6 +16,12 @@ import (
 )
 
 func TestTransport_RoundTrip(t *testing.T) {
+	if os.Getenv("KAFKA_ADDR") == "" {
+		t.Skip("set KAFKA_ADDR to run TestTransport_RoundTrip")
+		return
+	}
+	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
+
 	tracer := mocktracer.New()
 
 	factory, cleanup := provideWriterFactory(factoryIn{
@@ -21,7 +29,7 @@ func TestTransport_RoundTrip(t *testing.T) {
 		In:     di.In{},
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
-				Brokers: envDefaultKafkaAddrs,
+				Brokers: addrs,
 				Topic:   "Test",
 			},
 		}},

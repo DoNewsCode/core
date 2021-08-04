@@ -1,34 +1,26 @@
-// +build integration
-
 package leaderredis
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/DoNewsCode/core/events"
-	"github.com/DoNewsCode/core/internal"
 	"github.com/DoNewsCode/core/key"
 	"github.com/DoNewsCode/core/leader"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 )
 
-var envDefaultRedisAddrs, envDefaultRedisAddrsIsSet = internal.GetDefaultAddrsFromEnv("REDIS_ADDR", "127.0.0.1:6379")
-
-func TestMain(m *testing.M) {
-	if !envDefaultRedisAddrsIsSet {
-		fmt.Println("Set env REDIS_ADDR to run leaderredis tests")
-		os.Exit(0)
-	}
-	os.Exit(m.Run())
-}
-
 func TestCampaign(t *testing.T) {
-	client := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: envDefaultRedisAddrs})
+	if os.Getenv("REDIS_ADDR") == "" {
+		t.Skip("set REDIS_ADDR to run TestCampaign")
+		return
+	}
+	addrs := strings.Split(os.Getenv("REDIS_ADDR"), ",")
+	client := redis.NewUniversalClient(&redis.UniversalOptions{Addrs: addrs})
 	driver := RedisDriver{
 		client: client,
 		keyer:  key.New(),
@@ -51,9 +43,14 @@ func TestNewRedisDriver(t *testing.T) {
 }
 
 func TestElection(t *testing.T) {
+	if os.Getenv("REDIS_ADDR") == "" {
+		t.Skip("set REDIS_ADDR to run TestCampaign")
+		return
+	}
+	addrs := strings.Split(os.Getenv("REDIS_ADDR"), ",")
 	var dispatcher = &events.SyncDispatcher{}
 	var e1, e2 *leader.Election
-	var driver = NewRedisDriver(redis.NewUniversalClient(&redis.UniversalOptions{}), key.New("testElection"), WithPollInterval(time.Millisecond), WithExpiration(time.Second))
+	var driver = NewRedisDriver(redis.NewUniversalClient(&redis.UniversalOptions{Addrs: addrs}), key.New("testElection"), WithPollInterval(time.Millisecond), WithExpiration(time.Second))
 
 	e1 = leader.NewElection(dispatcher, driver)
 	e2 = leader.NewElection(dispatcher, driver)

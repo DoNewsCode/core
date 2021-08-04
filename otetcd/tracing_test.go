@@ -2,6 +2,8 @@ package otetcd
 
 import (
 	"context"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -13,13 +15,18 @@ import (
 )
 
 func TestTracing(t *testing.T) {
+	if os.Getenv("ETCD_ADDR") == "" {
+		t.Skip("Set env ETCD_ADDR to run TestTracing")
+		return
+	}
+	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
 	var interceptorCalled bool
 	tracer := mocktracer.New()
 	factory, cleanup := provideFactory(factoryIn{
 		Logger: log.NewNopLogger(),
 		Conf: config.MapAdapter{"etcd": map[string]Option{
 			"default": {
-				Endpoints: envDefaultEtcdAddrs,
+				Endpoints: addrs,
 			},
 		}},
 		Interceptor: func(name string, options *clientv3.Config) {

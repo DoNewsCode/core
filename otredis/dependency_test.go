@@ -41,5 +41,5 @@ func TestProvideConfigs(t *testing.T) {
 	k.Load(rawbytes.Provider(bytes), yaml.Parser())
 	k.Unmarshal("redis.default", &r)
 	assert.Equal(t, 0, r.DB)
-	assert.Equal(t, envDefaultRedisAddrs, r.Addrs)
+	assert.Equal(t, []string{"127.0.0.1:6379"}, r.Addrs)
 }

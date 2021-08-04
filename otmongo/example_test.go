@@ -3,6 +3,7 @@ package otmongo_test
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/otmongo"
@@ -11,6 +12,10 @@ import (
 )
 
 func Example() {
+	if os.Getenv("MONGO_ADDR") == "" {
+		fmt.Println("set MONGO_ADDR to run this example")
+		return
+	}
 	c := core.New()
 	c.ProvideEssentials()
 	c.Provide(otmongo.Providers())

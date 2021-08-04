@@ -1,6 +1,7 @@
 package otgorm
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -11,6 +12,11 @@ import (
 )
 
 func TestCollector(t *testing.T) {
+	if os.Getenv("MYSQL_DSN") == "" {
+		t.Skip("set MYSQL_DSN to run TestCollector")
+		return
+	}
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

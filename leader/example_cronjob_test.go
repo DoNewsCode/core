@@ -3,6 +3,7 @@ package leader_test
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
@@ -24,6 +25,10 @@ func (s CronModule) ProvideCron(crontab *cron.Cron) {
 }
 
 func Example_cronjob() {
+	if os.Getenv("ETCD_ADDR") == "" {
+		fmt.Println("set ETCD_ADDR to run this example")
+		return
+	}
 	c := core.Default(core.WithInline("log.level", "none"))
 	c.Provide(di.Deps{func() *cron.Cron {
 		return cron.New(cron.WithSeconds())
