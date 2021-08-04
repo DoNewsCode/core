@@ -2,6 +2,7 @@ package otmongo
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/DoNewsCode/core"
@@ -14,6 +15,10 @@ import (
 )
 
 func TestHook(t *testing.T) {
+	if os.Getenv("MONGO_ADDR") == "" {
+		t.Skip("set MONGO_ADDR to run TestHook")
+		return
+	}
 	t.Parallel()
 	c := core.New()
 	tracer := mocktracer.New()

@@ -13,6 +13,10 @@ import (
 )
 
 func Example_reader() {
+	if os.Getenv("KAFKA_ADDR") == "" {
+		fmt.Println("set KAFKA_ADDR to run this example")
+		return
+	}
 	brokers := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	conf := map[string]interface{}{
 		"log": map[string]interface{}{

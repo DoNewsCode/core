@@ -7,15 +7,12 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/internal"
 	"github.com/go-kit/kit/log"
 	"github.com/opentracing/opentracing-go"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/dig"
 )
-
-var envDefaultMongoAddr, envDefaultMongoAddrIsSet = internal.GetDefaultAddrFromEnv("MONGO_ADDR", "mongodb://127.0.0.1:27017")
 
 /*
 Providers returns a set of dependency providers. It includes the Maker, the
@@ -72,7 +69,7 @@ func provideMongoFactory(p factoryIn) (factoryOut, func()) {
 			return di.Pair{}, fmt.Errorf("mongo configuration %s not valid: %w", name, err)
 		}
 		if conf.URI == "" {
-			conf.URI = envDefaultMongoAddr
+			conf.URI = "mongodb://127.0.0.1:27017"
 		}
 
 		opts := options.Client()
@@ -122,7 +119,7 @@ func provideConfig() configOut {
 					Uri string `json:"uri" yaml:"uri"`
 				}{
 					"default": {
-						Uri: envDefaultMongoAddr,
+						Uri: "mongodb://127.0.0.1:27017",
 					},
 				},
 			},

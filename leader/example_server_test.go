@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/DoNewsCode/core"
@@ -29,6 +30,10 @@ func (s ServerModule) ProvideHTTP(router *mux.Router) {
 }
 
 func Example_server() {
+	if os.Getenv("ETCD_ADDR") == "" {
+		fmt.Println("set ETCD_ADDR to run this example")
+		return
+	}
 	c := core.Default(core.WithInline("log.level", "none"))
 	c.Provide(otetcd.Providers())
 	c.Provide(leader.Providers())

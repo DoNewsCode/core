@@ -1,6 +1,8 @@
 package otredis
 
 import (
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,6 +13,12 @@ import (
 )
 
 func TestCollector(t *testing.T) {
+	if os.Getenv("REDIS_ADDR") == "" {
+		t.Skip("set REDIS_ADDR to run TestCollector")
+		return
+	}
+	addrs := strings.Split(os.Getenv("REDIS_ADDR"), ",")
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -26,7 +34,11 @@ func TestCollector(t *testing.T) {
 	m.EXPECT().With(gomock.Any()).MinTimes(1).Return(m)
 	m.EXPECT().Set(gomock.Any()).MinTimes(1)
 
-	c := core.New()
+	c := core.New(
+		core.WithInline("redis.default.addrs", addrs),
+		core.WithInline("redisMetrics.interval", "1ms"),
+		core.WithInline("log.level", "none"),
+	)
 	c.ProvideEssentials()
 	c.Provide(Providers())
 	c.Provide(di.Deps{func() *Gauges { return &g }})

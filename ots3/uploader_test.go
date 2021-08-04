@@ -2,7 +2,6 @@ package ots3
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -34,16 +33,6 @@ func TestNewManager(t *testing.T) {
 	))
 }
 
-func TestMain(m *testing.M) {
-	if !envDefaultS3EndpointIsSet {
-		fmt.Println("Set env S3_ENDPOINT to run ots3 tests")
-		os.Exit(0)
-	}
-	manager := NewManager(envDefaultS3AccessKey, envDefaultS3AccessSecret, envDefaultS3Endpoint, envDefaultS3Region, envDefaultS3Bucket)
-	_ = manager.CreateBucket(context.Background(), "foo")
-	os.Exit(m.Run())
-}
-
 func TestManager_CreateBucket(t *testing.T) {
 	t.Parallel()
 	m := setupManager()
@@ -66,9 +55,29 @@ func TestManager_CreateBucket(t *testing.T) {
 }
 
 func TestManager_UploadFromUrl(t *testing.T) {
+	if os.Getenv("S3_ENDPOINT") == "" {
+		t.Skip("set S3_ENDPOINT to run TestManager_UploadFromUrl")
+		return
+	}
+	if os.Getenv("S3_ACCESSKEY") == "" {
+		t.Skip("set S3_ACCESSKEY to run TestManager_UploadFromUrl")
+		return
+	}
+	if os.Getenv("S3_ACCESSSECRET") == "" {
+		t.Skip("set S3_ACCESSSECRET to run TestManager_UploadFromUrl")
+		return
+	}
+	if os.Getenv("S3_BUCKET") == "" {
+		t.Skip("set S3_BUCKET to run TestManager_UploadFromUrl")
+		return
+	}
+	if os.Getenv("S3_REGION") == "" {
+		t.Skip("set S3_REGION to run TestManager_UploadFromUrl")
+		return
+	}
 	tracer := mocktracer.New()
 	m := setupManagerWithTracer(tracer)
-	_ = m.CreateBucket(context.Background(), envDefaultS3Bucket)
+	_ = m.CreateBucket(context.Background(), os.Getenv("S3_BUCKET"))
 	newURL, err := m.UploadFromUrl(context.Background(), "https://avatars.githubusercontent.com/u/43054062")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newURL)
@@ -81,11 +90,11 @@ func setupManager() *Manager {
 
 func setupManagerWithTracer(tracer opentracing.Tracer) *Manager {
 	m := NewManager(
-		envDefaultS3AccessKey,
-		envDefaultS3AccessSecret,
-		envDefaultS3Endpoint,
-		envDefaultS3Region,
-		envDefaultS3Bucket,
+		os.Getenv("S3_ACCESSKEY"),
+		os.Getenv("S3_ACCESSSECRET"),
+		os.Getenv("S3_ENDPOINT"),
+		os.Getenv("S3_REGION"),
+		os.Getenv("S3_BUCKET"),
 		WithTracer(tracer),
 	)
 	return m

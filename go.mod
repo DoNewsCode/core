@@ -12,9 +12,9 @@ require (
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-kit/kit v0.11.0
 	github.com/go-redis/redis/v8 v8.6.0
-	github.com/gogo/protobuf v1.3.2
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/mock v1.5.0
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -50,8 +50,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gorm.io/driver/clickhouse v0.1.0
 	gorm.io/driver/mysql v1.0.4
-	gorm.io/driver/postgres v1.1.0
+	gorm.io/driver/postgres v1.1.0 // indirect
 	gorm.io/driver/sqlite v1.1.4
-	gorm.io/driver/sqlserver v1.0.7
+	gorm.io/driver/sqlserver v1.0.7 // indirect
 	gorm.io/gorm v1.21.10
 )

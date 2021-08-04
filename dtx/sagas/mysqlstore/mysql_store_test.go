@@ -11,7 +11,6 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/dtx"
 	"github.com/DoNewsCode/core/dtx/sagas"
-	"github.com/DoNewsCode/core/internal"
 	"github.com/DoNewsCode/core/otgorm"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -24,17 +23,15 @@ func (m module) ProvideMigration() []*otgorm.Migration {
 	return Migrations("default")
 }
 
-var envDefaultMysqlDsn, envDefaultMysqlDsnIsSet = internal.GetDefaultAddrFromEnv("MYSQL_DSN", "root@tcp(127.0.0.1:3306)/app?charset=utf8mb4&parseTime=True&loc=Local")
-
 func TestMain(m *testing.M) {
-	if !envDefaultMysqlDsnIsSet {
+	if os.Getenv("MYSQL_DSN") == "" {
 		fmt.Println("Set env MYSQL_DSN to run mysqlstore tests")
 		os.Exit(0)
 	}
 	c := core.New(
 		core.WithInline("log.level", "error"),
 		core.WithInline("gorm.default.database", "mysql"),
-		core.WithInline("gorm.default.dsn", envDefaultMysqlDsn),
+		core.WithInline("gorm.default.dsn", os.Getenv("MYSQL_DSN")),
 	)
 	c.ProvideEssentials()
 	c.Provide(otgorm.Providers())
@@ -265,7 +262,7 @@ func TestMySQLStore(t *testing.T) {
 	c := core.New(
 		core.WithInline("log.level", "debug"),
 		core.WithInline("gorm.default.database", "mysql"),
-		core.WithInline("gorm.default.dsn", envDefaultMysqlDsn),
+		core.WithInline("gorm.default.dsn", os.Getenv("MYSQL_DSN")),
 	)
 	c.ProvideEssentials()
 	c.Provide(otgorm.Providers())
@@ -280,7 +277,7 @@ func TestStore_CleanUp(t *testing.T) {
 	c := core.New(
 		core.WithInline("log.level", "error"),
 		core.WithInline("gorm.default.database", "mysql"),
-		core.WithInline("gorm.default.dsn", envDefaultMysqlDsn),
+		core.WithInline("gorm.default.dsn", os.Getenv("MYSQL_DSN")),
 	)
 	c.ProvideEssentials()
 	c.Provide(otgorm.Providers())

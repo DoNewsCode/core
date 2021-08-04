@@ -1,8 +1,8 @@
 package otes
 
 import (
-	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -11,21 +11,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMain(m *testing.M) {
-	if !envDefaultElasticsearchAddrsIsSet {
-		fmt.Println("Set env ELASTICSEARCH_ADDR to run otes tests")
-		os.Exit(0)
-	}
-
-	os.Exit(m.Run())
-}
-
 func TestNewEsFactory(t *testing.T) {
-	t.Run("noraml construction", func(t *testing.T) {
+	if os.Getenv("ELASTICSEARCH_ADDR") == "" {
+		t.Skip("set env ELASTICSEARCH_ADDR to run TestNewEsFactory")
+		return
+	}
+	addrs := strings.Split(os.Getenv("ELASTICSEARCH_ADDR"), ",")
+	t.Run("normal construction", func(t *testing.T) {
 		esFactory, cleanup := provideEsFactory(factoryIn{
 			Conf: config.MapAdapter{"es": map[string]Config{
-				"default":     {URL: envDefaultElasticsearchAddrs},
-				"alternative": {URL: envDefaultElasticsearchAddrs},
+				"default":     {URL: addrs},
+				"alternative": {URL: addrs},
 			}},
 			Logger: log.NewNopLogger(),
 			Tracer: nil,
@@ -43,7 +39,7 @@ func TestNewEsFactory(t *testing.T) {
 		var called bool
 		esFactory, cleanup := provideEsFactory(factoryIn{
 			Conf: config.MapAdapter{"es": map[string]Config{
-				"default": {URL: envDefaultElasticsearchAddrs},
+				"default": {URL: addrs},
 			}},
 			Logger: log.NewNopLogger(),
 			Options: []elastic.ClientOptionFunc{
