@@ -28,15 +28,15 @@ type to the dependency graph.
 
 For example, if we want to use postgres:
 
-	var c *core.C = core.New()
-	c.Provide(otgorm.Providers())
+    var c *core.C = core.New()
+    c.Provide(otgorm.Providers())
     c.Provide(di.Deps{func() otgorm.Drivers {
-		return otgorm.Drivers{
-		    "mysql":      mysql.Open,
-		    "sqlite":     sqlite.Open,
-		    "clickhouse": clickhouse.Open,
-		    "postgres":   postgres.Open,
-	    }
+    	return otgorm.Drivers{
+    	    "mysql":      mysql.Open,
+    	    "sqlite":     sqlite.Open,
+    	    "clickhouse": clickhouse.Open,
+    	    "postgres":   postgres.Open,
+        }
     }}
 
 Sometimes there are valid reasons to connect to more than one mysql server.
