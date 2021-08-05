@@ -22,6 +22,23 @@ Then you can invoke gorm from the application.
 		// use client
 	})
 
+The database types you can specify in configs are "mysql", "sqlite" and
+"clickhouse". Other database types can be added by injecting the otgorm.Drivers
+type to the dependency graph.
+
+For example, if we want to use postgres:
+
+	var c *core.C = core.New()
+	c.Provide(otgorm.Providers())
+    c.Provide(di.Deps{func() otgorm.Drivers {
+		return otgorm.Drivers{
+		    "mysql":      mysql.Open,
+		    "sqlite":     sqlite.Open,
+		    "clickhouse": clickhouse.Open,
+		    "postgres":   postgres.Open,
+	    }
+    }}
+
 Sometimes there are valid reasons to connect to more than one mysql server.
 Inject otgorm.Maker to factory a *gorm.DB with a specific configuration entry.
 
