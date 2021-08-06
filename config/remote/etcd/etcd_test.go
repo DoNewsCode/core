@@ -1,4 +1,4 @@
-package remote
+package etcd
 
 import (
 	"context"
@@ -19,12 +19,12 @@ func TestRemote(t *testing.T) {
 		return
 	}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
-	cfg := &clientv3.Config{
+	cfg := clientv3.Config{
 		Endpoints:   addrs,
 		DialTimeout: 2 * time.Second,
 	}
 
-	r := Provider("config.yaml", cfg)
+	r := Provider(cfg, "config.yaml")
 
 	var testVal = "name: app"
 	// PREPARE TEST DATA
@@ -67,16 +67,16 @@ func TestError(t *testing.T) {
 	}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
 	var (
-		r   *Remote
+		r   *ETCD
 		err error
 	)
 
-	cfg := &clientv3.Config{
+	cfg := clientv3.Config{
 		Endpoints:   []string{},
 		DialTimeout: 2 * time.Second,
 	}
 
-	r = Provider("config.yaml", cfg)
+	r = Provider(cfg, "config.yaml")
 	err = put(r, "test")
 	assert.Error(t, err)
 
@@ -88,15 +88,15 @@ func TestError(t *testing.T) {
 	})
 	assert.Error(t, err)
 
-	cfg = &clientv3.Config{
+	cfg = clientv3.Config{
 		Endpoints:   addrs,
 		DialTimeout: 2 * time.Second,
 	}
-	r = Provider("config-test1", cfg)
+	r = Provider(cfg, "config-test1")
 	_, err = r.ReadBytes()
 	assert.Error(t, err)
 
-	r = Provider("config-test2", cfg)
+	r = Provider(cfg, "config-test2")
 
 	// Confirm that the two coroutines are finished
 	g := sync.WaitGroup{}
@@ -126,14 +126,17 @@ func TestError(t *testing.T) {
 	g.Wait()
 }
 
-func put(r *Remote, val string) error {
-	client, err := clientv3.New(*r.clientConfig)
+func put(r *ETCD, val string) error {
+	client, err := clientv3.New(r.clientConfig)
 	if err != nil {
 		return err
 	}
 	defer client.Close()
 
-	_, err = client.Put(context.Background(), r.key, val)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	_, err = client.Put(ctx, r.key, val)
 	if err != nil {
 		return err
 	}

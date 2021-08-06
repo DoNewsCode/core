@@ -1,20 +1,21 @@
-package remote_test
+package etcd_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/DoNewsCode/core"
-	"github.com/stretchr/testify/assert"
+	"github.com/DoNewsCode/core/codec/yaml"
+	"github.com/DoNewsCode/core/config/remote/etcd"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"os"
 	"strings"
-	"testing"
 	"time"
 )
 
-func Test_integration(t *testing.T) {
+func Example() {
 	addr := os.Getenv("ETCD_ADDR")
 	if addr == "" {
-		t.Skip("set ETCD_ADDR for run remote test")
+		fmt.Println("set ETCD_ADDR for run example")
 		return
 	}
 	key := "core.yaml"
@@ -23,13 +24,14 @@ func Test_integration(t *testing.T) {
 		Endpoints:   envEtcdAddrs,
 		DialTimeout: time.Second,
 	}
-	if err := put(cfg, key, "name: remote"); err != nil {
-		t.Fatal(err)
-	}
+	_ = put(cfg, key, "name: etcd")
 
-	c := core.New(core.WithRemoteYamlFile(key, cfg))
+	c := core.New(etcd.WithKey(cfg, key, yaml.Codec{}))
 	c.ProvideEssentials()
-	assert.Equal(t, "remote", c.String("name"))
+	fmt.Println(c.String("name"))
+
+	// Output:
+	// etcd
 }
 
 func put(cfg clientv3.Config, key, val string) error {
