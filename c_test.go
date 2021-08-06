@@ -140,7 +140,7 @@ func TestC_Remote(t *testing.T) {
 	envEtcdAddrs := strings.Split(addr, ",")
 	cfg := clientv3.Config{
 		Endpoints:   envEtcdAddrs,
-		DialTimeout: 2 * time.Second,
+		DialTimeout: time.Second,
 	}
 	if err := put(cfg, key, "name: remote"); err != nil {
 		t.Fatal(err)
@@ -212,11 +212,10 @@ func put(cfg clientv3.Config, key, val string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	for i := 0; i < 2; i++ {
-		_, err = client.Put(ctx, key, val)
-		if err != nil {
-			continue
-		}
+	_, err = client.Put(ctx, key, val)
+	if err != nil {
+		return err
 	}
-	return err
+
+	return nil
 }
