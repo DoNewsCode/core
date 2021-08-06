@@ -1,4 +1,4 @@
-package remote
+package etcd
 
 import (
 	"context"
@@ -67,7 +67,7 @@ func TestError(t *testing.T) {
 	}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
 	var (
-		r   *Remote
+		r   *ETCD
 		err error
 	)
 
@@ -126,7 +126,7 @@ func TestError(t *testing.T) {
 	g.Wait()
 }
 
-func put(r *Remote, val string) error {
+func put(r *ETCD, val string) error {
 	client, err := clientv3.New(*r.clientConfig)
 	if err != nil {
 		return err

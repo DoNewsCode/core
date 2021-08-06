@@ -15,7 +15,6 @@ import (
 
 	"github.com/DoNewsCode/core/codec/yaml"
 	"github.com/DoNewsCode/core/config"
-	"github.com/DoNewsCode/core/config/remote"
 	"github.com/DoNewsCode/core/config/watcher"
 	"github.com/DoNewsCode/core/container"
 	"github.com/DoNewsCode/core/contract"
@@ -24,7 +23,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/file"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // C stands for the core of the application. It contains service definitions and
@@ -91,13 +89,6 @@ type CoreOption func(*coreValues)
 func WithYamlFile(path string) (CoreOption, CoreOption) {
 	return WithConfigStack(file.Provider(path), config.CodecParser{Codec: yaml.Codec{}}),
 		WithConfigWatcher(watcher.File{Path: path})
-}
-
-// WithRemoteYamlFile is a two-in-one coreOption. It uses the remote key on etcd as the
-// source of configuration, and watches the change of that key for hot reloading.
-func WithRemoteYamlFile(key string, cfg clientv3.Config) (CoreOption, CoreOption) {
-	r := remote.Provider(key, &cfg)
-	return WithConfigStack(r, config.CodecParser{Codec: yaml.Codec{}}), WithConfigWatcher(r)
 }
 
 // WithInline is a CoreOption that creates a inline config in the configuration stack.
