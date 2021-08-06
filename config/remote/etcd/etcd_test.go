@@ -133,7 +133,10 @@ func put(r *ETCD, val string) error {
 	}
 	defer client.Close()
 
-	_, err = client.Put(context.Background(), r.key, val)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	_, err = client.Put(ctx, r.key, val)
 	if err != nil {
 		return err
 	}
