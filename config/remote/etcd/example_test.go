@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/codec/yaml"
-	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/config/remote/etcd"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"os"
@@ -21,14 +20,13 @@ func Example() {
 	}
 	key := "core.yaml"
 	envEtcdAddrs := strings.Split(addr, ",")
-	cfg := clientv3.Config{
+	cfg := &clientv3.Config{
 		Endpoints:   envEtcdAddrs,
 		DialTimeout: time.Second,
 	}
 	_ = put(cfg, key, "name: etcd")
 
-	provider := etcd.Provider(key, &cfg)
-	c := core.New(core.WithConfigStack(provider, config.CodecParser{Codec: yaml.Codec{}}), core.WithConfigWatcher(provider))
+	c := core.New(etcd.WithKey(cfg, key, yaml.Codec{}))
 	c.ProvideEssentials()
 	fmt.Println(c.String("name"))
 
@@ -36,8 +34,8 @@ func Example() {
 	// etcd
 }
 
-func put(cfg clientv3.Config, key, val string) error {
-	client, err := clientv3.New(cfg)
+func put(cfg *clientv3.Config, key, val string) error {
+	client, err := clientv3.New(*cfg)
 	if err != nil {
 		return err
 	}

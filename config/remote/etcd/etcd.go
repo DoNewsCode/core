@@ -5,7 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
+	"github.com/DoNewsCode/core"
+	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"go.etcd.io/etcd/client/v3"
 )
 
@@ -17,11 +19,18 @@ type ETCD struct {
 }
 
 // Provider create a *ETCD
-func Provider(key string, clientConfig *clientv3.Config) *ETCD {
+func Provider(clientConfig *clientv3.Config, key string) *ETCD {
 	return &ETCD{
 		key:          key,
 		clientConfig: clientConfig,
 	}
+}
+
+// WithKey is a two-in-one coreOption. It uses the remote key on etcd as the
+// source of configuration, and watches the change of that key for hot reloading.
+func WithKey(cfg *clientv3.Config, key string, codec contract.Codec) (core.CoreOption, core.CoreOption) {
+	r := Provider(cfg, key)
+	return core.WithConfigStack(r, config.CodecParser{Codec: codec}), core.WithConfigWatcher(r)
 }
 
 // ReadBytes reads the contents of a key from etcd and returns the bytes.
