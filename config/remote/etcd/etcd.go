@@ -15,11 +15,11 @@ import (
 // The remote client uses etcd.
 type ETCD struct {
 	key          string
-	clientConfig *clientv3.Config
+	clientConfig clientv3.Config
 }
 
 // Provider create a *ETCD
-func Provider(clientConfig *clientv3.Config, key string) *ETCD {
+func Provider(clientConfig clientv3.Config, key string) *ETCD {
 	return &ETCD{
 		key:          key,
 		clientConfig: clientConfig,
@@ -28,14 +28,14 @@ func Provider(clientConfig *clientv3.Config, key string) *ETCD {
 
 // WithKey is a two-in-one coreOption. It uses the remote key on etcd as the
 // source of configuration, and watches the change of that key for hot reloading.
-func WithKey(cfg *clientv3.Config, key string, codec contract.Codec) (core.CoreOption, core.CoreOption) {
+func WithKey(cfg clientv3.Config, key string, codec contract.Codec) (core.CoreOption, core.CoreOption) {
 	r := Provider(cfg, key)
 	return core.WithConfigStack(r, config.CodecParser{Codec: codec}), core.WithConfigWatcher(r)
 }
 
 // ReadBytes reads the contents of a key from etcd and returns the bytes.
 func (r *ETCD) ReadBytes() ([]byte, error) {
-	client, err := clientv3.New(*r.clientConfig)
+	client, err := clientv3.New(r.clientConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (r *ETCD) Read() (map[string]interface{}, error) {
 // it should reload the whole config stack. For example, if the flag or env takes precedence over the config
 // key, they should remain to be so after the key changes.
 func (r *ETCD) Watch(ctx context.Context, reload func() error) error {
-	client, err := clientv3.New(*r.clientConfig)
+	client, err := clientv3.New(r.clientConfig)
 	if err != nil {
 		return err
 	}

@@ -20,7 +20,7 @@ func Example() {
 	}
 	key := "core.yaml"
 	envEtcdAddrs := strings.Split(addr, ",")
-	cfg := &clientv3.Config{
+	cfg := clientv3.Config{
 		Endpoints:   envEtcdAddrs,
 		DialTimeout: time.Second,
 	}
@@ -34,8 +34,8 @@ func Example() {
 	// etcd
 }
 
-func put(cfg *clientv3.Config, key, val string) error {
-	client, err := clientv3.New(*cfg)
+func put(cfg clientv3.Config, key, val string) error {
+	client, err := clientv3.New(cfg)
 	if err != nil {
 		return err
 	}
