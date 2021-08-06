@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/config"
-	"github.com/DoNewsCode/core/config/remote"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
@@ -135,6 +134,7 @@ func TestC_Remote(t *testing.T) {
 	addr := os.Getenv("ETCD_ADDR")
 	if addr == "" {
 		t.Skip("set ETCD_ADDR for run remote test")
+		return
 	}
 	key := "core.yaml"
 	envEtcdAddrs := strings.Split(addr, ",")
@@ -142,7 +142,6 @@ func TestC_Remote(t *testing.T) {
 		Endpoints:   envEtcdAddrs,
 		DialTimeout: 2 * time.Second,
 	}
-	_ = remote.Provider(key, &cfg)
 	if err := put(cfg, key, "name: remote"); err != nil {
 		t.Fatal(err)
 	}
@@ -210,9 +209,14 @@ func put(cfg clientv3.Config, key, val string) error {
 	}
 	defer client.Close()
 
-	_, err = client.Put(context.Background(), key, val)
-	if err != nil {
-		return err
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	for i := 0; i < 2; i++ {
+		_, err = client.Put(ctx, key, val)
+		if err != nil {
+			continue
+		}
 	}
-	return nil
+	return err
 }
