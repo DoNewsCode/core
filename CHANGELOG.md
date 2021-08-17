@@ -1,4 +1,39 @@
 
+<a name="v0.8.0"></a>
+## [v0.8.0](https://github.com/DoNewsCode/core/compare/v0.7.3...v0.8.0) (2021-08-06)
+
+### ♻️ Code Refactoring
+
+* rename package remote to package etcd ([#175](https://github.com/DoNewsCode/core/issues/175)) (@[谷溪](guxi99@gmail.com))
+* move and rename ([#170](https://github.com/DoNewsCode/core/issues/170)) (@[谷溪](guxi99@gmail.com))
+* change event system ([#165](https://github.com/DoNewsCode/core/issues/165)) (@[谷溪](guxi99@gmail.com))
+* move otkafka/processor out of core, rename to core-processor as another package ([#156](https://github.com/DoNewsCode/core/issues/156)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+### ✨ Features
+
+* config.Duration implement TextMarshaller (close [#164](https://github.com/DoNewsCode/core/issues/164)) ([#166](https://github.com/DoNewsCode/core/issues/166)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* add codec package ([#161](https://github.com/DoNewsCode/core/issues/161)) (@[谷溪](guxi99@gmail.com))
+* **config:** add Validators to ExportedConfigs and "config verify" command. ([#154](https://github.com/DoNewsCode/core/issues/154)) (@[谷溪](guxi99@gmail.com))
+
+### 🐛 Bug Fixes
+
+* clarify env usage ([#174](https://github.com/DoNewsCode/core/issues/174)) (@[谷溪](guxi99@gmail.com))
+* optimize di output ([#171](https://github.com/DoNewsCode/core/issues/171)) (@[谷溪](guxi99@gmail.com))
+* when elasticsearch server is not up, the elasticsearch client should be constructed normally. ([#167](https://github.com/DoNewsCode/core/issues/167)) (@[谷溪](guxi99@gmail.com))
+* golangci-lint run (@[Reasno](guxi99@gmail.com))
+* fix remote test (close [#160](https://github.com/DoNewsCode/core/issues/160)) ([#162](https://github.com/DoNewsCode/core/issues/162)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* **core:** remove WithRemote (@[reasno](guxi99@gmail.com))
+
+### BREAKING CHANGE
+
+
+package remote no longer exists.
+
+WithRemote option removed.
+
+the event interface is changed. queue package is removed.
+
+
 <a name="v0.7.3"></a>
 ## [v0.7.3](https://github.com/DoNewsCode/core/compare/v0.7.2...v0.7.3) (2021-07-19)
 
