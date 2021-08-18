@@ -1,15 +1,16 @@
-package etcd_test
+package remote_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/DoNewsCode/core"
-	"github.com/DoNewsCode/core/codec/yaml"
-	"github.com/DoNewsCode/core/config/remote/etcd"
-	clientv3 "go.etcd.io/etcd/client/v3"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/DoNewsCode/core"
+	"github.com/DoNewsCode/core/codec/yaml"
+	"github.com/DoNewsCode/core/config/remote"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func Example() {
@@ -20,13 +21,17 @@ func Example() {
 	}
 	key := "core.yaml"
 	envEtcdAddrs := strings.Split(addr, ",")
-	cfg := clientv3.Config{
+	_ = put(clientv3.Config{
 		Endpoints:   envEtcdAddrs,
-		DialTimeout: time.Second,
-	}
-	_ = put(cfg, key, "name: etcd")
+		DialTimeout: 5 * time.Second,
+	}, key, "name: etcd")
 
-	c := core.New(etcd.WithKey(cfg, key, yaml.Codec{}))
+	cfg := remote.Config{
+		Endpoints: envEtcdAddrs,
+		Name:      "etcd",
+		Key:       key,
+	}
+	c := core.New(remote.WithKey(cfg, yaml.Codec{}))
 	c.ProvideEssentials()
 	fmt.Println(c.String("name"))
 
