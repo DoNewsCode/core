@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/ClickHouse/clickhouse-go v1.4.5 // indirect
-	github.com/DoNewsCode/crypt v0.0.1
+	github.com/DoNewsCode/crypt v0.0.3
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
 	github.com/Reasno/ifilter v0.1.2
 	github.com/aws/aws-sdk-go v1.38.68

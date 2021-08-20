@@ -18,7 +18,6 @@ func TestRemote_Read(t *testing.T) {
 		Name:      "etcd",
 		Endpoints: strings.Split(os.Getenv("ETCD_ADDR"), ","),
 		Key:       "remote_read_test",
-		SecretKey: "",
 	})
 
 	err := r.set("remote_read_test", []byte("test"))
@@ -41,7 +40,6 @@ func TestRemote_Watch(t *testing.T) {
 		Name:      "etcd",
 		Endpoints: strings.Split(os.Getenv("ETCD_ADDR"), ","),
 		Key:       "remote_watch_test",
-		SecretKey: "",
 	})
 
 	var ch = make(chan string)
