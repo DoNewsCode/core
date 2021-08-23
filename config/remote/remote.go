@@ -3,11 +3,12 @@ package remote
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	crypt "github.com/DoNewsCode/crypt/config"
-	"time"
 )
 
 type remote struct {
@@ -35,7 +36,7 @@ func Provider(cfg Config) *remote {
 	cm, err := crypt.NewConfigManager(crypt.Config{
 		Name:          cfg.Name,
 		Machines:      cfg.Endpoints,
-		WatchInterval: 10*time.Second,
+		WatchInterval: 10 * time.Second,
 	})
 	if err != nil {
 		panic(err)
@@ -67,7 +68,7 @@ func (r *remote) Read() (map[string]interface{}, error) {
 // it should reload the whole config stack. For example, if the flag or env takes precedence over the config
 // key, they should remain to be so after the key changes.
 func (r *remote) Watch(ctx context.Context, reload func() error) error {
-	rch := r.cm.Watch(ctx,r.key)
+	rch := r.cm.Watch(ctx, r.key)
 	for {
 		select {
 		case resp := <-rch:

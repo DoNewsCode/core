@@ -2,16 +2,17 @@ package remote
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRemote_Read(t *testing.T) {
 	if os.Getenv("ETCD_ADDR") == "" {
-		t.Skip("set ETCD_ADDR to run TestRemote")
+		t.Skip("set ETCD_ADDR to run TestRemote_Read")
 		return
 	}
 	r := Provider(Config{
@@ -33,7 +34,7 @@ func TestRemote_Read(t *testing.T) {
 
 func TestRemote_Watch(t *testing.T) {
 	if os.Getenv("ETCD_ADDR") == "" {
-		t.Skip("set ETCD_ADDR to run TestRemote")
+		t.Skip("set ETCD_ADDR to run TestRemote_Watch")
 		return
 	}
 	r := Provider(Config{
