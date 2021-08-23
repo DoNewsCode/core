@@ -28,6 +28,11 @@ jobs:
           ETCD_ADVERTISE_CLIENT_URLS: http://localhost:2379
         ports:
           - 2379:2379
+        options: >-
+          --health-cmd "etcdctl endpoint health"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       mysql:
         image: mysql:5.7
         env:
