@@ -17,7 +17,7 @@ type remote struct {
 }
 
 type Config struct {
-	// Name support etcd, firestore and consul.
+	// Name support etcd, redis, firestore and consul.
 	Name      string
 	Endpoints []string
 	Key       string
