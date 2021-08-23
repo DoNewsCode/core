@@ -11,17 +11,19 @@ import (
 	crypt "github.com/DoNewsCode/crypt/config"
 )
 
-type remote struct {
-	cm        crypt.Manager
-	key       string
-	watchQuit chan bool
+// Remote warp crypt.Manager and config key.
+type Remote struct {
+	cm  crypt.Manager
+	key string
 }
 
+// Config rename crypt.Config for uniform style of core.
 type Config struct {
 	// Name support etcd, redis, firestore and consul.
-	Name      string
-	Endpoints []string
-	Key       string
+	Name          string
+	Endpoints     []string
+	Key           string
+	WatchInterval time.Duration
 }
 
 // WithKey is a two-in-one coreOption. It uses the remote key as the
@@ -32,34 +34,36 @@ func WithKey(cfg Config, codec contract.Codec) (core.CoreOption, core.CoreOption
 }
 
 // Provider create a core.ConfProvider
-func Provider(cfg Config) *remote {
-	cm, err := crypt.NewConfigManager(crypt.Config{
+func Provider(cfg Config) *Remote {
+	cryptConfig := crypt.Config{
 		Name:          cfg.Name,
 		Machines:      cfg.Endpoints,
-		WatchInterval: 10 * time.Second,
-	})
+		WatchInterval: cfg.WatchInterval,
+	}
+	if cryptConfig.WatchInterval == 0 {
+		cryptConfig.WatchInterval = 10 * time.Second
+	}
+	cm, err := crypt.NewConfigManager(cryptConfig)
 	if err != nil {
 		panic(err)
 	}
-	quit := make(chan bool)
-	return &remote{
-		cm:        cm,
-		key:       cfg.Key,
-		watchQuit: quit,
+	return &Remote{
+		cm:  cm,
+		key: cfg.Key,
 	}
 }
 
-func (r *remote) set(key string, value []byte) error {
+func (r *Remote) set(key string, value []byte) error {
 	return r.cm.Set(context.TODO(), key, value)
 }
 
 // ReadBytes reads the contents of a key and returns the bytes.
-func (r *remote) ReadBytes() ([]byte, error) {
+func (r *Remote) ReadBytes() ([]byte, error) {
 	return r.cm.Get(context.TODO(), r.key)
 }
 
 // Read is not supported by the remote provider.
-func (r *remote) Read() (map[string]interface{}, error) {
+func (r *Remote) Read() (map[string]interface{}, error) {
 	return nil, errors.New("remote provider does not support this method")
 }
 
@@ -67,7 +71,7 @@ func (r *remote) Read() (map[string]interface{}, error) {
 // will be called. note the reload function should not just load the changes made within this key, but rather
 // it should reload the whole config stack. For example, if the flag or env takes precedence over the config
 // key, they should remain to be so after the key changes.
-func (r *remote) Watch(ctx context.Context, reload func() error) error {
+func (r *Remote) Watch(ctx context.Context, reload func() error) error {
 	rch := r.cm.Watch(ctx, r.key)
 	for {
 		select {
