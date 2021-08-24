@@ -243,6 +243,7 @@ func (m MapAdapter) Unmarshal(path string, o interface{}) (err error) {
 	})
 }
 
+// Route implements contract.ConfigRouter
 func (m MapAdapter) Route(s string) contract.ConfigUnmarshaler {
 	var v interface{}
 	v = m
@@ -339,6 +340,8 @@ func (w wrappedConfigAccessor) Duration(s string) time.Duration {
 	return dur.Duration
 }
 
+// WithAccessor upgrade contract.ConfigUnmarshaler to contract.ConfigAccessor by
+// wrapping the original unmarshaler.
 func WithAccessor(unmarshaler contract.ConfigUnmarshaler) contract.ConfigAccessor {
 	if accessor, ok := unmarshaler.(contract.ConfigAccessor); ok {
 		return accessor
