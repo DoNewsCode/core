@@ -315,10 +315,7 @@ func (w wrappedConfigAccessor) Strings(s string) []string {
 
 func (w wrappedConfigAccessor) Bool(s string) bool {
 	var o bool
-	err := w.unmarshaler.Unmarshal(s, &o)
-	if err != nil {
-		panic(err)
-	}
+	w.unmarshaler.Unmarshal(s, &o)
 	return o
 }
 
