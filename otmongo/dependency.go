@@ -42,7 +42,7 @@ type factoryIn struct {
 	dig.In
 
 	Logger      log.Logger
-	Conf        contract.ConfigAccessor
+	Conf        contract.ConfigUnmarshaler
 	Interceptor MongoConfigInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer     `optional:"true"`
 	Dispatcher  contract.Dispatcher    `optional:"true"`

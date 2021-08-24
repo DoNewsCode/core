@@ -76,7 +76,8 @@ func NewEnv(env string) Env {
 }
 
 // NewEnvFromConf reads the name of application from configuration's "env" entry.
-func NewEnvFromConf(conf contract.ConfigAccessor) Env {
-	envStr := conf.String("env")
+func NewEnvFromConf(conf contract.ConfigUnmarshaler) Env {
+	var envStr string
+	conf.Unmarshal("env", &envStr)
 	return NewEnv(envStr)
 }

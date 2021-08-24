@@ -31,6 +31,9 @@ import (
 	"github.com/go-kit/kit/log/term"
 )
 
+// LevelLogger is an alias of contract.LevelLogger
+type LevelLogger = contract.LevelLogger
+
 var _ LevelLogger = (*levelLogger)(nil)
 
 // NewLogger constructs a log.Logger based on the given format. The support
@@ -151,23 +154,43 @@ func (l levelLogger) Warnf(s string, i ...interface{}) {
 
 func (l levelLogger) Errf(s string, i ...interface{}) {
 	s = fmt.Sprintf(s, i...)
-	_ = level.Error(l).Log("err", s)
+	_ = level.Error(l).Log("msg", s)
 }
 
-func (l levelLogger) Debug(s string) {
-	_ = level.Debug(l).Log("err", s)
+func (l levelLogger) Debugw(s string, fields ...interface{}) {
+	m := append(fields, "msg", s)
+	_ = level.Debug(l).Log(m...)
 }
 
-func (l levelLogger) Info(s string) {
-	_ = level.Info(l).Log("msg", s)
+func (l levelLogger) Infow(s string, fields ...interface{}) {
+	m := append(fields, "msg", s)
+	_ = level.Info(l).Log(m...)
 }
 
-func (l levelLogger) Warn(s string) {
-	_ = level.Warn(l).Log("msg", s)
+func (l levelLogger) Warnw(s string, fields ...interface{}) {
+	m := append(fields, "msg", s)
+	_ = level.Warn(l).Log(m...)
 }
 
-func (l levelLogger) Err(err string) {
-	_ = level.Error(l).Log("err", err)
+func (l levelLogger) Errw(s string, fields ...interface{}) {
+	m := append(fields, "msg", s)
+	_ = level.Error(l).Log(m...)
+}
+
+func (l levelLogger) Debug(args ...interface{}) {
+	_ = level.Debug(l).Log("msg", fmt.Sprint(args...))
+}
+
+func (l levelLogger) Info(args ...interface{}) {
+	_ = level.Info(l).Log("msg", fmt.Sprint(args...))
+}
+
+func (l levelLogger) Warn(args ...interface{}) {
+	_ = level.Warn(l).Log("msg", fmt.Sprint(args...))
+}
+
+func (l levelLogger) Err(args ...interface{}) {
+	_ = level.Error(l).Log("msg", fmt.Sprint(args...))
 }
 
 // WithLevel decorates the logger and returns a contract.LevelLogger.
@@ -176,22 +199,9 @@ func (l levelLogger) Err(err string) {
 // this will weakens the powerful abstraction of log.Logger. Only inject
 // log.Logger, and converts log.Logger to contract.LevelLogger within the
 // boundary of dependency consumer if desired.
-func WithLevel(logger log.Logger) levelLogger {
-	if l, ok := logger.(levelLogger); ok {
+func WithLevel(logger log.Logger) LevelLogger {
+	if l, ok := logger.(LevelLogger); ok {
 		return l
 	}
 	return levelLogger{log.With(logger, "caller", log.Caller(5))}
-}
-
-// LevelLogger is plaintext logger with level.
-type LevelLogger interface {
-	log.Logger
-	Debug(string)
-	Info(string)
-	Warn(string)
-	Err(string)
-	Debugf(string, ...interface{})
-	Infof(string, ...interface{})
-	Warnf(string, ...interface{})
-	Errf(string, ...interface{})
 }

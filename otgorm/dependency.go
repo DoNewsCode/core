@@ -86,7 +86,7 @@ func provideMemoryDatabase() *SQLite {
 type factoryIn struct {
 	di.In
 
-	Conf                  contract.ConfigAccessor
+	Conf                  contract.ConfigUnmarshaler
 	Logger                log.Logger
 	GormConfigInterceptor GormConfigInterceptor `optional:"true"`
 	Tracer                opentracing.Tracer    `optional:"true"`

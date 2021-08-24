@@ -42,7 +42,7 @@ gorm:
 `
 
 // ProvideConfig is the default ConfigProvider for package Core.
-func ProvideConfig(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigAccessor {
+func ProvideConfig(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigUnmarshaler {
 	var (
 		stack []config.Option
 		err   error
@@ -65,12 +65,12 @@ func ProvideConfig(configStack []config.ProviderSet, configWatcher contract.Conf
 }
 
 // ProvideEnv is the default EnvProvider for package Core.
-func ProvideEnv(conf contract.ConfigAccessor) contract.Env {
+func ProvideEnv(conf contract.ConfigUnmarshaler) contract.Env {
 	return config.NewEnvFromConf(conf)
 }
 
 // ProvideAppName is the default AppNameProvider for package Core.
-func ProvideAppName(conf contract.ConfigAccessor) contract.AppName {
+func ProvideAppName(conf contract.ConfigUnmarshaler) contract.AppName {
 	var appName config.AppName
 	err := conf.Unmarshal("name", &appName)
 	if err != nil {
@@ -80,7 +80,7 @@ func ProvideAppName(conf contract.ConfigAccessor) contract.AppName {
 }
 
 // ProvideLogger is the default LoggerProvider for package Core.
-func ProvideLogger(conf contract.ConfigAccessor, appName contract.AppName, env contract.Env) log.Logger {
+func ProvideLogger(conf contract.ConfigUnmarshaler, appName contract.AppName, env contract.Env) log.Logger {
 	var (
 		lvl    string
 		format string
@@ -100,12 +100,12 @@ func ProvideLogger(conf contract.ConfigAccessor, appName contract.AppName, env c
 }
 
 // ProvideDi is the default DiProvider for package Core.
-func ProvideDi(conf contract.ConfigAccessor) DiContainer {
+func ProvideDi(conf contract.ConfigUnmarshaler) DiContainer {
 	return di.NewGraph()
 }
 
 // ProvideEventDispatcher is the default EventDispatcherProvider for package Core.
-func ProvideEventDispatcher(conf contract.ConfigAccessor) contract.Dispatcher {
+func ProvideEventDispatcher(conf contract.ConfigUnmarshaler) contract.Dispatcher {
 	return &events.SyncDispatcher{}
 }
 

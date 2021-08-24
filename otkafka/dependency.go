@@ -51,7 +51,7 @@ type factoryIn struct {
 	ReaderInterceptor ReaderInterceptor  `optional:"true"`
 	WriterInterceptor WriterInterceptor  `optional:"true"`
 	Tracer            opentracing.Tracer `optional:"true"`
-	Conf              contract.ConfigAccessor
+	Conf              contract.ConfigUnmarshaler
 	Logger            log.Logger
 	ReaderStats       *ReaderStats `optional:"true"`
 	WriterStats       *WriterStats `optional:"true"`

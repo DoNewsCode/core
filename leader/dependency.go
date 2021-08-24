@@ -35,7 +35,7 @@ type in struct {
 
 	AppName    contract.AppName
 	Env        contract.Env
-	Config     contract.ConfigAccessor
+	Config     contract.ConfigUnmarshaler
 	Dispatcher contract.Dispatcher
 	Driver     Driver       `optional:"true"`
 	Maker      otetcd.Maker `optional:"true"`

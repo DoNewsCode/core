@@ -40,7 +40,7 @@ type factoryIn struct {
 	di.In
 
 	Logger      log.Logger
-	Conf        contract.ConfigAccessor
+	Conf        contract.ConfigUnmarshaler
 	Interceptor EtcdConfigInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer    `optional:"true"`
 	Dispatcher  contract.Dispatcher   `optional:"true"`

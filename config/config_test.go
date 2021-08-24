@@ -146,46 +146,6 @@ func TestKoanfAdapter_Unmarshal_Yaml(t *gotesting.T) {
 	assert.Equal(t, r, Duration{1 * time.Nanosecond})
 }
 
-func TestMapAdapter_Bool(t *gotesting.T) {
-	t.Parallel()
-	k := MapAdapter(
-		map[string]interface{}{
-			"bool": true,
-		},
-	)
-	assert.True(t, k.Bool("bool"))
-}
-
-func TestMapAdapter_String(t *gotesting.T) {
-	t.Parallel()
-	k := MapAdapter(
-		map[string]interface{}{
-			"string": "string",
-		},
-	)
-	assert.Equal(t, "string", k.String("string"))
-}
-
-func TestMapAdapter_Float64(t *gotesting.T) {
-	t.Parallel()
-	k := MapAdapter(
-		map[string]interface{}{
-			"float": 1.0,
-		},
-	)
-	assert.Equal(t, 1.0, k.Float64("float"))
-}
-
-func TestMapAdapter_Get(t *gotesting.T) {
-	t.Parallel()
-	k := MapAdapter(
-		map[string]interface{}{
-			"float": 1.0,
-		},
-	)
-	assert.Equal(t, 1.0, k.Get("float"))
-}
-
 func TestMapAdapter_Route(t *gotesting.T) {
 	t.Parallel()
 	m := MapAdapter(
@@ -229,6 +189,18 @@ func TestKoanfAdapter_Reload(t *gotesting.T) {
 	)
 	assert.Error(t, err)
 	assert.Nil(t, conf)
+}
+
+func TestUpgrade(t *gotesting.T) {
+	var m MapAdapter = map[string]interface{}{"foo": "bar"}
+	upgraded := WithAccessor(m)
+
+	assert.Equal(t, float64(0), upgraded.Float64("foo"))
+	assert.Equal(t, 0, upgraded.Int("foo"))
+	assert.Equal(t, "bar", upgraded.String("foo"))
+	assert.Equal(t, false, upgraded.Bool("foo"))
+	assert.Equal(t, "bar", upgraded.Get("foo"))
+	assert.Equal(t, []string{"bar"}, upgraded.Strings("foo"))
 }
 
 func prepareJSONTestSubject(t *gotesting.T) *KoanfAdapter {
