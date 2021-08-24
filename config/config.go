@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
@@ -211,6 +212,14 @@ func (k *KoanfAdapter) Float64(s string) float64 {
 	return k.K.Float64(s)
 }
 
+// Duration returns the time.Duration value of a given key path or its zero value if the path does not exist or if the value is not a valid float64.
+func (k *KoanfAdapter) Duration(s string) time.Duration {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
+	return k.K.Duration(s)
+}
+
 // MapAdapter implements ConfigUnmarshaler and ConfigRouter.
 // It is primarily used for testing
 type MapAdapter map[string]interface{}
@@ -305,7 +314,10 @@ func (w wrappedConfigAccessor) Strings(s string) []string {
 
 func (w wrappedConfigAccessor) Bool(s string) bool {
 	var o bool
-	w.unmarshaler.Unmarshal(s, &o)
+	err := w.unmarshaler.Unmarshal(s, &o)
+	if err != nil {
+		panic(err)
+	}
 	return o
 }
 
@@ -319,6 +331,12 @@ func (w wrappedConfigAccessor) Float64(s string) float64 {
 	var o float64
 	w.unmarshaler.Unmarshal(s, &o)
 	return o
+}
+
+func (w wrappedConfigAccessor) Duration(s string) time.Duration {
+	var dur Duration
+	w.unmarshaler.Unmarshal(s, &dur)
+	return dur.Duration
 }
 
 func WithAccessor(unmarshaler contract.ConfigUnmarshaler) contract.ConfigAccessor {

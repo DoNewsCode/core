@@ -110,6 +110,12 @@ func TestKoanfAdapter_Get(t *gotesting.T) {
 	assert.Equal(t, 1.0, k.Get("float"))
 }
 
+func TestKoanfAdapter_Duration(t *gotesting.T) {
+	t.Parallel()
+	k := prepareJSONTestSubject(t)
+	assert.Equal(t, time.Second, k.Duration("duration_string"))
+}
+
 func TestKoanfAdapter_Unmarshal_Json(t *gotesting.T) {
 	t.Parallel()
 	ka := prepareJSONTestSubject(t)

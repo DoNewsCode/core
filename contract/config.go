@@ -1,6 +1,9 @@
 package contract
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // ConfigRouter enables modular configuration by giving every piece of configuration a path.
 type ConfigRouter interface {
@@ -28,6 +31,7 @@ type ConfigAccessor interface {
 	Bool(string) bool
 	Get(string) interface{}
 	Float64(string) float64
+	Duration(string) time.Duration
 }
 
 // ConfigWatcher is an interface for hot-reload provider.
