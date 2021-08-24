@@ -207,7 +207,7 @@ func TestUpgrade(t *gotesting.T) {
 	assert.Equal(t, false, upgraded.Bool("foo"))
 	assert.Equal(t, "bar", upgraded.Get("foo"))
 	assert.Equal(t, []string{"bar"}, upgraded.Strings("foo"))
-	assert.Equal(t, 0, upgraded.Duration("foo"))
+	assert.Equal(t, time.Duration(0), upgraded.Duration("foo"))
 }
 
 func prepareJSONTestSubject(t *gotesting.T) *KoanfAdapter {
