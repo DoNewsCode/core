@@ -194,7 +194,7 @@ That being said, let's redirect our attention to other goodies package core has 
   You could start you project as a monolith with multiple modules, and gradually migrate them into microservices.
 
 - Package core doesn't lock in transport or framework.
-  For instance, you can use go kit to construct your services, and bring in transports like gRPC, AMPQ, thrift, etc. Non-network services like CLI and Cron are also supported.
+  For instance, you can use go kit to construct your services, and bring in transports like gRPC, AMPQ, thrift, etc. Non-network services like CLI and Cron are also supported. See [all available interfaces a module can expose](https://github.com/DoNewsCode/core/blob/master/container/container.go). You can also invent your own.
 
 - Package core also babysits the services after initialization. The duty includes but not limited to distributed tracing, metrics exporting, error handling, event-dispatching, and leader election.
 
@@ -204,7 +204,6 @@ Be sure to checkout the documentation section to learn more.
 
 * [Tutorial](https://github.com/DoNewsCode/core/blob/master/doc/tutorial.md)
 * [GoDoc](https://pkg.go.dev/github.com/DoNewsCode/core)
-* [Demo Project](https://github.com/DoNewsCode/skeleton)
 * [Starter Template](https://github.com/DoNewsCode/core-starter)
 * [Contributing](https://github.com/DoNewsCode/core/blob/master/doc/contributing.md)
 
@@ -223,10 +222,10 @@ Be sure to checkout the documentation section to learn more.
 - Tries to care about service details.
 - Tries to reimplement the functionality provided by modern platforms.
 
-## Suggested service framework
+## Works well with
 - [Gin](https://github.com/DoNewsCode/core-gin) (if HTTP only)
 - [Go Kit](https://github.com/DoNewsCode/core-kit) (if multiple transports)
-- Kratos (when v2 is ready)
+- [Kratos v2](https://github.com/go-kratos/kratos)
 
 
 
