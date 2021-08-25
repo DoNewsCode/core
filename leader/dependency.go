@@ -48,9 +48,6 @@ type out struct {
 	Status   *Status
 }
 
-// ModuleSentinel marks out as module.
-func (m out) ModuleSentinel() {}
-
 func provide(in in) (out, error) {
 	if err := determineDriver(&in); err != nil {
 		return out{}, err
@@ -61,6 +58,9 @@ func provide(in in) (out, error) {
 		Status:   e.status,
 	}, nil
 }
+
+// Module marks out as a module.
+func (m out) Module() interface{} { return m }
 
 func (m out) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
