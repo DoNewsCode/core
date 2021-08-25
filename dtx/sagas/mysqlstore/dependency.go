@@ -68,7 +68,7 @@ type out struct {
 	SagaStore sagas.Store
 }
 
-func (m out) ModuleSentinel() {}
+func (m out) Module() interface{} { return m }
 
 func (m out) ProvideMigration() []*otgorm.Migration {
 	return Migrations(m.Conn)

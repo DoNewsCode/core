@@ -8,8 +8,8 @@ import (
 
 func TestModule(t *testing.T) {
 	type mock struct {
-		Module
+		Modular
 	}
-	assert.Implements(t, (*Module)(nil), mock{})
-	assert.Implements(t, (*Module)(nil), &mock{})
+	assert.Implements(t, (*Modular)(nil), mock{})
+	assert.Implements(t, (*Modular)(nil), &mock{})
 }

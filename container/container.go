@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/DoNewsCode/core/contract"
-	"github.com/Reasno/ifilter"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
 	"github.com/robfig/cron/v3"
@@ -54,7 +53,7 @@ type Container struct {
 	grpcProviders    []func(server *grpc.Server)
 	closerProviders  []func()
 	runProviders     []func(g *run.Group)
-	modules          ifilter.Collection
+	modules          []interface{}
 	cronProviders    []func(crontab *cron.Cron)
 	commandProviders []func(command *cobra.Command)
 }
@@ -113,7 +112,7 @@ func (c *Container) ApplyRunGroup(g *run.Group) {
 		}
 	})
 */
-func (c *Container) Modules() ifilter.Collection {
+func (c *Container) Modules() []interface{} {
 	return c.modules
 }
 
@@ -134,10 +133,6 @@ func (c *Container) ApplyRootCommand(command *cobra.Command) {
 }
 
 func (c *Container) AddModule(module interface{}) {
-	if p, ok := module.(func()); ok {
-		c.closerProviders = append(c.closerProviders, p)
-		return
-	}
 	if p, ok := module.(HTTPProvider); ok {
 		c.httpProviders = append(c.httpProviders, p.ProvideHTTP)
 	}

@@ -97,4 +97,4 @@ func (m out) ProvideRunGroup(group *run.Group) {
 	})
 }
 
-func (m out) ModuleSentinel() {}
+func (m out) Module() interface{} { return m }
