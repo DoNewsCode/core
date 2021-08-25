@@ -222,10 +222,10 @@ Be sure to checkout the documentation section to learn more.
 - Tries to care about service details.
 - Tries to reimplement the functionality provided by modern platforms.
 
-## Suggested service framework
+## Works well with
 - [Gin](https://github.com/DoNewsCode/core-gin) (if HTTP only)
 - [Go Kit](https://github.com/DoNewsCode/core-kit) (if multiple transports)
-- Kratos (when v2 is ready)
+- [Kratos v2](https://github.com/go-kratos/kratos)
 
 
 
