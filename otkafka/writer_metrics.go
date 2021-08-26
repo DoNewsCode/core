@@ -28,12 +28,12 @@ type WriterStats struct {
 	RequiredAcks metrics.Gauge
 	Async        metrics.Gauge
 
-	BatchTime  ThreeStats
-	WriteTime  ThreeStats
-	WaitTime   ThreeStats
-	Retries    ThreeStats
-	BatchSize  ThreeStats
-	BatchBytes ThreeStats
+	BatchTime  AggStats
+	WriteTime  AggStats
+	WaitTime   AggStats
+	Retries    AggStats
+	BatchSize  AggStats
+	BatchBytes AggStats
 }
 
 // newCollector creates a new kafka writer wrapper containing the name of the reader.
