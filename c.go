@@ -210,7 +210,7 @@ func Default(opts ...CoreOption) *C {
 //
 //  c.AddModule(component.New())
 //
-// A WrapModule is a group of functionality. It must provide some runnable stuff:
+// A Module is a group of functionality. It must provide some runnable stuff:
 // http handlers, grpc handlers, cron jobs, one-time command, etc.
 func (c *C) AddModule(modules ...interface{}) {
 	for i := range modules {
@@ -239,8 +239,9 @@ func (c *C) AddModule(modules ...interface{}) {
 //
 // The difference is, core.Provide has been made to accommodate the convention
 // from google/wire (https://github.com/google/wire). All "func()" returned by
-// constructor are treated as clean up functions. It also respect the core's unique
-// "di.WrapModule" annotation.
+// constructor are treated as clean up functions. It also examines if the
+// dependency implements the modular interface. If so, this dependency will be
+// added the module collection.
 func (c *C) Provide(deps di.Deps) {
 	for _, dep := range deps {
 		c.provide(dep)
