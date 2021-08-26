@@ -179,3 +179,16 @@ func TestNew_missingDependencyErrorMessage(t *testing.T) {
 		return nil
 	})
 }
+
+func TestC_cleanup(t *testing.T) {
+	var called bool
+	c := New()
+	c.Provide(di.Deps{func() (struct{}, func()) {
+		return struct{}{}, func() {
+			called = true
+		}
+	}})
+	c.Invoke(func(_ struct{}) {})
+	c.Shutdown()
+	assert.True(t, called)
+}
