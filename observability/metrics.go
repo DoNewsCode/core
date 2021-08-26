@@ -3,9 +3,8 @@ package observability
 import (
 	"sync"
 
-	"github.com/DoNewsCode/core/otkafka"
-
 	"github.com/DoNewsCode/core/otgorm"
+	"github.com/DoNewsCode/core/otkafka"
 	"github.com/DoNewsCode/core/otredis"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/prometheus"
@@ -144,7 +143,7 @@ func ProvideKafkaReaderMetrics() *otkafka.ReaderStats {
 			Name: "kafka_reader_queue_capacity",
 			Help: "",
 		}, labels),
-		DialTime: otkafka.ThreeStats{
+		DialTime: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_dial_seconds_min",
 				Help: "",
@@ -158,7 +157,7 @@ func ProvideKafkaReaderMetrics() *otkafka.ReaderStats {
 				Help: "",
 			}, labels),
 		},
-		ReadTime: otkafka.ThreeStats{
+		ReadTime: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_read_seconds_min",
 				Help: "",
@@ -172,7 +171,7 @@ func ProvideKafkaReaderMetrics() *otkafka.ReaderStats {
 				Help: "",
 			}, labels),
 		},
-		WaitTime: otkafka.ThreeStats{
+		WaitTime: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_wait_seconds_min",
 				Help: "",
@@ -186,7 +185,7 @@ func ProvideKafkaReaderMetrics() *otkafka.ReaderStats {
 				Help: "",
 			}, labels),
 		},
-		FetchSize: otkafka.ThreeStats{
+		FetchSize: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_fetch_size_min",
 				Help: "",
@@ -200,7 +199,7 @@ func ProvideKafkaReaderMetrics() *otkafka.ReaderStats {
 				Help: "",
 			}, labels),
 		},
-		FetchBytes: otkafka.ThreeStats{
+		FetchBytes: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_fetch_bytes_min",
 				Help: "",
@@ -266,7 +265,7 @@ func ProvideKafkaWriterMetrics() *otkafka.WriterStats {
 			Name: "kafka_writer_async",
 			Help: "",
 		}, labels),
-		BatchTime: otkafka.ThreeStats{
+		BatchTime: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_seconds_min",
 				Help: "",
@@ -280,7 +279,7 @@ func ProvideKafkaWriterMetrics() *otkafka.WriterStats {
 				Help: "",
 			}, labels),
 		},
-		WriteTime: otkafka.ThreeStats{
+		WriteTime: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_write_seconds_min",
 				Help: "",
@@ -294,7 +293,7 @@ func ProvideKafkaWriterMetrics() *otkafka.WriterStats {
 				Help: "",
 			}, labels),
 		},
-		WaitTime: otkafka.ThreeStats{
+		WaitTime: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_wait_seconds_min",
 				Help: "",
@@ -308,7 +307,7 @@ func ProvideKafkaWriterMetrics() *otkafka.WriterStats {
 				Help: "",
 			}, labels),
 		},
-		Retries: otkafka.ThreeStats{
+		Retries: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_retries_count_min",
 				Help: "",
@@ -322,7 +321,7 @@ func ProvideKafkaWriterMetrics() *otkafka.WriterStats {
 				Help: "",
 			}, labels),
 		},
-		BatchSize: otkafka.ThreeStats{
+		BatchSize: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_size_min",
 				Help: "",
@@ -336,7 +335,7 @@ func ProvideKafkaWriterMetrics() *otkafka.WriterStats {
 				Help: "",
 			}, labels),
 		},
-		BatchBytes: otkafka.ThreeStats{
+		BatchBytes: otkafka.AggStats{
 			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_bytes_min",
 				Help: "",

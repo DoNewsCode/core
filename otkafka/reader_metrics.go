@@ -13,8 +13,8 @@ type readerCollector struct {
 	interval time.Duration
 }
 
-// ThreeStats is a gauge group struct.
-type ThreeStats struct {
+// AggStats is a gauge group struct.
+type AggStats struct {
 	Min metrics.Gauge
 	Max metrics.Gauge
 	Avg metrics.Gauge
@@ -38,11 +38,11 @@ type ReaderStats struct {
 	QueueLength   metrics.Gauge
 	QueueCapacity metrics.Gauge
 
-	DialTime   ThreeStats
-	ReadTime   ThreeStats
-	WaitTime   ThreeStats
-	FetchSize  ThreeStats
-	FetchBytes ThreeStats
+	DialTime   AggStats
+	ReadTime   AggStats
+	WaitTime   AggStats
+	FetchSize  AggStats
+	FetchBytes AggStats
 }
 
 // newCollector creates a new kafka reader wrapper containing the name of the reader.
