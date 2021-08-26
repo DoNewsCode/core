@@ -384,10 +384,6 @@ func (c *C) AddModuleFunc(constructor interface{}) {
 	fnType := reflect.FuncOf(targetTypes, nil, false /* variadic */)
 	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
 		for _, arg := range args {
-			if isCleanup(arg.Type()) {
-				c.AddModule(cleanup(arg.Interface().(func())))
-				continue
-			}
 			c.AddModule(arg.Interface())
 		}
 		return nil

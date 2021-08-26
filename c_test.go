@@ -181,14 +181,21 @@ func TestNew_missingDependencyErrorMessage(t *testing.T) {
 }
 
 func TestC_cleanup(t *testing.T) {
-	var called bool
+	var dependencyCleanupCalled bool
+	var moduleCleanupCalled bool
 	c := New()
 	c.Provide(di.Deps{func() (struct{}, func()) {
 		return struct{}{}, func() {
-			called = true
+			dependencyCleanupCalled = true
 		}
 	}})
 	c.Invoke(func(_ struct{}) {})
+	c.AddModule(func() func() {
+		return func() {
+			moduleCleanupCalled = true
+		}
+	}())
 	c.Shutdown()
-	assert.True(t, called)
+	assert.True(t, dependencyCleanupCalled)
+	assert.True(t, moduleCleanupCalled)
 }
