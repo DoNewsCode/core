@@ -18,6 +18,7 @@ func (m MetricsModule) ProvideHTTP(router *mux.Router) {
 	router.PathPrefix("/metrics").Handler(promhttp.Handler())
 }
 
+// Metrics is a unary interceptor for standard library http package. It records the request duration in a histogram.
 func Metrics(metrics *RequestDurationSeconds) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
