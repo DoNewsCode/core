@@ -43,6 +43,54 @@ type ReaderStats struct {
 	WaitTime   AggStats
 	FetchSize  AggStats
 	FetchBytes AggStats
+
+	reader string
+}
+
+// Reader sets the writer label in WriterStats.
+func (r ReaderStats) Reader(reader string) ReaderStats {
+	r.reader = reader
+	return r
+}
+
+// Observe records the reader stats. It should be called periodically.
+func (r ReaderStats) Observe(stats kafka.ReaderStats) {
+	withValues := []string{"reader", r.reader, "client_id", stats.ClientID, "topic", stats.Topic, "partition", stats.Partition}
+	r.Dials.With(withValues...).Add(float64(stats.Dials))
+	r.Fetches.With(withValues...).Add(float64(stats.Fetches))
+	r.Messages.With(withValues...).Add(float64(stats.Messages))
+	r.Bytes.With(withValues...).Add(float64(stats.Bytes))
+	r.Rebalances.With(withValues...).Add(float64(stats.Rebalances))
+	r.Timeouts.With(withValues...).Add(float64(stats.Timeouts))
+	r.Errors.With(withValues...).Add(float64(stats.Errors))
+
+	r.Offset.With(withValues...).Set(float64(stats.Offset))
+	r.Lag.With(withValues...).Set(float64(stats.Lag))
+	r.MinBytes.With(withValues...).Set(float64(stats.MinBytes))
+	r.MaxBytes.With(withValues...).Set(float64(stats.MaxBytes))
+	r.MaxWait.With(withValues...).Set(stats.MaxWait.Seconds())
+	r.QueueLength.With(withValues...).Set(float64(stats.QueueLength))
+	r.QueueCapacity.With(withValues...).Set(float64(stats.QueueCapacity))
+
+	r.DialTime.Min.With(withValues...).Set(stats.DialTime.Min.Seconds())
+	r.DialTime.Max.With(withValues...).Set(stats.DialTime.Max.Seconds())
+	r.DialTime.Avg.With(withValues...).Set(stats.DialTime.Avg.Seconds())
+
+	r.ReadTime.Min.With(withValues...).Set(stats.ReadTime.Min.Seconds())
+	r.ReadTime.Max.With(withValues...).Set(stats.ReadTime.Max.Seconds())
+	r.ReadTime.Avg.With(withValues...).Set(stats.ReadTime.Avg.Seconds())
+
+	r.WaitTime.Min.With(withValues...).Set(stats.WaitTime.Min.Seconds())
+	r.WaitTime.Max.With(withValues...).Set(stats.WaitTime.Max.Seconds())
+	r.WaitTime.Avg.With(withValues...).Set(stats.WaitTime.Avg.Seconds())
+
+	r.FetchSize.Min.With(withValues...).Set(float64(stats.FetchSize.Min))
+	r.FetchSize.Max.With(withValues...).Set(float64(stats.FetchSize.Max))
+	r.FetchSize.Avg.With(withValues...).Set(float64(stats.FetchSize.Avg))
+
+	r.FetchBytes.Min.With(withValues...).Set(float64(stats.FetchBytes.Min))
+	r.FetchBytes.Max.With(withValues...).Set(float64(stats.FetchBytes.Max))
+	r.FetchBytes.Avg.With(withValues...).Set(float64(stats.FetchBytes.Avg))
 }
 
 // newCollector creates a new kafka reader wrapper containing the name of the reader.
@@ -59,42 +107,6 @@ func (d *readerCollector) collectConnectionStats() {
 	for k, v := range d.factory.List() {
 		reader := v.Conn.(*kafka.Reader)
 		stats := reader.Stats()
-		withValues := []string{"reader", k, "client_id", stats.ClientID, "topic", stats.Topic, "partition", stats.Partition}
-
-		d.stats.Dials.With(withValues...).Add(float64(stats.Dials))
-		d.stats.Fetches.With(withValues...).Add(float64(stats.Fetches))
-		d.stats.Messages.With(withValues...).Add(float64(stats.Messages))
-		d.stats.Bytes.With(withValues...).Add(float64(stats.Bytes))
-		d.stats.Rebalances.With(withValues...).Add(float64(stats.Rebalances))
-		d.stats.Timeouts.With(withValues...).Add(float64(stats.Timeouts))
-		d.stats.Errors.With(withValues...).Add(float64(stats.Errors))
-
-		d.stats.Offset.With(withValues...).Set(float64(stats.Offset))
-		d.stats.Lag.With(withValues...).Set(float64(stats.Lag))
-		d.stats.MinBytes.With(withValues...).Set(float64(stats.MinBytes))
-		d.stats.MaxBytes.With(withValues...).Set(float64(stats.MaxBytes))
-		d.stats.MaxWait.With(withValues...).Set(stats.MaxWait.Seconds())
-		d.stats.QueueLength.With(withValues...).Set(float64(stats.QueueLength))
-		d.stats.QueueCapacity.With(withValues...).Set(float64(stats.QueueCapacity))
-
-		d.stats.DialTime.Min.With(withValues...).Set(stats.DialTime.Min.Seconds())
-		d.stats.DialTime.Max.With(withValues...).Set(stats.DialTime.Max.Seconds())
-		d.stats.DialTime.Avg.With(withValues...).Set(stats.DialTime.Avg.Seconds())
-
-		d.stats.ReadTime.Min.With(withValues...).Set(stats.ReadTime.Min.Seconds())
-		d.stats.ReadTime.Max.With(withValues...).Set(stats.ReadTime.Max.Seconds())
-		d.stats.ReadTime.Avg.With(withValues...).Set(stats.ReadTime.Avg.Seconds())
-
-		d.stats.WaitTime.Min.With(withValues...).Set(stats.WaitTime.Min.Seconds())
-		d.stats.WaitTime.Max.With(withValues...).Set(stats.WaitTime.Max.Seconds())
-		d.stats.WaitTime.Avg.With(withValues...).Set(stats.WaitTime.Avg.Seconds())
-
-		d.stats.FetchSize.Min.With(withValues...).Set(float64(stats.FetchSize.Min))
-		d.stats.FetchSize.Max.With(withValues...).Set(float64(stats.FetchSize.Max))
-		d.stats.FetchSize.Avg.With(withValues...).Set(float64(stats.FetchSize.Avg))
-
-		d.stats.FetchBytes.Min.With(withValues...).Set(float64(stats.FetchBytes.Min))
-		d.stats.FetchBytes.Max.With(withValues...).Set(float64(stats.FetchBytes.Max))
-		d.stats.FetchBytes.Avg.With(withValues...).Set(float64(stats.FetchBytes.Avg))
+		d.stats.Reader(k).Observe(stats)
 	}
 }

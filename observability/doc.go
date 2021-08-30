@@ -1,5 +1,5 @@
 /*
-Package observability provides a tracer and a histogram to measure all incoming
+Package observability provides a tracer and a Histogram to measure all incoming
 requests to the system.
 
 Introduction

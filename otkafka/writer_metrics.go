@@ -34,6 +34,61 @@ type WriterStats struct {
 	Retries    AggStats
 	BatchSize  AggStats
 	BatchBytes AggStats
+
+	writer string
+}
+
+// Writer sets the writer label in WriterStats.
+func (w WriterStats) Writer(writer string) WriterStats {
+	w.writer = writer
+	return w
+}
+
+// Observe records the writer stats. It should called periodically.
+func (w WriterStats) Observe(stats kafka.WriterStats) WriterStats {
+	withValues := []string{"writer", w.writer, "topic", stats.Topic}
+
+	w.Writes.With(withValues...).Add(float64(stats.Writes))
+	w.Messages.With(withValues...).Add(float64(stats.Messages))
+	w.Bytes.With(withValues...).Add(float64(stats.Bytes))
+	w.Errors.With(withValues...).Add(float64(stats.Errors))
+
+	w.BatchTime.Min.With(withValues...).Add(stats.BatchTime.Min.Seconds())
+	w.BatchTime.Max.With(withValues...).Add(stats.BatchTime.Max.Seconds())
+	w.BatchTime.Avg.With(withValues...).Add(stats.BatchTime.Avg.Seconds())
+
+	w.WriteTime.Min.With(withValues...).Add(stats.WriteTime.Min.Seconds())
+	w.WriteTime.Max.With(withValues...).Add(stats.WriteTime.Max.Seconds())
+	w.WriteTime.Avg.With(withValues...).Add(stats.WriteTime.Avg.Seconds())
+
+	w.WaitTime.Min.With(withValues...).Add(stats.WaitTime.Min.Seconds())
+	w.WaitTime.Max.With(withValues...).Add(stats.WaitTime.Max.Seconds())
+	w.WaitTime.Avg.With(withValues...).Add(stats.WaitTime.Avg.Seconds())
+
+	w.Retries.Min.With(withValues...).Add(float64(stats.Retries.Min))
+	w.Retries.Max.With(withValues...).Add(float64(stats.Retries.Max))
+	w.Retries.Avg.With(withValues...).Add(float64(stats.Retries.Avg))
+
+	w.BatchSize.Min.With(withValues...).Add(float64(stats.BatchSize.Min))
+	w.BatchSize.Max.With(withValues...).Add(float64(stats.BatchSize.Max))
+	w.BatchSize.Avg.With(withValues...).Add(float64(stats.BatchSize.Avg))
+
+	w.BatchBytes.Min.With(withValues...).Add(float64(stats.BatchBytes.Min))
+	w.BatchBytes.Max.With(withValues...).Add(float64(stats.BatchBytes.Max))
+	w.BatchBytes.Avg.With(withValues...).Add(float64(stats.BatchBytes.Avg))
+
+	w.MaxAttempts.With(withValues...).Set(float64(stats.MaxAttempts))
+	w.MaxBatchSize.With(withValues...).Set(float64(stats.MaxBatchSize))
+	w.BatchTimeout.With(withValues...).Set(stats.BatchTimeout.Seconds())
+	w.ReadTimeout.With(withValues...).Set(stats.ReadTimeout.Seconds())
+	w.WriteTimeout.With(withValues...).Set(stats.WriteTimeout.Seconds())
+	w.RequiredAcks.With(withValues...).Set(float64(stats.RequiredAcks))
+	var async float64
+	if stats.Async {
+		async = 1.0
+	}
+	w.Async.With(withValues...).Set(async)
+	return w
 }
 
 // newCollector creates a new kafka writer wrapper containing the name of the reader.
@@ -50,47 +105,6 @@ func (d *writerCollector) collectConnectionStats() {
 	for k, v := range d.factory.List() {
 		writer := v.Conn.(*kafka.Writer)
 		stats := writer.Stats()
-		withValues := []string{"writer", k, "topic", stats.Topic}
-
-		d.stats.Writes.With(withValues...).Add(float64(stats.Writes))
-		d.stats.Messages.With(withValues...).Add(float64(stats.Messages))
-		d.stats.Bytes.With(withValues...).Add(float64(stats.Bytes))
-		d.stats.Errors.With(withValues...).Add(float64(stats.Errors))
-
-		d.stats.BatchTime.Min.With(withValues...).Add(stats.BatchTime.Min.Seconds())
-		d.stats.BatchTime.Max.With(withValues...).Add(stats.BatchTime.Max.Seconds())
-		d.stats.BatchTime.Avg.With(withValues...).Add(stats.BatchTime.Avg.Seconds())
-
-		d.stats.WriteTime.Min.With(withValues...).Add(stats.WriteTime.Min.Seconds())
-		d.stats.WriteTime.Max.With(withValues...).Add(stats.WriteTime.Max.Seconds())
-		d.stats.WriteTime.Avg.With(withValues...).Add(stats.WriteTime.Avg.Seconds())
-
-		d.stats.WaitTime.Min.With(withValues...).Add(stats.WaitTime.Min.Seconds())
-		d.stats.WaitTime.Max.With(withValues...).Add(stats.WaitTime.Max.Seconds())
-		d.stats.WaitTime.Avg.With(withValues...).Add(stats.WaitTime.Avg.Seconds())
-
-		d.stats.Retries.Min.With(withValues...).Add(float64(stats.Retries.Min))
-		d.stats.Retries.Max.With(withValues...).Add(float64(stats.Retries.Max))
-		d.stats.Retries.Avg.With(withValues...).Add(float64(stats.Retries.Avg))
-
-		d.stats.BatchSize.Min.With(withValues...).Add(float64(stats.BatchSize.Min))
-		d.stats.BatchSize.Max.With(withValues...).Add(float64(stats.BatchSize.Max))
-		d.stats.BatchSize.Avg.With(withValues...).Add(float64(stats.BatchSize.Avg))
-
-		d.stats.BatchBytes.Min.With(withValues...).Add(float64(stats.BatchBytes.Min))
-		d.stats.BatchBytes.Max.With(withValues...).Add(float64(stats.BatchBytes.Max))
-		d.stats.BatchBytes.Avg.With(withValues...).Add(float64(stats.BatchBytes.Avg))
-
-		d.stats.MaxAttempts.With(withValues...).Set(float64(stats.MaxAttempts))
-		d.stats.MaxBatchSize.With(withValues...).Set(float64(stats.MaxBatchSize))
-		d.stats.BatchTimeout.With(withValues...).Set(stats.BatchTimeout.Seconds())
-		d.stats.ReadTimeout.With(withValues...).Set(stats.ReadTimeout.Seconds())
-		d.stats.WriteTimeout.With(withValues...).Set(stats.WriteTimeout.Seconds())
-		d.stats.RequiredAcks.With(withValues...).Set(float64(stats.RequiredAcks))
-		var async float64
-		if stats.Async {
-			async = 1.0
-		}
-		d.stats.Async.With(withValues...).Set(async)
+		d.stats.Writer(k).Observe(stats)
 	}
 }
