@@ -26,7 +26,7 @@ func TestCollector(t *testing.T) {
 		Idle:  m,
 		Open:  m,
 	}
-	m.EXPECT().With(gomock.Any()).Times(3).Return(m)
+	m.EXPECT().With(gomock.Any()).MinTimes(3).Return(m)
 	m.EXPECT().Set(gomock.Any()).Times(3)
 
 	c := core.New()

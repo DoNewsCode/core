@@ -22,7 +22,8 @@ func Providers() di.Deps {
 	return di.Deps{
 		ProvideJaegerLogAdapter,
 		ProvideOpentracing,
-		ProvideHistogramMetrics,
+		ProvideHTTPRequestDurationSeconds,
+		ProvideGRPCRequestDurationSeconds,
 		ProvideGORMMetrics,
 		ProvideRedisMetrics,
 		ProvideKafkaReaderMetrics,
