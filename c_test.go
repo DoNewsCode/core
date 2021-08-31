@@ -130,21 +130,19 @@ func TestC_Default(t *testing.T) {
 }
 
 type m1 struct {
-	di.Out
 	A int
 }
 
-func (m m1) ModuleSentinel() {
-	panic("implement me")
+func (m m1) Module() interface{} {
+	return m
 }
 
 type m2 struct {
-	di.Out
 	A float32
 }
 
-func (m m2) ModuleSentinel() {
-	panic("implement me")
+func (m m2) Module() interface{} {
+	return m
 }
 
 func TestC_Provide(t *testing.T) {
@@ -153,6 +151,8 @@ func TestC_Provide(t *testing.T) {
 		func() m1 { return m1{} },
 		func() m2 { return m2{} },
 	})
+	c.Invoke(func(m1, m2) {})
+	assert.Len(t, c.Modules(), 2)
 }
 
 type a struct{}
@@ -178,4 +178,24 @@ func TestNew_missingDependencyErrorMessage(t *testing.T) {
 	c.Invoke(func(a a) error {
 		return nil
 	})
+}
+
+func TestC_cleanup(t *testing.T) {
+	var dependencyCleanupCalled bool
+	var moduleCleanupCalled bool
+	c := New()
+	c.Provide(di.Deps{func() (struct{}, func()) {
+		return struct{}{}, func() {
+			dependencyCleanupCalled = true
+		}
+	}})
+	c.Invoke(func(_ struct{}) {})
+	c.AddModule(func() func() {
+		return func() {
+			moduleCleanupCalled = true
+		}
+	}())
+	c.Shutdown()
+	assert.True(t, dependencyCleanupCalled)
+	assert.True(t, moduleCleanupCalled)
 }

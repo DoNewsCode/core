@@ -214,11 +214,13 @@ func Default(opts ...CoreOption) *C {
 // http handlers, grpc handlers, cron jobs, one-time command, etc.
 func (c *C) AddModule(modules ...interface{}) {
 	for i := range modules {
-		switch modules[i].(type) {
+		switch x := modules[i].(type) {
 		case error:
-			panic(modules[i].(error))
+			panic(x)
+		case func():
+			c.Container.AddModule(cleanup(x))
 		default:
-			c.Container.AddModule(modules[i])
+			c.Container.AddModule(x)
 		}
 	}
 }
@@ -237,8 +239,9 @@ func (c *C) AddModule(modules ...interface{}) {
 //
 // The difference is, core.Provide has been made to accommodate the convention
 // from google/wire (https://github.com/google/wire). All "func()" returned by
-// constructor are treated as clean up functions. It also respect the core's unique
-// "di.Module" annotation.
+// constructor are treated as clean up functions. It also examines if the
+// dependency implements the modular interface. If so, this dependency will be
+// added the module collection.
 func (c *C) Provide(deps di.Deps) {
 	for _, dep := range deps {
 		c.provide(dep)
@@ -296,11 +299,11 @@ func (c *C) provide(constructor interface{}) {
 		for _, v := range outVs {
 			vType := v.Type()
 			if isCleanup(vType) {
-				c.AddModule(v.Interface())
+				c.AddModule(cleanup(v.Interface().(func())))
 				continue
 			}
 			if isModule(vType) {
-				c.AddModule(v.Interface())
+				c.AddModule(v.Interface().(di.Modular).Module())
 			}
 			filteredOuts = append(filteredOuts, v)
 		}
@@ -416,13 +419,19 @@ func isCleanup(v reflect.Type) bool {
 	return false
 }
 
+type cleanup func()
+
+func (c cleanup) ProvideCloser() {
+	c()
+}
+
 var _errType = reflect.TypeOf((*error)(nil)).Elem()
 
 func isErr(v reflect.Type) bool {
 	return v.Implements(_errType)
 }
 
-var _moduleType = reflect.TypeOf((*di.Module)(nil)).Elem()
+var _moduleType = reflect.TypeOf((*di.Modular)(nil)).Elem()
 
 func isModule(v reflect.Type) bool {
 	return v.Implements(_moduleType)

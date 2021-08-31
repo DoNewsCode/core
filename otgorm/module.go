@@ -173,17 +173,21 @@ func (m Module) collectMigrations(connection string) Migrations {
 	if connection == "" {
 		connection = "default"
 	}
+
 	var migrations Migrations
-	m.container.Modules().Filter(func(p MigrationProvider) {
-		for _, migration := range p.ProvideMigration() {
-			if migration.Connection == "" {
-				migration.Connection = "default"
-			}
-			if migration.Connection == connection {
-				migrations.Collection = append(migrations.Collection, migration)
+	for _, m := range m.container.Modules() {
+		if p, ok := m.(MigrationProvider); ok {
+			for _, migration := range p.ProvideMigration() {
+				if migration.Connection == "" {
+					migration.Connection = "default"
+				}
+				if migration.Connection == connection {
+					migrations.Collection = append(migrations.Collection, migration)
+				}
 			}
 		}
-	})
+	}
+
 	migrations.Db, _ = m.maker.Make(connection)
 	return migrations
 }
@@ -192,17 +196,20 @@ func (m Module) collectSeeds(connection string) Seeds {
 	if connection == "" {
 		connection = "default"
 	}
+
 	var seeds Seeds
-	m.container.Modules().Filter(func(p SeedProvider) {
-		for _, seed := range p.ProvideSeed() {
-			if seed.Connection == "" {
-				seed.Connection = "default"
-			}
-			if seed.Connection == connection {
-				seeds.Collection = append(seeds.Collection, seed)
+	for _, m := range m.container.Modules() {
+		if p, ok := m.(SeedProvider); ok {
+			for _, seed := range p.ProvideSeed() {
+				if seed.Connection == "" {
+					seed.Connection = "default"
+				}
+				if seed.Connection == connection {
+					seeds.Collection = append(seeds.Collection, seed)
+				}
 			}
 		}
-	})
+	}
 	seeds.Logger = m.logger
 	seeds.Db, _ = m.maker.Make(connection)
 	return seeds

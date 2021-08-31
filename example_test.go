@@ -24,9 +24,9 @@ func ExampleC_AddModuleFunc() {
 	c.AddModuleFunc(func() (Foo, func(), error) {
 		return Foo{}, func() {}, nil
 	})
-	fmt.Printf("%T\n", c.Modules()...)
+	fmt.Printf("%T %T\n", c.Modules()...)
 	// Output:
-	// core_test.Foo
+	// core.cleanup core_test.Foo
 }
 
 func ExampleC_AddModule() {
