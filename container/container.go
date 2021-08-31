@@ -74,7 +74,7 @@ func (c *Container) ApplyGRPCServer(server *grpc.Server) {
 }
 
 // Shutdown iterates through every CloserProvider registered in the container,
-// and calls them in the reversed order registered.
+// and calls them in the reversed order of registration.
 func (c *Container) Shutdown() {
 	for i := len(c.closerProviders) - 1; i >= 0; i-- {
 		c.closerProviders[i]()
