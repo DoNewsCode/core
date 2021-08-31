@@ -4,8 +4,6 @@ Package container includes the Container type, witch contains a collection of mo
 package container
 
 import (
-	"sync"
-
 	"github.com/DoNewsCode/core/contract"
 	"github.com/Reasno/ifilter"
 	"github.com/gorilla/mux"
@@ -76,18 +74,11 @@ func (c *Container) ApplyGRPCServer(server *grpc.Server) {
 }
 
 // Shutdown iterates through every CloserProvider registered in the container,
-// and calls them in parallel.
+// and calls them in the reversed order registered.
 func (c *Container) Shutdown() {
-	var wg sync.WaitGroup
-	for _, p := range c.closerProviders {
-		wg.Add(1)
-		p := p
-		go func() {
-			p()
-			wg.Done()
-		}()
+	for i := len(c.closerProviders) - 1; i >= 0; i-- {
+		c.closerProviders[i]()
 	}
-	wg.Wait()
 }
 
 // ApplyRunGroup iterates through every RunProvider registered in the container,
