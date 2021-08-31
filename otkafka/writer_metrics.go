@@ -62,10 +62,20 @@ func (w *WriterStats) Writer(writer string) *WriterStats {
 			Max: w.WriteTime.Max.With(withValues...),
 			Avg: w.WriteTime.Avg.With(withValues...),
 		},
+		Retries: AggStats{
+			Min: w.Retries.Min.With(withValues...),
+			Max: w.Retries.Max.With(withValues...),
+			Avg: w.Retries.Avg.With(withValues...),
+		},
 		WaitTime: AggStats{
 			Min: w.WaitTime.Min.With(withValues...),
 			Max: w.WaitTime.Max.With(withValues...),
 			Avg: w.WaitTime.Avg.With(withValues...),
+		},
+		BatchSize: AggStats{
+			Min: w.BatchSize.Min.With(withValues...),
+			Max: w.BatchSize.Max.With(withValues...),
+			Avg: w.BatchSize.Avg.With(withValues...),
 		},
 		BatchBytes: AggStats{
 			Min: w.BatchBytes.Min.With(withValues...),
