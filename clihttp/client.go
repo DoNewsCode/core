@@ -5,9 +5,9 @@ package clihttp
 
 import (
 	"bytes"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
@@ -97,7 +97,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 }
 
 func (c *Client) logRequest(req *http.Request, span opentracing.Span) {
-	if req.Body == nil {
+	if req.Body == nil || c.requestLogThreshold <= 0 {
 		return
 	}
 	body, err := req.GetBody()
@@ -106,13 +106,9 @@ func (c *Client) logRequest(req *http.Request, span opentracing.Span) {
 		span.LogKV("error", errors.Wrap(err, "cannot get request body"))
 		return
 	}
-	length, _ := strconv.Atoi(req.Header.Get("Content-Length"))
-	if length > c.requestLogThreshold {
-		ext.Error.Set(span, true)
-		span.LogKV("request", "elided: Content-Length too large")
-		return
-	}
-	byt, err := ioutil.ReadAll(body)
+	defer body.Close()
+
+	byt, err := ioutil.ReadAll(io.LimitReader(body, int64(c.responseLogThreshold)))
 	if err != nil {
 		ext.Error.Set(span, true)
 		span.LogKV("error", errors.Wrap(err, "cannot read request body"))
@@ -125,23 +121,25 @@ func (c *Client) logRequest(req *http.Request, span opentracing.Span) {
 }
 
 func (c *Client) logResponse(response *http.Response, span opentracing.Span) {
-	if response.Body == nil {
+	if response.Body == nil || c.responseLogThreshold <= 0 {
 		return
 	}
-	length, _ := strconv.Atoi(response.Header.Get("Content-Length"))
-	if length > c.responseLogThreshold {
-		span.LogKV("response", "elided: Content-Length too large")
-		return
-	}
-	var buf bytes.Buffer
-	byt, err := ioutil.ReadAll(response.Body)
+	byt, err := ioutil.ReadAll(io.LimitReader(response.Body, int64(c.responseLogThreshold)))
 	if err != nil {
 		ext.Error.Set(span, true)
 		span.LogFields(log.Error(err))
+		return
 	}
 	if span != nil {
 		span.LogKV("response", string(byt))
 	}
-	buf.Write(byt)
-	response.Body = ioutil.NopCloser(&buf)
+	response.Body = readCloser{
+		Closer: response.Body,
+		Reader: io.MultiReader(bytes.NewReader(byt), response.Body),
+	}
+}
+
+type readCloser struct {
+	io.Closer
+	io.Reader
 }
