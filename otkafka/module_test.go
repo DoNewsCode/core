@@ -63,27 +63,27 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 			MaxWait:       m,
 			QueueLength:   m,
 			QueueCapacity: m,
-			DialTime: ThreeStats{
+			DialTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			ReadTime: ThreeStats{
+			ReadTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			WaitTime: ThreeStats{
+			WaitTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			FetchSize: ThreeStats{
+			FetchSize: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			FetchBytes: ThreeStats{
+			FetchBytes: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
@@ -103,32 +103,32 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 			WriteTimeout: m,
 			RequiredAcks: m,
 			Async:        m,
-			BatchTime: ThreeStats{
+			BatchTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			WriteTime: ThreeStats{
+			WriteTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			WaitTime: ThreeStats{
+			WaitTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			Retries: ThreeStats{
+			Retries: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			BatchSize: ThreeStats{
+			BatchSize: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			BatchBytes: ThreeStats{
+			BatchBytes: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
@@ -186,27 +186,27 @@ func TestCollector(t *testing.T) {
 			MaxWait:       m,
 			QueueLength:   m,
 			QueueCapacity: m,
-			DialTime: ThreeStats{
+			DialTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			ReadTime: ThreeStats{
+			ReadTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			WaitTime: ThreeStats{
+			WaitTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			FetchSize: ThreeStats{
+			FetchSize: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			FetchBytes: ThreeStats{
+			FetchBytes: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
@@ -226,32 +226,32 @@ func TestCollector(t *testing.T) {
 			WriteTimeout: m,
 			RequiredAcks: m,
 			Async:        m,
-			BatchTime: ThreeStats{
+			BatchTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			WriteTime: ThreeStats{
+			WriteTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			WaitTime: ThreeStats{
+			WaitTime: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			Retries: ThreeStats{
+			Retries: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			BatchSize: ThreeStats{
+			BatchSize: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
 			},
-			BatchBytes: ThreeStats{
+			BatchBytes: AggStats{
 				Min: m,
 				Max: m,
 				Avg: m,
