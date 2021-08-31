@@ -48,24 +48,36 @@ type RequestDurationSeconds struct {
 }
 
 // Module specifies the module label for RequestDurationSeconds.
-func (r RequestDurationSeconds) Module(module string) RequestDurationSeconds {
-	r.module = module
-	return r
+func (r *RequestDurationSeconds) Module(module string) *RequestDurationSeconds {
+	return &RequestDurationSeconds{
+		Histogram: r.Histogram.With("module", module),
+		module:    module,
+		service:   r.service,
+		route:     r.route,
+	}
 }
 
 // Service specifies the service label for RequestDurationSeconds.
-func (r RequestDurationSeconds) Service(service string) RequestDurationSeconds {
-	r.service = service
-	return r
+func (r *RequestDurationSeconds) Service(service string) *RequestDurationSeconds {
+	return &RequestDurationSeconds{
+		Histogram: r.Histogram.With("service", service),
+		module:    r.module,
+		service:   service,
+		route:     r.route,
+	}
 }
 
 // Route specifies the method label for RequestDurationSeconds.
-func (r RequestDurationSeconds) Route(route string) RequestDurationSeconds {
-	r.route = route
-	return r
+func (r *RequestDurationSeconds) Route(route string) *RequestDurationSeconds {
+	return &RequestDurationSeconds{
+		Histogram: r.Histogram.With("route", route),
+		module:    r.module,
+		service:   r.service,
+		route:     route,
+	}
 }
 
 // Observe records the time taken to process the request.
 func (r RequestDurationSeconds) Observe(seconds float64) {
-	r.Histogram.With("module", r.module, "service", r.service, "route", r.route).Observe(seconds)
+	r.Histogram.Observe(seconds)
 }

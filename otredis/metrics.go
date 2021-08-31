@@ -28,38 +28,33 @@ type Gauges struct {
 }
 
 // DBName sets the dbname label of redis metrics.
-func (r Gauges) DBName(dbName string) Gauges {
-	r.dbName = dbName
-	return r
+func (g *Gauges) DBName(dbName string) *Gauges {
+	withValues := []string{"dbname", dbName}
+	return &Gauges{
+		Hits:       g.Hits.With(withValues...),
+		Misses:     g.Misses.With(withValues...),
+		Timeouts:   g.Timeouts.With(withValues...),
+		TotalConns: g.TotalConns.With(withValues...),
+		IdleConns:  g.IdleConns.With(withValues...),
+		StaleConns: g.StaleConns.With(withValues...),
+		dbName:     dbName,
+	}
 }
 
 // Observe records the redis pool stats. It should be called periodically.
-func (r Gauges) Observe(stats *redis.PoolStats) {
-	withValues := []string{"dbname", r.dbName}
+func (g *Gauges) Observe(stats *redis.PoolStats) {
 
-	r.Hits.
-		With(withValues...).
-		Set(float64(stats.Hits))
+	g.Hits.Set(float64(stats.Hits))
 
-	r.Misses.
-		With(withValues...).
-		Set(float64(stats.Misses))
+	g.Misses.Set(float64(stats.Misses))
 
-	r.Timeouts.
-		With(withValues...).
-		Set(float64(stats.Timeouts))
+	g.Timeouts.Set(float64(stats.Timeouts))
 
-	r.TotalConns.
-		With(withValues...).
-		Set(float64(stats.TotalConns))
+	g.TotalConns.Set(float64(stats.TotalConns))
 
-	r.IdleConns.
-		With(withValues...).
-		Set(float64(stats.IdleConns))
+	g.IdleConns.Set(float64(stats.IdleConns))
 
-	r.StaleConns.
-		With(withValues...).
-		Set(float64(stats.StaleConns))
+	g.StaleConns.Set(float64(stats.StaleConns))
 }
 
 // newCollector creates a new redis wrapper containing the name of the redis.

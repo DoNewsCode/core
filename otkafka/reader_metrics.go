@@ -48,14 +48,55 @@ type ReaderStats struct {
 }
 
 // Reader sets the writer label in WriterStats.
-func (r ReaderStats) Reader(reader string) ReaderStats {
-	r.reader = reader
-	return r
+func (r *ReaderStats) Reader(reader string) *ReaderStats {
+	withValues := []string{"reader", reader}
+	return &ReaderStats{
+		Dials:         r.Dials.With(withValues...),
+		Fetches:       r.Fetches.With(withValues...),
+		Messages:      r.Messages.With(withValues...),
+		Bytes:         r.Bytes.With(withValues...),
+		Rebalances:    r.Rebalances.With(withValues...),
+		Timeouts:      r.Timeouts.With(withValues...),
+		Errors:        r.Errors.With(withValues...),
+		Offset:        r.Offset.With(withValues...),
+		Lag:           r.Lag.With(withValues...),
+		MinBytes:      r.MinBytes.With(withValues...),
+		MaxBytes:      r.MaxBytes.With(withValues...),
+		MaxWait:       r.MaxWait.With(withValues...),
+		QueueLength:   r.QueueLength.With(withValues...),
+		QueueCapacity: r.QueueCapacity.With(withValues...),
+		DialTime: AggStats{
+			Min: r.DialTime.Min.With(withValues...),
+			Max: r.DialTime.Max.With(withValues...),
+			Avg: r.DialTime.Avg.With(withValues...),
+		},
+		ReadTime: AggStats{
+			Min: r.ReadTime.Min.With(withValues...),
+			Max: r.ReadTime.Max.With(withValues...),
+			Avg: r.ReadTime.Avg.With(withValues...),
+		},
+		WaitTime: AggStats{
+			Min: r.WaitTime.Min.With(withValues...),
+			Max: r.WaitTime.Max.With(withValues...),
+			Avg: r.WaitTime.Avg.With(withValues...),
+		},
+		FetchSize: AggStats{
+			Min: r.FetchSize.Min.With(withValues...),
+			Max: r.FetchSize.Max.With(withValues...),
+			Avg: r.FetchSize.Avg.With(withValues...),
+		},
+		FetchBytes: AggStats{
+			Min: r.FetchBytes.Min.With(withValues...),
+			Max: r.FetchBytes.Max.With(withValues...),
+			Avg: r.FetchBytes.Avg.With(withValues...),
+		},
+		reader: reader,
+	}
 }
 
 // Observe records the reader stats. It should be called periodically.
-func (r ReaderStats) Observe(stats kafka.ReaderStats) {
-	withValues := []string{"reader", r.reader, "client_id", stats.ClientID, "topic", stats.Topic, "partition", stats.Partition}
+func (r *ReaderStats) Observe(stats kafka.ReaderStats) {
+	withValues := []string{"client_id", stats.ClientID, "topic", stats.Topic, "partition", stats.Partition}
 	r.Dials.With(withValues...).Add(float64(stats.Dials))
 	r.Fetches.With(withValues...).Add(float64(stats.Fetches))
 	r.Messages.With(withValues...).Add(float64(stats.Messages))

@@ -25,32 +25,34 @@ type Gauges struct {
 }
 
 // DBName sets the dbname label of metrics.
-func (g Gauges) DBName(dbName string) Gauges {
-	g.dbName = dbName
-	return g
+func (g *Gauges) DBName(dbName string) *Gauges {
+	withValues := []string{"dbname", g.dbName}
+	return &Gauges{
+		Idle:   g.Idle.With(withValues...),
+		InUse:  g.InUse.With(withValues...),
+		Open:   g.Open.With(withValues...),
+		dbName: dbName,
+		driver: g.driver,
+	}
 }
 
 // Driver sets the driver label of metrics.
-func (g Gauges) Driver(driver string) Gauges {
-	g.driver = driver
-	return g
+func (g *Gauges) Driver(driver string) *Gauges {
+	withValues := []string{"driver", driver}
+	return &Gauges{
+		Idle:   g.Idle.With(withValues...),
+		InUse:  g.InUse.With(withValues...),
+		Open:   g.Open.With(withValues...),
+		dbName: g.dbName,
+		driver: driver,
+	}
 }
 
 // Observe records the DBStats collected. It should be called periodically.
-func (g Gauges) Observe(stats sql.DBStats) Gauges {
-	withValues := []string{"dbname", g.dbName, "driver", g.driver}
-	g.Idle.
-		With(withValues...).
-		Set(float64(stats.Idle))
-
-	g.InUse.
-		With(withValues...).
-		Set(float64(stats.InUse))
-
-	g.Open.
-		With(withValues...).
-		Set(float64(stats.OpenConnections))
-	return g
+func (g *Gauges) Observe(stats sql.DBStats) {
+	g.Idle.Set(float64(stats.Idle))
+	g.InUse.Set(float64(stats.InUse))
+	g.Open.Set(float64(stats.OpenConnections))
 }
 
 // newCollector creates a new database wrapper containing the name of the database,
