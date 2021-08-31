@@ -2,6 +2,7 @@ package clihttp
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -47,8 +48,23 @@ func TestClient_Do(t *testing.T) {
 			resp, _ := client.Do(c.request)
 			defer resp.Body.Close()
 			assert.NotEmpty(t, tracer.FinishedSpans())
+			byt, _ := ioutil.ReadAll(resp.Body)
+			assert.Len(t, byt, 1256)
 		})
 	}
+}
+
+func TestClient_Option(t *testing.T) {
+	t.Parallel()
+	client := NewClient(opentracing.NoopTracer{}, []Option{
+		WithResponseLogThreshold(0),
+		WithRequestLogThreshold(0),
+	}...)
+	assert.Zero(t, client.requestLogThreshold)
+	assert.Zero(t, client.responseLogThreshold)
+	req, _ := http.NewRequest(http.MethodGet, "https://example.com/", nil)
+	resp, _ := client.Do(req)
+	defer resp.Body.Close()
 }
 
 func TestClient_race(t *testing.T) {
