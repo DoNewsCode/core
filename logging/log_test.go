@@ -12,9 +12,17 @@ import (
 func TestWithLevel(t *testing.T) {
 	var buf bytes.Buffer
 	l := log.NewLogfmtLogger(&buf)
-	WithLevel(l).Debug("hi")
+	ll := WithLevel(l)
+	ll.Debug("hi")
 	// ensure the caller depth is correct
 	assert.Contains(t, buf.String(), "caller=log_test.go")
+	assert.Contains(t, buf.String(), "level=debug")
+
+	ll.Debugw("foo", "bar", "baz")
+	assert.Contains(t, buf.String(), "bar=baz")
+
+	ll.Debugf("foo%d", 1)
+	assert.Contains(t, buf.String(), "foo1")
 }
 
 func TestLevelFilter(t *testing.T) {

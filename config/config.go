@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
@@ -211,33 +212,17 @@ func (k *KoanfAdapter) Float64(s string) float64 {
 	return k.K.Float64(s)
 }
 
-// MapAdapter implements ConfigAccessor and ConfigRouter.
+// Duration returns the time.Duration value of a given key path or its zero value if the path does not exist or if the value is not a valid float64.
+func (k *KoanfAdapter) Duration(s string) time.Duration {
+	k.rwlock.RLock()
+	defer k.rwlock.RUnlock()
+
+	return k.K.Duration(s)
+}
+
+// MapAdapter implements ConfigUnmarshaler and ConfigRouter.
 // It is primarily used for testing
 type MapAdapter map[string]interface{}
-
-func (m MapAdapter) String(s string) string {
-	return m[s].(string)
-}
-
-func (m MapAdapter) Int(s string) int {
-	return m[s].(int)
-}
-
-func (m MapAdapter) Strings(s string) []string {
-	return m[s].([]string)
-}
-
-func (m MapAdapter) Bool(s string) bool {
-	return m[s].(bool)
-}
-
-func (m MapAdapter) Get(s string) interface{} {
-	return m[s]
-}
-
-func (m MapAdapter) Float64(s string) float64 {
-	return m[s].(float64)
-}
 
 func (m MapAdapter) Unmarshal(path string, o interface{}) (err error) {
 	k := koanf.New(".")
@@ -258,7 +243,8 @@ func (m MapAdapter) Unmarshal(path string, o interface{}) (err error) {
 	})
 }
 
-func (m MapAdapter) Route(s string) contract.ConfigAccessor {
+// Route implements contract.ConfigRouter
+func (m MapAdapter) Route(s string) contract.ConfigUnmarshaler {
 	var v interface{}
 	v = m
 	if s != "" {
@@ -299,4 +285,63 @@ func stringToConfigDurationHookFunc() mapstructure.DecodeHookFunc {
 		}
 		return d, nil
 	}
+}
+
+type wrappedConfigAccessor struct {
+	unmarshaler contract.ConfigUnmarshaler
+}
+
+func (w wrappedConfigAccessor) Unmarshal(path string, o interface{}) error {
+	return w.unmarshaler.Unmarshal(path, o)
+}
+
+func (w wrappedConfigAccessor) String(s string) string {
+	var o string
+	w.unmarshaler.Unmarshal(s, &o)
+	return o
+}
+
+func (w wrappedConfigAccessor) Int(s string) int {
+	var o int
+	w.unmarshaler.Unmarshal(s, &o)
+	return o
+}
+
+func (w wrappedConfigAccessor) Strings(s string) []string {
+	var o []string
+	w.unmarshaler.Unmarshal(s, &o)
+	return o
+}
+
+func (w wrappedConfigAccessor) Bool(s string) bool {
+	var o bool
+	w.unmarshaler.Unmarshal(s, &o)
+	return o
+}
+
+func (w wrappedConfigAccessor) Get(s string) interface{} {
+	var o interface{}
+	w.unmarshaler.Unmarshal(s, &o)
+	return o
+}
+
+func (w wrappedConfigAccessor) Float64(s string) float64 {
+	var o float64
+	w.unmarshaler.Unmarshal(s, &o)
+	return o
+}
+
+func (w wrappedConfigAccessor) Duration(s string) time.Duration {
+	var dur Duration
+	w.unmarshaler.Unmarshal(s, &dur)
+	return dur.Duration
+}
+
+// WithAccessor upgrade contract.ConfigUnmarshaler to contract.ConfigAccessor by
+// wrapping the original unmarshaler.
+func WithAccessor(unmarshaler contract.ConfigUnmarshaler) contract.ConfigAccessor {
+	if accessor, ok := unmarshaler.(contract.ConfigAccessor); ok {
+		return accessor
+	}
+	return wrappedConfigAccessor{unmarshaler: unmarshaler}
 }

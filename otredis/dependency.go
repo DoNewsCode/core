@@ -44,7 +44,7 @@ type factoryIn struct {
 	di.In
 
 	Logger      log.Logger
-	Conf        contract.ConfigAccessor
+	Conf        contract.ConfigUnmarshaler
 	Interceptor RedisConfigurationInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer            `optional:"true"`
 	Gauges      *Gauges                       `optional:"true"`

@@ -2,6 +2,8 @@ package otes
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
@@ -10,7 +12,6 @@ import (
 	"github.com/olivere/elastic/v7"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/dig"
-	"net/http"
 )
 
 /*
@@ -39,7 +40,7 @@ type factoryIn struct {
 	dig.In
 
 	Logger      log.Logger
-	Conf        contract.ConfigAccessor
+	Conf        contract.ConfigUnmarshaler
 	Interceptor EsConfigInterceptor        `optional:"true"`
 	Tracer      opentracing.Tracer         `optional:"true"`
 	Options     []elastic.ClientOptionFunc `optional:"true"`
