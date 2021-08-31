@@ -47,13 +47,6 @@ func TestContainer_AddModule(t *testing.T) {
 			},
 		},
 		{
-			"close",
-			func() {},
-			func(t *testing.T, container Container) {
-				assert.Len(t, container.closerProviders, 1)
-			},
-		},
-		{
 			"mock",
 			mock{},
 			func(t *testing.T, container Container) {

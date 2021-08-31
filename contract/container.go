@@ -1,7 +1,6 @@
 package contract
 
 import (
-	"github.com/Reasno/ifilter"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
 	"github.com/robfig/cron/v3"
@@ -17,6 +16,6 @@ type Container interface {
 	ApplyRunGroup(g *run.Group)
 	ApplyRootCommand(command *cobra.Command)
 	Shutdown()
-	Modules() ifilter.Collection
+	Modules() []interface{}
 	AddModule(module interface{})
 }
