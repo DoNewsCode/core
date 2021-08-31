@@ -71,12 +71,18 @@ func TestContainer_AddModule(t *testing.T) {
 	}
 }
 
+type closer func()
+
+func (f closer) ProvideCloser() {
+	f()
+}
+
 func TestContainer_Shutdown(t *testing.T) {
 	var seq = 0
 	container := Container{}
-	container.AddModule(func() { assert.Equal(t, 2, seq); seq = 1 })
-	container.AddModule(func() { assert.Equal(t, 3, seq); seq = 2 })
-	container.AddModule(func() { assert.Equal(t, 0, seq); seq = 3 })
+	container.AddModule(closer(func() { assert.Equal(t, 2, seq); seq = 1 }))
+	container.AddModule(closer(func() { assert.Equal(t, 3, seq); seq = 2 }))
+	container.AddModule(closer(func() { assert.Equal(t, 0, seq); seq = 3 }))
 	container.Shutdown()
 	assert.Equal(t, 1, seq)
 }
