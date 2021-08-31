@@ -12,13 +12,10 @@ require (
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-kit/kit v0.11.0
 	github.com/go-redis/redis/v8 v8.6.0
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/mock v1.5.0
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.3.0 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/klauspost/compress v1.12.2 // indirect
@@ -32,7 +29,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/rs/xid v1.2.1
 	github.com/segmentio/kafka-go v0.4.16
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
