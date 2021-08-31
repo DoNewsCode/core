@@ -26,7 +26,7 @@ type Gauges struct {
 
 // DBName sets the dbname label of metrics.
 func (g *Gauges) DBName(dbName string) *Gauges {
-	withValues := []string{"dbname", g.dbName}
+	withValues := []string{"dbname", dbName}
 	return &Gauges{
 		Idle:   g.Idle.With(withValues...),
 		InUse:  g.InUse.With(withValues...),
