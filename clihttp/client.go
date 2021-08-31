@@ -52,7 +52,7 @@ func WithRequestLogThreshold(num int) Option {
 // If the response body is larger than this threshold, the log will be omit.
 func WithResponseLogThreshold(num int) Option {
 	return func(client *Client) {
-		client.requestLogThreshold = num
+		client.responseLogThreshold = num
 	}
 }
 
