@@ -106,15 +106,18 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	}
 
 	idle := mock_metrics.NewMockGauge(ctrl)
-	idle.EXPECT().With(withValues...).Return(idle).MinTimes(1)
+	idle.EXPECT().With(withValues[0:2]...).Return(idle).MinTimes(1)
+	idle.EXPECT().With(withValues[2:4]...).Return(idle).MinTimes(1)
 	idle.EXPECT().Set(gomock.Eq(0.0)).MinTimes(1)
 
 	open := mock_metrics.NewMockGauge(ctrl)
-	open.EXPECT().With(withValues...).Return(open).MinTimes(1)
+	open.EXPECT().With(withValues[0:2]...).Return(open).MinTimes(1)
+	open.EXPECT().With(withValues[2:4]...).Return(open).MinTimes(1)
 	open.EXPECT().Set(gomock.Eq(2.0)).MinTimes(1)
 
 	inUse := mock_metrics.NewMockGauge(ctrl)
-	inUse.EXPECT().With(withValues...).Return(inUse).MinTimes(1)
+	inUse.EXPECT().With(withValues[0:2]...).Return(inUse).MinTimes(1)
+	inUse.EXPECT().With(withValues[2:4]...).Return(inUse).MinTimes(1)
 	inUse.EXPECT().Set(gomock.Eq(2.0)).MinTimes(1)
 
 	c := core.New(

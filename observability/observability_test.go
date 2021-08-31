@@ -14,6 +14,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -33,8 +34,26 @@ func TestProvideOpentracing(t *testing.T) {
 }
 
 func TestProvideHistogramMetrics(t *testing.T) {
-	Out := ProvideHistogramMetrics()
-	assert.NotNil(t, Out)
+	for _, c := range []struct {
+		name       string
+		registerer prometheus.Registerer
+	}{
+		{
+			"default",
+			nil,
+		},
+		{
+			"provided registerer",
+			prometheus.NewPedanticRegistry(),
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			http := ProvideHTTPRequestDurationSeconds(MetricsIn{Registerer: c.registerer})
+			assert.NotNil(t, http)
+			grpc := ProvideGRPCRequestDurationSeconds(MetricsIn{Registerer: c.registerer})
+			assert.NotNil(t, grpc)
+		})
+	}
 }
 
 func TestProvideGORMMetrics(t *testing.T) {

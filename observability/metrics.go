@@ -1,353 +1,406 @@
 package observability
 
 import (
-	"sync"
-
+	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otgorm"
 	"github.com/DoNewsCode/core/otkafka"
 	"github.com/DoNewsCode/core/otredis"
+	"github.com/DoNewsCode/core/srvgrpc"
+	"github.com/DoNewsCode/core/srvhttp"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
-type histogram struct {
-	once sync.Once
-	*prometheus.Histogram
+// MetricsIn is the injection parameter of most metrics constructors in the observability package.
+type MetricsIn struct {
+	di.In
+
+	Registerer stdprometheus.Registerer `optional:"true"`
 }
 
-var his histogram
-
-// ProvideHistogramMetrics returns a metrics.Histogram that is designed to measure incoming requests
-// to the system. Note it has three labels: "module", "service", "method". If any label is missing,
+// ProvideHTTPRequestDurationSeconds returns a metrics.Histogram that is designed to measure incoming HTTP requests
+// to the system. Note it has three labels: "module", "service", "route". If any label is missing,
 // the system will panic.
-func ProvideHistogramMetrics() metrics.Histogram {
-	his.once.Do(func() {
-		his.Histogram = prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
-			Name: "http_request_duration_seconds",
-			Help: "Total time spent serving requests.",
-		}, []string{"module", "service", "method"})
-	})
-	return &his
+func ProvideHTTPRequestDurationSeconds(in MetricsIn) *srvhttp.RequestDurationSeconds {
+	http := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
+		Name: "http_request_duration_seconds",
+		Help: "Total time spent serving requests.",
+	}, []string{"module", "service", "route"})
+
+	if in.Registerer == nil {
+		in.Registerer = stdprometheus.DefaultRegisterer
+	}
+	in.Registerer.MustRegister(http)
+
+	return &srvhttp.RequestDurationSeconds{
+		Histogram: prometheus.NewHistogram(http),
+	}
+}
+
+// ProvideGRPCRequestDurationSeconds returns a metrics.Histogram that is designed to measure incoming GRPC requests
+// to the system. Note it has three labels: "module", "service", "route". If any label is missing,
+// the system will panic.
+func ProvideGRPCRequestDurationSeconds(in MetricsIn) *srvgrpc.RequestDurationSeconds {
+	grpc := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
+		Name: "grpc_request_duration_seconds",
+		Help: "Total time spent serving requests.",
+	}, []string{"module", "service", "route"})
+
+	if in.Registerer == nil {
+		in.Registerer = stdprometheus.DefaultRegisterer
+	}
+	in.Registerer.MustRegister(grpc)
+
+	return &srvgrpc.RequestDurationSeconds{
+		Histogram: prometheus.NewHistogram(grpc),
+	}
 }
 
 // ProvideGORMMetrics returns a *otgorm.Gauges that measures the connection info in databases.
 // It is meant to be consumed by the otgorm.Providers.
-func ProvideGORMMetrics() *otgorm.Gauges {
+func ProvideGORMMetrics(in MetricsIn) *otgorm.Gauges {
+	if in.Registerer == nil {
+		in.Registerer = stdprometheus.DefaultRegisterer
+	}
 	return &otgorm.Gauges{
-		Idle: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		Idle: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "gorm_idle_connections",
 			Help: "number of idle connections",
-		}, []string{"dbname", "driver"}),
-		Open: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, []string{"dbname", "driver"}, in.Registerer),
+		Open: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "gorm_open_connections",
 			Help: "number of open connections",
-		}, []string{"dbname", "driver"}),
-		InUse: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, []string{"dbname", "driver"}, in.Registerer),
+		InUse: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "gorm_in_use_connections",
 			Help: "number of in use connections",
-		}, []string{"dbname", "driver"}),
+		}, []string{"dbname", "driver"}, in.Registerer),
 	}
 }
 
-// ProvideRedisMetrics returns a *otredis.Gauges that measures the connection info in redis.
+// ProvideRedisMetrics returns a RedisMetrics that measures the connection info in redis.
 // It is meant to be consumed by the otredis.Providers.
-func ProvideRedisMetrics() *otredis.Gauges {
+func ProvideRedisMetrics(in MetricsIn) *otredis.Gauges {
+	if in.Registerer == nil {
+		in.Registerer = stdprometheus.DefaultRegisterer
+	}
 	return &otredis.Gauges{
-		Hits: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		Hits: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_hit_connections",
 			Help: "number of times free connection was found in the pool",
-		}, []string{"dbname"}),
-		Misses: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, []string{"dbname"}, in.Registerer),
+		Misses: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_miss_connections",
 			Help: "number of times free connection was NOT found in the pool",
-		}, []string{"dbname"}),
-		Timeouts: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, []string{"dbname"}, in.Registerer),
+		Timeouts: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_timeout_connections",
 			Help: "number of times a wait timeout occurred",
-		}, []string{"dbname"}),
-		TotalConns: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, []string{"dbname"}, in.Registerer),
+		TotalConns: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_total_connections",
 			Help: "number of total connections in the pool",
-		}, []string{"dbname"}),
-		IdleConns: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, []string{"dbname"}, in.Registerer),
+		IdleConns: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_idle_connections",
 			Help: "number of idle connections in the pool",
-		}, []string{"dbname"}),
-		StaleConns: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, []string{"dbname"}, in.Registerer),
+		StaleConns: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_stale_connections",
 			Help: "number of stale connections removed from the pool",
-		}, []string{"dbname"}),
+		}, []string{"dbname"}, in.Registerer),
 	}
 }
 
 // ProvideKafkaReaderMetrics returns a *otkafka.ReaderStats that measures the reader info in kafka.
 // It is meant to be consumed by the otkafka.Providers.
-func ProvideKafkaReaderMetrics() *otkafka.ReaderStats {
+func ProvideKafkaReaderMetrics(in MetricsIn) *otkafka.ReaderStats {
 	labels := []string{"reader", "client_id", "topic", "partition"}
 
+	if in.Registerer == nil {
+		in.Registerer = stdprometheus.DefaultRegisterer
+	}
+
 	return &otkafka.ReaderStats{
-		Dials: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		Dials: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_reader_dial_count",
 			Help: "",
-		}, labels),
-		Fetches: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		}, labels, in.Registerer),
+		Fetches: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_reader_fetch_count",
 			Help: "",
-		}, labels),
-		Messages: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		}, labels, in.Registerer),
+		Messages: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_reader_message_count",
 			Help: "",
-		}, labels),
-		Bytes: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		}, labels, in.Registerer),
+		Bytes: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_reader_message_bytes",
 			Help: "",
-		}, labels),
-		Rebalances: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		}, labels, in.Registerer),
+		Rebalances: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_reader_rebalance_count",
 			Help: "",
-		}, labels),
-		Timeouts: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		}, labels, in.Registerer),
+		Timeouts: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_reader_timeout_count",
 			Help: "",
-		}, labels),
-		Errors: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		}, labels, in.Registerer),
+		Errors: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_reader_error_count",
 			Help: "",
-		}, labels),
-		Offset: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		Offset: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_reader_offset",
 			Help: "",
-		}, labels),
-		Lag: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		Lag: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_reader_lag",
 			Help: "",
-		}, labels),
-		MinBytes: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		MinBytes: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_reader_bytes_min",
 			Help: "",
-		}, labels),
-		MaxBytes: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		MaxBytes: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_reader_bytes_max",
 			Help: "",
-		}, labels),
-		MaxWait: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		MaxWait: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_reader_fetch_wait_max",
 			Help: "",
-		}, labels),
-		QueueLength: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		QueueLength: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_reader_queue_length",
 			Help: "",
-		}, labels),
-		QueueCapacity: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		QueueCapacity: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_reader_queue_capacity",
 			Help: "",
-		}, labels),
+		}, labels, in.Registerer),
 		DialTime: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_dial_seconds_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_dial_seconds_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_dial_seconds_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 		ReadTime: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_read_seconds_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_read_seconds_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_read_seconds_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 		WaitTime: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_wait_seconds_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_wait_seconds_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_wait_seconds_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 		FetchSize: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_fetch_size_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_fetch_size_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_fetch_size_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 		FetchBytes: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_fetch_bytes_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_fetch_bytes_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_reader_fetch_bytes_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 	}
 }
 
 // ProvideKafkaWriterMetrics returns a *otkafka.WriterStats that measures the writer info in kafka.
 // It is meant to be consumed by the otkafka.Providers.
-func ProvideKafkaWriterMetrics() *otkafka.WriterStats {
+func ProvideKafkaWriterMetrics(in MetricsIn) *otkafka.WriterStats {
 	labels := []string{"writer", "topic"}
+
+	if in.Registerer == nil {
+		in.Registerer = stdprometheus.DefaultRegisterer
+	}
+
 	return &otkafka.WriterStats{
-		Writes: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		Writes: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_writer_write_count",
 			Help: "",
-		}, labels),
-		Messages: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		}, labels, in.Registerer),
+		Messages: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_writer_message_count",
 			Help: "",
-		}, labels),
-		Bytes: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		}, labels, in.Registerer),
+		Bytes: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_writer_message_bytes",
 			Help: "",
-		}, labels),
-		Errors: prometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		}, labels, in.Registerer),
+		Errors: newCounterFrom(stdprometheus.CounterOpts{
 			Name: "kafka_writer_error_count",
 			Help: "",
-		}, labels),
-		MaxAttempts: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		MaxAttempts: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_writer_attempts_max",
 			Help: "",
-		}, labels),
-		MaxBatchSize: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		MaxBatchSize: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_writer_batch_max",
 			Help: "",
-		}, labels),
-		BatchTimeout: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		BatchTimeout: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_writer_batch_timeout",
 			Help: "",
-		}, labels),
-		ReadTimeout: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		ReadTimeout: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_writer_read_timeout",
 			Help: "",
-		}, labels),
-		WriteTimeout: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		WriteTimeout: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_writer_write_timeout",
 			Help: "",
-		}, labels),
-		RequiredAcks: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		RequiredAcks: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_writer_acks_required",
 			Help: "",
-		}, labels),
-		Async: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+		}, labels, in.Registerer),
+		Async: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "kafka_writer_async",
 			Help: "",
-		}, labels),
+		}, labels, in.Registerer),
 		BatchTime: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_seconds_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_seconds_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_seconds_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 		WriteTime: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_write_seconds_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_write_seconds_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_write_seconds_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 		WaitTime: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_wait_seconds_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_wait_seconds_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_wait_seconds_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 		Retries: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_retries_count_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_retries_count_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_retries_count_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 		BatchSize: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_size_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_size_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_size_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 		BatchBytes: otkafka.AggStats{
-			Min: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			Min: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_bytes_min",
 				Help: "",
-			}, labels),
-			Max: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Max: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_bytes_max",
 				Help: "",
-			}, labels),
-			Avg: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
+			}, labels, in.Registerer),
+			Avg: newGaugeFrom(stdprometheus.GaugeOpts{
 				Name: "kafka_writer_batch_bytes_avg",
 				Help: "",
-			}, labels),
+			}, labels, in.Registerer),
 		},
 	}
+}
+
+func newCounterFrom(opts stdprometheus.CounterOpts, labelNames []string, registerer stdprometheus.Registerer) metrics.Counter {
+	cv := stdprometheus.NewCounterVec(opts, labelNames)
+	registerer.MustRegister(cv)
+	return prometheus.NewCounter(cv)
+}
+
+func newGaugeFrom(opts stdprometheus.GaugeOpts, labelNames []string, registerer stdprometheus.Registerer) metrics.Gauge {
+	cv := stdprometheus.NewGaugeVec(opts, labelNames)
+	registerer.MustRegister(cv)
+	return prometheus.NewGauge(cv)
 }
