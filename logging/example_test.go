@@ -3,7 +3,7 @@ package logging_test
 import (
 	"context"
 
-	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/ctxmeta"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/kit/log/level"
 )
@@ -31,9 +31,10 @@ func ExampleWithLevel() {
 }
 
 func ExampleWithContext() {
-	ctx := context.WithValue(context.Background(), contract.IpKey, "127.0.0.1")
-	ctx = context.WithValue(ctx, contract.TransportKey, "http")
-	ctx = context.WithValue(ctx, contract.RequestUrlKey, "/example")
+	bag, ctx := ctxmeta.Inject(context.Background())
+	bag.Set("clientIp", "127.0.0.1")
+	bag.Set("requestUrl", "/example")
+	bag.Set("transport", "http")
 	logger := logging.NewLogger("json")
 	ctxLogger := logging.WithContext(logger, ctx)
 	ctxLogger.Log("foo", "bar")

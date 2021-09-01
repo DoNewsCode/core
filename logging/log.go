@@ -23,6 +23,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/DoNewsCode/core/ctxmeta"
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/DoNewsCode/core/contract"
@@ -97,34 +98,38 @@ func LevelFilter(levelCfg string) level.Option {
 type spanLogger struct {
 	span opentracing.Span
 	base log.Logger
+	kvs  []interface{}
 }
 
 func (s spanLogger) Log(keyvals ...interface{}) error {
-	s.span.LogKV(keyvals...)
-	return s.base.Log(keyvals...)
+	s.kvs = append(s.kvs, keyvals...)
+	s.span.LogKV(s.kvs...)
+	return s.base.Log(s.kvs...)
 }
 
 // WithContext decorates the log.Logger with information form context. If there is a opentracing span
 // in the context, the span will receive the logger output as well.
 func WithContext(logger log.Logger, ctx context.Context) log.Logger {
+	var args []interface{}
+
+	bag := ctxmeta.GetBaggage(ctx)
+	for _, kv := range bag.Slice() {
+		args = append(args, kv.Key, kv.Val)
+	}
+
 	span := opentracing.SpanFromContext(ctx)
 	if span == nil {
 		return withContext(logger, ctx)
 	}
-	return spanLogger{span: span, base: withContext(logger, ctx)}
+	return spanLogger{span: span, base: logger, kvs: args}
 }
 
 func withContext(logger log.Logger, ctx context.Context) log.Logger {
-	transport, _ := ctx.Value(contract.TransportKey).(string)
-	requestUrl, _ := ctx.Value(contract.RequestUrlKey).(string)
-	ip, _ := ctx.Value(contract.IpKey).(string)
-	tenant, ok := ctx.Value(contract.TenantKey).(contract.Tenant)
-	if !ok {
-		tenant = contract.MapTenant{}
-	}
-	args := []interface{}{"transport", transport, "requestUrl", requestUrl, "clientIp", ip}
-	for k, v := range tenant.KV() {
-		args = append(args, k, v)
+	var args []interface{}
+
+	bag := ctxmeta.GetBaggage(ctx)
+	for _, kv := range bag.Slice() {
+		args = append(args, kv.Key, kv.Val)
 	}
 
 	return log.With(
