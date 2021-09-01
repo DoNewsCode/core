@@ -208,7 +208,10 @@ func (m *MetadataSet) Inject(ctx context.Context) (*Baggage, context.Context) {
 
 // GetBaggage returns the Baggage stored in the context.
 func (m *MetadataSet) GetBaggage(ctx context.Context) *Baggage {
-	return ctx.Value(m.key).(*Baggage)
+	if val, ok := ctx.Value(m.key).(*Baggage); ok {
+		return val
+	}
+	return nil
 }
 
 // Inject constructs a Baggage object and injects it into the provided context
