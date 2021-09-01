@@ -185,6 +185,8 @@ type Metadata struct {
 	key *struct{}
 }
 
+// The DefaultMetadata contains the default key in the context. Use this if there
+// is no need to categorize metadata.
 var DefaultMetadata = Metadata{key: &struct{}{}}
 
 // New constructs a new metadata. This metadata can be used to retrieve a group of contextual data.
