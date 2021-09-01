@@ -12,7 +12,7 @@ func TestContextMeta_crud(t *testing.T) {
 
 	ctx := context.Background()
 	metadata := New()
-	baggage, ctx := metadata.Inject(ctx)
+	baggage, _ := metadata.Inject(ctx)
 
 	baggage.Set("foo", "bar")
 	result, err := baggage.Get("foo")
@@ -30,12 +30,12 @@ func TestContextMeta_crud(t *testing.T) {
 	assert.Equal(t, "bar", s)
 
 	baggage.Update("foo", func(value interface{}) interface{} { return "baz" })
-	result, err = baggage.Get("foo")
+	_, err = baggage.Get("foo")
 	assert.NoError(t, err)
 	assert.Equal(t, "baz", result)
 
 	baggage.Delete("foo")
-	result, err = baggage.Get("foo")
+	_, err = baggage.Get("foo")
 	assert.ErrorIs(t, err, ErrNotFound)
 
 }

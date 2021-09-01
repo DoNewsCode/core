@@ -10,7 +10,7 @@ import (
 
 // This example demonstrates how to use Unmarshal to retrieve metadata into an
 // arbitrary type.
-func Example_Unmarshal() {
+func ExampleBaggage_Unmarshal() {
 	type DomainError struct {
 		Code   int
 		Reason string
