@@ -30,7 +30,7 @@ func TestContextMeta_crud(t *testing.T) {
 	assert.Equal(t, "bar", s)
 
 	baggage.Update("foo", func(value interface{}) interface{} { return "baz" })
-	_, err = baggage.Get("foo")
+	result, err = baggage.Get("foo")
 	assert.NoError(t, err)
 	assert.Equal(t, "baz", result)
 
@@ -45,7 +45,7 @@ func TestContextMeta_parallel(t *testing.T) {
 
 	cases := []struct {
 		name  string
-		meta  *Metadata
+		meta  *MetadataSet
 		key   string
 		value string
 	}{

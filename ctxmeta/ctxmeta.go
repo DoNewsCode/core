@@ -138,7 +138,7 @@ func (b *Baggage) Update(key string, callback func(value interface{}) interface{
 }
 
 // Delete key from baggage. If key doesn't exists, it returns ErrNotFound. If the
-// Metadata is not associated with a initialized baggage, it returns
+// MetadataSet is not associated with a initialized baggage, it returns
 // ErrNoBaggage.
 func (b *Baggage) Delete(key interface{}) (err error) {
 	if b == nil {
@@ -179,27 +179,27 @@ func (b *Baggage) Map() map[string]interface{} {
 	return mp
 }
 
-// Metadata is a group key to the contextual data stored the context.
-// The data stored with different Metadata instances are not shared.
-type Metadata struct {
+// MetadataSet is a group key to the contextual data stored the context.
+// The data stored with different MetadataSet instances are not shared.
+type MetadataSet struct {
 	key *struct{}
 }
 
 // DefaultMetadata contains the default key for Baggage in the context. Use this if there
 // is no need to categorize metadata, ie. put all data in one baggage.
-var DefaultMetadata = Metadata{key: &struct{}{}}
+var DefaultMetadata = MetadataSet{key: &struct{}{}}
 
-// New constructs a new metadata. This metadata can be used to retrieve a group of contextual data.
-// The data stored with different Metadata instances are not shared.
-func New() *Metadata {
-	return &Metadata{key: &struct{}{}}
+// New constructs a new set of metadata. This metadata can be used to retrieve a group of contextual data.
+// The data stored with different MetadataSet instances are not shared.
+func New() *MetadataSet {
+	return &MetadataSet{key: &struct{}{}}
 }
 
 // Inject constructs a Baggage object and injects it into the provided context
 // under the context key determined the the metadata instance. Use the returned
 // context for all further operations. The returned Baggage can be queried at any
 // point for metadata collected over the life of the context.
-func (m *Metadata) Inject(ctx context.Context) (*Baggage, context.Context) {
+func (m *MetadataSet) Inject(ctx context.Context) (*Baggage, context.Context) {
 	c := make(chan []KeyVal, 1)
 	c <- make([]KeyVal, 0, 32)
 	d := &Baggage{c: c}
@@ -207,7 +207,7 @@ func (m *Metadata) Inject(ctx context.Context) (*Baggage, context.Context) {
 }
 
 // GetBaggage returns the Baggage stored in the context.
-func (m *Metadata) GetBaggage(ctx context.Context) *Baggage {
+func (m *MetadataSet) GetBaggage(ctx context.Context) *Baggage {
 	return ctx.Value(m.key).(*Baggage)
 }
 
