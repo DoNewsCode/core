@@ -25,7 +25,7 @@ type KeyVal struct {
 
 // ErrNoBaggage is returned by accessor methods when they're called on a nil
 // pointer receiver. This typically means From was called on a context that
-// didn't have a Baggage injected into it previously via Inject.
+// didn't have Baggage injected into it previously via Inject.
 var ErrNoBaggage = errors.New("no baggage in context")
 
 // ErrIncompatibleType is returned by GetAs/Unmarshal if the value associated with a key
@@ -75,7 +75,7 @@ func (b *Baggage) Unmarshal(path string, target interface{}) error {
 }
 
 // Get the value associated with key, or return ErrNotFound. If this method is
-// called on a nil Baggage pointer, it returns ErrNoData.
+// called on a nil Baggage pointer, it returns ErrNoBaggage.
 func (b *Baggage) Get(key string) (value interface{}, err error) {
 	if b == nil {
 		return nil, ErrNoBaggage
@@ -94,7 +94,7 @@ func (b *Baggage) Get(key string) (value interface{}, err error) {
 }
 
 // Set key to value. If key already exists, it will be overwritten. If this method
-// is called on a nil Baggage pointer, it returns ErrNoData.
+// is called on a nil Baggage pointer, it returns ErrNoBaggage.
 func (b *Baggage) Set(key string, value interface{}) (err error) {
 	if b == nil {
 		return ErrNoBaggage
@@ -116,9 +116,9 @@ func (b *Baggage) Set(key string, value interface{}) (err error) {
 	return nil
 }
 
-// Update key to the value returned from the callback. If key doesn't exists, it
+// Update key to the value returned from the callback. If key doesn't exist, it
 // returns ErrNotFound. If this method is called on a nil Baggage pointer, it
-// returns ErrNoData.
+// returns ErrNoBaggage.
 func (b *Baggage) Update(key string, callback func(value interface{}) interface{}) (err error) {
 	if b == nil {
 		return ErrNoBaggage
@@ -137,8 +137,8 @@ func (b *Baggage) Update(key string, callback func(value interface{}) interface{
 	return ErrNotFound
 }
 
-// Delete key from baggage. If key doesn't exists, it returns ErrNotFound. If the
-// MetadataSet is not associated with a initialized baggage, it returns
+// Delete key from baggage. If key doesn't exist, it returns ErrNotFound. If the
+// MetadataSet is not associated with an initialized baggage, it returns
 // ErrNoBaggage.
 func (b *Baggage) Delete(key interface{}) (err error) {
 	if b == nil {
@@ -196,7 +196,7 @@ func New() *MetadataSet {
 }
 
 // Inject constructs a Baggage object and injects it into the provided context
-// under the context key determined the the metadata instance. Use the returned
+// under the context key determined the metadata instance. Use the returned
 // context for all further operations. The returned Baggage can be queried at any
 // point for metadata collected over the life of the context.
 func (m *MetadataSet) Inject(ctx context.Context) (*Baggage, context.Context) {

@@ -3,7 +3,7 @@ Package logging provides a kitlog compatible logger.
 
 This package is mostly a thin wrapper around kitlog
 (http://github.com/go-kit/kit/log). kitlog provides a minimalist, contextual,
-fully composable logger. However it is too unopinionated, hence requiring some
+fully composable logger. However, it is too unopinionated, hence requiring some
 efforts and coordination to set up a good practise.
 
 Integration
@@ -107,7 +107,7 @@ func (s spanLogger) Log(keyvals ...interface{}) error {
 	return s.base.Log(s.kvs...)
 }
 
-// WithContext decorates the log.Logger with information form context. If there is a opentracing span
+// WithContext decorates the log.Logger with information form context. If there is an opentracing span
 // in the context, the span will receive the logger output as well.
 func WithContext(logger log.Logger, ctx context.Context) log.Logger {
 	var args []interface{}
@@ -201,7 +201,7 @@ func (l levelLogger) Err(args ...interface{}) {
 // WithLevel decorates the logger and returns a contract.LevelLogger.
 //
 // Note: Don't inject contract.LevelLogger to dependency consumers directly as
-// this will weakens the powerful abstraction of log.Logger. Only inject
+// this will weaken the powerful abstraction of log.Logger. Only inject
 // log.Logger, and converts log.Logger to contract.LevelLogger within the
 // boundary of dependency consumer if desired.
 func WithLevel(logger log.Logger) LevelLogger {
