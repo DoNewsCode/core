@@ -50,7 +50,7 @@ type Baggage struct {
 }
 
 // Unmarshal get the value at given path, and store it into the target variable. Target must
-// be a pointer to an assignable type. GetAs will return ErrNotFound if the key
+// be a pointer to an assignable type. Get will return ErrNotFound if the key
 // is not found, and ErrIncompatibleType if the found value is not assignable to
 // target. Unmarshal also implements contract.ConfigUnmarshaler.
 func (b *Baggage) Unmarshal(path string, target interface{}) error {
