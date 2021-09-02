@@ -1,11 +1,10 @@
 module github.com/DoNewsCode/core
 
-go 1.14
+go 1.15
 
 require (
 	github.com/ClickHouse/clickhouse-go v1.4.5 // indirect
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
-	github.com/Reasno/ifilter v0.1.2
 	github.com/aws/aws-sdk-go v1.38.68
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.2

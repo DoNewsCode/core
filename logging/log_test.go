@@ -2,8 +2,10 @@ package logging
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
+	"github.com/DoNewsCode/core/ctxmeta"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/stretchr/testify/assert"
@@ -36,4 +38,16 @@ func TestLevelFilter(t *testing.T) {
 
 func TestNewLogger(t *testing.T) {
 	_ = NewLogger("logfmt")
+}
+
+func TestWithContext(t *testing.T) {
+	ctx := context.Background()
+	bag, ctx := ctxmeta.Inject(ctx)
+	bag.Set("foo", "bar")
+
+	var buf bytes.Buffer
+	l := log.NewLogfmtLogger(&buf)
+	ll := WithContext(l, ctx)
+	ll.Log("baz", "qux")
+	assert.Contains(t, buf.String(), "foo=bar baz=qux")
 }
