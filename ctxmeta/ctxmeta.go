@@ -28,7 +28,7 @@ type KeyVal struct {
 // didn't have Baggage injected into it previously via Inject.
 var ErrNoBaggage = errors.New("no baggage in context")
 
-// ErrIncompatibleType is returned by GetAs/Unmarshal if the value associated with a key
+// ErrIncompatibleType is returned by Unmarshal if the value associated with a key
 // isn't assignable to the provided target.
 var ErrIncompatibleType = errors.New("incompatible type")
 
@@ -50,7 +50,7 @@ type Baggage struct {
 }
 
 // Unmarshal get the value at given path, and store it into the target variable. Target must
-// be a pointer to an assignable type. Get will return ErrNotFound if the key
+// be a pointer to an assignable type. Unmarshal will return ErrNotFound if the key
 // is not found, and ErrIncompatibleType if the found value is not assignable to
 // target. Unmarshal also implements contract.ConfigUnmarshaler.
 func (b *Baggage) Unmarshal(path string, target interface{}) error {
