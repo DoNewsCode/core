@@ -170,8 +170,6 @@ func provideDatabaseFactory(p factoryIn) (databaseOut, func(), error) {
 		p.Conf.Unmarshal("gormMetrics.interval", &interval)
 		collector = newCollector(factory, p.Gauges, interval)
 	}
-	factory.SubscribeReloadEventFrom(p.Dispatcher)
-
 	return databaseOut{
 		Factory:   factory,
 		Maker:     factory,
