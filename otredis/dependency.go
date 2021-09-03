@@ -1,6 +1,7 @@
 package otredis
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/go-redis/redis/v8"
+	"github.com/oklog/run"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -58,6 +60,34 @@ type factoryOut struct {
 	Maker     Maker
 	Factory   Factory
 	Collector *collector
+}
+
+// Module implements di.Module
+func (m factoryOut) Module() interface{} {
+	return m
+}
+
+// ProvideRunGroup add a goroutine to periodically scan redis connections and
+// report them to metrics collector such as prometheus.
+func (m factoryOut) ProvideRunGroup(group *run.Group) {
+	if m.Collector == nil {
+		return
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	ticker := time.NewTicker(m.Collector.interval)
+	group.Add(func() error {
+		for {
+			select {
+			case <-ticker.C:
+				m.Collector.collectConnectionStats()
+			case <-ctx.Done():
+				ticker.Stop()
+				return nil
+			}
+		}
+	}, func(err error) {
+		cancel()
+	})
 }
 
 // provideRedisFactory creates Factory and redis.UniversalClient. It is a valid

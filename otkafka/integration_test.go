@@ -19,9 +19,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestModule_ProvideRunGroup(t *testing.T) {
+func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 	if os.Getenv("KAFKA_ADDR") == "" {
-		t.Skip("set KAFKA_ADDR to run TestModule_ProvideRunGroup")
+		t.Skip("set KAFKA_ADDR to run TestFactoryOut_ProvideRunGroup")
 		return
 	}
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
@@ -136,8 +136,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		}
 	}})
 	c.Provide(Providers())
-	c.AddModuleFunc(New)
-
+	c.Invoke(func(reader ReaderFactory, writer WriterFactory) {})
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	c.Serve(ctx)
@@ -331,7 +330,6 @@ func TestModule_hotReload(t *testing.T) {
 	c := core.Default(core.WithConfigStack(file.Provider(path), knoaf_json.Parser()), core.WithConfigWatcher(cw))
 	c.Provide(Providers())
 	c.AddModuleFunc(config.New)
-	c.AddModuleFunc(New)
 
 	go c.Serve(ctx)
 

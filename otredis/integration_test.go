@@ -14,7 +14,7 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func TestModule_ProvideRunGroup(t *testing.T) {
+func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 	if os.Getenv("REDIS_ADDR") == "" {
 		t.Skip("set REDIS_ADDR to run TestModule_ProvideRunGroup")
 		return
@@ -51,7 +51,6 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 		}
 	}})
 	c.Provide(Providers())
-	c.AddModuleFunc(New)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
