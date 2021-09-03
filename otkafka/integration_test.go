@@ -16,6 +16,7 @@ import (
 	"github.com/golang/mock/gomock"
 	knoaf_json "github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/file"
+	"github.com/oklog/run"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -331,7 +332,15 @@ func TestModule_hotReload(t *testing.T) {
 	c.Provide(Providers())
 	c.AddModuleFunc(config.New)
 
-	go c.Serve(ctx)
+	var group run.Group
+	c.ApplyRunGroup(&group)
+	group.Add(func() error {
+		<-ctx.Done()
+		return ctx.Err()
+	}, func(err error) {
+		cancel()
+	})
+	go group.Run()
 
 	// Test initial value
 	c.Invoke(func(f ReaderFactory) {
