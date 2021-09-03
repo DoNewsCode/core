@@ -28,7 +28,7 @@ func TestProvideDBFactory(t *testing.T) {
 			Dsn:      os.Getenv("MYSQL_DSN"),
 		},
 	}
-	factory, cleanup := provideDBFactory(factoryIn{
+	out, cleanup, _ := provideDBFactory(factoryIn{
 		Conf:   config.MapAdapter{"gorm": gorms},
 		Logger: log.NewNopLogger(),
 		Tracer: nil,
@@ -36,7 +36,7 @@ func TestProvideDBFactory(t *testing.T) {
 	defer cleanup()
 	for driverName := range gorms {
 		t.Run(driverName, func(t *testing.T) {
-			db, err := factory.Make(driverName)
+			db, err := out.Maker.Make(driverName)
 			assert.NoError(t, err)
 			assert.NotNil(t, db)
 		})
@@ -61,15 +61,6 @@ func TestGorm(t *testing.T) {
 		a.NotNil(d2)
 		a.NotEmpty(d3.Cfg)
 		a.NotNil(d4)
-	})
-}
-
-func TestProvideMemoryDatabase(t *testing.T) {
-	c := core.New()
-	c.ProvideEssentials()
-	c.Provide(di.Deps{provideMemoryDatabase})
-	c.Invoke(func(d1 *SQLite) {
-		assert.Equal(t, "sqlite", d1.Name())
 	})
 }
 

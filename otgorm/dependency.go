@@ -1,6 +1,7 @@
 package otgorm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/log"
+	"github.com/oklog/run"
 	"github.com/opentracing/opentracing-go"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -24,23 +26,20 @@ the Maker, database configs and the default *gorm.DB instance.
 		GormConfigInterceptor `optional:"true"`
 		opentracing.Tracer    `optional:"true"`
 		Gauges `optional:"true"`
+		contract.Dispatcher `optional:"true"`
+		Drivers               `optional:"true"`
 	Provide:
 		Maker
 		Factory
 		*gorm.DB
-		*SQLite
-		*collector
 */
 func Providers() []interface{} {
-	return []interface{}{provideDatabaseFactory, provideConfig, provideDefaultDatabase, provideMemoryDatabase}
+	return []interface{}{provideConfig, provideDefaultDatabase, provideDBFactory}
 }
 
 // GormConfigInterceptor is a function that allows user to Make last minute
 // change to *gorm.Config when constructing *gorm.DB.
 type GormConfigInterceptor func(name string, conf *gorm.Config)
-
-// SQLite is an alias of gorm.DB. This is useful when injecting test db.
-type SQLite gorm.DB
 
 type databaseConf struct {
 	Database                                 string `json:"database" yaml:"database"`
@@ -65,24 +64,7 @@ type metricsConf struct {
 	Interval config.Duration `json:"interval" yaml:"interval"`
 }
 
-// provideMemoryDatabase provides a sqlite database in memory mode. This is
-// useful for testing.
-func provideMemoryDatabase() *SQLite {
-	factory, _ := provideDBFactory(factoryIn{
-		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
-			"memory": {
-				Database: "sqlite",
-				Dsn:      "file::memory:?cache=shared",
-			},
-		}},
-		Logger: log.NewNopLogger(),
-		Tracer: nil,
-	})
-	memoryDatabase, _ := factory.Make("memory")
-	return (*SQLite)(memoryDatabase)
-}
-
-// factoryIn is the injection parameter for provideDatabaseFactory.
+// factoryIn is the injection parameter for provideDatabaseOut.
 type factoryIn struct {
 	di.In
 
@@ -95,7 +77,7 @@ type factoryIn struct {
 	Drivers               Drivers               `optional:"true"`
 }
 
-// databaseOut is the result of provideDatabaseFactory. *gorm.DB is not a interface
+// databaseOut is the result of provideDatabaseOut. *gorm.DB is not a interface
 // type. It is up to the users to define their own database repository interface.
 type databaseOut struct {
 	di.Out
@@ -103,6 +85,33 @@ type databaseOut struct {
 	Factory   Factory
 	Maker     Maker
 	Collector *collector
+}
+
+// Module implements di.Modular
+func (d databaseOut) Module() interface{} {
+	return d
+}
+
+// ProvideRunGroup implements RunGroupProvider
+func (d databaseOut) ProvideRunGroup(group *run.Group) {
+	if d.Collector == nil {
+		return
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	ticker := time.NewTicker(d.Collector.interval)
+	group.Add(func() error {
+		for {
+			select {
+			case <-ticker.C:
+				d.Collector.collectConnectionStats()
+			case <-ctx.Done():
+				ticker.Stop()
+				return nil
+			}
+		}
+	}, func(err error) {
+		cancel()
+	})
 }
 
 // provideDialector provides a gorm.Dialector. Mean to be used as an intermediate
@@ -159,29 +168,11 @@ func provideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 	}, nil
 }
 
-// provideDatabaseFactory creates the Factory. It is a valid dependency for
-// package core.
-func provideDatabaseFactory(p factoryIn) (databaseOut, func(), error) {
-	var collector *collector
-
-	factory, cleanup := provideDBFactory(p)
-	if p.Gauges != nil {
-		var interval time.Duration
-		p.Conf.Unmarshal("gormMetrics.interval", &interval)
-		collector = newCollector(factory, p.Gauges, interval)
-	}
-	return databaseOut{
-		Factory:   factory,
-		Maker:     factory,
-		Collector: collector,
-	}, cleanup, nil
-}
-
 func provideDefaultDatabase(maker Maker) (*gorm.DB, error) {
 	return maker.Make("default")
 }
 
-func provideDBFactory(p factoryIn) (Factory, func()) {
+func provideDBFactory(p factoryIn) (databaseOut, func(), error) {
 	logger := log.With(p.Logger, "tag", "database")
 
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
@@ -217,7 +208,19 @@ func provideDBFactory(p factoryIn) (Factory, func()) {
 	})
 	dbFactory := Factory{factory}
 	dbFactory.SubscribeReloadEventFrom(p.Dispatcher)
-	return dbFactory, dbFactory.Close
+
+	var collector *collector
+	if p.Gauges != nil {
+
+		var interval time.Duration
+		p.Conf.Unmarshal("gormMetrics.interval", &interval)
+		collector = newCollector(dbFactory, p.Gauges, interval)
+	}
+	return databaseOut{
+		Factory:   dbFactory,
+		Maker:     dbFactory,
+		Collector: collector,
+	}, dbFactory.Close, nil
 }
 
 type configOut struct {
