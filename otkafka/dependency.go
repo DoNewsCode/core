@@ -1,6 +1,7 @@
 package otkafka
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/oklog/run"
 	"github.com/opentracing/opentracing-go"
 	"github.com/segmentio/kafka-go"
 )
@@ -53,8 +55,9 @@ type factoryIn struct {
 	Tracer            opentracing.Tracer `optional:"true"`
 	Conf              contract.ConfigUnmarshaler
 	Logger            log.Logger
-	ReaderStats       *ReaderStats `optional:"true"`
-	WriterStats       *WriterStats `optional:"true"`
+	ReaderStats       *ReaderStats        `optional:"true"`
+	WriterStats       *WriterStats        `optional:"true"`
+	Dispatcher        contract.Dispatcher `optional:"true"`
 }
 
 // factoryOut is the result of provideKafkaFactory.
@@ -71,12 +74,58 @@ type factoryOut struct {
 	WriterCollector *writerCollector
 }
 
+// Module implements di.Modular
+func (f factoryOut) Module() interface{} {
+	return f
+}
+
+// ProvideRunGroup add a goroutine to periodically scan kafka's reader&writer info and
+// report them to metrics collector such as prometheus.
+func (f factoryOut) ProvideRunGroup(group *run.Group) {
+	if f.ReaderCollector != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		ticker := time.NewTicker(f.ReaderCollector.interval)
+		group.Add(func() error {
+			for {
+				select {
+				case <-ticker.C:
+					f.ReaderCollector.collectConnectionStats()
+				case <-ctx.Done():
+					ticker.Stop()
+					return nil
+				}
+			}
+		}, func(err error) {
+			cancel()
+		})
+	}
+	if f.WriterCollector != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		ticker := time.NewTicker(f.WriterCollector.interval)
+		group.Add(func() error {
+			for {
+				select {
+				case <-ticker.C:
+					f.WriterCollector.collectConnectionStats()
+				case <-ctx.Done():
+					ticker.Stop()
+					return nil
+				}
+			}
+		}, func(err error) {
+			cancel()
+		})
+	}
+}
+
 // provideKafkaFactory creates the ReaderFactory and WriterFactory. It is
 // valid dependency option for package core. Note: when working with package
 // core's DI container, use provideKafkaFactory over provideReaderFactory and
 // provideWriterFactory. Not only provideKafkaFactory provides both reader and
 // writer, but also only provideKafkaFactory exports default Kafka configuration.
 func provideKafkaFactory(p factoryIn) (factoryOut, func(), func(), error) {
+	var readerCollector *readerCollector
+	var writerCollector *writerCollector
 	rf, rc := provideReaderFactory(p)
 	wf, wc := provideWriterFactory(p)
 	dr, err1 := rf.Make("default")
@@ -87,8 +136,7 @@ func provideKafkaFactory(p factoryIn) (factoryOut, func(), func(), error) {
 	if err2 != nil {
 		level.Warn(p.Logger).Log("err", err2)
 	}
-	var readerCollector *readerCollector
-	var writerCollector *writerCollector
+
 	if p.ReaderStats != nil || p.WriterStats != nil {
 		var interval time.Duration
 		p.Conf.Unmarshal("kafkaMetrics.interval", &interval)
@@ -98,6 +146,11 @@ func provideKafkaFactory(p factoryIn) (factoryOut, func(), func(), error) {
 		if p.WriterStats != nil {
 			writerCollector = newWriterCollector(wf, p.WriterStats, interval)
 		}
+	}
+
+	if p.Dispatcher != nil {
+		rf.SubscribeReloadEventFrom(p.Dispatcher)
+		wf.SubscribeReloadEventFrom(p.Dispatcher)
 	}
 
 	return factoryOut{
