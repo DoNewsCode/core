@@ -22,7 +22,7 @@ func (a AlwaysLeaderDriver) Resign(ctx context.Context) error {
 	return nil
 }
 
-func Example_Providers() {
+func Example_providers() {
 	if os.Getenv("ETCD_ADDR") == "" {
 		fmt.Println("set ETCD_ADDR to run this example")
 		return
