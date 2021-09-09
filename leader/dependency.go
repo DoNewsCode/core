@@ -34,7 +34,7 @@ func Providers(opt ...ProvidersOptionFunc) di.Deps {
 	for _, f := range opt {
 		f(option)
 	}
-	return []interface{}{provide(option), provideConfig}
+	return di.Deps{provide(option), provideConfig}
 }
 
 type in struct {

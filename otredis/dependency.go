@@ -29,14 +29,14 @@ Maker, the default redis.UniversalClient and exported configs.
 		redis.UniversalClient
 		*collector
 */
-func Providers(opts ...ProvidersOptionFunc) []interface{} {
+func Providers(opts ...ProvidersOptionFunc) di.Deps {
 	option := providersOption{
 		interceptor: func(name string, opts *redis.UniversalOptions) {},
 	}
 	for _, f := range opts {
 		f(&option)
 	}
-	return []interface{}{
+	return di.Deps{
 		provideRedisFactory(&option),
 		provideDefaultClient,
 		provideConfig,
