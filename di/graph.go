@@ -7,6 +7,7 @@ package di
 import (
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/DoNewsCode/core/contract"
 	"go.uber.org/dig"
@@ -54,6 +55,7 @@ func (g *Graph) String() string {
 }
 
 type defaultPopulater struct {
+	mutex   sync.Mutex
 	invoker contract.DIInvoker
 }
 
@@ -100,6 +102,9 @@ func (d *defaultPopulater) Populate(target interface{}) error {
 		}
 		return nil
 	})
+
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 	return d.invoker.Invoke(fn.Interface())
 }
 
