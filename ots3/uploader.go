@@ -68,8 +68,8 @@ func WithKeyer(keyer contract.Keyer) ManagerOptionFunc {
 	}
 }
 
-// WithHttpClient is an option that replaces the default http client. Useful for interceptors like tracing and metrics.
-func WithHttpClient(client contract.HttpDoer) ManagerOptionFunc {
+// WithHTTPClient is an option that replaces the default http client. Useful for interceptors like tracing and metrics.
+func WithHTTPClient(client contract.HttpDoer) ManagerOptionFunc {
 	return func(c *ManagerConfig) {
 		c.doer = client
 	}
