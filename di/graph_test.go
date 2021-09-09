@@ -22,4 +22,7 @@ func TestIntoPopulator(t *testing.T) {
 	var s string
 	err = p.Populate(&s)
 	assert.Error(t, err)
+
+	err = p.Populate(s)
+	assert.Error(t, err)
 }

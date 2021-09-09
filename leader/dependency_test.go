@@ -2,6 +2,7 @@ package leader
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -54,6 +55,17 @@ func TestDriverConstructor(t *testing.T) {
 		driverConstructor: ctor,
 	})(in{})
 	assert.IsType(t, mockDriver{}, out.Election.driver)
+}
+
+func TestFailedDriverConstructor(t *testing.T) {
+	ctor := func(args DriverConstructorArgs) (Driver, error) {
+		return nil, fmt.Errorf("failed")
+	}
+	_, err := provide(&providersOption{
+		driver:            nil,
+		driverConstructor: ctor,
+	})(in{})
+	assert.Error(t, err)
 }
 
 type mockPopulator struct {
