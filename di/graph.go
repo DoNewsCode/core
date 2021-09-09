@@ -117,3 +117,17 @@ func IntoPopulator(container contract.DIInvoker) contract.DIPopulator {
 		invoker: container,
 	}
 }
+
+// Bind binds a type to another. Useful when binding implementation to
+// interfaces. The arguments should be a ptr to the binding types, rather than
+// the types themselves. For example:
+//  Bind(new(MyConcreteStruct), new(MyAbstractInterface))
+func Bind(from interface{}, to interface{}) interface{} {
+	fromTypes := []reflect.Type{reflect.TypeOf(from).Elem()}
+	toTypes := []reflect.Type{reflect.TypeOf(to).Elem()}
+	fnType := reflect.FuncOf(fromTypes, toTypes, false /* variadic */)
+	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
+		return args
+	})
+	return fn.Interface()
+}

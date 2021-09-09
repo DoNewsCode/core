@@ -38,7 +38,12 @@ func Providers(optionFunc ...ProvidersOptionFunc) di.Deps {
 	for _, f := range optionFunc {
 		f(&option)
 	}
-	return di.Deps{provideKafkaFactory(&option), provideConfig}
+	return di.Deps{
+		provideKafkaFactory(&option),
+		provideConfig,
+		di.Bind(new(WriterFactory), new(WriterMaker)),
+		di.Bind(new(ReaderFactory), new(ReaderMaker)),
+	}
 }
 
 // WriterMaker models a WriterFactory
@@ -69,8 +74,6 @@ type factoryOut struct {
 
 	ReaderFactory   ReaderFactory
 	WriterFactory   WriterFactory
-	ReaderMaker     ReaderMaker
-	WriterMaker     WriterMaker
 	Reader          *kafka.Reader
 	Writer          *kafka.Writer
 	ReaderCollector *readerCollector
@@ -164,9 +167,7 @@ func provideKafkaFactory(option *providersOption) func(p factoryIn) (factoryOut,
 		}
 
 		return factoryOut{
-			ReaderMaker:     rf,
 			ReaderFactory:   rf,
-			WriterMaker:     wf,
 			WriterFactory:   wf,
 			Reader:          dr,
 			Writer:          dw,

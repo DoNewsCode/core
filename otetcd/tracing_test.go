@@ -38,7 +38,7 @@ func TestTracing(t *testing.T) {
 	})
 	defer cleanup()
 
-	client, err := factory.Maker.Make("default")
+	client, err := factory.Make("default")
 	assert.NoError(t, err)
 	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "test")
 	defer span.Finish()

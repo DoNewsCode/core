@@ -36,7 +36,7 @@ func TestProvideDBFactory(t *testing.T) {
 	defer cleanup()
 	for driverName := range gorms {
 		t.Run(driverName, func(t *testing.T) {
-			db, err := out.Maker.Make(driverName)
+			db, err := out.Factory.Make(driverName)
 			assert.NoError(t, err)
 			assert.NotNil(t, db)
 		})

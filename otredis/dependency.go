@@ -36,7 +36,12 @@ func Providers(opts ...ProvidersOptionFunc) []interface{} {
 	for _, f := range opts {
 		f(&option)
 	}
-	return []interface{}{provideRedisFactory(&option), provideDefaultClient, provideConfig}
+	return []interface{}{
+		provideRedisFactory(&option),
+		provideDefaultClient,
+		provideConfig,
+		di.Bind(new(Factory), new(Maker)),
+	}
 }
 
 // factoryIn is the injection parameter for provideRedisFactory.
@@ -55,7 +60,6 @@ type factoryIn struct {
 type factoryOut struct {
 	di.Out
 
-	Maker     Maker
 	Factory   Factory
 	Collector *collector
 }
@@ -163,7 +167,6 @@ func provideRedisFactory(option *providersOption) func(p factoryIn) (factoryOut,
 			collector = newCollector(redisFactory, p.Gauges, interval)
 		}
 		redisOut := factoryOut{
-			Maker:     redisFactory,
 			Factory:   redisFactory,
 			Collector: collector,
 		}

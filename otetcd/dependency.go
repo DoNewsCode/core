@@ -41,12 +41,17 @@ Providers returns a set of dependencies including the Maker, the default *client
 		Factory
 		*clientv3.Client
 */
-func Providers(opts ...ProvidersOptionFunc) []interface{} {
+func Providers(opts ...ProvidersOptionFunc) di.Deps {
 	option := providersOption{interceptor: func(name string, options *clientv3.Config) {}}
 	for _, f := range opts {
 		f(&option)
 	}
-	return []interface{}{provideFactory(&option), provideDefaultClient, provideConfig}
+	return di.Deps{
+		provideFactory(&option),
+		provideDefaultClient,
+		provideConfig,
+		di.Bind(new(Factory), new(Maker)),
+	}
 }
 
 // EtcdConfigInterceptor is an injector type hint that allows user to do
@@ -64,22 +69,14 @@ type factoryIn struct {
 	Dispatcher contract.Dispatcher `optional:"true"`
 }
 
-// FactoryOut is the result of Provide.
-type FactoryOut struct {
-	di.Out
-
-	Maker   Maker
-	Factory Factory
-}
-
 // provideFactory creates Factory. It is a valid
 // dependency for package core.
-func provideFactory(option *providersOption) func(p factoryIn) (FactoryOut, func()) {
+func provideFactory(option *providersOption) func(p factoryIn) (Factory, func()) {
 	if option.interceptor == nil {
 		option.interceptor = func(name string, options *clientv3.Config) {}
 	}
 
-	return func(p factoryIn) (FactoryOut, func()) {
+	return func(p factoryIn) (Factory, func()) {
 
 		factory := di.NewFactory(func(name string) (di.Pair, error) {
 			var (
@@ -126,11 +123,7 @@ func provideFactory(option *providersOption) func(p factoryIn) (FactoryOut, func
 		})
 		etcdFactory := Factory{factory}
 		etcdFactory.SubscribeReloadEventFrom(p.Dispatcher)
-		out := FactoryOut{
-			Maker:   etcdFactory,
-			Factory: etcdFactory,
-		}
-		return out, factory.Close
+		return etcdFactory, etcdFactory.Close
 	}
 }
 

@@ -23,10 +23,10 @@ func TestNewMongoFactory(t *testing.T) {
 		}},
 		Tracer: nil,
 	})
-	def, err := factory.Maker.Make("default")
+	def, err := factory.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
-	alt, err := factory.Maker.Make("alternative")
+	alt, err := factory.Make("alternative")
 	assert.NoError(t, err)
 	assert.NotNil(t, alt)
 	assert.NotNil(t, cleanup)

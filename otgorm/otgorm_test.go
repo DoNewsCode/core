@@ -37,7 +37,7 @@ func TestHook(t *testing.T) {
 	})
 	defer cleanup()
 
-	factory := out.Maker
+	factory := out.Factory
 
 	db, err := factory.Make("default")
 	assert.NoError(t, err)

@@ -32,7 +32,12 @@ func Providers(optionFunc ...ProvidersOptionFunc) di.Deps {
 	for _, f := range optionFunc {
 		f(&o)
 	}
-	return []interface{}{provideMongoFactory(&o), provideDefaultClient, provideConfig}
+	return di.Deps{
+		provideMongoFactory(&o),
+		provideDefaultClient,
+		provideConfig,
+		di.Bind(new(Factory), new(Maker)),
+	}
 }
 
 // factoryIn is the injection parameter for Provide.
@@ -57,11 +62,11 @@ type factoryOut struct {
 
 // Provide creates Factory and *mongo.Client. It is a valid dependency for
 // package core.
-func provideMongoFactory(po *providersOption) func(p factoryIn) (factoryOut, func()) {
+func provideMongoFactory(po *providersOption) func(p factoryIn) (Factory, func()) {
 	if po.interceptor == nil {
 		po.interceptor = func(name string, clientOptions *options.ClientOptions) {}
 	}
-	return func(p factoryIn) (factoryOut, func()) {
+	return func(p factoryIn) (Factory, func()) {
 		factory := di.NewFactory(func(name string) (di.Pair, error) {
 			var (
 				conf struct{ URI string }
@@ -92,10 +97,7 @@ func provideMongoFactory(po *providersOption) func(p factoryIn) (factoryOut, fun
 		})
 		f := Factory{factory}
 		f.SubscribeReloadEventFrom(p.Dispatcher)
-		return factoryOut{
-			Factory: f,
-			Maker:   f,
-		}, factory.Close
+		return f, f.Close
 	}
 
 }

@@ -39,7 +39,12 @@ func Providers(opt ...ProvidersOptionFunc) di.Deps {
 	for _, f := range opt {
 		f(&o)
 	}
-	return di.Deps{provideConfig, provideDefaultDatabase, provideDBFactory(&o)}
+	return di.Deps{
+		provideConfig,
+		provideDefaultDatabase,
+		provideDBFactory(&o),
+		di.Bind(new(Factory), new(Maker)),
+	}
 }
 
 type databaseConf struct {
@@ -69,13 +74,11 @@ type metricsConf struct {
 type factoryIn struct {
 	di.In
 
-	Conf                  contract.ConfigUnmarshaler
-	Logger                log.Logger
-	GormConfigInterceptor GormConfigInterceptor `optional:"true"`
-	Tracer                opentracing.Tracer    `optional:"true"`
-	Gauges                *Gauges               `optional:"true"`
-	Dispatcher            contract.Dispatcher   `optional:"true"`
-	Drivers               Drivers               `optional:"true"`
+	Conf       contract.ConfigUnmarshaler
+	Logger     log.Logger
+	Tracer     opentracing.Tracer  `optional:"true"`
+	Gauges     *Gauges             `optional:"true"`
+	Dispatcher contract.Dispatcher `optional:"true"`
 }
 
 // databaseOut is the result of provideDatabaseOut. *gorm.DB is not a interface
@@ -84,7 +87,6 @@ type databaseOut struct {
 	di.Out
 
 	Factory   Factory
-	Maker     Maker
 	Collector *collector
 }
 
@@ -220,7 +222,6 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 		}
 		return databaseOut{
 			Factory:   dbFactory,
-			Maker:     dbFactory,
 			Collector: collector,
 		}, dbFactory.Close, nil
 	}

@@ -26,10 +26,10 @@ func TestNewEsFactory(t *testing.T) {
 			Logger: log.NewNopLogger(),
 			Tracer: nil,
 		})
-		def, err := esFactory.Maker.Make("default")
+		def, err := esFactory.Make("default")
 		assert.NoError(t, err)
 		assert.NotNil(t, def)
-		alt, err := esFactory.Maker.Make("alternative")
+		alt, err := esFactory.Make("alternative")
 		assert.NoError(t, err)
 		assert.NotNil(t, alt)
 		assert.NotNil(t, cleanup)
@@ -58,7 +58,7 @@ func TestNewEsFactory(t *testing.T) {
 				Tracer: nil,
 			},
 		)
-		def, err := esFactory.Maker.Make("default")
+		def, err := esFactory.Make("default")
 		assert.NoError(t, err)
 		assert.NotNil(t, def)
 		assert.True(t, calledConstructor)
@@ -75,7 +75,7 @@ func TestNewEsFactory(t *testing.T) {
 			Logger: log.NewNopLogger(),
 			Tracer: nil,
 		})
-		def, err := esFactory.Maker.Make("default")
+		def, err := esFactory.Make("default")
 		assert.NoError(t, err)
 		assert.NotNil(t, def)
 		cleanup()

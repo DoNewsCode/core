@@ -35,7 +35,12 @@ func Providers(opts ...ProvidersOptionFunc) di.Deps {
 	for _, f := range opts {
 		f(&options)
 	}
-	return di.Deps{provideEsFactory(&options), provideDefaultClient, provideConfig}
+	return di.Deps{
+		provideEsFactory(&options),
+		provideDefaultClient,
+		provideConfig,
+		di.Bind(new(Factory), new(Maker)),
+	}
 }
 
 // EsConfigInterceptor is an injector type hint that allows user to do
@@ -53,25 +58,16 @@ type factoryIn struct {
 	Populator  contract.DIPopulator `optional:"true"`
 }
 
-// factoryOut is the result of Provide.
-type factoryOut struct {
-	di.Out
-
-	Factory        Factory
-	Maker          Maker
-	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
-}
-
 // Provide creates Factory and *elastic.Client. It is a valid dependency for
 // package core.
-func provideEsFactory(option *providersOption) func(p factoryIn) (factoryOut, func()) {
+func provideEsFactory(option *providersOption) func(p factoryIn) (Factory, func()) {
 	if option.interceptor == nil {
 		option.interceptor = func(name string, opt *Config) {}
 	}
 	if option.clientConstructor == nil {
 		option.clientConstructor = newClient
 	}
-	return func(p factoryIn) (factoryOut, func()) {
+	return func(p factoryIn) (Factory, func()) {
 		factory := di.NewFactory(func(name string) (di.Pair, error) {
 			var conf Config
 			if err := p.Conf.Unmarshal(fmt.Sprintf("es.%s", name), &conf); err != nil {
@@ -103,10 +99,7 @@ func provideEsFactory(option *providersOption) func(p factoryIn) (factoryOut, fu
 		})
 		f := Factory{factory}
 		f.SubscribeReloadEventFrom(p.Dispatcher)
-		return factoryOut{
-			Factory: f,
-			Maker:   f,
-		}, factory.Close
+		return f, f.Close
 	}
 }
 

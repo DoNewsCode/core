@@ -89,10 +89,10 @@ func TestProvideKafka(t *testing.T) {
 		}},
 	})
 	assert.NoError(t, err)
-	def, err := Out.WriterMaker.Make("default")
+	def, err := Out.WriterFactory.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
-	alt, err := Out.WriterMaker.Make("alternative")
+	alt, err := Out.WriterFactory.Make("alternative")
 	assert.NoError(t, err)
 	assert.NotNil(t, alt)
 	cleanupReader()

@@ -27,14 +27,14 @@ Manager, the Maker and exported configurations.
 		*Manager
 		Uploader
 */
-func Providers(optionFunc ...ProvidersOptionFunc) []interface{} {
+func Providers(optionFunc ...ProvidersOptionFunc) di.Deps {
 	option := providersOption{
 		ctor: newManager,
 	}
 	for _, f := range optionFunc {
 		f(&option)
 	}
-	return []interface{}{provideFactory(&option), provideManager, provideConfig}
+	return di.Deps{provideFactory(&option), provideManager, provideConfig}
 }
 
 // Uploader models UploadService
@@ -64,20 +64,12 @@ type factoryIn struct {
 	Dispatcher contract.Dispatcher  `optional:"true"`
 }
 
-// factoryOut is the di output of provideFactory.
-type factoryOut struct {
-	di.Out
-
-	Factory Factory
-	Maker   Maker
-}
-
 // provideFactory creates *Factory and *ots3.Manager. It is a valid dependency for package core.
-func provideFactory(option *providersOption) func(p factoryIn) factoryOut {
+func provideFactory(option *providersOption) func(p factoryIn) Factory {
 	if option.ctor == nil {
 		option.ctor = newManager
 	}
-	return func(p factoryIn) factoryOut {
+	return func(p factoryIn) Factory {
 		factory := di.NewFactory(func(name string) (di.Pair, error) {
 
 			var conf S3Config
@@ -107,10 +99,8 @@ func provideFactory(option *providersOption) func(p factoryIn) factoryOut {
 		s3Factory := Factory{factory}
 		s3Factory.SubscribeReloadEventFrom(p.Dispatcher)
 
-		return factoryOut{
-			Factory: s3Factory,
-			Maker:   &s3Factory,
-		}
+		return s3Factory
+
 	}
 }
 
