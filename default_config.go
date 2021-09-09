@@ -100,7 +100,7 @@ func ProvideLogger(conf contract.ConfigUnmarshaler, appName contract.AppName, en
 }
 
 // ProvideDi is the default DiProvider for package Core.
-func ProvideDi(conf contract.ConfigUnmarshaler) DiContainer {
+func ProvideDi(conf contract.ConfigUnmarshaler) contract.DIContainer {
 	return di.NewGraph()
 }
 

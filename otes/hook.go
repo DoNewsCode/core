@@ -18,13 +18,13 @@ type Transport struct {
 	tracer opentracing.Tracer
 }
 
-// Option signature for specifying options, e.g. WithRoundTripper.
-type Option func(t *Transport)
+// TransportOption signature for specifying options, e.g. WithRoundTripper.
+type TransportOption func(t *Transport)
 
 // WithRoundTripper specifies the http.RoundTripper to call
 // next after this transport. If it is nil (default), the
 // transport will use http.DefaultTransport.
-func WithRoundTripper(rt http.RoundTripper) Option {
+func WithRoundTripper(rt http.RoundTripper) TransportOption {
 	return func(t *Transport) {
 		t.rt = rt
 	}
@@ -32,7 +32,7 @@ func WithRoundTripper(rt http.RoundTripper) Option {
 
 // WithTracer specifies the opentracing.Tracer to call
 // this transport.
-func WithTracer(tracer opentracing.Tracer) Option {
+func WithTracer(tracer opentracing.Tracer) TransportOption {
 	return func(t *Transport) {
 		t.tracer = tracer
 	}
@@ -40,7 +40,7 @@ func WithTracer(tracer opentracing.Tracer) Option {
 
 // NewTransport specifies a transport that will trace Elastic
 // and report back via OpenTracing.
-func NewTransport(opts ...Option) *Transport {
+func NewTransport(opts ...TransportOption) *Transport {
 	t := &Transport{}
 	for _, o := range opts {
 		o(t)

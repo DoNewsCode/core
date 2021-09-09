@@ -40,7 +40,7 @@ func TestProvideFactory(t *testing.T) {
 		return
 	}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
-	out, cleanup := provideFactory(factoryIn{
+	out, cleanup := provideFactory(&providersOption{})(factoryIn{
 		Conf: config.MapAdapter{"etcd": map[string]Option{
 			"default": {
 				Endpoints: addrs,

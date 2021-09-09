@@ -35,7 +35,7 @@ type C struct {
 	logging.LevelLogger
 	contract.Container
 	contract.Dispatcher
-	di DiContainer
+	di contract.DIContainer
 }
 
 // ConfParser models a parser for configuration. For example, yaml.Parser.
@@ -57,7 +57,7 @@ type ConfigProvider func(configStack []config.ProviderSet, configWatcher contrac
 type EventDispatcherProvider func(conf contract.ConfigUnmarshaler) contract.Dispatcher
 
 // DiProvider provides the DiContainer to the core.
-type DiProvider func(conf contract.ConfigUnmarshaler) DiContainer
+type DiProvider func(conf contract.ConfigUnmarshaler) contract.DIContainer
 
 // AppNameProvider provides the contract.AppName to the core.
 type AppNameProvider func(conf contract.ConfigUnmarshaler) contract.AppName
@@ -327,6 +327,7 @@ func (c *C) ProvideEssentials() {
 		ConfigAccessor    contract.ConfigAccessor
 		ConfigRouter      contract.ConfigRouter
 		ConfigWatcher     contract.ConfigWatcher
+		DIPopulater       contract.DIPopulater
 		Logger            log.Logger
 		LevelLogger       logging.LevelLogger
 		Dispatcher        contract.Dispatcher
@@ -343,6 +344,7 @@ func (c *C) ProvideEssentials() {
 			Logger:            c.LevelLogger,
 			LevelLogger:       c.LevelLogger,
 			Dispatcher:        c.Dispatcher,
+			DIPopulater:       di.IntoPopulater(c.di),
 			DefaultConfigs:    provideDefaultConfig(),
 		}
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {

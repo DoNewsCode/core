@@ -5,6 +5,10 @@
 package di
 
 import (
+	"fmt"
+	"reflect"
+
+	"github.com/DoNewsCode/core/contract"
 	"go.uber.org/dig"
 )
 
@@ -47,4 +51,63 @@ func (g *Graph) Invoke(function interface{}) error {
 // String representation of the entire Container
 func (g *Graph) String() string {
 	return g.dig.String()
+}
+
+type defaultPopulater struct {
+	invoker contract.DIInvoker
+}
+
+// Populate sets targets with values from the dependency injection container
+// during application initialization. All targets must be pointers to the
+// values that must be populated. Pointers to structs that embed In are
+// supported, which can be used to populate multiple values in a struct.
+//
+// This is most helpful in unit tests: it lets tests leverage Fx's automatic
+// constructor wiring to build a few structs, but then extract those structs
+// for further testing.
+//
+// Mostly copied from uber/fx. License: https://github.com/uber-go/fx/blob/master/LICENSE
+func (d *defaultPopulater) Populate(target interface{}) error {
+	invokeErr := func(err error) error {
+		return d.invoker.Invoke(func() error {
+			return err
+		})
+	}
+	targetTypes := make([]reflect.Type, 1)
+	// Validate all targets are non-nil pointers.
+	if target == nil {
+		return invokeErr(fmt.Errorf("failed to Populate: target is nil"))
+	}
+	rt := reflect.TypeOf(target)
+	if rt.Kind() != reflect.Ptr {
+		return invokeErr(fmt.Errorf("failed to Populate: target is not a pointer type, got %T", rt))
+	}
+
+	targetTypes[0] = rt.Elem()
+
+	// Build a function that looks like:
+	//
+	// func(t1 T1, t2 T2, ...) {
+	//   *targets[0] = t1
+	//   *targets[1] = t2
+	//   [...]
+	// }
+	//
+	fnType := reflect.FuncOf(targetTypes, nil, false /* variadic */)
+	fn := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
+		for _, arg := range args {
+			reflect.ValueOf(target).Elem().Set(arg)
+		}
+		return nil
+	})
+	return d.invoker.Invoke(fn.Interface())
+}
+
+func IntoPopulater(container contract.DIInvoker) contract.DIPopulater {
+	if populater, ok := container.(contract.DIPopulater); ok {
+		return populater
+	}
+	return &defaultPopulater{
+		invoker: container,
+	}
 }

@@ -28,7 +28,7 @@ func TestProvideDBFactory(t *testing.T) {
 			Dsn:      os.Getenv("MYSQL_DSN"),
 		},
 	}
-	out, cleanup, _ := provideDBFactory(factoryIn{
+	out, cleanup, _ := provideDBFactory(&providersOption{})(factoryIn{
 		Conf:   config.MapAdapter{"gorm": gorms},
 		Logger: log.NewNopLogger(),
 		Tracer: nil,

@@ -18,7 +18,7 @@ func TestNewEsFactory(t *testing.T) {
 	}
 	addrs := strings.Split(os.Getenv("ELASTICSEARCH_ADDR"), ",")
 	t.Run("normal construction", func(t *testing.T) {
-		esFactory, cleanup := provideEsFactory(factoryIn{
+		esFactory, cleanup := provideEsFactory(&providersOption{})(factoryIn{
 			Conf: config.MapAdapter{"es": map[string]Config{
 				"default":     {URL: addrs},
 				"alternative": {URL: addrs},
@@ -36,29 +36,38 @@ func TestNewEsFactory(t *testing.T) {
 		cleanup()
 	})
 	t.Run("with options", func(t *testing.T) {
-		var called bool
-		esFactory, cleanup := provideEsFactory(factoryIn{
-			Conf: config.MapAdapter{"es": map[string]Config{
-				"default": {URL: addrs},
-			}},
-			Logger: log.NewNopLogger(),
-			Options: []elastic.ClientOptionFunc{
-				func(client *elastic.Client) error {
-					called = true
-					return nil
+		var calledConstructor bool
+		var calledConfig bool
+		esFactory, cleanup := provideEsFactory(
+
+			&providersOption{
+				clientConstructor: func(args ClientConstructorArgs) (*elastic.Client, error) {
+					calledConstructor = true
+					return newClient(args)
+				},
+				interceptor: func(name string, opt *Config) {
+					calledConfig = true
 				},
 			},
-			Tracer: nil,
-		})
+		)(
+			factoryIn{
+				Conf: config.MapAdapter{"es": map[string]Config{
+					"default": {URL: addrs},
+				}},
+				Logger: log.NewNopLogger(),
+				Tracer: nil,
+			},
+		)
 		def, err := esFactory.Maker.Make("default")
 		assert.NoError(t, err)
 		assert.NotNil(t, def)
-		assert.True(t, called)
+		assert.True(t, calledConstructor)
+		assert.True(t, calledConfig)
 		cleanup()
 	})
 
 	t.Run("should not connect to ES", func(t *testing.T) {
-		esFactory, cleanup := provideEsFactory(factoryIn{
+		esFactory, cleanup := provideEsFactory(&providersOption{})(factoryIn{
 			Conf: config.MapAdapter{"es": map[string]Config{
 				// elasticsearch server doesn't exist at this port
 				"default": {URL: []string{"http://127.0.0.1:9999"}},

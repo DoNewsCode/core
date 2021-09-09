@@ -23,23 +23,24 @@ the Maker, database configs and the default *gorm.DB instance.
 	Depends On:
 		contract.ConfigAccessor
 		log.Logger
-		GormConfigInterceptor `optional:"true"`
 		opentracing.Tracer    `optional:"true"`
 		Gauges `optional:"true"`
 		contract.Dispatcher `optional:"true"`
-		Drivers               `optional:"true"`
 	Provide:
 		Maker
 		Factory
 		*gorm.DB
 */
-func Providers() []interface{} {
-	return []interface{}{provideConfig, provideDefaultDatabase, provideDBFactory}
+func Providers(opt ...ProvidersOptionFunc) di.Deps {
+	o := providersOption{
+		interceptor: func(name string, conf *gorm.Config) {},
+		drivers:     getDefaultDrivers(),
+	}
+	for _, f := range opt {
+		f(&o)
+	}
+	return di.Deps{provideConfig, provideDefaultDatabase, provideDBFactory(&o)}
 }
-
-// GormConfigInterceptor is a function that allows user to Make last minute
-// change to *gorm.Config when constructing *gorm.DB.
-type GormConfigInterceptor func(name string, conf *gorm.Config)
 
 type databaseConf struct {
 	Database                                 string `json:"database" yaml:"database"`
@@ -172,55 +173,57 @@ func provideDefaultDatabase(maker Maker) (*gorm.DB, error) {
 	return maker.Make("default")
 }
 
-func provideDBFactory(p factoryIn) (databaseOut, func(), error) {
-	logger := log.With(p.Logger, "tag", "database")
+func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, func(), error) {
+	return func(factoryIn factoryIn) (databaseOut, func(), error) {
+		logger := log.With(factoryIn.Logger, "tag", "database")
+		if options.drivers == nil {
+			options.drivers = getDefaultDrivers()
+		}
+		if options.interceptor == nil {
+			options.interceptor = func(name string, conf *gorm.Config) {}
+		}
 
-	factory := di.NewFactory(func(name string) (di.Pair, error) {
-		var (
-			dialector gorm.Dialector
-			conf      databaseConf
-			conn      *gorm.DB
-			cleanup   func()
-		)
-		p := p
-		if err := p.Conf.Unmarshal(fmt.Sprintf("gorm.%s", name), &conf); err != nil {
-			return di.Pair{}, fmt.Errorf("database configuration %s not valid: %w", name, err)
-		}
-		if p.Drivers == nil {
-			p.Drivers = getDefaultDrivers()
-		}
-		dialector, err := provideDialector(&conf, p.Drivers)
-		if err != nil {
-			return di.Pair{}, err
-		}
-		gormConfig := provideGormConfig(logger, &conf)
-		if p.GormConfigInterceptor != nil {
-			p.GormConfigInterceptor(name, gormConfig)
-		}
-		conn, cleanup, err = provideGormDB(dialector, gormConfig, p.Tracer)
-		if err != nil {
-			return di.Pair{}, err
-		}
-		return di.Pair{
-			Conn:   conn,
-			Closer: cleanup,
-		}, err
-	})
-	dbFactory := Factory{factory}
-	dbFactory.SubscribeReloadEventFrom(p.Dispatcher)
+		factory := di.NewFactory(func(name string) (di.Pair, error) {
+			var (
+				dialector gorm.Dialector
+				conf      databaseConf
+				conn      *gorm.DB
+				cleanup   func()
+			)
+			factoryIn := factoryIn
+			if err := factoryIn.Conf.Unmarshal(fmt.Sprintf("gorm.%s", name), &conf); err != nil {
+				return di.Pair{}, fmt.Errorf("database configuration %s not valid: %w", name, err)
+			}
+			dialector, err := provideDialector(&conf, options.drivers)
+			if err != nil {
+				return di.Pair{}, err
+			}
+			gormConfig := provideGormConfig(logger, &conf)
+			options.interceptor(name, gormConfig)
+			conn, cleanup, err = provideGormDB(dialector, gormConfig, factoryIn.Tracer)
+			if err != nil {
+				return di.Pair{}, err
+			}
+			return di.Pair{
+				Conn:   conn,
+				Closer: cleanup,
+			}, err
+		})
+		dbFactory := Factory{factory}
+		dbFactory.SubscribeReloadEventFrom(factoryIn.Dispatcher)
 
-	var collector *collector
-	if p.Gauges != nil {
-
-		var interval time.Duration
-		p.Conf.Unmarshal("gormMetrics.interval", &interval)
-		collector = newCollector(dbFactory, p.Gauges, interval)
+		var collector *collector
+		if factoryIn.Gauges != nil {
+			var interval time.Duration
+			factoryIn.Conf.Unmarshal("gormMetrics.interval", &interval)
+			collector = newCollector(dbFactory, factoryIn.Gauges, interval)
+		}
+		return databaseOut{
+			Factory:   dbFactory,
+			Maker:     dbFactory,
+			Collector: collector,
+		}, dbFactory.Close, nil
 	}
-	return databaseOut{
-		Factory:   dbFactory,
-		Maker:     dbFactory,
-		Collector: collector,
-	}, dbFactory.Close, nil
 }
 
 type configOut struct {

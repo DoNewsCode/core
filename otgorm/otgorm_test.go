@@ -19,7 +19,10 @@ type mockModel struct {
 func TestHook(t *testing.T) {
 	var interceptorCalled bool
 	tracer := mocktracer.New()
-	out, cleanup, _ := provideDBFactory(factoryIn{
+	out, cleanup, _ := provideDBFactory(&providersOption{
+		interceptor: func(name string, conf *gorm.Config) {},
+		drivers:     map[string]func(dsn string) gorm.Dialector{},
+	})(factoryIn{
 		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
 			"default": {
 				Database: "sqlite",
