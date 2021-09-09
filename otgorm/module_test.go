@@ -54,7 +54,10 @@ func TestModule_ProvideCommand(t *testing.T) {
 	c := core.New(core.WithInline("gorm.default.database", "sqlite"),
 		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"))
 	c.ProvideEssentials()
-	c.Provide(di.Deps{provideDBFactory(&providersOption{})})
+	c.Provide(di.Deps{
+		provideDBFactory(&providersOption{}),
+		di.Bind(new(Factory), new(Maker)),
+	})
 	c.AddModuleFunc(New)
 	mock := &Mock{}
 	c.AddModule(mock)
