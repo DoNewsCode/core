@@ -23,15 +23,6 @@ func (m *mockMaker) Make(name string) (*clientv3.Client, error) {
 	return clientv3.New(clientv3.Config{Endpoints: m.endpoints})
 }
 
-func TestDrivers(t *testing.T) {
-	driver := mockDriver{}
-	out, _ := provide(&providersOption{
-		driver:            nil,
-		driverConstructor: nil,
-	})(in{})
-	assert.Equal(t, driver, out.Election.driver)
-}
-
 type mockDriver struct{}
 
 func (m mockDriver) Campaign(ctx context.Context) error {
