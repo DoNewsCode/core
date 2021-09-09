@@ -114,6 +114,7 @@ func provideFactory(option *providersOption) func(p factoryIn) factoryOut {
 	}
 }
 
+// ManagerConstructorArgs are arguments for constructing the s3 manager. When providing custom constructors, take this as input.
 type ManagerConstructorArgs struct {
 	Name      string
 	Conf      S3Config
