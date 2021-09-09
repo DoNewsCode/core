@@ -44,7 +44,7 @@ type in struct {
 	Env        contract.Env
 	Config     contract.ConfigUnmarshaler
 	Dispatcher contract.Dispatcher
-	Populater  contract.DIPopulater
+	Populator  contract.DIPopulator
 }
 
 type out struct {
@@ -73,7 +73,7 @@ func provide(option *providersOption) func(in in) (out, error) {
 			Conf:      in.Config,
 			AppName:   in.AppName,
 			Env:       in.Env,
-			Populater: in.Populater,
+			Populator: in.Populator,
 		})
 		if err != nil {
 			return out{}, fmt.Errorf("unable to contruct driver: %w", err)
@@ -108,7 +108,7 @@ type DriverConstructorArgs struct {
 	Conf      contract.ConfigUnmarshaler
 	AppName   contract.AppName
 	Env       contract.Env
-	Populater contract.DIPopulater
+	Populator contract.DIPopulator
 }
 
 func newDefaultDriver(args DriverConstructorArgs) (Driver, error) {
@@ -120,7 +120,7 @@ func newDefaultDriver(args DriverConstructorArgs) (Driver, error) {
 		option.EtcdName = "default"
 	}
 	var maker otetcd.Maker
-	args.Populater.Populate(&maker)
+	args.Populator.Populate(&maker)
 	if maker == nil {
 		return nil, fmt.Errorf("must provider an otetcd.Maker to the DI graph to construct the default leader.Driver")
 	}

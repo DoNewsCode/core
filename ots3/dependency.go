@@ -20,7 +20,7 @@ Manager, the Maker and exported configurations.
 		log.Logger
 		contract.ConfigAccessor
 		opentracing.Tracer `optional:"true"`
-		contract.DIPopulater `optional:"true"`
+		contract.DIPopulator `optional:"true"`
 	Provide:
 		Factory
 		Maker
@@ -59,7 +59,7 @@ type factoryIn struct {
 
 	Logger     log.Logger
 	Conf       contract.ConfigUnmarshaler
-	Populater  contract.DIPopulater `optional:"true"`
+	Populator  contract.DIPopulator `optional:"true"`
 	Tracer     opentracing.Tracer   `optional:"true"`
 	Dispatcher contract.Dispatcher  `optional:"true"`
 }
@@ -93,7 +93,7 @@ func provideFactory(option *providersOption) func(p factoryIn) factoryOut {
 				Name:      name,
 				Conf:      conf,
 				Tracer:    p.Tracer,
-				Populator: p.Populater,
+				Populator: p.Populator,
 			})
 			if err != nil {
 				return di.Pair{}, fmt.Errorf("error constructing manager: %w", err)
@@ -119,7 +119,7 @@ type ManagerConstructorArgs struct {
 	Name      string
 	Conf      S3Config
 	Tracer    opentracing.Tracer
-	Populator contract.DIPopulater
+	Populator contract.DIPopulator
 }
 
 func newManager(args ManagerConstructorArgs) (*Manager, error) {

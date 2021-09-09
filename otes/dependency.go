@@ -21,7 +21,7 @@ default *elastic.Client and exported configs.
 		contract.ConfigAccessor
 		opentracing.Tracer     `optional:"true"`
 		contract.Dispatcher    `optional:"true"`
-		contract.DIPopulater   `optional:"true"`
+		contract.DIPopulator   `optional:"true"`
 	Provides:
 		Factory
 		Maker
@@ -50,7 +50,7 @@ type factoryIn struct {
 	Conf       contract.ConfigUnmarshaler
 	Tracer     opentracing.Tracer   `optional:"true"`
 	Dispatcher contract.Dispatcher  `optional:"true"`
-	Populater  contract.DIPopulater `optional:"true"`
+	Populator  contract.DIPopulator `optional:"true"`
 }
 
 // factoryOut is the result of Provide.
@@ -88,7 +88,7 @@ func provideEsFactory(option *providersOption) func(p factoryIn) (factoryOut, fu
 				Conf:      &conf,
 				Logger:    p.Logger,
 				Tracer:    p.Tracer,
-				Populater: p.Populater,
+				Populator: p.Populator,
 			})
 			if err != nil {
 				return di.Pair{}, err
@@ -117,7 +117,7 @@ type ClientConstructorArgs struct {
 	Conf      *Config
 	Logger    log.Logger
 	Tracer    opentracing.Tracer
-	Populater contract.DIPopulater
+	Populator contract.DIPopulator
 }
 
 func newClient(args ClientConstructorArgs) (*elastic.Client, error) {

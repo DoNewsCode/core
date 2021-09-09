@@ -56,11 +56,11 @@ func TestDriverConstructor(t *testing.T) {
 	assert.IsType(t, mockDriver{}, out.Election.driver)
 }
 
-type mockPopulater struct {
+type mockPopulator struct {
 	endpoints []string
 }
 
-func (m mockPopulater) Populate(target interface{}) error {
+func (m mockPopulator) Populate(target interface{}) error {
 	*target.(*otetcd.Maker) = &mockMaker{"default", m.endpoints}
 	return nil
 }
@@ -79,7 +79,7 @@ func TestDefaultDriver(t *testing.T) {
 	)(
 		in{
 			Config:    config.MapAdapter{"etcdName": "default"},
-			Populater: mockPopulater{addrs},
+			Populator: mockPopulator{addrs},
 			AppName:   config.AppName("test"),
 			Env:       config.NewEnv("test"),
 		},

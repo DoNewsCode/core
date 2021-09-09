@@ -327,7 +327,7 @@ func (c *C) ProvideEssentials() {
 		ConfigAccessor    contract.ConfigAccessor
 		ConfigRouter      contract.ConfigRouter
 		ConfigWatcher     contract.ConfigWatcher
-		DIPopulater       contract.DIPopulater
+		DIPopulator       contract.DIPopulator
 		Logger            log.Logger
 		LevelLogger       logging.LevelLogger
 		Dispatcher        contract.Dispatcher
@@ -344,7 +344,7 @@ func (c *C) ProvideEssentials() {
 			Logger:            c.LevelLogger,
 			LevelLogger:       c.LevelLogger,
 			Dispatcher:        c.Dispatcher,
-			DIPopulater:       di.IntoPopulater(c.di),
+			DIPopulator:       di.IntoPopulator(c.di),
 			DefaultConfigs:    provideDefaultConfig(),
 		}
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {

@@ -6,12 +6,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIntoPopulater(t *testing.T) {
+func TestIntoPopulator(t *testing.T) {
 	var target int
 	g := NewGraph()
 	g.Provide(func() int { return 1 })
 
-	p := IntoPopulater(g)
+	p := IntoPopulator(g)
 	err := p.Populate(&target)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, target)

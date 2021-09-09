@@ -54,7 +54,7 @@ func (g *Graph) String() string {
 	return g.dig.String()
 }
 
-type defaultPopulater struct {
+type defaultPopulator struct {
 	mutex   sync.Mutex
 	invoker contract.DIInvoker
 }
@@ -69,7 +69,7 @@ type defaultPopulater struct {
 // for further testing.
 //
 // Mostly copied from uber/fx. License: https://github.com/uber-go/fx/blob/master/LICENSE
-func (d *defaultPopulater) Populate(target interface{}) error {
+func (d *defaultPopulator) Populate(target interface{}) error {
 	invokeErr := func(err error) error {
 		return d.invoker.Invoke(func() error {
 			return err
@@ -108,12 +108,12 @@ func (d *defaultPopulater) Populate(target interface{}) error {
 	return d.invoker.Invoke(fn.Interface())
 }
 
-// IntoPopulater converts a contract.DIInvoker to contract.DIPopulater.
-func IntoPopulater(container contract.DIInvoker) contract.DIPopulater {
-	if populater, ok := container.(contract.DIPopulater); ok {
-		return populater
+// IntoPopulator converts a contract.DIInvoker to contract.DIPopulator.
+func IntoPopulator(container contract.DIInvoker) contract.DIPopulator {
+	if populator, ok := container.(contract.DIPopulator); ok {
+		return populator
 	}
-	return &defaultPopulater{
+	return &defaultPopulator{
 		invoker: container,
 	}
 }
