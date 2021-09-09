@@ -23,7 +23,7 @@ func WithConfigInterceptor(interceptor GormConfigInterceptor) ProvidersOptionFun
 	}
 }
 
-// WithDriver instructs the Providers to add new drivers or replace existing
+// WithDrivers instructs the Providers to add new drivers or replace existing
 // drivers. (By default, only "mysql", "sqlite", and "clickhouse" drivers are
 // registered out of box.) For example, if SqlServer driver and mysql driver are
 // need, we can pass in the following option

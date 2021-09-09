@@ -103,6 +103,7 @@ func (d *defaultPopulater) Populate(target interface{}) error {
 	return d.invoker.Invoke(fn.Interface())
 }
 
+// IntoPopulater converts a contract.DIInvoker to contract.DIPopulater.
 func IntoPopulater(container contract.DIInvoker) contract.DIPopulater {
 	if populater, ok := container.(contract.DIPopulater); ok {
 		return populater

@@ -21,6 +21,7 @@ default *elastic.Client and exported configs.
 		contract.ConfigAccessor
 		opentracing.Tracer     `optional:"true"`
 		contract.Dispatcher    `optional:"true"`
+		contract.DIPopulater   `optional:"true"`
 	Provides:
 		Factory
 		Maker
@@ -109,6 +110,8 @@ func provideEsFactory(option *providersOption) func(p factoryIn) (factoryOut, fu
 	}
 }
 
+// ClientConstructorArgs are arguments for constructing elasticsearch clients.
+// Use this as input when providing custom constructor.
 type ClientConstructorArgs struct {
 	Name      string
 	Conf      *Config

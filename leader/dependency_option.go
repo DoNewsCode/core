@@ -17,7 +17,7 @@ func WithDriver(driver Driver) ProvidersOptionFunc {
 	}
 }
 
-// WithClientConstructor instructs the Providers to accept an alternative constructor for election driver.
+// WithDriverConstructor instructs the Providers to accept an alternative constructor for election driver.
 // If the WithDriver option is set, this option becomes an no-op.
 func WithDriverConstructor(f func(args DriverConstructorArgs) (Driver, error)) ProvidersOptionFunc {
 	return func(options *providersOption) {

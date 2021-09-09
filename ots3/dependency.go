@@ -20,7 +20,7 @@ Manager, the Maker and exported configurations.
 		log.Logger
 		contract.ConfigAccessor
 		opentracing.Tracer `optional:"true"`
-		contract.DIPopulater `optional:true`
+		contract.DIPopulater `optional:"true"`
 	Provide:
 		Factory
 		Maker
@@ -59,7 +59,7 @@ type factoryIn struct {
 
 	Logger     log.Logger
 	Conf       contract.ConfigUnmarshaler
-	Populater  contract.DIPopulater `optional:true`
+	Populater  contract.DIPopulater `optional:"true"`
 	Tracer     opentracing.Tracer   `optional:"true"`
 	Dispatcher contract.Dispatcher  `optional:"true"`
 }
