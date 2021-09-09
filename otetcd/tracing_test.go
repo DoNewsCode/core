@@ -22,22 +22,23 @@ func TestTracing(t *testing.T) {
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
 	var interceptorCalled bool
 	tracer := mocktracer.New()
-	factory, cleanup := provideFactory(factoryIn{
+	factory, cleanup := provideFactory(&providersOption{
+		interceptor: func(name string, options *clientv3.Config) {
+			interceptorCalled = true
+			assert.Equal(t, "default", name)
+		},
+	})(factoryIn{
 		Logger: log.NewNopLogger(),
 		Conf: config.MapAdapter{"etcd": map[string]Option{
 			"default": {
 				Endpoints: addrs,
 			},
 		}},
-		Interceptor: func(name string, options *clientv3.Config) {
-			interceptorCalled = true
-			assert.Equal(t, "default", name)
-		},
 		Tracer: tracer,
 	})
 	defer cleanup()
 
-	client, err := factory.Maker.Make("default")
+	client, err := factory.Make("default")
 	assert.NoError(t, err)
 	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "test")
 	defer span.Finish()

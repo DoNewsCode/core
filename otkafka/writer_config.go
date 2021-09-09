@@ -6,10 +6,6 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// WriterInterceptor is an interceptor that makes last minute change to a
-// *kafka.Writer during its creation
-type WriterInterceptor func(name string, writer *kafka.Writer)
-
 // WriterConfig is a configuration type used to create new instances of Writer.
 type WriterConfig struct {
 	// The list of brokers used to discover the partitions available on the

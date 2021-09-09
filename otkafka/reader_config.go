@@ -126,10 +126,6 @@ type ReaderConfig struct {
 	MaxAttempts int `json:"maxAttempts" yaml:"maxAttempts"`
 }
 
-// ReaderInterceptor is an interceptor that makes last minute change to a *kafka.ReaderConfig
-// during kafka.Reader's creation
-type ReaderInterceptor func(name string, reader *kafka.ReaderConfig)
-
 func fromReaderConfig(conf ReaderConfig) kafka.ReaderConfig {
 	if len(conf.Brokers) == 0 {
 		conf.Brokers = []string{"127.0.0.1:9092"}

@@ -27,25 +27,27 @@ default mongo.Client and exported configs.
 		Maker
 		*mongo.Client
 */
-func Providers() di.Deps {
-	return []interface{}{provideMongoFactory, provideDefaultClient, provideConfig}
+func Providers(optionFunc ...ProvidersOptionFunc) di.Deps {
+	o := providersOption{interceptor: func(name string, clientOptions *options.ClientOptions) {}}
+	for _, f := range optionFunc {
+		f(&o)
+	}
+	return di.Deps{
+		provideMongoFactory(&o),
+		provideDefaultClient,
+		provideConfig,
+		di.Bind(new(Factory), new(Maker)),
+	}
 }
-
-// MongoConfigInterceptor is an injection type hint that allows user to make last
-// minute modification to mongo configuration. This is useful when some
-// configuration cannot be easily expressed factoryIn a text form. For example, the
-// options.ContextDialer.
-type MongoConfigInterceptor func(name string, clientOptions *options.ClientOptions)
 
 // factoryIn is the injection parameter for Provide.
 type factoryIn struct {
 	dig.In
 
-	Logger      log.Logger
-	Conf        contract.ConfigUnmarshaler
-	Interceptor MongoConfigInterceptor `optional:"true"`
-	Tracer      opentracing.Tracer     `optional:"true"`
-	Dispatcher  contract.Dispatcher    `optional:"true"`
+	Logger     log.Logger
+	Conf       contract.ConfigUnmarshaler
+	Tracer     opentracing.Tracer  `optional:"true"`
+	Dispatcher contract.Dispatcher `optional:"true"`
 }
 
 // factoryOut is the result of Provide. The official mongo package doesn't
@@ -60,43 +62,44 @@ type factoryOut struct {
 
 // Provide creates Factory and *mongo.Client. It is a valid dependency for
 // package core.
-func provideMongoFactory(p factoryIn) (factoryOut, func()) {
-	factory := di.NewFactory(func(name string) (di.Pair, error) {
-		var (
-			conf struct{ URI string }
-		)
-		if err := p.Conf.Unmarshal(fmt.Sprintf("mongo.%s", name), &conf); err != nil {
-			return di.Pair{}, fmt.Errorf("mongo configuration %s not valid: %w", name, err)
-		}
-		if conf.URI == "" {
-			conf.URI = "mongodb://127.0.0.1:27017"
-		}
+func provideMongoFactory(po *providersOption) func(p factoryIn) (Factory, func()) {
+	if po.interceptor == nil {
+		po.interceptor = func(name string, clientOptions *options.ClientOptions) {}
+	}
+	return func(p factoryIn) (Factory, func()) {
+		factory := di.NewFactory(func(name string) (di.Pair, error) {
+			var (
+				conf struct{ URI string }
+			)
+			if err := p.Conf.Unmarshal(fmt.Sprintf("mongo.%s", name), &conf); err != nil {
+				return di.Pair{}, fmt.Errorf("mongo configuration %s not valid: %w", name, err)
+			}
+			if conf.URI == "" {
+				conf.URI = "mongodb://127.0.0.1:27017"
+			}
 
-		opts := options.Client()
-		opts.ApplyURI(conf.URI)
-		if p.Tracer != nil {
-			opts.Monitor = NewMonitor(p.Tracer)
-		}
-		if p.Interceptor != nil {
-			p.Interceptor(name, opts)
-		}
-		client, err := mongo.Connect(context.Background(), opts)
-		if err != nil {
-			return di.Pair{}, err
-		}
-		return di.Pair{
-			Conn: client,
-			Closer: func() {
-				_ = client.Disconnect(context.Background())
-			},
-		}, nil
-	})
-	f := Factory{factory}
-	f.SubscribeReloadEventFrom(p.Dispatcher)
-	return factoryOut{
-		Factory: f,
-		Maker:   f,
-	}, factory.Close
+			opts := options.Client()
+			opts.ApplyURI(conf.URI)
+			if p.Tracer != nil {
+				opts.Monitor = NewMonitor(p.Tracer)
+			}
+			po.interceptor(name, opts)
+			client, err := mongo.Connect(context.Background(), opts)
+			if err != nil {
+				return di.Pair{}, err
+			}
+			return di.Pair{
+				Conn: client,
+				Closer: func() {
+					_ = client.Disconnect(context.Background())
+				},
+			}, nil
+		})
+		f := Factory{factory}
+		f.SubscribeReloadEventFrom(p.Dispatcher)
+		return f, f.Close
+	}
+
 }
 
 func provideDefaultClient(maker Maker) (*mongo.Client, error) {

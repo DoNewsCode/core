@@ -11,7 +11,6 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/olivere/elastic/v7"
 	"github.com/opentracing/opentracing-go"
-	"go.uber.org/dig"
 )
 
 /*
@@ -20,15 +19,28 @@ default *elastic.Client and exported configs.
 	Depends On:
 		log.Logger
 		contract.ConfigAccessor
-		EsConfigInterceptor `optional:"true"`
 		opentracing.Tracer     `optional:"true"`
+		contract.Dispatcher    `optional:"true"`
+		contract.DIPopulator   `optional:"true"`
 	Provides:
 		Factory
 		Maker
 		*elastic.Client
 */
-func Providers() di.Deps {
-	return []interface{}{provideEsFactory, provideDefaultClient, provideConfig}
+func Providers(opts ...ProvidersOptionFunc) di.Deps {
+	options := providersOption{
+		interceptor:       func(name string, opt *Config) {},
+		clientConstructor: newClient,
+	}
+	for _, f := range opts {
+		f(&options)
+	}
+	return di.Deps{
+		provideEsFactory(&options),
+		provideDefaultClient,
+		provideConfig,
+		di.Bind(new(Factory), new(Maker)),
+	}
 }
 
 // EsConfigInterceptor is an injector type hint that allows user to do
@@ -37,90 +49,106 @@ type EsConfigInterceptor func(name string, opt *Config)
 
 // factoryIn is the injection parameter for Provide.
 type factoryIn struct {
-	dig.In
+	di.In
 
-	Logger      log.Logger
-	Conf        contract.ConfigUnmarshaler
-	Interceptor EsConfigInterceptor        `optional:"true"`
-	Tracer      opentracing.Tracer         `optional:"true"`
-	Options     []elastic.ClientOptionFunc `optional:"true"`
-	Dispatcher  contract.Dispatcher        `optional:"true"`
-}
-
-// factoryOut is the result of Provide.
-type factoryOut struct {
-	dig.Out
-
-	Factory        Factory
-	Maker          Maker
-	ExportedConfig []config.ExportedConfig `group:"config,flatten"`
+	Logger     log.Logger
+	Conf       contract.ConfigUnmarshaler
+	Tracer     opentracing.Tracer   `optional:"true"`
+	Dispatcher contract.Dispatcher  `optional:"true"`
+	Populator  contract.DIPopulator `optional:"true"`
 }
 
 // Provide creates Factory and *elastic.Client. It is a valid dependency for
 // package core.
-func provideEsFactory(p factoryIn) (factoryOut, func()) {
-	factory := di.NewFactory(func(name string) (di.Pair, error) {
-		var (
-			conf    Config
-			options []elastic.ClientOptionFunc
-		)
-		if err := p.Conf.Unmarshal(fmt.Sprintf("es.%s", name), &conf); err != nil {
-			if name != "default" {
-				return di.Pair{}, fmt.Errorf("elastic configuration %s not valid: %w", name, err)
+func provideEsFactory(option *providersOption) func(p factoryIn) (Factory, func()) {
+	if option.interceptor == nil {
+		option.interceptor = func(name string, opt *Config) {}
+	}
+	if option.clientConstructor == nil {
+		option.clientConstructor = newClient
+	}
+	return func(p factoryIn) (Factory, func()) {
+		factory := di.NewFactory(func(name string) (di.Pair, error) {
+			var conf Config
+			if err := p.Conf.Unmarshal(fmt.Sprintf("es.%s", name), &conf); err != nil {
+				if name != "default" {
+					return di.Pair{}, fmt.Errorf("elastic configuration %s not valid: %w", name, err)
+				}
+				conf.URL = []string{"http://127.0.0.1:9200"}
 			}
-			conf.URL = []string{"http://127.0.0.1:9200"}
-		}
-		if p.Interceptor != nil {
-			p.Interceptor(name, &conf)
-		}
 
-		if p.Tracer != nil {
-			options = append(options,
-				elastic.SetHttpClient(
-					&http.Client{
-						Transport: NewTransport(WithTracer(p.Tracer)),
-					},
-				),
-			)
-		}
+			option.interceptor(name, &conf)
 
-		if conf.Healthcheck != nil {
-			options = append(options, elastic.SetHealthcheck(*conf.Healthcheck))
-		}
-
-		if conf.Sniff != nil {
-			options = append(options, elastic.SetSniff(*conf.Sniff))
-		}
-		logger := log.With(p.Logger, "tag", "es")
-		options = append(options,
-			elastic.SetURL(conf.URL...),
-			elastic.SetBasicAuth(conf.Username, conf.Password),
-			elastic.SetInfoLog(ElasticLogAdapter{level.Info(logger)}),
-			elastic.SetErrorLog(ElasticLogAdapter{level.Error(logger)}),
-			elastic.SetTraceLog(ElasticLogAdapter{level.Debug(logger)}),
-		)
-		options = append(options, p.Options...)
-
-		client, err := elastic.NewClient(options...)
-		if err != nil {
-			client, err = elastic.NewSimpleClient(options...)
+			client, err := option.clientConstructor(ClientConstructorArgs{
+				Name:      name,
+				Conf:      &conf,
+				Logger:    p.Logger,
+				Tracer:    p.Tracer,
+				Populator: p.Populator,
+			})
 			if err != nil {
 				return di.Pair{}, err
 			}
+
+			return di.Pair{
+				Conn: client,
+				Closer: func() {
+					client.Stop()
+				},
+			}, nil
+		})
+		f := Factory{factory}
+		f.SubscribeReloadEventFrom(p.Dispatcher)
+		return f, f.Close
+	}
+}
+
+// ClientConstructorArgs are arguments for constructing elasticsearch clients.
+// Use this as input when providing custom constructor.
+type ClientConstructorArgs struct {
+	Name      string
+	Conf      *Config
+	Logger    log.Logger
+	Tracer    opentracing.Tracer
+	Populator contract.DIPopulator
+}
+
+func newClient(args ClientConstructorArgs) (*elastic.Client, error) {
+	var options []elastic.ClientOptionFunc
+
+	if args.Tracer != nil {
+		options = append(options,
+			elastic.SetHttpClient(
+				&http.Client{
+					Transport: NewTransport(WithTracer(args.Tracer)),
+				},
+			),
+		)
+	}
+
+	if args.Conf.Healthcheck != nil {
+		options = append(options, elastic.SetHealthcheck(*args.Conf.Healthcheck))
+	}
+
+	if args.Conf.Sniff != nil {
+		options = append(options, elastic.SetSniff(*args.Conf.Sniff))
+	}
+	logger := log.With(args.Logger, "tag", "es")
+	options = append(options,
+		elastic.SetURL(args.Conf.URL...),
+		elastic.SetBasicAuth(args.Conf.Username, args.Conf.Password),
+		elastic.SetInfoLog(ElasticLogAdapter{level.Info(logger)}),
+		elastic.SetErrorLog(ElasticLogAdapter{level.Error(logger)}),
+		elastic.SetTraceLog(ElasticLogAdapter{level.Debug(logger)}),
+	)
+	client, err := elastic.NewClient(options...)
+	if err != nil {
+		client, err = elastic.NewSimpleClient(options...)
+		if err != nil {
+			return nil, err
 		}
-		return di.Pair{
-			Conn: client,
-			Closer: func() {
-				client.Stop()
-			},
-		}, nil
-	})
-	f := Factory{factory}
-	f.SubscribeReloadEventFrom(p.Dispatcher)
-	return factoryOut{
-		Factory: f,
-		Maker:   f,
-	}, factory.Close
+	}
+	return client, nil
 }
 
 func provideDefaultClient(maker Maker) (*elastic.Client, error) {

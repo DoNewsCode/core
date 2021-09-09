@@ -22,7 +22,7 @@ func TestTracing(t *testing.T) {
 	addrs := strings.Split(os.Getenv("ELASTICSEARCH_ADDR"), ",")
 	tracer := mocktracer.New()
 	opentracing.SetGlobalTracer(tracer)
-	factory, cleanup := provideEsFactory(factoryIn{
+	factory, cleanup := provideEsFactory(&providersOption{})(factoryIn{
 		Conf: config.MapAdapter{"es": map[string]Config{
 			"default":     {URL: addrs},
 			"alternative": {URL: addrs},
@@ -32,7 +32,7 @@ func TestTracing(t *testing.T) {
 	})
 	defer cleanup()
 
-	client, err := factory.Maker.Make("default")
+	client, err := factory.Make("default")
 	assert.NoError(t, err)
 	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "es.query")
 	defer span.Finish()

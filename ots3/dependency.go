@@ -20,14 +20,21 @@ Manager, the Maker and exported configurations.
 		log.Logger
 		contract.ConfigAccessor
 		opentracing.Tracer `optional:"true"`
+		contract.DIPopulator `optional:"true"`
 	Provide:
 		Factory
 		Maker
 		*Manager
 		Uploader
 */
-func Providers() []interface{} {
-	return []interface{}{provideFactory, provideManager, provideConfig}
+func Providers(optionFunc ...ProvidersOptionFunc) di.Deps {
+	option := providersOption{
+		ctor: newManager,
+	}
+	for _, f := range optionFunc {
+		f(&option)
+	}
+	return di.Deps{provideFactory(&option), provideManager, provideConfig}
 }
 
 // Uploader models UploadService
@@ -52,59 +59,76 @@ type factoryIn struct {
 
 	Logger     log.Logger
 	Conf       contract.ConfigUnmarshaler
-	Tracer     opentracing.Tracer  `optional:"true"`
-	Dispatcher contract.Dispatcher `optional:"true"`
-}
-
-// factoryOut is the di output of provideFactory.
-type factoryOut struct {
-	di.Out
-
-	Factory Factory
-	Maker   Maker
+	Populator  contract.DIPopulator `optional:"true"`
+	Tracer     opentracing.Tracer   `optional:"true"`
+	Dispatcher contract.Dispatcher  `optional:"true"`
 }
 
 // provideFactory creates *Factory and *ots3.Manager. It is a valid dependency for package core.
-func provideFactory(p factoryIn) factoryOut {
-	factory := di.NewFactory(func(name string) (di.Pair, error) {
-
-		var conf S3Config
-
-		if err := p.Conf.Unmarshal(fmt.Sprintf("s3.%s", name), &conf); err != nil {
-			if name != "default" {
-				return di.Pair{}, fmt.Errorf("s3 configuration %s not found", name)
-			}
-			conf = S3Config{}
-		}
-
-		manager := NewManager(
-			conf.AccessKey,
-			conf.AccessSecret,
-			conf.Endpoint,
-			conf.Region,
-			conf.Bucket,
-			WithLocationFunc(func(location string) (uri string) {
-				u, err := url.Parse(location)
-				if err != nil {
-					return location
-				}
-				return fmt.Sprintf(conf.CdnUrl, u.Path[1:])
-			}),
-			WithTracer(p.Tracer),
-		)
-		return di.Pair{
-			Closer: nil,
-			Conn:   manager,
-		}, nil
-	})
-
-	s3Factory := Factory{factory}
-	s3Factory.SubscribeReloadEventFrom(p.Dispatcher)
-
-	return factoryOut{
-		Factory: s3Factory,
-		Maker:   &s3Factory,
+func provideFactory(option *providersOption) func(p factoryIn) Factory {
+	if option.ctor == nil {
+		option.ctor = newManager
 	}
+	return func(p factoryIn) Factory {
+		factory := di.NewFactory(func(name string) (di.Pair, error) {
+
+			var conf S3Config
+
+			if err := p.Conf.Unmarshal(fmt.Sprintf("s3.%s", name), &conf); err != nil {
+				if name != "default" {
+					return di.Pair{}, fmt.Errorf("s3 configuration %s not found", name)
+				}
+				conf = S3Config{}
+			}
+
+			manager, err := option.ctor(ManagerConstructorArgs{
+				Name:      name,
+				Conf:      conf,
+				Tracer:    p.Tracer,
+				Populator: p.Populator,
+			})
+			if err != nil {
+				return di.Pair{}, fmt.Errorf("error constructing manager: %w", err)
+			}
+			return di.Pair{
+				Closer: nil,
+				Conn:   manager,
+			}, nil
+		})
+
+		s3Factory := Factory{factory}
+		s3Factory.SubscribeReloadEventFrom(p.Dispatcher)
+
+		return s3Factory
+
+	}
+}
+
+// ManagerConstructorArgs are arguments for constructing the s3 manager. When providing custom constructors, take this as input.
+type ManagerConstructorArgs struct {
+	Name      string
+	Conf      S3Config
+	Tracer    opentracing.Tracer
+	Populator contract.DIPopulator
+}
+
+func newManager(args ManagerConstructorArgs) (*Manager, error) {
+	manager := NewManager(
+		args.Conf.AccessKey,
+		args.Conf.AccessSecret,
+		args.Conf.Endpoint,
+		args.Conf.Region,
+		args.Conf.Bucket,
+		WithLocationFunc(func(location string) (uri string) {
+			u, err := url.Parse(location)
+			if err != nil {
+				return location
+			}
+			return fmt.Sprintf(args.Conf.CdnUrl, u.Path[1:])
+		}),
+		WithTracer(args.Tracer),
+	)
+	return manager, nil
 }
 
 type managerOut struct {

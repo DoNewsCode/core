@@ -22,7 +22,6 @@ Maker, the default redis.UniversalClient and exported configs.
 	Depends On:
 		log.Logger
 		contract.ConfigAccessor
-		RedisConfigurationInterceptor `optional:"true"`
 		opentracing.Tracer            `optional:"true"`
 	Provide:
 		Maker
@@ -30,16 +29,20 @@ Maker, the default redis.UniversalClient and exported configs.
 		redis.UniversalClient
 		*collector
 */
-func Providers() []interface{} {
-	return []interface{}{provideRedisFactory, provideDefaultClient, provideConfig}
+func Providers(opts ...ProvidersOptionFunc) di.Deps {
+	option := providersOption{
+		interceptor: func(name string, opts *redis.UniversalOptions) {},
+	}
+	for _, f := range opts {
+		f(&option)
+	}
+	return di.Deps{
+		provideRedisFactory(&option),
+		provideDefaultClient,
+		provideConfig,
+		di.Bind(new(Factory), new(Maker)),
+	}
 }
-
-// RedisConfigurationInterceptor intercepts the redis.UniversalOptions before
-// creating the client so you can make amendment to it. Useful because some
-// configuration can not be mapped to a text representation. For example, you
-// cannot add OnConnect callback factoryIn a configuration file, but you can add it
-// here.
-type RedisConfigurationInterceptor func(name string, opts *redis.UniversalOptions)
 
 // factoryIn is the injection parameter for provideRedisFactory.
 type factoryIn struct {
@@ -57,7 +60,6 @@ type factoryIn struct {
 type factoryOut struct {
 	di.Out
 
-	Maker     Maker
 	Factory   Factory
 	Collector *collector
 }
@@ -92,83 +94,86 @@ func (m factoryOut) ProvideRunGroup(group *run.Group) {
 
 // provideRedisFactory creates Factory and redis.UniversalClient. It is a valid
 // dependency for package core.
-func provideRedisFactory(p factoryIn) (factoryOut, func()) {
-	factory := di.NewFactory(func(name string) (di.Pair, error) {
-		var (
-			base RedisUniversalOptions
-			full redis.UniversalOptions
-		)
-		if err := p.Conf.Unmarshal(fmt.Sprintf("redis.%s", name), &base); err != nil {
-			return di.Pair{}, fmt.Errorf("redis configuration %s not valid: %w", name, err)
-		}
-		if len(base.Addrs) == 0 {
-			base = RedisUniversalOptions{
-				Addrs: []string{"127.0.0.1:6379"},
-			}
-		}
-
-		full = redis.UniversalOptions{
-			Addrs:              base.Addrs,
-			DB:                 base.DB,
-			Username:           base.Username,
-			Password:           base.Password,
-			SentinelPassword:   base.SentinelPassword,
-			MaxRetries:         base.MaxRetries,
-			MinRetryBackoff:    base.MinRetryBackoff.Duration,
-			MaxRetryBackoff:    base.MaxRetryBackoff.Duration,
-			DialTimeout:        base.DialTimeout.Duration,
-			ReadTimeout:        base.ReadTimeout.Duration,
-			WriteTimeout:       base.WriteTimeout.Duration,
-			PoolSize:           base.PoolSize,
-			MinIdleConns:       base.MinIdleConns,
-			MaxConnAge:         base.MaxConnAge.Duration,
-			PoolTimeout:        base.PoolTimeout.Duration,
-			IdleTimeout:        base.IdleTimeout.Duration,
-			IdleCheckFrequency: base.IdleCheckFrequency.Duration,
-			TLSConfig:          nil,
-			MaxRedirects:       base.MaxRetries,
-			ReadOnly:           base.ReadOnly,
-			RouteByLatency:     base.RouteByLatency,
-			RouteRandomly:      base.RouteRandomly,
-			MasterName:         base.MasterName,
-		}
-		if p.Interceptor != nil {
-			p.Interceptor(name, &full)
-		}
-		redis.SetLogger(&RedisLogAdapter{level.Debug(p.Logger)})
-
-		client := redis.NewUniversalClient(&full)
-		if p.Tracer != nil {
-			client.AddHook(
-				hook{
-					addrs:    full.Addrs,
-					database: full.DB,
-					tracer:   p.Tracer,
-				},
+func provideRedisFactory(option *providersOption) func(p factoryIn) (factoryOut, func()) {
+	if option.interceptor == nil {
+		option.interceptor = func(name string, opts *redis.UniversalOptions) {}
+	}
+	return func(p factoryIn) (factoryOut, func()) {
+		factory := di.NewFactory(func(name string) (di.Pair, error) {
+			var (
+				base RedisUniversalOptions
+				full redis.UniversalOptions
 			)
+			if err := p.Conf.Unmarshal(fmt.Sprintf("redis.%s", name), &base); err != nil {
+				return di.Pair{}, fmt.Errorf("redis configuration %s not valid: %w", name, err)
+			}
+			if len(base.Addrs) == 0 {
+				base = RedisUniversalOptions{
+					Addrs: []string{"127.0.0.1:6379"},
+				}
+			}
+
+			full = redis.UniversalOptions{
+				Addrs:              base.Addrs,
+				DB:                 base.DB,
+				Username:           base.Username,
+				Password:           base.Password,
+				SentinelPassword:   base.SentinelPassword,
+				MaxRetries:         base.MaxRetries,
+				MinRetryBackoff:    base.MinRetryBackoff.Duration,
+				MaxRetryBackoff:    base.MaxRetryBackoff.Duration,
+				DialTimeout:        base.DialTimeout.Duration,
+				ReadTimeout:        base.ReadTimeout.Duration,
+				WriteTimeout:       base.WriteTimeout.Duration,
+				PoolSize:           base.PoolSize,
+				MinIdleConns:       base.MinIdleConns,
+				MaxConnAge:         base.MaxConnAge.Duration,
+				PoolTimeout:        base.PoolTimeout.Duration,
+				IdleTimeout:        base.IdleTimeout.Duration,
+				IdleCheckFrequency: base.IdleCheckFrequency.Duration,
+				TLSConfig:          nil,
+				MaxRedirects:       base.MaxRetries,
+				ReadOnly:           base.ReadOnly,
+				RouteByLatency:     base.RouteByLatency,
+				RouteRandomly:      base.RouteRandomly,
+				MasterName:         base.MasterName,
+			}
+			option.interceptor(name, &full)
+			redis.SetLogger(&RedisLogAdapter{level.Debug(p.Logger)})
+
+			client := redis.NewUniversalClient(&full)
+			if p.Tracer != nil {
+				client.AddHook(
+					hook{
+						addrs:    full.Addrs,
+						database: full.DB,
+						tracer:   p.Tracer,
+					},
+				)
+			}
+			return di.Pair{
+				Conn: client,
+				Closer: func() {
+					_ = client.Close()
+				},
+			}, nil
+		})
+		redisFactory := Factory{factory}
+		redisFactory.SubscribeReloadEventFrom(p.Dispatcher)
+		var collector *collector
+		if p.Gauges != nil {
+			var interval time.Duration
+			p.Conf.Unmarshal("redisMetrics.interval", &interval)
+			collector = newCollector(redisFactory, p.Gauges, interval)
 		}
-		return di.Pair{
-			Conn: client,
-			Closer: func() {
-				_ = client.Close()
-			},
-		}, nil
-	})
-	redisFactory := Factory{factory}
-	redisFactory.SubscribeReloadEventFrom(p.Dispatcher)
-	var collector *collector
-	if p.Gauges != nil {
-		var interval time.Duration
-		p.Conf.Unmarshal("redisMetrics.interval", &interval)
-		collector = newCollector(redisFactory, p.Gauges, interval)
-	}
-	redisOut := factoryOut{
-		Maker:     redisFactory,
-		Factory:   redisFactory,
-		Collector: collector,
+		redisOut := factoryOut{
+			Factory:   redisFactory,
+			Collector: collector,
+		}
+
+		return redisOut, redisFactory.Close
 	}
 
-	return redisOut, redisFactory.Close
 }
 
 func provideDefaultClient(maker Maker) (redis.UniversalClient, error) {

@@ -26,8 +26,15 @@ Providers returns a set of dependency providers for *Election and *Status.
 		Election *Election
 		Status   *Status
 */
-func Providers() di.Deps {
-	return []interface{}{provide}
+func Providers(opt ...ProvidersOptionFunc) di.Deps {
+	option := &providersOption{
+		driver:            nil,
+		driverConstructor: nil,
+	}
+	for _, f := range opt {
+		f(option)
+	}
+	return di.Deps{provide(option), provideConfig}
 }
 
 type in struct {
@@ -37,8 +44,7 @@ type in struct {
 	Env        contract.Env
 	Config     contract.ConfigUnmarshaler
 	Dispatcher contract.Dispatcher
-	Driver     Driver       `optional:"true"`
-	Maker      otetcd.Maker `optional:"true"`
+	Populator  contract.DIPopulator
 }
 
 type out struct {
@@ -48,15 +54,35 @@ type out struct {
 	Status   *Status
 }
 
-func provide(in in) (out, error) {
-	if err := determineDriver(&in); err != nil {
-		return out{}, err
+func provide(option *providersOption) func(in in) (out, error) {
+	return func(in in) (out, error) {
+		if option.driver != nil {
+			e := NewElection(in.Dispatcher, option.driver)
+			return out{
+				Election: e,
+				Status:   e.status,
+			}, nil
+		}
+
+		driverConstructor := newDefaultDriver
+		if option.driverConstructor != nil {
+			driverConstructor = option.driverConstructor
+		}
+
+		driver, err := driverConstructor(DriverConstructorArgs{
+			Conf:      in.Config,
+			AppName:   in.AppName,
+			Env:       in.Env,
+			Populator: in.Populator,
+		})
+		if err != nil {
+			return out{}, fmt.Errorf("unable to contruct driver: %w", err)
+		}
+
+		e := NewElection(in.Dispatcher, driver)
+		return out{Election: e, Status: e.status}, nil
 	}
-	e := NewElection(in.Dispatcher, in.Driver)
-	return out{
-		Election: e,
-		Status:   e.status,
-	}, nil
+
 }
 
 // Module marks out as a module.
@@ -77,25 +103,32 @@ func (m out) ProvideRunGroup(group *run.Group) {
 	})
 }
 
-func determineDriver(in *in) error {
+// DriverConstructorArgs is the argument for constructing new drivers.
+type DriverConstructorArgs struct {
+	Conf      contract.ConfigUnmarshaler
+	AppName   contract.AppName
+	Env       contract.Env
+	Populator contract.DIPopulator
+}
+
+func newDefaultDriver(args DriverConstructorArgs) (Driver, error) {
 	var option Option
-	if in.Driver == nil {
-		if err := in.Config.Unmarshal("leader", &option); err != nil {
-			return fmt.Errorf("leader election configuration error: %w", err)
-		}
-		if option.EtcdName == "" {
-			option.EtcdName = "default"
-		}
-		if in.Maker == nil {
-			return fmt.Errorf("must provider an otetcd.Maker or provider a leader.Driver")
-		}
-		etcdClient, err := in.Maker.Make(option.EtcdName)
-		if err != nil {
-			return fmt.Errorf("failed to initiate leader election with etcd driver (%s): %w", option.EtcdName, err)
-		}
-		in.Driver = leaderetcd2.NewEtcdDriver(etcdClient, key.New(in.AppName.String(), in.Env.String()))
+	if err := args.Conf.Unmarshal("leader", &option); err != nil {
+		return nil, fmt.Errorf("leader election configuration error: %w", err)
 	}
-	return nil
+	if option.EtcdName == "" {
+		option.EtcdName = "default"
+	}
+	var maker otetcd.Maker
+	args.Populator.Populate(&maker)
+	if maker == nil {
+		return nil, fmt.Errorf("must provider an otetcd.Maker to the DI graph to construct the default leader.Driver")
+	}
+	etcdClient, err := maker.Make(option.EtcdName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate leader election with etcd driver (%s): %w", option.EtcdName, err)
+	}
+	return leaderetcd2.NewEtcdDriver(etcdClient, key.New(args.AppName.String(), args.Env.String())), nil
 }
 
 type configOut struct {

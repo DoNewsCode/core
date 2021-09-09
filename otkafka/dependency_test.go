@@ -8,6 +8,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/log"
+	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +24,6 @@ func TestProvideReaderFactory(t *testing.T) {
 	}
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideReaderFactory(factoryIn{
-		In: di.In{},
 		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
 			"default": {
 				Brokers: addrs,
@@ -34,7 +34,7 @@ func TestProvideReaderFactory(t *testing.T) {
 				Topic:   "Test",
 			},
 		}},
-	})
+	}, func(name string, reader *kafka.ReaderConfig) {})
 	def, err := factory.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
@@ -63,7 +63,7 @@ func TestProvideWriterFactory(t *testing.T) {
 				Topic:   "Test",
 			},
 		}},
-	})
+	}, func(name string, writer *kafka.Writer) {})
 	def, err := factory.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
@@ -75,7 +75,7 @@ func TestProvideWriterFactory(t *testing.T) {
 }
 
 func TestProvideKafka(t *testing.T) {
-	Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(factoryIn{
+	Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(&providersOption{})(factoryIn{
 		Logger: log.NewNopLogger(),
 		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 			"default": {
@@ -89,10 +89,10 @@ func TestProvideKafka(t *testing.T) {
 		}},
 	})
 	assert.NoError(t, err)
-	def, err := Out.WriterMaker.Make("default")
+	def, err := Out.WriterFactory.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
-	alt, err := Out.WriterMaker.Make("alternative")
+	alt, err := Out.WriterFactory.Make("alternative")
 	assert.NoError(t, err)
 	assert.NotNil(t, alt)
 	cleanupReader()

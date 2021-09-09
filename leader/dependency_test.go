@@ -1,93 +1,103 @@
 package leader
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
-	"github.com/DoNewsCode/core/key"
 	"github.com/DoNewsCode/core/leader/leaderetcd"
+	"github.com/DoNewsCode/core/otetcd"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 )
 
 type mockMaker struct {
-	name string
+	name      string
+	endpoints []string
 }
 
 func (m *mockMaker) Make(name string) (*clientv3.Client, error) {
 	m.name = name
-	return clientv3.New(clientv3.Config{})
+	return clientv3.New(clientv3.Config{Endpoints: m.endpoints})
 }
 
-func TestDetermineDriver(t *testing.T) {
+type mockDriver struct{}
+
+func (m mockDriver) Campaign(ctx context.Context) error {
+	panic("implement me")
+}
+
+func (m mockDriver) Resign(ctx context.Context) error {
+	panic("implement me")
+}
+
+func TestDriverConstructorsAndDriverPriority(t *testing.T) {
+	driver := mockDriver{}
+	ctor := func(args DriverConstructorArgs) (Driver, error) {
+		return mockDriver{}, nil
+	}
+	out, _ := provide(&providersOption{
+		driver:            driver,
+		driverConstructor: ctor,
+	})(in{})
+	assert.Equal(t, driver, out.Election.driver)
+}
+
+func TestDriverConstructor(t *testing.T) {
+	ctor := func(args DriverConstructorArgs) (Driver, error) {
+		return mockDriver{}, nil
+	}
+	out, _ := provide(&providersOption{
+		driver:            nil,
+		driverConstructor: ctor,
+	})(in{})
+	assert.IsType(t, mockDriver{}, out.Election.driver)
+}
+
+func TestFailedDriverConstructor(t *testing.T) {
+	ctor := func(args DriverConstructorArgs) (Driver, error) {
+		return nil, fmt.Errorf("failed")
+	}
+	_, err := provide(&providersOption{
+		driver:            nil,
+		driverConstructor: ctor,
+	})(in{})
+	assert.Error(t, err)
+}
+
+type mockPopulator struct {
+	endpoints []string
+}
+
+func (m mockPopulator) Populate(target interface{}) error {
+	*target.(*otetcd.Maker) = &mockMaker{"default", m.endpoints}
+	return nil
+}
+
+func TestDefaultDriver(t *testing.T) {
 	if os.Getenv("ETCD_ADDR") == "" {
-		t.Skip("set ETCD_ADDR to run TestDetermineDriver")
+		t.Skip("Set env ETCD_ADDR to run TestDefaultDriver")
 		return
 	}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
-	client, _ := clientv3.New(clientv3.Config{
-		Endpoints: addrs,
-	})
-	driver := leaderetcd.NewEtcdDriver(client, key.New())
-	p := in{}
-	p.Driver = driver
-	determineDriver(&p)
-	assert.Equal(t, driver, p.Driver)
-
-	maker := &mockMaker{}
-	p = in{
-		Config: config.MapAdapter{
-			"leader": Option{
-				EtcdName: "",
-			},
+	out, err := provide(
+		&providersOption{
+			driver:            nil,
+			driverConstructor: nil,
 		},
-		Dispatcher: nil,
-		Driver:     nil,
-		Maker:      maker,
-	}
-	determineDriver(&p)
-	assert.Equal(t, "default", maker.name)
-
-	p = in{
-		Config: config.MapAdapter{
-			"leader": Option{
-				EtcdName: "foo",
-			},
+	)(
+		in{
+			Config:    config.MapAdapter{"etcdName": "default"},
+			Populator: mockPopulator{addrs},
+			AppName:   config.AppName("test"),
+			Env:       config.NewEnv("test"),
 		},
-		Dispatcher: nil,
-		Driver:     nil,
-		Maker:      maker,
-	}
-	determineDriver(&p)
-	assert.Equal(t, "foo", maker.name)
-
-	p = in{
-		Config: config.MapAdapter{
-			"leader": Option{
-				EtcdName: "foo",
-			},
-		},
-		Dispatcher: nil,
-		Driver:     nil,
-		Maker:      nil,
-		AppName:    config.AppName("foo"),
-		Env:        config.EnvTesting,
-	}
-	err := determineDriver(&p)
-	assert.Error(t, err)
-
-	p = in{
-		Config:     config.MapAdapter{},
-		Dispatcher: nil,
-		Driver:     nil,
-		Maker:      maker,
-		AppName:    config.AppName("foo"),
-		Env:        config.EnvTesting,
-	}
-	err = determineDriver(&p)
-	assert.Error(t, err)
+	)
+	assert.NoError(t, err)
+	assert.IsType(t, &leaderetcd.EtcdDriver{}, out.Election.driver)
 }
 
 func Test_provideConfig(t *testing.T) {

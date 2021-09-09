@@ -34,7 +34,7 @@ func TestTransport_RoundTrip(t *testing.T) {
 			},
 		}},
 		Logger: log.NewNopLogger(),
-	})
+	}, func(name string, writer *kafka.Writer) {})
 	defer cleanup()
 	def, _ := factory.Make("default")
 

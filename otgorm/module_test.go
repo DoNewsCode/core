@@ -12,6 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -53,7 +54,10 @@ func TestModule_ProvideCommand(t *testing.T) {
 	c := core.New(core.WithInline("gorm.default.database", "sqlite"),
 		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"))
 	c.ProvideEssentials()
-	c.Provide(di.Deps{provideDBFactory})
+	c.Provide(di.Deps{
+		provideDBFactory(&providersOption{}),
+		di.Bind(new(Factory), new(Maker)),
+	})
 	c.AddModuleFunc(New)
 	mock := &Mock{}
 	c.AddModule(mock)
@@ -152,4 +156,29 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	<-time.After(1000 * time.Millisecond)
 	c1.Close()
 	c2.Close()
+}
+
+func TestProviders(t *testing.T) {
+	provider := Providers(
+		WithConfigInterceptor(func(name string, conf *gorm.Config) {
+			conf.DryRun = true
+		}),
+		WithDrivers(
+			Drivers{"dummy": sqlite.Open},
+		),
+	)
+
+	c := core.New(
+		core.WithInline("gorm.dummy.database", "dummy"),
+		core.WithInline("gorm.default.dsn", "file::memory:?cache=shared"),
+		core.WithInline("log.level", "none"),
+	)
+	c.ProvideEssentials()
+	c.Provide(provider)
+	c.Invoke(func(maker Maker) {
+		dummy, err := maker.Make("dummy")
+		assert.NoError(t, err)
+		assert.Equal(t, "sqlite", dummy.Dialector.Name())
+		assert.True(t, dummy.DryRun)
+	})
 }

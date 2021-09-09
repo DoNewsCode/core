@@ -12,6 +12,7 @@ import (
 	mock_metrics "github.com/DoNewsCode/core/otredis/mocks"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFactoryOut_ProvideRunGroup(t *testing.T) {
@@ -24,6 +25,8 @@ func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+
+	var called = false
 
 	withValues := []interface{}{
 		gomock.Eq("dbname"),
@@ -50,7 +53,9 @@ func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 			StaleConns: m,
 		}
 	}})
-	c.Provide(Providers())
+	c.Provide(Providers(WithConfigInterceptor(func(name string, opts *redis.UniversalOptions) {
+		called = true
+	})))
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -62,4 +67,5 @@ func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 	<-time.After(10 * time.Millisecond)
 	cancel()
 	<-time.After(1000 * time.Millisecond)
+	assert.True(t, called)
 }

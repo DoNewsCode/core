@@ -34,8 +34,8 @@ type Manager struct {
 	autoExtension bool
 }
 
-// Config contains a various of configurations for Manager. It is mean to be modified by Option.
-type Config struct {
+// ManagerConfig contains a various of configurations for Manager. It is mean to be modified by ManagerOptionFunc.
+type ManagerConfig struct {
 	tracer        opentracing.Tracer
 	doer          contract.HttpDoer
 	keyer         contract.Keyer
@@ -44,55 +44,55 @@ type Config struct {
 	autoExtension bool
 }
 
-// Option is the type of functional options to alter Config.
-type Option func(*Config)
+// ManagerOptionFunc is the type of functional options to alter ManagerConfig.
+type ManagerOptionFunc func(*ManagerConfig)
 
 // WithTracer is an option that add opentracing.Tracer via the hook of S3 client.
-func WithTracer(tracer opentracing.Tracer) Option {
-	return func(c *Config) {
+func WithTracer(tracer opentracing.Tracer) ManagerOptionFunc {
+	return func(c *ManagerConfig) {
 		c.tracer = tracer
 	}
 }
 
 // WithPathPrefix is an option that changes the path prefix of uploaded file.
-func WithPathPrefix(pathPrefix string) Option {
-	return func(c *Config) {
+func WithPathPrefix(pathPrefix string) ManagerOptionFunc {
+	return func(c *ManagerConfig) {
 		c.pathPrefix = pathPrefix
 	}
 }
 
 // WithKeyer is an option that changes the path of the uploaded file.
-func WithKeyer(keyer contract.Keyer) Option {
-	return func(c *Config) {
+func WithKeyer(keyer contract.Keyer) ManagerOptionFunc {
+	return func(c *ManagerConfig) {
 		c.keyer = keyer
 	}
 }
 
-// WithHttpClient is an option that replaces the default http client. Useful for interceptors like tracing and metrics.
-func WithHttpClient(client contract.HttpDoer) Option {
-	return func(c *Config) {
+// WithHTTPClient is an option that replaces the default http client. Useful for interceptors like tracing and metrics.
+func WithHTTPClient(client contract.HttpDoer) ManagerOptionFunc {
+	return func(c *ManagerConfig) {
 		c.doer = client
 	}
 }
 
 // WithLocationFunc is an option that decides the how url is mapped to S3 bucket and path.
 // Useful when not serving file directly from S3, but from a CDN.
-func WithLocationFunc(f func(location string) (url string)) Option {
-	return func(c *Config) {
+func WithLocationFunc(f func(location string) (url string)) ManagerOptionFunc {
+	return func(c *ManagerConfig) {
 		c.locationFunc = f
 	}
 }
 
 // WithAutoExtension is an option that auto splice extension, default is true.
-func WithAutoExtension(auto bool) Option {
-	return func(c *Config) {
+func WithAutoExtension(auto bool) ManagerOptionFunc {
+	return func(c *ManagerConfig) {
 		c.autoExtension = auto
 	}
 }
 
 // NewManager creates a new S3 manager
-func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts ...Option) *Manager {
-	c := &Config{
+func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts ...ManagerOptionFunc) *Manager {
+	c := &ManagerConfig{
 		doer:  http.DefaultClient,
 		keyer: key.New(),
 		locationFunc: func(location string) (url string) {

@@ -9,6 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -19,7 +20,12 @@ type mockModel struct {
 func TestHook(t *testing.T) {
 	var interceptorCalled bool
 	tracer := mocktracer.New()
-	out, cleanup, _ := provideDBFactory(factoryIn{
+	out, cleanup, _ := provideDBFactory(&providersOption{
+		interceptor: func(name string, conf *gorm.Config) {
+			interceptorCalled = true
+		},
+		drivers: map[string]func(dsn string) gorm.Dialector{"sqlite": sqlite.Open},
+	})(factoryIn{
 		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
 			"default": {
 				Database: "sqlite",
@@ -27,14 +33,11 @@ func TestHook(t *testing.T) {
 			},
 		}},
 		Logger: log.NewNopLogger(),
-		GormConfigInterceptor: func(name string, conf *gorm.Config) {
-			interceptorCalled = true
-		},
 		Tracer: tracer,
 	})
 	defer cleanup()
 
-	factory := out.Maker
+	factory := out.Factory
 
 	db, err := factory.Make("default")
 	assert.NoError(t, err)

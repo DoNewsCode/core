@@ -24,7 +24,7 @@ func TestNewManager(t *testing.T) {
 		"",
 		WithTracer(opentracing.GlobalTracer()),
 		WithPathPrefix(""),
-		WithHttpClient(http.DefaultClient),
+		WithHTTPClient(http.DefaultClient),
 		WithLocationFunc(func(location string) (url string) {
 			return ""
 		}),
