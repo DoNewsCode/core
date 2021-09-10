@@ -32,3 +32,18 @@ func (f *ListenerFunc) Listen() interface{} {
 func (f *ListenerFunc) Process(ctx context.Context, event interface{}) error {
 	return f.callback(ctx, event)
 }
+
+type onceListener struct {
+	unsub func()
+	contract.Listener
+}
+
+func (o *onceListener) Process(ctx context.Context, event interface{}) error {
+	// Dispatcher is synchronous, so we don't need to lock.
+	defer o.unsub()
+	return o.Listener.Process(ctx, event)
+}
+
+func (o *onceListener) Equals(listener contract.Listener) bool {
+	return o.Listener == listener
+}
