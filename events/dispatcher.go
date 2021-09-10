@@ -8,6 +8,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 )
 
+// ErrNotSubscribed is returned when trying to unsubscribe a listener that not subscribing.
 var ErrNotSubscribed = errors.New("not subscribed")
 
 var _ contract.Dispatcher = (*SyncDispatcher)(nil)
