@@ -50,16 +50,6 @@ type factoryIn struct {
 	Dispatcher contract.Dispatcher `optional:"true"`
 }
 
-// factoryOut is the result of Provide. The official mongo package doesn't
-// provide a proper interface type. It is up to the users to define their own
-// mongodb repository interface.
-type factoryOut struct {
-	dig.Out
-
-	Factory Factory
-	Maker   Maker
-}
-
 // Provide creates Factory and *mongo.Client. It is a valid dependency for
 // package core.
 func provideMongoFactory(po *providersOption) func(p factoryIn) (Factory, func()) {
