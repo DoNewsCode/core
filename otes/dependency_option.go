@@ -4,7 +4,7 @@ import "github.com/olivere/elastic/v7"
 
 type providersOption struct {
 	interceptor       EsConfigInterceptor
-	clientConstructor func(args ClientConstructorArgs) (*elastic.Client, error)
+	clientConstructor func(args ClientArgs) (*elastic.Client, error)
 }
 
 // ProvidersOptionFunc is the type of functional providersOption for Providers. Use this type to change how Providers work.
@@ -21,7 +21,7 @@ func WithConfigInterceptor(interceptor EsConfigInterceptor) ProvidersOptionFunc 
 
 // WithClientConstructor instructs the Providers to accept an alternative constructor for elasticsearch client.
 // Refer to the package elastic for how to construct a custom elastic.Client.
-func WithClientConstructor(f func(ClientConstructorArgs) (*elastic.Client, error)) ProvidersOptionFunc {
+func WithClientConstructor(f func(ClientArgs) (*elastic.Client, error)) ProvidersOptionFunc {
 	return func(options *providersOption) {
 		options.clientConstructor = f
 	}

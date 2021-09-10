@@ -20,7 +20,7 @@ func Example_providers() {
 		core.WithInline("es.default.url", strings.Split(os.Getenv("ELASTICSEARCH_ADDR"), ",")),
 	)
 	c.ProvideEssentials()
-	c.Provide(otes.Providers(otes.WithClientConstructor(func(args otes.ClientConstructorArgs) (*elastic.Client, error) {
+	c.Provide(otes.Providers(otes.WithClientConstructor(func(args otes.ClientArgs) (*elastic.Client, error) {
 		return elastic.NewClient(elastic.SetURL(args.Conf.URL...), elastic.SetGzip(true))
 	})))
 	c.Invoke(func(esClient *elastic.Client) {

@@ -8,7 +8,7 @@ type providersOption struct {
 type ProvidersOptionFunc func(options *providersOption)
 
 // ManagerConstructor constructs a manager
-type ManagerConstructor func(args ManagerConstructorArgs) (*Manager, error)
+type ManagerConstructor func(args ManagerArgs) (*Manager, error)
 
 // WithManagerConstructor is a provider option to override how s3 manager are constructed.
 func WithManagerConstructor(ctor ManagerConstructor) ProvidersOptionFunc {

@@ -21,7 +21,7 @@ default *elastic.Client and exported configs.
 		contract.ConfigAccessor
 		opentracing.Tracer     `optional:"true"`
 		contract.Dispatcher    `optional:"true"`
-		contract.DIPopulator   `optional:"true"`
+		contract.DIPopulator
 	Provides:
 		Factory
 		Maker
@@ -53,9 +53,8 @@ type factoryIn struct {
 
 	Logger     log.Logger
 	Conf       contract.ConfigUnmarshaler
-	Tracer     opentracing.Tracer   `optional:"true"`
-	Dispatcher contract.Dispatcher  `optional:"true"`
-	Populator  contract.DIPopulator `optional:"true"`
+	Dispatcher contract.Dispatcher `optional:"true"`
+	Populator  contract.DIPopulator
 }
 
 // Provide creates Factory and *elastic.Client. It is a valid dependency for
@@ -79,11 +78,9 @@ func provideEsFactory(option *providersOption) func(p factoryIn) (Factory, func(
 
 			option.interceptor(name, &conf)
 
-			client, err := option.clientConstructor(ClientConstructorArgs{
+			client, err := option.clientConstructor(ClientArgs{
 				Name:      name,
 				Conf:      &conf,
-				Logger:    p.Logger,
-				Tracer:    p.Tracer,
 				Populator: p.Populator,
 			})
 			if err != nil {
@@ -103,24 +100,31 @@ func provideEsFactory(option *providersOption) func(p factoryIn) (Factory, func(
 	}
 }
 
-// ClientConstructorArgs are arguments for constructing elasticsearch clients.
+// ClientArgs are arguments for constructing elasticsearch clients.
 // Use this as input when providing custom constructor.
-type ClientConstructorArgs struct {
+type ClientArgs struct {
 	Name      string
 	Conf      *Config
-	Logger    log.Logger
-	Tracer    opentracing.Tracer
 	Populator contract.DIPopulator
 }
 
-func newClient(args ClientConstructorArgs) (*elastic.Client, error) {
+func newClient(args ClientArgs) (*elastic.Client, error) {
 	var options []elastic.ClientOptionFunc
 
-	if args.Tracer != nil {
+	var injected struct {
+		di.In
+
+		opentracing.Tracer `optional:"true"`
+		log.Logger
+	}
+
+	args.Populator.Populate(&injected)
+
+	if injected.Tracer != nil {
 		options = append(options,
 			elastic.SetHttpClient(
 				&http.Client{
-					Transport: NewTransport(WithTracer(args.Tracer)),
+					Transport: NewTransport(WithTracer(injected.Tracer)),
 				},
 			),
 		)
@@ -133,7 +137,7 @@ func newClient(args ClientConstructorArgs) (*elastic.Client, error) {
 	if args.Conf.Sniff != nil {
 		options = append(options, elastic.SetSniff(*args.Conf.Sniff))
 	}
-	logger := log.With(args.Logger, "tag", "es")
+	logger := log.With(injected.Logger, "tag", "es")
 	options = append(options,
 		elastic.SetURL(args.Conf.URL...),
 		elastic.SetBasicAuth(args.Conf.Username, args.Conf.Password),

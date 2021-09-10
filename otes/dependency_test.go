@@ -6,10 +6,25 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/kit/log"
 	"github.com/olivere/elastic/v7"
+	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 )
+
+type Populator struct{}
+
+func (p Populator) Populate(target interface{}) error {
+	g := di.NewGraph()
+	g.Provide(func() log.Logger {
+		return log.NewNopLogger()
+	})
+	g.Provide(func() opentracing.Tracer {
+		return opentracing.NoopTracer{}
+	})
+	return di.IntoPopulator(g).Populate(target)
+}
 
 func TestNewEsFactory(t *testing.T) {
 	if os.Getenv("ELASTICSEARCH_ADDR") == "" {
@@ -23,8 +38,8 @@ func TestNewEsFactory(t *testing.T) {
 				"default":     {URL: addrs},
 				"alternative": {URL: addrs},
 			}},
-			Logger: log.NewNopLogger(),
-			Tracer: nil,
+			Logger:    log.NewNopLogger(),
+			Populator: Populator{},
 		})
 		def, err := esFactory.Make("default")
 		assert.NoError(t, err)
@@ -41,7 +56,7 @@ func TestNewEsFactory(t *testing.T) {
 		esFactory, cleanup := provideEsFactory(
 
 			&providersOption{
-				clientConstructor: func(args ClientConstructorArgs) (*elastic.Client, error) {
+				clientConstructor: func(args ClientArgs) (*elastic.Client, error) {
 					calledConstructor = true
 					return newClient(args)
 				},
@@ -54,8 +69,8 @@ func TestNewEsFactory(t *testing.T) {
 				Conf: config.MapAdapter{"es": map[string]Config{
 					"default": {URL: addrs},
 				}},
-				Logger: log.NewNopLogger(),
-				Tracer: nil,
+				Logger:    log.NewNopLogger(),
+				Populator: Populator{},
 			},
 		)
 		def, err := esFactory.Make("default")
@@ -72,8 +87,8 @@ func TestNewEsFactory(t *testing.T) {
 				// elasticsearch server doesn't exist at this port
 				"default": {URL: []string{"http://127.0.0.1:9999"}},
 			}},
-			Logger: log.NewNopLogger(),
-			Tracer: nil,
+			Logger:    log.NewNopLogger(),
+			Populator: Populator{},
 		})
 		def, err := esFactory.Make("default")
 		assert.NoError(t, err)

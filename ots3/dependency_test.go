@@ -9,13 +9,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type Populator struct{}
+
+func (p Populator) Populate(target interface{}) error { return nil }
+
 func TestNewUploadManagerFactory(t *testing.T) {
 	s3out := provideFactory(&providersOption{})(factoryIn{
 		Conf: config.MapAdapter{"s3": map[string]S3Config{
 			"default":     {},
 			"alternative": {},
 		}},
-		Tracer: nil,
+		Populator: Populator{},
 	})
 	def, err := s3out.Factory.Make("default")
 	assert.NoError(t, err)
@@ -27,7 +31,7 @@ func TestNewUploadManagerFactory(t *testing.T) {
 
 func TestNewUploadManagerFactory_customOption(t *testing.T) {
 	var called bool
-	s3out := provideFactory(&providersOption{ctor: func(args ManagerConstructorArgs) (*Manager, error) {
+	s3out := provideFactory(&providersOption{ctor: func(args ManagerArgs) (*Manager, error) {
 		called = true
 		return newManager(args)
 	}})(factoryIn{
@@ -35,7 +39,7 @@ func TestNewUploadManagerFactory_customOption(t *testing.T) {
 			"default":     {},
 			"alternative": {},
 		}},
-		Tracer: nil,
+		Populator: Populator{},
 	})
 	def, err := s3out.Factory.Make("default")
 	assert.NoError(t, err)

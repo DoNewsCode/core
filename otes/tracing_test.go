@@ -27,8 +27,8 @@ func TestTracing(t *testing.T) {
 			"default":     {URL: addrs},
 			"alternative": {URL: addrs},
 		}},
-		Logger: log.NewNopLogger(),
-		Tracer: tracer,
+		Logger:    log.NewNopLogger(),
+		Populator: Populator{},
 	})
 	defer cleanup()
 

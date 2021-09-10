@@ -8,7 +8,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/key"
-	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
+	"github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/DoNewsCode/core/otetcd"
 	"github.com/oklog/run"
 )
@@ -16,12 +16,9 @@ import (
 /*
 Providers returns a set of dependency providers for *Election and *Status.
 	Depends On:
-		contract.AppName
-		contract.Env
 		contract.ConfigAccessor
 		contract.Dispatcher
-		Driver       `optional:"true"`
-		otetcd.Maker `optional:"true"`
+		contract.DIPopulator
 	Provide:
 		Election *Election
 		Status   *Status
@@ -40,8 +37,6 @@ func Providers(opt ...ProvidersOptionFunc) di.Deps {
 type in struct {
 	di.In
 
-	AppName    contract.AppName
-	Env        contract.Env
 	Config     contract.ConfigUnmarshaler
 	Dispatcher contract.Dispatcher
 	Populator  contract.DIPopulator
@@ -68,11 +63,7 @@ func provide(option *providersOption) func(in in) (out, error) {
 		if option.driverConstructor != nil {
 			driverConstructor = option.driverConstructor
 		}
-
-		driver, err := driverConstructor(DriverConstructorArgs{
-			Conf:      in.Config,
-			AppName:   in.AppName,
-			Env:       in.Env,
+		driver, err := driverConstructor(DriverArgs{
 			Populator: in.Populator,
 		})
 		if err != nil {
@@ -103,32 +94,35 @@ func (m out) ProvideRunGroup(group *run.Group) {
 	})
 }
 
-// DriverConstructorArgs is the argument for constructing new drivers.
-type DriverConstructorArgs struct {
-	Conf      contract.ConfigUnmarshaler
-	AppName   contract.AppName
-	Env       contract.Env
+// DriverArgs is the argument for constructing new drivers.
+type DriverArgs struct {
 	Populator contract.DIPopulator
 }
 
-func newDefaultDriver(args DriverConstructorArgs) (Driver, error) {
+func newDefaultDriver(args DriverArgs) (Driver, error) {
+	var injected struct {
+		di.In
+
+		Conf    contract.ConfigUnmarshaler
+		AppName contract.AppName
+		Env     contract.Env
+		Maker   otetcd.Maker
+	}
+	if err := args.Populator.Populate(&injected); err != nil {
+		return nil, fmt.Errorf("missing dependency for the default election driver: %w", err)
+	}
 	var option Option
-	if err := args.Conf.Unmarshal("leader", &option); err != nil {
+	if err := injected.Conf.Unmarshal("leader", &option); err != nil {
 		return nil, fmt.Errorf("leader election configuration error: %w", err)
 	}
 	if option.EtcdName == "" {
 		option.EtcdName = "default"
 	}
-	var maker otetcd.Maker
-	args.Populator.Populate(&maker)
-	if maker == nil {
-		return nil, fmt.Errorf("must provider an otetcd.Maker to the DI graph to construct the default leader.Driver")
-	}
-	etcdClient, err := maker.Make(option.EtcdName)
+	etcdClient, err := injected.Maker.Make(option.EtcdName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate leader election with etcd driver (%s): %w", option.EtcdName, err)
 	}
-	return leaderetcd2.NewEtcdDriver(etcdClient, key.New(args.AppName.String(), args.Env.String())), nil
+	return leaderetcd.NewEtcdDriver(etcdClient, key.New(injected.AppName.String(), injected.Env.String())), nil
 }
 
 type configOut struct {

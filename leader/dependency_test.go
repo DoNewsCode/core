@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/DoNewsCode/core/otetcd"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +38,7 @@ func (m mockDriver) Resign(ctx context.Context) error {
 
 func TestDriverConstructorsAndDriverPriority(t *testing.T) {
 	driver := mockDriver{}
-	ctor := func(args DriverConstructorArgs) (Driver, error) {
+	ctor := func(args DriverArgs) (Driver, error) {
 		return mockDriver{}, nil
 	}
 	out, _ := provide(&providersOption{
@@ -47,7 +49,7 @@ func TestDriverConstructorsAndDriverPriority(t *testing.T) {
 }
 
 func TestDriverConstructor(t *testing.T) {
-	ctor := func(args DriverConstructorArgs) (Driver, error) {
+	ctor := func(args DriverArgs) (Driver, error) {
 		return mockDriver{}, nil
 	}
 	out, _ := provide(&providersOption{
@@ -58,7 +60,7 @@ func TestDriverConstructor(t *testing.T) {
 }
 
 func TestFailedDriverConstructor(t *testing.T) {
-	ctor := func(args DriverConstructorArgs) (Driver, error) {
+	ctor := func(args DriverArgs) (Driver, error) {
 		return nil, fmt.Errorf("failed")
 	}
 	_, err := provide(&providersOption{
@@ -73,8 +75,21 @@ type mockPopulator struct {
 }
 
 func (m mockPopulator) Populate(target interface{}) error {
-	*target.(*otetcd.Maker) = &mockMaker{"default", m.endpoints}
-	return nil
+	c := di.NewGraph()
+	c.Provide(func() contract.AppName {
+		return config.AppName("foo")
+	})
+	c.Provide(func() contract.Env {
+		return config.EnvUnknown
+	})
+	c.Provide(func() otetcd.Maker {
+		return &mockMaker{"default", m.endpoints}
+	})
+	c.Provide(func() contract.ConfigUnmarshaler {
+		return config.MapAdapter{}
+	})
+	p := di.IntoPopulator(c)
+	return p.Populate(target)
 }
 
 func TestDefaultDriver(t *testing.T) {
@@ -92,8 +107,6 @@ func TestDefaultDriver(t *testing.T) {
 		in{
 			Config:    config.MapAdapter{"etcdName": "default"},
 			Populator: mockPopulator{addrs},
-			AppName:   config.AppName("test"),
-			Env:       config.NewEnv("test"),
 		},
 	)
 	assert.NoError(t, err)

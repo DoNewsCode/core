@@ -60,7 +60,6 @@ type factoryIn struct {
 	Logger     log.Logger
 	Conf       contract.ConfigUnmarshaler
 	Populator  contract.DIPopulator `optional:"true"`
-	Tracer     opentracing.Tracer   `optional:"true"`
 	Dispatcher contract.Dispatcher  `optional:"true"`
 }
 
@@ -81,10 +80,9 @@ func provideFactory(option *providersOption) func(p factoryIn) Factory {
 				conf = S3Config{}
 			}
 
-			manager, err := option.ctor(ManagerConstructorArgs{
+			manager, err := option.ctor(ManagerArgs{
 				Name:      name,
 				Conf:      conf,
-				Tracer:    p.Tracer,
 				Populator: p.Populator,
 			})
 			if err != nil {
@@ -104,15 +102,16 @@ func provideFactory(option *providersOption) func(p factoryIn) Factory {
 	}
 }
 
-// ManagerConstructorArgs are arguments for constructing the s3 manager. When providing custom constructors, take this as input.
-type ManagerConstructorArgs struct {
+// ManagerArgs are arguments for constructing the s3 manager. When providing custom constructors, take this as input.
+type ManagerArgs struct {
 	Name      string
 	Conf      S3Config
-	Tracer    opentracing.Tracer
 	Populator contract.DIPopulator
 }
 
-func newManager(args ManagerConstructorArgs) (*Manager, error) {
+func newManager(args ManagerArgs) (*Manager, error) {
+	var tracer opentracing.Tracer
+	args.Populator.Populate(&tracer)
 	manager := NewManager(
 		args.Conf.AccessKey,
 		args.Conf.AccessSecret,
@@ -126,7 +125,7 @@ func newManager(args ManagerConstructorArgs) (*Manager, error) {
 			}
 			return fmt.Sprintf(args.Conf.CdnUrl, u.Path[1:])
 		}),
-		WithTracer(args.Tracer),
+		WithTracer(tracer),
 	)
 	return manager, nil
 }

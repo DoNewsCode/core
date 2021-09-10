@@ -2,7 +2,7 @@ package leader
 
 type providersOption struct {
 	driver            Driver
-	driverConstructor func(args DriverConstructorArgs) (Driver, error)
+	driverConstructor func(args DriverArgs) (Driver, error)
 }
 
 // ProvidersOptionFunc is the type of functional providersOption for Providers. Use this type to change how Providers work.
@@ -19,7 +19,7 @@ func WithDriver(driver Driver) ProvidersOptionFunc {
 
 // WithDriverConstructor instructs the Providers to accept an alternative constructor for election driver.
 // If the WithDriver option is set, this option becomes an no-op.
-func WithDriverConstructor(f func(args DriverConstructorArgs) (Driver, error)) ProvidersOptionFunc {
+func WithDriverConstructor(f func(args DriverArgs) (Driver, error)) ProvidersOptionFunc {
 	return func(options *providersOption) {
 		options.driverConstructor = f
 	}
