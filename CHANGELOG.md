@@ -1,6 +1,31 @@
 
+<a name="v0.9.0"></a>
+## [v0.9.0](https://github.com/DoNewsCode/core/compare/v0.8.0...v0.9.0) (2021-09-10)
+
+### ♻️ Code Refactoring
+
+* change collector mechanism ([#189](https://github.com/DoNewsCode/core/issues/189)) (@[谷溪](guxi99@gmail.com))
+* remove dtx and rename to core-dtx ([#181](https://github.com/DoNewsCode/core/issues/181)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* make config and log easier to use and extend ([#177](https://github.com/DoNewsCode/core/issues/177)) (@[谷溪](guxi99@gmail.com))
+* **container:** remove ifilter dependency. ([#183](https://github.com/DoNewsCode/core/issues/183)) (@[谷溪](guxi99@gmail.com))
+
+### ✨ Features
+
+* expand the API of SyncDispatcher ([#191](https://github.com/DoNewsCode/core/issues/191)) (@[谷溪](guxi99@gmail.com))
+* introduce provider options ([#190](https://github.com/DoNewsCode/core/issues/190)) (@[谷溪](guxi99@gmail.com))
+* add ctxmeta package ([#188](https://github.com/DoNewsCode/core/issues/188)) (@[谷溪](guxi99@gmail.com))
+* make metrics struct type safe ([#185](https://github.com/DoNewsCode/core/issues/185)) (@[谷溪](guxi99@gmail.com))
+* **clihttp:** limit max length a client can read from body ([#186](https://github.com/DoNewsCode/core/issues/186)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+### 🐛 Bug Fixes
+
+* remove unused factoryOut (@[Reasno](guxi99@gmail.com))
+* rename ThreeStats to AggStats ([#184](https://github.com/DoNewsCode/core/issues/184)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* **container:** shutdown the modules in the reversed order of registr… ([#187](https://github.com/DoNewsCode/core/issues/187)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.8.0"></a>
-## [v0.8.0](https://github.com/DoNewsCode/core/compare/v0.7.3...v0.8.0) (2021-08-06)
+## [v0.8.0](https://github.com/DoNewsCode/core/compare/v0.7.3...v0.8.0) (2021-08-17)
 
 ### ♻️ Code Refactoring
 
