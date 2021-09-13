@@ -134,7 +134,7 @@ func TestPreferDriverInDI(t *testing.T) {
 func TestPreferDriverInDI_error(t *testing.T) {
 	g := di.NewGraph()
 	g.Provide(func() (Driver, error) {
-		return mockDriver{}, errors.New("err!")
+		return mockDriver{}, errors.New("err")
 	})
 	_, err := newDefaultDriver(DriverArgs{
 		Populator: di.IntoPopulator(g),
