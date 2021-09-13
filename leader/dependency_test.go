@@ -2,6 +2,7 @@ package leader
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -116,4 +117,27 @@ func TestDefaultDriver(t *testing.T) {
 func Test_provideConfig(t *testing.T) {
 	conf := provideConfig()
 	assert.NotNil(t, conf)
+}
+
+func TestPreferDriverInDI(t *testing.T) {
+	g := di.NewGraph()
+	g.Provide(func() Driver {
+		return mockDriver{}
+	})
+	driver, err := newDefaultDriver(DriverArgs{
+		Populator: di.IntoPopulator(g),
+	})
+	assert.NoError(t, err)
+	assert.IsType(t, mockDriver{}, driver)
+}
+
+func TestPreferDriverInDI_error(t *testing.T) {
+	g := di.NewGraph()
+	g.Provide(func() (Driver, error) {
+		return mockDriver{}, errors.New("err!")
+	})
+	_, err := newDefaultDriver(DriverArgs{
+		Populator: di.IntoPopulator(g),
+	})
+	assert.Error(t, err)
 }

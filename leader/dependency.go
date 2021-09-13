@@ -100,6 +100,18 @@ type DriverArgs struct {
 }
 
 func newDefaultDriver(args DriverArgs) (Driver, error) {
+
+	var diDriver struct {
+		di.In
+		Driver `optional:"true"`
+	}
+	if err := args.Populator.Populate(&diDriver); err != nil {
+		return nil, fmt.Errorf("failed to contruct default driver from DI: %w", err)
+	}
+	if diDriver.Driver != nil {
+		return diDriver.Driver, nil
+	}
+
 	var injected struct {
 		di.In
 
@@ -107,13 +119,9 @@ func newDefaultDriver(args DriverArgs) (Driver, error) {
 		AppName contract.AppName
 		Env     contract.Env
 		Maker   otetcd.Maker
-		Driver  Driver `optional:"true"`
 	}
 	if err := args.Populator.Populate(&injected); err != nil {
 		return nil, fmt.Errorf("missing dependency for the default election driver: %w", err)
-	}
-	if injected.Driver != nil {
-		return injected.Driver, nil
 	}
 	var option Option
 	if err := injected.Conf.Unmarshal("leader", &option); err != nil {
