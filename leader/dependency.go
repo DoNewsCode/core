@@ -107,9 +107,13 @@ func newDefaultDriver(args DriverArgs) (Driver, error) {
 		AppName contract.AppName
 		Env     contract.Env
 		Maker   otetcd.Maker
+		Driver  Driver `optional:"true"`
 	}
 	if err := args.Populator.Populate(&injected); err != nil {
 		return nil, fmt.Errorf("missing dependency for the default election driver: %w", err)
+	}
+	if injected.Driver != nil {
+		return injected.Driver, nil
 	}
 	var option Option
 	if err := injected.Conf.Unmarshal("leader", &option); err != nil {
