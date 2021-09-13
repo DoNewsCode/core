@@ -100,6 +100,18 @@ type DriverArgs struct {
 }
 
 func newDefaultDriver(args DriverArgs) (Driver, error) {
+
+	var diDriver struct {
+		di.In
+		Driver `optional:"true"`
+	}
+	if err := args.Populator.Populate(&diDriver); err != nil {
+		return nil, fmt.Errorf("failed to contruct default driver from DI: %w", err)
+	}
+	if diDriver.Driver != nil {
+		return diDriver.Driver, nil
+	}
+
 	var injected struct {
 		di.In
 
