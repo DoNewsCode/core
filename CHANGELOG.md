@@ -1,4 +1,17 @@
 
+<a name="v0.9.1"></a>
+## [v0.9.1](https://github.com/DoNewsCode/core/compare/v0.9.0...v0.9.1) (2021-09-13)
+
+### ♻️ Code Refactoring
+
+* reduce clustering (@[Reasno](guxi99@gmail.com))
+
+### 🐛 Bug Fixes
+
+* prefer driver from DI (@[Reasno](guxi99@gmail.com))
+* prefer driver from DI ([#192](https://github.com/DoNewsCode/core/issues/192)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.9.0"></a>
 ## [v0.9.0](https://github.com/DoNewsCode/core/compare/v0.8.0...v0.9.0) (2021-09-10)
 
