@@ -19,9 +19,13 @@ func TestRemote(t *testing.T) {
 		return
 	}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	cfg := clientv3.Config{
-		Endpoints:   addrs,
-		DialTimeout: 2 * time.Second,
+		Endpoints:        addrs,
+		AutoSyncInterval: 0,
+		DialTimeout:      2 * time.Second,
+		Context:          ctx,
 	}
 
 	r := Provider(cfg, "config.yaml")
