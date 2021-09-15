@@ -166,7 +166,7 @@ func (s serveIn) signalWatch(ctx context.Context, logger logging.LevelLogger) (f
 			}
 			return nil
 		}, func(err error) {
-			close(sig)
+			signal.Stop(sig)
 		}, nil
 }
 
