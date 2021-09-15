@@ -1,4 +1,14 @@
 
+<a name="v0.9.2"></a>
+## [v0.9.2](https://github.com/DoNewsCode/core/compare/v0.9.1...v0.9.2) (2021-09-15)
+
+### 🐛 Bug Fixes
+
+* panic when signal sent twice ([#193](https://github.com/DoNewsCode/core/issues/193)) (@[谷溪](guxi99@gmail.com))
+* golangci-lint complaint (@[Reasno](guxi99@gmail.com))
+* don't close connection right away after reload (@[Reasno](guxi99@gmail.com))
+
+
 <a name="v0.9.1"></a>
 ## [v0.9.1](https://github.com/DoNewsCode/core/compare/v0.9.0...v0.9.1) (2021-09-13)
 
