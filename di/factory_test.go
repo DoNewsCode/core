@@ -148,8 +148,8 @@ func TestFactory_SubscribeReloadEventFrom(t *testing.T) {
 	}
 
 	// now that foo is garbage collected, we can safely close foo.
-	ptr = nil
-	foo = nil
+	ptr = nil //nolint
+	foo = nil //nolint
 	runtime.GC()
 	select {
 	case <-closed:
