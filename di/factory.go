@@ -2,6 +2,8 @@ package di
 
 import (
 	"context"
+	"reflect"
+	"runtime"
 	"sync"
 
 	"golang.org/x/sync/singleflight"
@@ -61,7 +63,25 @@ func (f *Factory) SubscribeReloadEventFrom(dispatcher contract.Dispatcher) {
 	}
 	f.reloadOnce.Do(func() {
 		dispatcher.Subscribe(events.Listen(events.OnReload, func(ctx context.Context, event interface{}) error {
-			f.Close()
+			f.cache.Range(func(key, value interface{}) bool {
+				defer f.cache.Delete(key)
+				pair := value.(Pair)
+				if pair.Closer == nil {
+					return true
+				}
+				var finalized = make(chan struct{})
+				if reflect.TypeOf(pair.Conn).Kind() == reflect.Ptr {
+					runtime.SetFinalizer(pair.Conn, func(_ interface{}) { finalized <- struct{}{} })
+				}
+				go func() {
+					select {
+					case <-ctx.Done():
+					case <-finalized:
+					}
+					pair.Closer()
+				}()
+				return true
+			})
 			return nil
 		}))
 	})
