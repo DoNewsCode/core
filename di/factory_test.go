@@ -151,6 +151,7 @@ func TestFactory_SubscribeReloadEventFrom(t *testing.T) {
 	ptr = nil //nolint
 	foo = nil //nolint
 	runtime.GC()
+	cancel()
 	select {
 	case <-closed:
 	case <-time.After(4 * time.Second):
