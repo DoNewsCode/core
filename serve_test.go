@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/kit/log"
@@ -21,6 +22,7 @@ func TestServeIn_signalWatch(t *testing.T) {
 	var group run.Group
 	group.Add(do, cancel)
 	group.Add(func() error {
+		time.Sleep(time.Second)
 		p, err := os.FindProcess(os.Getpid())
 		if err != nil {
 			t.Skip("TestServeIn_signalWatch only works on unix")
