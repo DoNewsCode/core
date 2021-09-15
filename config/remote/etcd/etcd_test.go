@@ -22,10 +22,9 @@ func TestRemote(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	cfg := clientv3.Config{
-		Endpoints:        addrs,
-		AutoSyncInterval: 0,
-		DialTimeout:      2 * time.Second,
-		Context:          ctx,
+		Endpoints:   addrs,
+		Context:     ctx,
+		DialTimeout: time.Second,
 	}
 
 	r := Provider(cfg, "config.yaml")
