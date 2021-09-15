@@ -165,7 +165,6 @@ func mockConstructor(b b) (a, func(), error) {
 func TestNew_missingDependencyErrorMessage(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
-			t.Log(r)
 			if strings.Contains(r.(error).Error(), "\"reflect\".makeFuncStub") {
 				t.Error("should not contain reflection stub")
 			}
