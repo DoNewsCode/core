@@ -5,6 +5,7 @@ import "github.com/olivere/elastic/v7"
 type providersOption struct {
 	interceptor       EsConfigInterceptor
 	clientConstructor func(args ClientArgs) (*elastic.Client, error)
+	reloadable        bool
 }
 
 // ProvidersOptionFunc is the type of functional providersOption for Providers. Use this type to change how Providers work.
@@ -24,5 +25,13 @@ func WithConfigInterceptor(interceptor EsConfigInterceptor) ProvidersOptionFunc 
 func WithClientConstructor(f func(ClientArgs) (*elastic.Client, error)) ProvidersOptionFunc {
 	return func(options *providersOption) {
 		options.clientConstructor = f
+	}
+}
+
+// WithReload toggles whether to reload the factory after receiving the OnReload
+// event. By default, the factory won't be reloaded.
+func WithReload(shouldReload bool) ProvidersOptionFunc {
+	return func(options *providersOption) {
+		options.reloadable = shouldReload
 	}
 }
