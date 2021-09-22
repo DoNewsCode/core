@@ -8,10 +8,8 @@ package core
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
-	"regexp"
 
 	"github.com/DoNewsCode/core/codec/yaml"
 	"github.com/DoNewsCode/core/config"
@@ -309,6 +307,16 @@ func (c *C) provide(constructor interface{}) {
 		}
 		return filteredOuts
 	})
+	if pcProvider, ok := c.di.(interface {
+		ProvideWithPC(ctor interface{}, pc uintptr) error
+	}); ok {
+		pc := reflect.ValueOf(constructor).Pointer()
+		err := pcProvider.ProvideWithPC(fn.Interface(), pc)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
 	err := c.di.Provide(fn.Interface())
 	if err != nil {
 		panic(err)
@@ -408,8 +416,6 @@ func (c *C) AddModuleFunc(constructor interface{}) {
 func (c *C) Invoke(function interface{}) {
 	err := c.di.Invoke(function)
 	if err != nil {
-		re := regexp.MustCompile(` missing dependencies for function "reflect"\.makeFuncStub \(.+?\):`)
-		err = errors.New(re.ReplaceAllString(err.Error(), ""))
 		panic(err)
 	}
 }

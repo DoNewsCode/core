@@ -40,6 +40,12 @@ func (g *Graph) Provide(constructor interface{}) error {
 	return g.dig.Provide(constructor)
 }
 
+// ProvideWithPC is like Provide, but additionally parametrized with a pointer
+// for the constructor. This is useful when constructing the debug message.
+func (g *Graph) ProvideWithPC(constructor interface{}, pc uintptr) error {
+	return g.dig.Provide(constructor, dig.LocationForPC(pc))
+}
+
 // Invoke runs the given function after instantiating its dependencies. Any
 // arguments that the function has are treated as its dependencies. The
 // dependencies are instantiated in an unspecified order along with any

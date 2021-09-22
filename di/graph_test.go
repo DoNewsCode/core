@@ -1,6 +1,8 @@
 package di
 
 import (
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -46,4 +48,20 @@ func TestBind(t *testing.T) {
 		assert.NotNil(t, f)
 	})
 	assert.NoError(t, err)
+}
+
+func ctor(f Fooer) Stub {
+	return Stub{}
+}
+
+func TestProvideWithPC(t *testing.T) {
+	other := func(f Fooer) Stub {
+		return Stub{}
+	}
+	g := NewGraph()
+	g.ProvideWithPC(other, reflect.ValueOf(ctor).Pointer())
+	err := g.Invoke(func(f Stub) {})
+	if !strings.Contains(err.Error(), "missing dependencies for function \"github.com/DoNewsCode/core/di\".ctor") {
+		t.Errorf("ProvideWithPC should replace the passed in function with the function pc points to. got \"%s\"", err)
+	}
 }
