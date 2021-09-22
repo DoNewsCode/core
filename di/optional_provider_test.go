@@ -38,15 +38,13 @@ func TestBind(t *testing.T) {
 }
 
 func TestName(t *testing.T) {
-	g := dig.New()
-	err := g.Provide(di.Name(ctor, "foo"))
-	assert.NoError(t, err)
-	err = g.Invoke(func(injected struct {
+	g := core.New()
+	g.Provide(di.Deps{di.Name(ctor, "foo")})
+	g.Invoke(func(injected struct {
 		dig.In
 		Stub Stub `name:"foo"`
 	}) {
 	})
-	assert.NoError(t, err)
 }
 
 func TestAs(t *testing.T) {

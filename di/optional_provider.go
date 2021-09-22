@@ -6,7 +6,9 @@ import (
 	"go.uber.org/dig"
 )
 
-// OptionalProvider is a constructor with dig options.
+// OptionalProvider is a struct with constructor and dig options. When
+// OptionalProvider is used as the element in di.Deps, the options are applied to
+// the inner dig.Container automatically.
 type OptionalProvider struct {
 	Constructor interface{}
 	Options     []dig.ProvideOption
