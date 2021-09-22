@@ -7,13 +7,13 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
-	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
+	"go.uber.org/dig"
 )
 
 const defaultConfig = `
@@ -100,8 +100,8 @@ func ProvideLogger(conf contract.ConfigUnmarshaler, appName contract.AppName, en
 }
 
 // ProvideDi is the default DiProvider for package Core.
-func ProvideDi(conf contract.ConfigUnmarshaler) contract.DIContainer {
-	return di.NewGraph()
+func ProvideDi(conf contract.ConfigUnmarshaler) *dig.Container {
+	return dig.New()
 }
 
 // ProvideEventDispatcher is the default EventDispatcherProvider for package Core.

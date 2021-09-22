@@ -15,6 +15,7 @@ import (
 	"github.com/DoNewsCode/core/otetcd"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
+	"go.uber.org/dig"
 )
 
 type mockMaker struct {
@@ -76,7 +77,7 @@ type mockPopulator struct {
 }
 
 func (m mockPopulator) Populate(target interface{}) error {
-	c := di.NewGraph()
+	c := dig.New()
 	c.Provide(func() contract.AppName {
 		return config.AppName("foo")
 	})
@@ -120,7 +121,7 @@ func Test_provideConfig(t *testing.T) {
 }
 
 func TestPreferDriverInDI(t *testing.T) {
-	g := di.NewGraph()
+	g := dig.New()
 	g.Provide(func() Driver {
 		return mockDriver{}
 	})
@@ -132,7 +133,7 @@ func TestPreferDriverInDI(t *testing.T) {
 }
 
 func TestPreferDriverInDI_error(t *testing.T) {
-	g := di.NewGraph()
+	g := dig.New()
 	g.Provide(func() (Driver, error) {
 		return mockDriver{}, errors.New("err")
 	})
