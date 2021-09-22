@@ -67,7 +67,7 @@ func (d *defaultPopulator) Populate(target interface{}) error {
 	return d.invoker.Invoke(fn.Interface())
 }
 
-// IntoPopulator converts a contract.DIInvoker to contract.DIPopulator.
+// IntoPopulator converts a *dig.Container to contract.DIPopulator.
 func IntoPopulator(container *dig.Container) contract.DIPopulator {
 	return &defaultPopulator{
 		invoker: container,

@@ -16,7 +16,7 @@ type OptionalProvider struct {
 
 // LocationForPC sets the constructor pointer to a specified location. Use this
 // Options to reduce vague debug message when constructor are made by
-// reflect.makeFunc.
+// reflect.makeFunc. For example:
 //  LocationForPC(reflect.makeFunc(...), reflect.ValueOf(realConstructor).Pointer())
 func LocationForPC(constructor interface{}, pc uintptr) interface{} {
 	if op, ok := constructor.(OptionalProvider); ok {
@@ -29,7 +29,8 @@ func LocationForPC(constructor interface{}, pc uintptr) interface{} {
 	}
 }
 
-// As constructs the instance and bind it to another interface. As is mean to be used as an argument to graph.Provide.
+// As constructs the instance and bind it to another interface. As means to be used as an argument to graph.Provide.
+// For example:
 //  As(MyConstructor, new(MyAbstractInterface))
 func As(constructor interface{}, as interface{}) interface{} {
 	if op, ok := constructor.(OptionalProvider); ok {
@@ -42,7 +43,8 @@ func As(constructor interface{}, as interface{}) interface{} {
 	}
 }
 
-// Name constructs a named instance. Name is mean to be used as an argument to graph.Provide.
+// Name constructs a named instance. Name means to be used as an argument to graph.Provide.
+// For example:
 //  Name(MyConstructor, "foo")
 func Name(constructor interface{}, name string) interface{} {
 	if op, ok := constructor.(OptionalProvider); ok {

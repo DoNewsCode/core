@@ -34,7 +34,7 @@ type Manager struct {
 	autoExtension bool
 }
 
-// ManagerConfig contains a various of configurations for Manager. It is mean to be modified by ManagerOptionFunc.
+// ManagerConfig contains a various configurations for Manager. It means to be modified by ManagerOptionFunc.
 type ManagerConfig struct {
 	tracer        opentracing.Tracer
 	doer          contract.HttpDoer
@@ -75,7 +75,7 @@ func WithHTTPClient(client contract.HttpDoer) ManagerOptionFunc {
 	}
 }
 
-// WithLocationFunc is an option that decides the how url is mapped to S3 bucket and path.
+// WithLocationFunc is an option that decides how url is mapped to S3 bucket and path.
 // Useful when not serving file directly from S3, but from a CDN.
 func WithLocationFunc(f func(location string) (url string)) ManagerOptionFunc {
 	return func(c *ManagerConfig) {

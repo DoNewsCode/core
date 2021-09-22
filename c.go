@@ -25,7 +25,7 @@ import (
 )
 
 // C stands for the core of the application. It contains service definitions and
-// dependencies. C is mean to be used in the boostrap phase of the application.
+// dependencies. C means to be used in the boostrap phase of the application.
 // Do not pass C into services and use it as a service locator.
 type C struct {
 	AppName contract.AppName
@@ -55,7 +55,7 @@ type ConfigProvider func(configStack []config.ProviderSet, configWatcher contrac
 // EventDispatcherProvider provides contract.Dispatcher to the core.
 type EventDispatcherProvider func(conf contract.ConfigUnmarshaler) contract.Dispatcher
 
-// DiProvider provides the DiContainer to the core.
+// DiProvider provides the *dig.Container to the core.
 type DiProvider func(conf contract.ConfigUnmarshaler) *dig.Container
 
 // AppNameProvider provides the contract.AppName to the core.
