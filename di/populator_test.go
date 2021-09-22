@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/dig"
 )
 
 func TestIntoPopulator(t *testing.T) {
 	var target int
-	g := NewGraph()
+	g := dig.New()
 	g.Provide(func() int { return 1 })
 
 	p := IntoPopulator(g)
@@ -25,25 +26,4 @@ func TestIntoPopulator(t *testing.T) {
 
 	err = p.Populate(s)
 	assert.Error(t, err)
-}
-
-type Stub struct{}
-
-func (s Stub) Foo() {}
-
-type Fooer interface {
-	Foo()
-}
-
-func TestBind(t *testing.T) {
-	ctor := func() Stub {
-		return Stub{}
-	}
-	g := NewGraph()
-	g.Provide(ctor)
-	g.Provide(Bind(new(Stub), new(Fooer)))
-	err := g.Invoke(func(f Fooer) {
-		assert.NotNil(t, f)
-	})
-	assert.NoError(t, err)
 }
