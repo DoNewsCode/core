@@ -21,6 +21,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/file"
+	"go.uber.org/dig"
 )
 
 // C stands for the core of the application. It contains service definitions and
@@ -33,7 +34,7 @@ type C struct {
 	logging.LevelLogger
 	contract.Container
 	contract.Dispatcher
-	di contract.DIContainer
+	di *dig.Container
 }
 
 // ConfParser models a parser for configuration. For example, yaml.Parser.
@@ -55,7 +56,7 @@ type ConfigProvider func(configStack []config.ProviderSet, configWatcher contrac
 type EventDispatcherProvider func(conf contract.ConfigUnmarshaler) contract.Dispatcher
 
 // DiProvider provides the DiContainer to the core.
-type DiProvider func(conf contract.ConfigUnmarshaler) contract.DIContainer
+type DiProvider func(conf contract.ConfigUnmarshaler) *dig.Container
 
 // AppNameProvider provides the contract.AppName to the core.
 type AppNameProvider func(conf contract.ConfigUnmarshaler) contract.AppName
@@ -247,8 +248,15 @@ func (c *C) Provide(deps di.Deps) {
 }
 
 func (c *C) provide(constructor interface{}) {
+	var (
+		options        []dig.ProvideOption
+		shouldMakeFunc bool
+	)
 
-	var shouldMakeFunc bool
+	if op, ok := constructor.(di.OptionalProvider); ok {
+		constructor = op.Constructor
+		options = op.Options
+	}
 
 	ftype := reflect.TypeOf(constructor)
 	if ftype == nil {
@@ -282,7 +290,7 @@ func (c *C) provide(constructor interface{}) {
 
 	// no cleanup or module, we can use normal dig.
 	if !shouldMakeFunc {
-		err := c.di.Provide(constructor)
+		err := c.di.Provide(constructor, options...)
 		if err != nil {
 			panic(err)
 		}
@@ -307,17 +315,8 @@ func (c *C) provide(constructor interface{}) {
 		}
 		return filteredOuts
 	})
-	if pcProvider, ok := c.di.(interface {
-		ProvideWithPC(ctor interface{}, pc uintptr) error
-	}); ok {
-		pc := reflect.ValueOf(constructor).Pointer()
-		err := pcProvider.ProvideWithPC(fn.Interface(), pc)
-		if err != nil {
-			panic(err)
-		}
-		return
-	}
-	err := c.di.Provide(fn.Interface())
+	options = append(options, dig.LocationForPC(reflect.ValueOf(constructor).Pointer()))
+	err := c.di.Provide(fn.Interface(), options...)
 	if err != nil {
 		panic(err)
 	}

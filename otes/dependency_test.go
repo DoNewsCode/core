@@ -11,12 +11,13 @@ import (
 	"github.com/olivere/elastic/v7"
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/dig"
 )
 
 type Populator struct{}
 
 func (p Populator) Populate(target interface{}) error {
-	g := di.NewGraph()
+	g := dig.New()
 	g.Provide(func() log.Logger {
 		return log.NewNopLogger()
 	})
