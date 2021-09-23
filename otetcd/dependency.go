@@ -15,6 +15,7 @@ import (
 )
 
 type providersOption struct {
+	reloadable  bool
 	interceptor EtcdConfigInterceptor
 }
 
@@ -27,6 +28,14 @@ type ProvidersOptionFunc func(options *providersOption)
 func WithConfigInterceptor(interceptor EtcdConfigInterceptor) ProvidersOptionFunc {
 	return func(options *providersOption) {
 		options.interceptor = interceptor
+	}
+}
+
+// WithReload toggles whether the factory should reload cached instances upon
+// OnReload event.
+func WithReload(shouldReload bool) ProvidersOptionFunc {
+	return func(options *providersOption) {
+		options.reloadable = shouldReload
 	}
 }
 
@@ -122,7 +131,9 @@ func provideFactory(option *providersOption) func(p factoryIn) (Factory, func())
 			}, nil
 		})
 		etcdFactory := Factory{factory}
-		etcdFactory.SubscribeReloadEventFrom(p.Dispatcher)
+		if option.reloadable {
+			etcdFactory.SubscribeReloadEventFrom(p.Dispatcher)
+		}
 		return etcdFactory, etcdFactory.Close
 	}
 }

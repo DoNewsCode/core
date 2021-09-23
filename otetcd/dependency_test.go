@@ -40,25 +40,37 @@ func TestProvideFactory(t *testing.T) {
 		return
 	}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
-	out, cleanup := provideFactory(&providersOption{})(factoryIn{
-		Conf: config.MapAdapter{"etcd": map[string]Option{
-			"default": {
-				Endpoints: addrs,
-			},
-			"alternative": {
-				Endpoints: addrs,
-			},
-		}},
-		Logger: log.NewNopLogger(),
-		Tracer: nil,
-	})
-	alt, err := out.Factory.Make("alternative")
-	assert.NoError(t, err)
-	assert.NotNil(t, alt)
-	def, err := out.Factory.Make("default")
-	assert.NoError(t, err)
-	assert.NotNil(t, def)
-	cleanup()
+	for _, c := range []struct {
+		name   string
+		reload bool
+	}{
+		{"reload", true},
+		{"no reload", false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			out, cleanup := provideFactory(&providersOption{reloadable: c.reload})(factoryIn{
+				Conf: config.MapAdapter{"etcd": map[string]Option{
+					"default": {
+						Endpoints: addrs,
+					},
+					"alternative": {
+						Endpoints: addrs,
+					},
+				}},
+				Logger: log.NewNopLogger(),
+				Tracer: nil,
+			})
+			alt, err := out.Factory.Make("alternative")
+			assert.NoError(t, err)
+			assert.NotNil(t, alt)
+			def, err := out.Factory.Make("default")
+			assert.NoError(t, err)
+			assert.NotNil(t, def)
+			cleanup()
+		})
+
+	}
+
 }
 
 func Test_provideConfig(t *testing.T) {
