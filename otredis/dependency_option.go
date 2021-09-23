@@ -14,6 +14,7 @@ type ProvidersOptionFunc func(options *providersOption)
 
 type providersOption struct {
 	interceptor RedisConfigurationInterceptor
+	reloadable  bool
 }
 
 // WithConfigInterceptor instructs the Providers to accept the
@@ -22,5 +23,13 @@ type providersOption struct {
 func WithConfigInterceptor(interceptor RedisConfigurationInterceptor) ProvidersOptionFunc {
 	return func(options *providersOption) {
 		options.interceptor = interceptor
+	}
+}
+
+// WithReload toggles whether the factory should reload cached instances upon
+// OnReload event.
+func WithReload(shouldReload bool) ProvidersOptionFunc {
+	return func(options *providersOption) {
+		options.reloadable = shouldReload
 	}
 }

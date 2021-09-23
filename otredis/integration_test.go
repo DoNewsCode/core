@@ -55,7 +55,7 @@ func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 	}})
 	c.Provide(Providers(WithConfigInterceptor(func(name string, opts *redis.UniversalOptions) {
 		called = true
-	})))
+	}), WithReload(true)))
 
 	ctx, cancel := context.WithCancel(context.Background())
 
