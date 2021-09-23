@@ -27,12 +27,14 @@ func TestNewMongoFactory(t *testing.T) {
 			reloadable: c.reloadable,
 		})(factoryIn{
 			In: dig.In{},
-			Conf: config.MapAdapter{"mongo": map[string]struct{ Uri string }{
+			Conf: config.MapAdapter{"mongo": map[string]struct {
+				URI string `json:"uri"`
+			}{
 				"default": {
-					Uri: "mongodb://127.0.0.1:27017",
+					URI: "mongodb://127.0.0.1:27017",
 				},
 				"alternative": {
-					Uri: "mongodb://127.0.0.1:27017",
+					URI: "mongodb://127.0.0.1:27017",
 				},
 			}},
 			Tracer:     nil,
