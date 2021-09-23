@@ -29,8 +29,9 @@ func TestNewRedisFactory(t *testing.T) {
 					"default":     {},
 					"alternative": {},
 				}},
-				Logger: log.NewNopLogger(),
-				Tracer: nil,
+				Logger:     log.NewNopLogger(),
+				Tracer:     nil,
+				Dispatcher: dispatcher,
 			})
 			def, err := redisOut.Factory.Make("default")
 			assert.NoError(t, err)
