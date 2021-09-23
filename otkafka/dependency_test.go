@@ -7,6 +7,7 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 	"github.com/go-kit/kit/log"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
@@ -83,6 +84,7 @@ func TestProvideKafka(t *testing.T) {
 		{"not reload", false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			dispatcher := &events.SyncDispatcher{}
 			Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(&providersOption{})(factoryIn{
 				Logger: log.NewNopLogger(),
 				Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
@@ -95,6 +97,7 @@ func TestProvideKafka(t *testing.T) {
 						Topic:   "Test",
 					},
 				}},
+				Dispatcher: dispatcher,
 			})
 			assert.NoError(t, err)
 			def, err := Out.WriterFactory.Make("default")
@@ -103,6 +106,7 @@ func TestProvideKafka(t *testing.T) {
 			alt, err := Out.WriterFactory.Make("alternative")
 			assert.NoError(t, err)
 			assert.NotNil(t, alt)
+			assert.Equal(t, c.reloadable, dispatcher.ListenerCount(events.OnReload) == 1)
 			cleanupReader()
 			cleanupWriter()
 		})

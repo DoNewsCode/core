@@ -8,6 +8,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 	"github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
@@ -48,6 +49,7 @@ func TestProvideFactory(t *testing.T) {
 		{"no reload", false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			var dispatcher = &events.SyncDispatcher{}
 			out, cleanup := provideFactory(&providersOption{reloadable: c.reload})(factoryIn{
 				Conf: config.MapAdapter{"etcd": map[string]Option{
 					"default": {
@@ -57,8 +59,9 @@ func TestProvideFactory(t *testing.T) {
 						Endpoints: addrs,
 					},
 				}},
-				Logger: log.NewNopLogger(),
-				Tracer: nil,
+				Logger:     log.NewNopLogger(),
+				Tracer:     nil,
+				Dispatcher: dispatcher,
 			})
 			alt, err := out.Factory.Make("alternative")
 			assert.NoError(t, err)
@@ -66,6 +69,7 @@ func TestProvideFactory(t *testing.T) {
 			def, err := out.Factory.Make("default")
 			assert.NoError(t, err)
 			assert.NotNil(t, def)
+			assert.Equal(t, c.reload, dispatcher.ListenerCount(events.OnReload) == 1)
 			cleanup()
 		})
 

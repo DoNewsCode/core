@@ -95,7 +95,9 @@ func provideFactory(option *providersOption) func(p factoryIn) Factory {
 		})
 
 		s3Factory := Factory{factory}
-		s3Factory.SubscribeReloadEventFrom(p.Dispatcher)
+		if option.reloadable {
+			s3Factory.SubscribeReloadEventFrom(p.Dispatcher)
+		}
 
 		return s3Factory
 
