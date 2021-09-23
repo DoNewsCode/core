@@ -85,7 +85,10 @@ func TestProvideKafka(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			dispatcher := &events.SyncDispatcher{}
-			Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(&providersOption{})(factoryIn{
+			Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(&providersOption{
+				readerReloadable: c.reloadable,
+				writerReloadable: c.reloadable,
+			})(factoryIn{
 				Logger: log.NewNopLogger(),
 				Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
 					"default": {
@@ -106,7 +109,7 @@ func TestProvideKafka(t *testing.T) {
 			alt, err := Out.WriterFactory.Make("alternative")
 			assert.NoError(t, err)
 			assert.NotNil(t, alt)
-			assert.Equal(t, c.reloadable, dispatcher.ListenerCount(events.OnReload) == 1)
+			assert.Equal(t, c.reloadable, dispatcher.ListenerCount(events.OnReload) == 2)
 			cleanupReader()
 			cleanupWriter()
 		})
