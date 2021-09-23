@@ -52,9 +52,9 @@ type factoryIn struct {
 
 // Provide creates Factory and *mongo.Client. It is a valid dependency for
 // package core.
-func provideMongoFactory(po *providersOption) func(p factoryIn) (Factory, func()) {
-	if po.interceptor == nil {
-		po.interceptor = func(name string, clientOptions *options.ClientOptions) {}
+func provideMongoFactory(providerOption *providersOption) func(p factoryIn) (Factory, func()) {
+	if providerOption.interceptor == nil {
+		providerOption.interceptor = func(name string, clientOptions *options.ClientOptions) {}
 	}
 	return func(p factoryIn) (Factory, func()) {
 		factory := di.NewFactory(func(name string) (di.Pair, error) {
@@ -73,7 +73,7 @@ func provideMongoFactory(po *providersOption) func(p factoryIn) (Factory, func()
 			if p.Tracer != nil {
 				opts.Monitor = NewMonitor(p.Tracer)
 			}
-			po.interceptor(name, opts)
+			providerOption.interceptor(name, opts)
 			client, err := mongo.Connect(context.Background(), opts)
 			if err != nil {
 				return di.Pair{}, err
@@ -86,7 +86,9 @@ func provideMongoFactory(po *providersOption) func(p factoryIn) (Factory, func()
 			}, nil
 		})
 		f := Factory{factory}
-		f.SubscribeReloadEventFrom(p.Dispatcher)
+		if providerOption.reloadable {
+			f.SubscribeReloadEventFrom(p.Dispatcher)
+		}
 		return f, f.Close
 	}
 
