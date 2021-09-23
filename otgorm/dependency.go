@@ -212,7 +212,9 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			}, err
 		})
 		dbFactory := Factory{factory}
-		dbFactory.SubscribeReloadEventFrom(factoryIn.Dispatcher)
+		if options.reloadable {
+			dbFactory.SubscribeReloadEventFrom(factoryIn.Dispatcher)
+		}
 
 		var collector *collector
 		if factoryIn.Gauges != nil {
