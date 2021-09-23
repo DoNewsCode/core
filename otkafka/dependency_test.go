@@ -75,26 +75,37 @@ func TestProvideWriterFactory(t *testing.T) {
 }
 
 func TestProvideKafka(t *testing.T) {
-	Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(&providersOption{})(factoryIn{
-		Logger: log.NewNopLogger(),
-		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
-			"default": {
-				Brokers: nil,
-				Topic:   "Test",
-			},
-			"alternative": {
-				Brokers: nil,
-				Topic:   "Test",
-			},
-		}},
-	})
-	assert.NoError(t, err)
-	def, err := Out.WriterFactory.Make("default")
-	assert.NoError(t, err)
-	assert.NotNil(t, def)
-	alt, err := Out.WriterFactory.Make("alternative")
-	assert.NoError(t, err)
-	assert.NotNil(t, alt)
-	cleanupReader()
-	cleanupWriter()
+	for _, c := range []struct {
+		name       string
+		reloadable bool
+	}{
+		{"reload", true},
+		{"not reload", false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(&providersOption{})(factoryIn{
+				Logger: log.NewNopLogger(),
+				Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
+					"default": {
+						Brokers: nil,
+						Topic:   "Test",
+					},
+					"alternative": {
+						Brokers: nil,
+						Topic:   "Test",
+					},
+				}},
+			})
+			assert.NoError(t, err)
+			def, err := Out.WriterFactory.Make("default")
+			assert.NoError(t, err)
+			assert.NotNil(t, def)
+			alt, err := Out.WriterFactory.Make("alternative")
+			assert.NoError(t, err)
+			assert.NotNil(t, alt)
+			cleanupReader()
+			cleanupWriter()
+		})
+	}
+
 }

@@ -11,7 +11,9 @@ type ReaderInterceptor func(name string, reader *kafka.ReaderConfig)
 type WriterInterceptor func(name string, writer *kafka.Writer)
 
 type providersOption struct {
+	readerReloadable  bool
 	readerInterceptor ReaderInterceptor
+	writerReloadable  bool
 	writerInterceptor WriterInterceptor
 }
 
@@ -33,5 +35,21 @@ func WithReaderInterceptor(interceptor ReaderInterceptor) ProvidersOptionFunc {
 func WithWriterInterceptor(interceptor WriterInterceptor) ProvidersOptionFunc {
 	return func(options *providersOption) {
 		options.writerInterceptor = interceptor
+	}
+}
+
+// WithReaderReload toggles whether the reader factory should reload cached instances upon
+// OnReload event.
+func WithReaderReload(shouldReload bool) ProvidersOptionFunc {
+	return func(options *providersOption) {
+		options.readerReloadable = shouldReload
+	}
+}
+
+// WithWriterReload toggles whether the writer factory should reload cached instances upon
+// OnReload event.
+func WithWriterReload(shouldReload bool) ProvidersOptionFunc {
+	return func(options *providersOption) {
+		options.writerReloadable = shouldReload
 	}
 }

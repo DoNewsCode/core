@@ -162,8 +162,12 @@ func provideKafkaFactory(option *providersOption) func(p factoryIn) (factoryOut,
 		}
 
 		if p.Dispatcher != nil {
-			rf.SubscribeReloadEventFrom(p.Dispatcher)
-			wf.SubscribeReloadEventFrom(p.Dispatcher)
+			if option.writerReloadable {
+				wf.SubscribeReloadEventFrom(p.Dispatcher)
+			}
+			if option.readerReloadable {
+				rf.SubscribeReloadEventFrom(p.Dispatcher)
+			}
 		}
 
 		return factoryOut{
