@@ -17,6 +17,7 @@ import (
 type ETCD struct {
 	key          string
 	clientConfig clientv3.Config
+	rev          int64
 }
 
 // Provider create a *ETCD
@@ -49,7 +50,7 @@ func (r *ETCD) ReadBytes() ([]byte, error) {
 	if resp.Count == 0 {
 		return nil, fmt.Errorf("no such config key: %s", r.key)
 	}
-
+	r.rev = resp.Header.Revision
 	return resp.Kvs[0].Value, nil
 }
 
@@ -69,7 +70,7 @@ func (r *ETCD) Watch(ctx context.Context, reload func() error) error {
 	}
 	defer client.Close()
 
-	rch := client.Watch(ctx, r.key)
+	rch := client.Watch(ctx, r.key, clientv3.WithRev(r.rev))
 	for {
 		select {
 		case resp := <-rch:
