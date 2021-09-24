@@ -14,4 +14,5 @@ As a contributor, here are the guidelines we would like you to follow:
 - Have fun!
 
 [issues]: https://github.com/DoNewsCode/core/issues
+
 [prs]: https://github.com/DoNewsCode/core/pulls

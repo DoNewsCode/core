@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 )
 
 // RedisLogAdapter is an adapter between kitlog and redis logger interface

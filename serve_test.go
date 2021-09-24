@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/logging"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/oklog/run"
 	"github.com/stretchr/testify/assert"
 )

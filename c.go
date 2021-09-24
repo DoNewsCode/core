@@ -18,7 +18,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/file"
 	"go.uber.org/dig"

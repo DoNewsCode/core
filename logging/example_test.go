@@ -5,7 +5,7 @@ import (
 
 	"github.com/DoNewsCode/core/ctxmeta"
 	"github.com/DoNewsCode/core/logging"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log/level"
 )
 
 func Example_minimal() {
