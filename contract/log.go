@@ -1,6 +1,6 @@
 package contract
 
-import "github.com/go-kit/kit/log"
+import "github.com/go-kit/log"
 
 // Logger is an alias of go kit logger
 type Logger = log.Logger

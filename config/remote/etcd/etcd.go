@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
@@ -41,7 +42,7 @@ func (r *ETCD) ReadBytes() ([]byte, error) {
 	}
 	defer client.Close()
 
-	resp, err := client.Get(context.Background(), r.key)
+	resp, err := client.Get(r.context(), r.key)
 	if err != nil {
 		return nil, err
 	}
@@ -83,4 +84,11 @@ func (r *ETCD) Watch(ctx context.Context, reload func() error) error {
 			return ctx.Err()
 		}
 	}
+}
+
+func (r *ETCD) context() context.Context {
+	if r.clientConfig.Context != nil {
+		return r.clientConfig.Context
+	}
+	return context.Background()
 }

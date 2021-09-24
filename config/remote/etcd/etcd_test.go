@@ -19,7 +19,7 @@ func TestRemote(t *testing.T) {
 		return
 	}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	cfg := clientv3.Config{
 		Endpoints:   addrs,
@@ -43,7 +43,7 @@ func TestRemote(t *testing.T) {
 	assert.Equal(t, testVal, string(bytes))
 
 	var ch = make(chan string)
-	go r.Watch(context.Background(), func() error {
+	go r.Watch(ctx, func() error {
 		bytes, err := r.ReadBytes()
 		if err != nil {
 			ch <- ""
@@ -73,10 +73,13 @@ func TestError(t *testing.T) {
 		r   *ETCD
 		err error
 	)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	cfg := clientv3.Config{
 		Endpoints:   []string{},
 		DialTimeout: 2 * time.Second,
+		Context:     ctx,
 	}
 
 	r = Provider(cfg, "config.yaml")
@@ -86,7 +89,7 @@ func TestError(t *testing.T) {
 	_, err = r.ReadBytes()
 	assert.Error(t, err)
 
-	err = r.Watch(context.Background(), func() error {
+	err = r.Watch(ctx, func() error {
 		return nil
 	})
 	assert.Error(t, err)
@@ -94,6 +97,7 @@ func TestError(t *testing.T) {
 	cfg = clientv3.Config{
 		Endpoints:   addrs,
 		DialTimeout: 2 * time.Second,
+		Context:     ctx,
 	}
 	r = Provider(cfg, "config-test1")
 	_, err = r.ReadBytes()
@@ -105,7 +109,7 @@ func TestError(t *testing.T) {
 	g := sync.WaitGroup{}
 	g.Add(2)
 	go func() {
-		err := r.Watch(context.Background(), func() error {
+		err := r.Watch(ctx, func() error {
 			return fmt.Errorf("for test")
 		})
 		assert.Error(t, err)
@@ -113,8 +117,6 @@ func TestError(t *testing.T) {
 	}()
 
 	go func() {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
 		err := r.Watch(ctx, func() error {
 			return fmt.Errorf("for test")
 		})
@@ -136,10 +138,7 @@ func put(r *ETCD, val string) error {
 	}
 	defer client.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	_, err = client.Put(ctx, r.key, val)
+	_, err = client.Put(r.context(), r.key, val)
 	if err != nil {
 		return err
 	}
