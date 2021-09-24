@@ -3,13 +3,14 @@ package etcd_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/codec/yaml"
 	"github.com/DoNewsCode/core/config/remote/etcd"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"os"
-	"strings"
-	"time"
 )
 
 func Example() {
@@ -20,9 +21,12 @@ func Example() {
 	}
 	key := "core.yaml"
 	envEtcdAddrs := strings.Split(addr, ",")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	cfg := clientv3.Config{
 		Endpoints:   envEtcdAddrs,
 		DialTimeout: time.Second,
+		Context:     ctx,
 	}
 	_ = put(cfg, key, "name: etcd")
 
