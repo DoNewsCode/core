@@ -53,8 +53,6 @@ func TestRemote(t *testing.T) {
 		return nil
 	})
 
-	time.Sleep(1 * time.Second)
-
 	if err := put(r, testVal); err != nil {
 		t.Fatal(err)
 	}
