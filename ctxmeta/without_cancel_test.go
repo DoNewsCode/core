@@ -8,7 +8,8 @@ import (
 )
 
 func TestWithoutCancel(t *testing.T) {
-	ctx := context.WithValue(context.Background(), "key", "value")
+	key := struct{}{}
+	ctx := context.WithValue(context.Background(), key, "value")
 	ctx, cancel := context.WithCancel(ctx)
 	cancel()
 
@@ -21,5 +22,5 @@ func TestWithoutCancel(t *testing.T) {
 	_, dead := WithoutCancel(ctx).Deadline()
 	assert.False(t, dead)
 	assert.Nil(t, WithoutCancel(ctx).Err())
-	assert.Equal(t, "value", WithoutCancel(ctx).Value("key"))
+	assert.Equal(t, "value", WithoutCancel(ctx).Value(key))
 }
