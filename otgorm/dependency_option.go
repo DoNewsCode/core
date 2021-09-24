@@ -9,6 +9,7 @@ type GormConfigInterceptor func(name string, conf *gorm.Config)
 type providersOption struct {
 	interceptor GormConfigInterceptor
 	drivers     Drivers
+	reloadable  bool
 }
 
 // ProvidersOptionFunc is the type of functional providersOption for Providers. Use this type to change how Providers work.
@@ -31,5 +32,13 @@ func WithConfigInterceptor(interceptor GormConfigInterceptor) ProvidersOptionFun
 func WithDrivers(drivers Drivers) ProvidersOptionFunc {
 	return func(options *providersOption) {
 		options.drivers = drivers
+	}
+}
+
+// WithReload toggles whether the factory should reload cached instances upon
+// OnReload event.
+func WithReload(shouldReload bool) ProvidersOptionFunc {
+	return func(options *providersOption) {
+		options.reloadable = shouldReload
 	}
 }

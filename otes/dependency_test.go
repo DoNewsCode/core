@@ -1,12 +1,14 @@
 package otes
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 	"github.com/go-kit/kit/log"
 	"github.com/olivere/elastic/v7"
 	"github.com/opentracing/opentracing-go"
@@ -95,6 +97,52 @@ func TestNewEsFactory(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, def)
 		cleanup()
+	})
+
+	t.Run("should not reload if the providersOption forbids", func(t *testing.T) {
+		dispatcher := &events.SyncDispatcher{}
+		esFactory, cleanup := provideEsFactory(&providersOption{})(factoryIn{
+			Conf: config.MapAdapter{"es": map[string]Config{
+				// elasticsearch server doesn't exist at this port
+				"default": {URL: []string{"http://127.0.0.1:9999"}},
+			}},
+			Logger:     log.NewNopLogger(),
+			Populator:  Populator{},
+			Dispatcher: dispatcher,
+		})
+		defer cleanup()
+
+		def1, err := esFactory.Make("default")
+		assert.NoError(t, err)
+		dispatcher.Dispatch(context.Background(), events.OnReload, events.OnReloadPayload{})
+
+		def2, err := esFactory.Make("default")
+		assert.NoError(t, err)
+
+		assert.Same(t, def1, def2)
+	})
+
+	t.Run("should reload if the providersOption allows", func(t *testing.T) {
+		dispatcher := &events.SyncDispatcher{}
+		esFactory, cleanup := provideEsFactory(&providersOption{reloadable: true})(factoryIn{
+			Conf: config.MapAdapter{"es": map[string]Config{
+				// elasticsearch server doesn't exist at this port
+				"default": {URL: []string{"http://127.0.0.1:9999"}},
+			}},
+			Logger:     log.NewNopLogger(),
+			Populator:  Populator{},
+			Dispatcher: dispatcher,
+		})
+		defer cleanup()
+
+		def1, err := esFactory.Make("default")
+		assert.NoError(t, err)
+		dispatcher.Dispatch(context.Background(), events.OnReload, events.OnReloadPayload{})
+
+		def2, err := esFactory.Make("default")
+		assert.NoError(t, err)
+
+		assert.NotSame(t, def1, def2)
 	})
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,21 +31,24 @@ func TestNewUploadManagerFactory(t *testing.T) {
 }
 
 func TestNewUploadManagerFactory_customOption(t *testing.T) {
+	dispatcher := &events.SyncDispatcher{}
 	var called bool
 	s3out := provideFactory(&providersOption{ctor: func(args ManagerArgs) (*Manager, error) {
 		called = true
 		return newManager(args)
-	}})(factoryIn{
+	}, reloadable: true})(factoryIn{
 		Conf: config.MapAdapter{"s3": map[string]S3Config{
 			"default":     {},
 			"alternative": {},
 		}},
-		Populator: Populator{},
+		Populator:  Populator{},
+		Dispatcher: dispatcher,
 	})
 	def, err := s3out.Factory.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
 	assert.True(t, called)
+	assert.Equal(t, 1, dispatcher.ListenerCount(events.OnReload))
 }
 
 type exportedConfig struct {

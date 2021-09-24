@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/events"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf"
@@ -14,22 +15,36 @@ import (
 )
 
 func TestNewRedisFactory(t *testing.T) {
-	redisOut, cleanup := provideRedisFactory(&providersOption{})(factoryIn{
-		Conf: config.MapAdapter{"redis": map[string]RedisUniversalOptions{
-			"default":     {},
-			"alternative": {},
-		}},
-		Logger: log.NewNopLogger(),
-		Tracer: nil,
-	})
-	def, err := redisOut.Factory.Make("default")
-	assert.NoError(t, err)
-	assert.NotNil(t, def)
-	alt, err := redisOut.Factory.Make("alternative")
-	assert.NoError(t, err)
-	assert.NotNil(t, alt)
-	assert.NotNil(t, cleanup)
-	cleanup()
+	for _, c := range []struct {
+		name   string
+		reload bool
+	}{
+		{"reload", true},
+		{"not reload", false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			dispatcher := &events.SyncDispatcher{}
+			redisOut, cleanup := provideRedisFactory(&providersOption{reloadable: c.reload})(factoryIn{
+				Conf: config.MapAdapter{"redis": map[string]RedisUniversalOptions{
+					"default":     {},
+					"alternative": {},
+				}},
+				Logger:     log.NewNopLogger(),
+				Tracer:     nil,
+				Dispatcher: dispatcher,
+			})
+			def, err := redisOut.Factory.Make("default")
+			assert.NoError(t, err)
+			assert.NotNil(t, def)
+			alt, err := redisOut.Factory.Make("alternative")
+			assert.NoError(t, err)
+			assert.NotNil(t, alt)
+			assert.NotNil(t, cleanup)
+			assert.Equal(t, c.reload, dispatcher.ListenerCount(events.OnReload) == 1)
+			cleanup()
+		})
+	}
+
 }
 
 func TestProvideConfigs(t *testing.T) {

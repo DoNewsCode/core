@@ -10,6 +10,7 @@ type MongoConfigInterceptor func(name string, clientOptions *options.ClientOptio
 
 type providersOption struct {
 	interceptor MongoConfigInterceptor
+	reloadable  bool
 }
 
 // ProvidersOptionFunc is the type of functional providersOption for Providers. Use this type to change how Providers work.
@@ -21,5 +22,13 @@ type ProvidersOptionFunc func(options *providersOption)
 func WithConfigInterceptor(interceptor MongoConfigInterceptor) ProvidersOptionFunc {
 	return func(options *providersOption) {
 		options.interceptor = interceptor
+	}
+}
+
+// WithReload toggles whether the factory should reload cached instances upon
+// OnReload event.
+func WithReload(shouldReload bool) ProvidersOptionFunc {
+	return func(options *providersOption) {
+		options.reloadable = shouldReload
 	}
 }

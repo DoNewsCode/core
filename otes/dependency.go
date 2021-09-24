@@ -95,7 +95,9 @@ func provideEsFactory(option *providersOption) func(p factoryIn) (Factory, func(
 			}, nil
 		})
 		f := Factory{factory}
-		f.SubscribeReloadEventFrom(p.Dispatcher)
+		if option.reloadable {
+			f.SubscribeReloadEventFrom(p.Dispatcher)
+		}
 		return f, f.Close
 	}
 }

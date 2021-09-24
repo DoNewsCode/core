@@ -159,7 +159,9 @@ func provideRedisFactory(option *providersOption) func(p factoryIn) (factoryOut,
 			}, nil
 		})
 		redisFactory := Factory{factory}
-		redisFactory.SubscribeReloadEventFrom(p.Dispatcher)
+		if option.reloadable {
+			redisFactory.SubscribeReloadEventFrom(p.Dispatcher)
+		}
 		var collector *collector
 		if p.Gauges != nil {
 			var interval time.Duration

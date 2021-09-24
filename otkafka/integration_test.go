@@ -329,7 +329,7 @@ func TestModule_hotReload(t *testing.T) {
 	}
 	path := createFile(conf)
 	c := core.Default(core.WithConfigStack(file.Provider(path), knoaf_json.Parser()), core.WithConfigWatcher(cw))
-	c.Provide(Providers())
+	c.Provide(Providers(WithReaderReload(true), WithWriterReload(true)))
 	c.AddModuleFunc(config.New)
 
 	var group run.Group

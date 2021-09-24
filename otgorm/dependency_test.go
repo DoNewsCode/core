@@ -6,6 +6,7 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 	"gorm.io/gorm"
 
 	"github.com/DoNewsCode/core/config"
@@ -28,18 +29,31 @@ func TestProvideDBFactory(t *testing.T) {
 			Dsn:      os.Getenv("MYSQL_DSN"),
 		},
 	}
-	out, cleanup, _ := provideDBFactory(&providersOption{})(factoryIn{
-		Conf:   config.MapAdapter{"gorm": gorms},
-		Logger: log.NewNopLogger(),
-		Tracer: nil,
-	})
-	defer cleanup()
+
 	for driverName := range gorms {
-		t.Run(driverName, func(t *testing.T) {
-			db, err := out.Factory.Make(driverName)
-			assert.NoError(t, err)
-			assert.NotNil(t, db)
-		})
+		for _, reloadable := range []bool{true, false} {
+			t.Run(driverName, func(t *testing.T) {
+				dispatcher := &events.SyncDispatcher{}
+				out, cleanup, _ := provideDBFactory(&providersOption{reloadable: reloadable})(factoryIn{
+					Conf:       config.MapAdapter{"gorm": gorms},
+					Logger:     log.NewNopLogger(),
+					Tracer:     nil,
+					Dispatcher: dispatcher,
+				})
+				defer cleanup()
+				db, err := out.Factory.Make(driverName)
+				assert.NoError(t, err)
+				assert.NotNil(t, db)
+				assert.Equal(
+					t,
+					reloadable,
+					dispatcher.ListenerCount(events.OnReload) == 1,
+					"unexpected dispatcher count %d when reload = %t",
+					dispatcher.ListenerCount(events.OnReload),
+					reloadable,
+				)
+			})
+		}
 	}
 }
 
