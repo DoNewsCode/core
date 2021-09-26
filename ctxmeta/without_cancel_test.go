@@ -27,7 +27,7 @@ func TestWithoutCancel(t *testing.T) {
 
 func TestWithoutCancel_Nil(t *testing.T) {
 	defer func() {
-		assert.Equal(t, recover(), "cannot create context from nil parent")
+		assert.Equal(t, "cannot create context from nil parent", recover())
 	}()
 	WithoutCancel(nil)
 }
