@@ -24,3 +24,10 @@ func TestWithoutCancel(t *testing.T) {
 	assert.Nil(t, WithoutCancel(ctx).Err())
 	assert.Equal(t, "value", WithoutCancel(ctx).Value(key))
 }
+
+func TestWithoutCancel_Nil(t *testing.T) {
+	defer func() {
+		assert.Equal(t, recover(), "cannot create context from nil parent")
+	}()
+	WithoutCancel(nil)
+}
