@@ -10,7 +10,7 @@ type asyncContext struct {
 }
 
 func (a asyncContext) Deadline() (deadline time.Time, ok bool) {
-	return
+	return time.Time{}, false
 }
 
 func (a asyncContext) Done() <-chan struct{} {
