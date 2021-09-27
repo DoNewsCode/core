@@ -25,7 +25,7 @@ func TestNewEtcdDriver(t *testing.T) {
 	e1 := NewEtcdDriver(client, key.New("test"))
 	e2 := NewEtcdDriver(client, key.New("test"))
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	ch := make(chan *EtcdDriver)
 
