@@ -22,12 +22,13 @@ jobs:
         ports:
           - 6379:6379
       etcd:
-        image: bitnami/etcd:3.5.0
-        env:
-          ALLOW_NONE_AUTHENTICATION: yes
-          ETCD_ADVERTISE_CLIENT_URLS: http://localhost:2379
+        image: gcr.io/etcd-development/etcd:v3.5.0
         ports:
-          - 2379:2379
+          - 2379
+        env:
+          ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+          ETCD_ADVERTISE_CLIENT_URLS: http://0.0.0.0:2379
+        options: --health-cmd "ETCDCTL_API=3 etcdctl --endpoints http://localhost:2379 endpoint health" --health-interval 10s --health-timeout 5s --health-retries 5
       mysql:
         image: mysql:5.7
         env:
