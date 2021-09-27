@@ -1,4 +1,46 @@
 
+<a name="v0.10.0"></a>
+## [v0.10.0](https://github.com/DoNewsCode/core/compare/v0.9.2...v0.10.0) (2021-09-27)
+
+### ♻️ Code Refactoring
+
+* remove DIContainer abstraction ([#196](https://github.com/DoNewsCode/core/issues/196)) (@[谷溪](guxi99@gmail.com))
+
+### ✨ Features
+
+* add WithoutCancel ([#200](https://github.com/DoNewsCode/core/issues/200)) (@[谷溪](guxi99@gmail.com))
+* make reload opt-in ([#195](https://github.com/DoNewsCode/core/issues/195)) (@[谷溪](guxi99@gmail.com))
+
+### 🐛 Bug Fixes
+
+* **config:** watch etcd from last revision ([#199](https://github.com/DoNewsCode/core/issues/199)) (@[谷溪](guxi99@gmail.com))
+
+### BREAKING CHANGE
+
+
+reload used to be enabled by default
+
+* refactor: add WithReload to otetcd
+
+* refactor: add WithReload to otkafka
+
+* refactor: add WithReload to ots3
+
+* refactor: add WithReload to otgorm
+
+* refactor: add WithReload to otkafka
+
+* refactor: add WithReload to otmongo
+
+* fix: tests in otkafka
+
+* fix: tests in otmongo
+
+* fix: tests in otredis
+
+* fix: tests in otredis
+
+
 <a name="v0.9.2"></a>
 ## [v0.9.2](https://github.com/DoNewsCode/core/compare/v0.9.1...v0.9.2) (2021-09-15)
 
