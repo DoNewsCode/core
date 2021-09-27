@@ -17,15 +17,15 @@ func TestNewEtcdDriver(t *testing.T) {
 		t.Skip("set ETCD_ADDR to run TestNewEtcdDriver")
 		return
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
-	client, err := clientv3.New(clientv3.Config{Endpoints: addrs, DialTimeout: 2 * time.Second})
+	client, err := clientv3.New(clientv3.Config{Endpoints: addrs, DialTimeout: 10 * time.Second, Context: ctx})
 	assert.NoError(t, err)
 	defer client.Close()
 
 	e1 := NewEtcdDriver(client, key.New("test"))
 	e2 := NewEtcdDriver(client, key.New("test"))
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 
 	ch := make(chan *EtcdDriver)
 
@@ -51,5 +51,4 @@ func TestNewEtcdDriver(t *testing.T) {
 
 	assert.NotEqual(t, e3, e4)
 	e4.Resign(ctx)
-	cancel()
 }
