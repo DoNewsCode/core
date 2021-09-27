@@ -22,7 +22,7 @@ jobs:
         ports:
           - 6379:6379
       etcd:
-        image: bitnami/etcd
+        image: bitnami/etcd:3.5.0
         env:
           ALLOW_NONE_AUTHENTICATION: yes
           ETCD_ADVERTISE_CLIENT_URLS: http://localhost:2379
