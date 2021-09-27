@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/go-kit/log"
@@ -40,7 +41,9 @@ func TestTracing(t *testing.T) {
 
 	client, err := factory.Make("default")
 	assert.NoError(t, err)
-	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "test")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, tracer, "test")
 	defer span.Finish()
 
 	response, err := client.Get(ctx, "foo")
