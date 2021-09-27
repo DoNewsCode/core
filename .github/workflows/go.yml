@@ -28,7 +28,7 @@ jobs:
         env:
           ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
           ETCD_ADVERTISE_CLIENT_URLS: http://0.0.0.0:2379
-        options: --health-cmd "ETCDCTL_API=3 etcdctl --endpoints http://localhost:2379 endpoint health" --health-interval 10s --health-timeout 5s --health-retries 5
+        options: --health-cmd "ETCDCTL_API=3 etcdctl --endpoints http://localhost:2379 endpoint health" --health-interval 2s --health-timeout 1s --health-retries 2
       mysql:
         image: mysql:5.7
         env:
