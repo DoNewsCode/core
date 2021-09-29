@@ -151,7 +151,7 @@ func provideKafkaFactory(option *providersOption) func(p factoryIn) (factoryOut,
 		}
 
 		if p.ReaderStats != nil || p.WriterStats != nil {
-			var interval time.Duration
+			var interval time.Duration = 15 * time.Second
 			p.Conf.Unmarshal("kafkaMetrics.interval", &interval)
 			if p.ReaderStats != nil {
 				readerCollector = newReaderCollector(rf, p.ReaderStats, interval)

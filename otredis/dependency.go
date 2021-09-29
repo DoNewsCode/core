@@ -164,7 +164,7 @@ func provideRedisFactory(option *providersOption) func(p factoryIn) (factoryOut,
 		}
 		var collector *collector
 		if p.Gauges != nil {
-			var interval time.Duration
+			var interval time.Duration = 15 * time.Second
 			p.Conf.Unmarshal("redisMetrics.interval", &interval)
 			collector = newCollector(redisFactory, p.Gauges, interval)
 		}
