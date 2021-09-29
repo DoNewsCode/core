@@ -2,7 +2,6 @@ package otgorm
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
@@ -31,7 +30,6 @@ type Module struct {
 	env       contract.Env
 	logger    log.Logger
 	container contract.Container
-	interval  time.Duration
 }
 
 // ModuleIn contains the input parameters needed for creating the new module.
