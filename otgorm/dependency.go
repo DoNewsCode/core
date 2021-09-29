@@ -218,7 +218,7 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 
 		var collector *collector
 		if factoryIn.Gauges != nil {
-			var interval time.Duration
+			var interval time.Duration = 15 * time.Second
 			factoryIn.Conf.Unmarshal("gormMetrics.interval", &interval)
 			collector = newCollector(dbFactory, factoryIn.Gauges, interval)
 		}
