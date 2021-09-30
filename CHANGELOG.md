@@ -1,4 +1,15 @@
 
+<a name="v0.10.1"></a>
+## [v0.10.1](https://github.com/DoNewsCode/core/compare/v0.10.0...v0.10.1) (2021-09-30)
+
+### 🐛 Bug Fixes
+
+* lint error ([#204](https://github.com/DoNewsCode/core/issues/204)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* metrics default interval ([#203](https://github.com/DoNewsCode/core/issues/203)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+* **logging:** nil pointer (@[Reasno](guxi99@gmail.com))
+* **logging:** nil pointer (@[Reasno](guxi99@gmail.com))
+
+
 <a name="v0.10.0"></a>
 ## [v0.10.0](https://github.com/DoNewsCode/core/compare/v0.9.2...v0.10.0) (2021-09-27)
 
