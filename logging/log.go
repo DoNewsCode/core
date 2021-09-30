@@ -113,10 +113,9 @@ func WithContext(logger log.Logger, ctx context.Context) log.Logger {
 	var args []interface{}
 
 	bag := ctxmeta.GetBaggage(ctx)
-	if bag != nil {
-		for _, kv := range bag.Slice() {
-			args = append(args, kv.Key, kv.Val)
-		}
+
+	for _, kv := range bag.Slice() {
+		args = append(args, kv.Key, kv.Val)
 	}
 
 	span := opentracing.SpanFromContext(ctx)
