@@ -62,6 +62,9 @@ func TestContextMeta_ErrNoBaggae(t *testing.T) {
 
 	err = baggage.Delete("foo")
 	assert.ErrorIs(t, err, ErrNoBaggage)
+
+	assert.Nil(t, baggage.Slice())
+	assert.Nil(t, baggage.Map())
 }
 
 func TestContextMeta_ErrNotFound(t *testing.T) {

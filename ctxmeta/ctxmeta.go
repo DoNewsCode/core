@@ -159,6 +159,9 @@ func (b *Baggage) Delete(key interface{}) (err error) {
 
 // Slice returns a slice of key/value pairs in the order in which they were set.
 func (b *Baggage) Slice() []KeyVal {
+	if b == nil {
+		return nil
+	}
 	s := <-b.c
 	defer func() { b.c <- s }()
 
@@ -169,6 +172,10 @@ func (b *Baggage) Slice() []KeyVal {
 
 // Map returns a map of key to value.
 func (b *Baggage) Map() map[string]interface{} {
+	if b == nil {
+		return nil
+	}
+
 	s := <-b.c
 	defer func() { b.c <- s }()
 
