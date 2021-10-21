@@ -1,4 +1,14 @@
 
+<a name="v0.10.2"></a>
+## [v0.10.2](https://github.com/DoNewsCode/core/compare/v0.10.1...v0.10.2) (2021-10-21)
+
+### 🐛 Bug Fixes
+
+* **logging:** nil pointer ([#205](https://github.com/DoNewsCode/core/issues/205)) (@[谷溪](guxi99@gmail.com))
+* **serve:** signal group couldn't be canceled ([#208](https://github.com/DoNewsCode/core/issues/208)) (@[谷溪](guxi99@gmail.com))
+* **srvhttp:** RequestDurationSeconds shouldn't panic when missing labels ([#207](https://github.com/DoNewsCode/core/issues/207)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.10.1"></a>
 ## [v0.10.1](https://github.com/DoNewsCode/core/compare/v0.10.0...v0.10.1) (2021-09-30)
 
