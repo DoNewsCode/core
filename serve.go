@@ -157,6 +157,7 @@ func (s serveIn) cronServe(ctx context.Context, logger logging.LevelLogger) (fun
 func (s serveIn) signalWatch(ctx context.Context, logger logging.LevelLogger) (func() error, func(err error), error) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	ctx, cancel := context.WithCancel(ctx)
 	return func() error {
 			select {
 			case n := <-sig:
@@ -167,6 +168,7 @@ func (s serveIn) signalWatch(ctx context.Context, logger logging.LevelLogger) (f
 			return nil
 		}, func(err error) {
 			signal.Stop(sig)
+			cancel()
 		}, nil
 }
 
