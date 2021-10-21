@@ -27,3 +27,11 @@ func TestRequestDurationSeconds(t *testing.T) {
 	h.ServeHTTP(nil, httptest.NewRequest(http.MethodGet, "/", nil))
 	assert.GreaterOrEqual(t, 1.0, rds.Histogram.(*generic.Histogram).Quantile(0.5))
 }
+
+func TestRequestDurationSeconds_noPanicWhenMissingLabels(t *testing.T) {
+	rds := &RequestDurationSeconds{
+		Histogram: generic.NewHistogram("foo", 2),
+	}
+	rds.Observe(50)
+	assert.ElementsMatch(t, []string{"module", "", "service", "", "route", ""}, rds.Histogram.(*generic.Histogram).LabelValues())
+}
