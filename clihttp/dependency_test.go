@@ -13,9 +13,7 @@ func TestProviders(t *testing.T) {
 		c := core.Default()
 		c.Provide(observability.Providers())
 		c.Provide(clihttp.Providers())
-		c.Invoke(func(client *clihttp.Client) {
-
-		})
+		c.Invoke(func(client *clihttp.Client) {})
 	})
 	t.Run("panic", func(t *testing.T) {
 		defer func() {
