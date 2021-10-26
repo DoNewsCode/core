@@ -95,14 +95,23 @@ func LevelFilter(levelCfg string) level.Option {
 	}
 }
 
+type span interface {
+	LogKV(alternatingKeyValues ...interface{})
+}
+
 type spanLogger struct {
-	span opentracing.Span
+	span span
 	base log.Logger
 	kvs  []interface{}
 }
 
 func (s spanLogger) Log(keyvals ...interface{}) error {
 	s.kvs = append(s.kvs, keyvals...)
+	for k := range s.kvs {
+		if f, ok := s.kvs[k].(log.Valuer); ok {
+			s.kvs[k] = f()
+		}
+	}
 	s.span.LogKV(s.kvs...)
 	return s.base.Log(s.kvs...)
 }

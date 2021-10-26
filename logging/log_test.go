@@ -51,3 +51,22 @@ func TestWithContext(t *testing.T) {
 	ll.Log("baz", "qux")
 	assert.Contains(t, buf.String(), "foo=bar baz=qux")
 }
+
+type mockSpan struct {
+	received []interface{}
+}
+
+func (m *mockSpan) LogKV(alternatingKeyValues ...interface{}) {
+	m.received = alternatingKeyValues
+}
+
+func TestSpanLogger(t *testing.T) {
+	var mock mockSpan
+	spanLogger{
+		span: &mock,
+		base: log.NewNopLogger(),
+		kvs:  []interface{}{"foo", "bar"},
+	}.Log("baz", log.Valuer(func() interface{} { return "qux" }))
+
+	assert.Equal(t, []interface{}{"foo", "bar", "baz", "qux"}, mock.received)
+}
