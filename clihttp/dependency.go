@@ -1,6 +1,9 @@
 package clihttp
 
 import (
+	"fmt"
+
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/opentracing/opentracing-go"
 )
@@ -11,10 +14,22 @@ Depends On:
 Provides:
 	*clihttp.Client
 */
-func Providers(options ...Option) di.Deps {
+func Providers(options ...ProvidersOptionFunc) di.Deps {
+	var p providersOption
+	for _, f := range options {
+		f(&p)
+	}
 	return di.Deps{
-		func(tracer opentracing.Tracer) *Client {
-			return NewClient(tracer, options...)
+		func(tracer opentracing.Tracer, populator contract.DIPopulator) (*Client, error) {
+			if p.clientConstructor != nil {
+				doer, err := p.clientConstructor(ClientArgs{populator})
+				if err != nil {
+					return nil, fmt.Errorf("contructing contract.HttpDoer: %w", err)
+				}
+				return NewClient(tracer, append(p.clientOptions, WithDoer(doer))...), nil
+			}
+			return NewClient(tracer, p.clientOptions...), nil
 		},
+		di.Bind(new(*Client), new(contract.HttpDoer)),
 	}
 }
