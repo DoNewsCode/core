@@ -19,7 +19,7 @@ Providers returns a set of dependency providers for *Election and *Status.
 		contract.ConfigAccessor
 		contract.Dispatcher
 		contract.DIPopulator
-	Provide:
+	Provides:
 		Election *Election
 		Status   *Status
 */
