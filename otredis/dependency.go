@@ -139,7 +139,7 @@ func provideRedisFactory(option *providersOption) func(p factoryIn) (factoryOut,
 				MasterName:         base.MasterName,
 			}
 			option.interceptor(name, &full)
-			redis.SetLogger(&RedisLogAdapter{level.Debug(p.Logger)})
+			redis.SetLogger(&RedisLogAdapter{level.Debug(log.With(p.Logger, "tag", "redis"))})
 
 			client := redis.NewUniversalClient(&full)
 			if p.Tracer != nil {

@@ -67,7 +67,7 @@ func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (fun
 
 	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		tpl, _ := route.GetPathTemplate()
-		level.Debug(logger).Log("service", "http", "path", tpl)
+		level.Debug(logger).Log("tag", "http", "path", tpl)
 		return nil
 	})
 
@@ -108,7 +108,7 @@ func (s serveIn) grpcServe(ctx context.Context, logger logging.LevelLogger) (fun
 
 	for module, info := range s.GRPCServer.GetServiceInfo() {
 		for _, method := range info.Methods {
-			level.Debug(logger).Log("service", "grpc", "path", fmt.Sprintf("%s/%s", module, method.Name))
+			level.Debug(logger).Log("tag", "grpc", "path", fmt.Sprintf("%s/%s", module, method.Name))
 		}
 	}
 
@@ -141,7 +141,8 @@ func (s serveIn) cronServe(ctx context.Context, logger logging.LevelLogger) (fun
 		return nil, nil, nil
 	}
 	if s.Cron == nil {
-		s.Cron = cron.New(cron.WithLogger(cronopts.CronLogAdapter{Logging: s.Logger}))
+		logger := log.With(s.Logger, "tag", "cron")
+		s.Cron = cron.New(cron.WithLogger(cronopts.CronLogAdapter{Logging: logger}))
 	}
 	s.Container.ApplyCron(s.Cron)
 
