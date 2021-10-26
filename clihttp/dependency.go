@@ -8,7 +8,8 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-/* Providers provides the http client as a dependency.
+/*
+Providers provides the http client as a dependency.
 Depends On:
 	opentracing.Tracer
 Provides:
