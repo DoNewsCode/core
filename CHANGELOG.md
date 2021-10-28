@@ -1,4 +1,14 @@
 
+<a name="v0.10.3"></a>
+## [v0.10.3](https://github.com/DoNewsCode/core/compare/v0.10.2...v0.10.3) (2021-10-26)
+
+### 🐛 Bug Fixes
+
+* use "tag" as the key to identify logs (@[Reasno](guxi99@gmail.com))
+* spanlogger should support log.Valuer ([#209](https://github.com/DoNewsCode/core/issues/209)) (@[谷溪](guxi99@gmail.com))
+* **clihttp:** add the missing Providers function ([#210](https://github.com/DoNewsCode/core/issues/210)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.10.2"></a>
 ## [v0.10.2](https://github.com/DoNewsCode/core/compare/v0.10.1...v0.10.2) (2021-10-21)
 
