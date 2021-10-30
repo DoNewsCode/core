@@ -65,8 +65,8 @@ func TestSpanLogger(t *testing.T) {
 	spanLogger{
 		span: &mock,
 		base: log.NewNopLogger(),
-		kvs:  []interface{}{"foo", "bar"},
-	}.Log("baz", log.Valuer(func() interface{} { return "qux" }))
+		kvs:  []interface{}{"foo", log.Valuer(func() interface{} { return "bar" })},
+	}.Log("baz", "qux")
 
 	assert.Equal(t, []interface{}{"foo", "bar", "baz", "qux"}, mock.received)
 }

@@ -106,14 +106,14 @@ type spanLogger struct {
 }
 
 func (s spanLogger) Log(keyvals ...interface{}) error {
-	s.kvs = append(s.kvs, keyvals...)
 	for k := range s.kvs {
 		if f, ok := s.kvs[k].(log.Valuer); ok {
 			s.kvs[k] = f()
 		}
 	}
+	s.kvs = append(s.kvs, keyvals...)
 	s.span.LogKV(s.kvs...)
-	return s.base.Log(s.kvs...)
+	return s.base.Log(keyvals...)
 }
 
 // WithContext decorates the log.Logger with information form context. If there is an opentracing span
@@ -127,25 +127,13 @@ func WithContext(logger log.Logger, ctx context.Context) log.Logger {
 		args = append(args, kv.Key, kv.Val)
 	}
 
+	base := log.With(logger, args...)
+
 	span := opentracing.SpanFromContext(ctx)
 	if span == nil {
-		return withContext(logger, ctx)
+		return base
 	}
 	return spanLogger{span: span, base: logger, kvs: args}
-}
-
-func withContext(logger log.Logger, ctx context.Context) log.Logger {
-	var args []interface{}
-
-	bag := ctxmeta.GetBaggage(ctx)
-	for _, kv := range bag.Slice() {
-		args = append(args, kv.Key, kv.Val)
-	}
-
-	return log.With(
-		logger,
-		args...,
-	)
 }
 
 type levelLogger struct {
