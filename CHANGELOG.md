@@ -1,6 +1,15 @@
 
+<a name="v0.10.4"></a>
+## [v0.10.4](https://github.com/DoNewsCode/core/compare/v0.10.3...v0.10.4) (2021-11-18)
+
+### 🐛 Bug Fixes
+
+* **clihttp:** log errors ([#212](https://github.com/DoNewsCode/core/issues/212)) (@[谷溪](guxi99@gmail.com))
+* **logging:** inconsistency between go kit Logger and spanLogger ([#211](https://github.com/DoNewsCode/core/issues/211)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.10.3"></a>
-## [v0.10.3](https://github.com/DoNewsCode/core/compare/v0.10.2...v0.10.3) (2021-10-26)
+## [v0.10.3](https://github.com/DoNewsCode/core/compare/v0.10.2...v0.10.3) (2021-10-28)
 
 ### 🐛 Bug Fixes
 
