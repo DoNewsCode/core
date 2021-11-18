@@ -88,6 +88,8 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	c.tracer.Inject(clientSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	response, err := c.underlying.Do(req)
 	if err != nil {
+		ext.Error.Set(clientSpan, true)
+		clientSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
 		return response, err
 	}
 
