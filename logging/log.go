@@ -136,20 +136,6 @@ func WithContext(logger log.Logger, ctx context.Context) log.Logger {
 	return spanLogger{span: span, base: logger, kvs: args}
 }
 
-func withContext(logger log.Logger, ctx context.Context) log.Logger {
-	var args []interface{}
-
-	bag := ctxmeta.GetBaggage(ctx)
-	for _, kv := range bag.Slice() {
-		args = append(args, kv.Key, kv.Val)
-	}
-
-	return log.With(
-		logger,
-		args...,
-	)
-}
-
 type levelLogger struct {
 	log.Logger
 }

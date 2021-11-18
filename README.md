@@ -194,7 +194,7 @@ That being said, let's redirect our attention to other goodies package core has 
   You could start you project as a monolith with multiple modules, and gradually migrate them into microservices.
 
 - Package core doesn't lock in transport or framework.
-  For instance, you can use go kit to construct your services, and bring in transports like gRPC, AMPQ, thrift, etc. Non-network services like CLI and Cron are also supported. See [all available interfaces a module can expose](https://github.com/DoNewsCode/core/blob/master/container/container.go). You can also invent your own.
+  For instance, you can use go kit to construct your services, and bring in transports like gRPC, AMQP, thrift, etc. Non-network services like CLI and Cron are also supported. See [all available interfaces a module can expose](https://github.com/DoNewsCode/core/blob/master/container/container.go). You can also invent your own.
 
 - Package core also babysits the services after initialization. The duty includes but not limited to distributed tracing, metrics exporting, error handling, event-dispatching, and leader election.
 
