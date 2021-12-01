@@ -216,7 +216,7 @@ func (m *Manager) otHandler() func(*request.Request) {
 			if req.HTTPResponse != nil {
 				ext.HTTPStatusCode.Set(sp, uint16(req.HTTPResponse.StatusCode))
 			} else {
-				ext.Error.Set(sp, true)
+				ext.LogError(sp,errors.New("PushBack HTTPResponse is Nil"))
 			}
 			sp.Finish()
 		})
