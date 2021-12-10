@@ -49,7 +49,7 @@ func TestProvideFactory(t *testing.T) {
 		{"no reload", false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			var dispatcher = &events.SyncDispatcher{}
+			dispatcher := &events.SyncDispatcher{}
 			out, cleanup := provideFactory(&providersOption{reloadable: c.reload})(factoryIn{
 				Conf: config.MapAdapter{"etcd": map[string]Option{
 					"default": {
@@ -72,9 +72,7 @@ func TestProvideFactory(t *testing.T) {
 			assert.Equal(t, c.reload, dispatcher.ListenerCount(events.OnReload) == 1)
 			cleanup()
 		})
-
 	}
-
 }
 
 func Test_provideConfig(t *testing.T) {

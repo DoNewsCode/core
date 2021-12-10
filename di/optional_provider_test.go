@@ -58,7 +58,6 @@ func TestAs(t *testing.T) {
 }
 
 func TestLocationForPC(t *testing.T) {
-
 	g := core.New()
 	inlineCtor := func(f Fooer) Stub {
 		return Stub{}
@@ -89,5 +88,4 @@ func TestChainedOptions(t *testing.T) {
 		Stub Fooer `name:"foo"`
 	}) {
 	})
-
 }

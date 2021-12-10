@@ -29,8 +29,7 @@ func SpanFromMessage(ctx context.Context, tracer opentracing.Tracer, message *ka
 }
 
 func getCarrier(msg *kafka.Message) opentracing.TextMapCarrier {
-
-	var mapCarrier = make(opentracing.TextMapCarrier)
+	mapCarrier := make(opentracing.TextMapCarrier)
 	if msg.Headers != nil {
 		for _, v := range msg.Headers {
 			mapCarrier[v.Key] = string(v.Value)

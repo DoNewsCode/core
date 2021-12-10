@@ -85,8 +85,8 @@ func With(k contract.Keyer, parts ...string) manager {
 
 // SpreadInterface likes Spread, but returns a slice of interface{}
 func SpreadInterface(k contract.Keyer) []interface{} {
-	var spreader = k.Spread()
-	var out = make([]interface{}, len(spreader))
+	spreader := k.Spread()
+	out := make([]interface{}, len(spreader))
 	for i := range k.Spread() {
 		out[i] = interface{}(spreader[i])
 	}

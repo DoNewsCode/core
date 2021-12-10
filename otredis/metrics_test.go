@@ -26,7 +26,7 @@ func TestCollector(t *testing.T) {
 	defer ctrl.Finish()
 
 	m := mock_metrics.NewMockGauge(ctrl)
-	var g = Gauges{
+	g := Gauges{
 		Hits:       m,
 		Misses:     m,
 		Timeouts:   m,

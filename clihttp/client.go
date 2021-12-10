@@ -87,7 +87,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	c.tracer.Inject(clientSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	response, err := c.underlying.Do(req)
 	if err != nil {
-		ext.LogError(clientSpan,err)
+		ext.LogError(clientSpan, err)
 		return response, err
 	}
 
@@ -115,7 +115,6 @@ func (c *Client) logRequest(req *http.Request, span opentracing.Span) {
 	if span != nil {
 		span.LogKV("request", string(byt))
 	}
-
 }
 
 func (c *Client) logResponse(response *http.Response, span opentracing.Span) {

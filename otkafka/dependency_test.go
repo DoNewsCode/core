@@ -114,5 +114,4 @@ func TestProvideKafka(t *testing.T) {
 			cleanupWriter()
 		})
 	}
-
 }

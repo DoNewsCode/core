@@ -26,7 +26,7 @@ func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	var called = false
+	called := false
 
 	withValues := []interface{}{
 		gomock.Eq("dbname"),

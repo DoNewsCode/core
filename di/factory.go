@@ -69,7 +69,7 @@ func (f *Factory) SubscribeReloadEventFrom(dispatcher contract.Dispatcher) {
 				if pair.Closer == nil {
 					return true
 				}
-				var finalized = make(chan struct{})
+				finalized := make(chan struct{})
 				if reflect.TypeOf(pair.Conn).Kind() == reflect.Ptr {
 					runtime.SetFinalizer(pair.Conn, func(_ interface{}) { finalized <- struct{}{} })
 				}
@@ -89,7 +89,7 @@ func (f *Factory) SubscribeReloadEventFrom(dispatcher contract.Dispatcher) {
 
 // List lists created instance in the factory.
 func (f *Factory) List() map[string]Pair {
-	var out = make(map[string]Pair)
+	out := make(map[string]Pair)
 	f.cache.Range(func(key, value interface{}) bool {
 		out[key.(string)] = value.(Pair)
 		return true

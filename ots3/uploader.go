@@ -134,13 +134,12 @@ func NewManager(accessKey, accessSecret, endpoint, region, bucket string, opts .
 // Upload uploads an io.reader to the S3 server, and returns the url on S3. The extension of the uploaded file
 // is auto detected.
 func (m *Manager) Upload(ctx context.Context, name string, reader io.Reader) (newUrl string, err error) {
-
 	// Create an uploader with the session and default options
 	uploader := s3manager.NewUploader(m.sess)
-	var extension = ""
-	var buf = bytes.NewBuffer(nil)
+	extension := ""
+	buf := bytes.NewBuffer(nil)
 	if m.autoExtension {
-		var tee = io.TeeReader(reader, buf)
+		tee := io.TeeReader(reader, buf)
 		mi, err := mimetype.DetectReader(tee)
 		if err == nil {
 			extension = mi.Extension()
@@ -155,7 +154,6 @@ func (m *Manager) Upload(ctx context.Context, name string, reader io.Reader) (ne
 		Key:    aws.String(m.pathPrefix + k),
 		Body:   io.MultiReader(buf, reader),
 	})
-
 	if err != nil {
 		return "", errors.Wrap(err, "unable to upload from io reader")
 	}
@@ -216,7 +214,7 @@ func (m *Manager) otHandler() func(*request.Request) {
 			if req.HTTPResponse != nil {
 				ext.HTTPStatusCode.Set(sp, uint16(req.HTTPResponse.StatusCode))
 			} else {
-				ext.LogError(sp,errors.New("PushBack HTTPResponse is Nil"))
+				ext.LogError(sp, errors.New("PushBack HTTPResponse is Nil"))
 			}
 			sp.Finish()
 		})

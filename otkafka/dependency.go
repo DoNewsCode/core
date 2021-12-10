@@ -213,7 +213,6 @@ func provideReaderFactory(p factoryIn, interceptor ReaderInterceptor) (ReaderFac
 // provideWriterFactory creates WriterFactory. It is a valid injection
 // option for package core.
 func provideWriterFactory(p factoryIn, interceptor WriterInterceptor) (WriterFactory, func()) {
-
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
 			err          error

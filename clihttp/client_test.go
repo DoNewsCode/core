@@ -78,7 +78,7 @@ func TestClient_Option(t *testing.T) {
 
 func TestClient_race(t *testing.T) {
 	// the mock tracer is not concurrent safe.
-	//tracer := opentracing.GlobalTracer()
+	// tracer := opentracing.GlobalTracer()
 	tracer := opentracing.NoopTracer{}
 	client := NewClient(tracer)
 	for i := 0; i < 100; i++ {

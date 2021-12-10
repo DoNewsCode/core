@@ -42,5 +42,4 @@ func TestTransport_RoundTrip(t *testing.T) {
 	def.WriteMessages(ctx, kafka.Message{Value: []byte(`foo`)})
 	assert.Len(t, tracer.FinishedSpans(), 1)
 	span.Finish()
-
 }

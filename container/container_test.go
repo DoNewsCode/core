@@ -78,7 +78,7 @@ func (f closer) ProvideCloser() {
 }
 
 func TestContainer_Shutdown(t *testing.T) {
-	var seq = 0
+	seq := 0
 	container := Container{}
 	container.AddModule(closer(func() { assert.Equal(t, 2, seq); seq = 1 }))
 	container.AddModule(closer(func() { assert.Equal(t, 3, seq); seq = 2 }))

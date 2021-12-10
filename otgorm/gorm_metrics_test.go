@@ -24,7 +24,7 @@ func TestCollector(t *testing.T) {
 	defer ctrl.Finish()
 
 	m := mock_metrics.NewMockGauge(ctrl)
-	var g = NewGauges(m, m, m)
+	g := NewGauges(m, m, m)
 	m.EXPECT().With(gomock.Any()).MinTimes(3).Return(m)
 	m.EXPECT().Set(gomock.Any()).Times(3)
 

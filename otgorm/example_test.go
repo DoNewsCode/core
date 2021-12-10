@@ -2,6 +2,7 @@ package otgorm_test
 
 import (
 	"fmt"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/otgorm"
 	"gorm.io/gorm"

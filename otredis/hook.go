@@ -65,7 +65,7 @@ func (h hook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) erro
 	if span != nil {
 		// if context is raised an error.
 		if ctx.Err() != nil {
-			ext.LogError(span,ctx.Err())
+			ext.LogError(span, ctx.Err())
 		}
 		span.Finish()
 	}

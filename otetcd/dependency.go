@@ -86,11 +86,8 @@ func provideFactory(option *providersOption) func(p factoryIn) (Factory, func())
 	}
 
 	return func(p factoryIn) (Factory, func()) {
-
 		factory := di.NewFactory(func(name string) (di.Pair, error) {
-			var (
-				conf Option
-			)
+			var conf Option
 			if err := p.Conf.Unmarshal(fmt.Sprintf("etcd.%s", name), &conf); err != nil {
 				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid: %w", name, err)
 			}

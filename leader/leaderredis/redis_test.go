@@ -48,9 +48,9 @@ func TestElection(t *testing.T) {
 		return
 	}
 	addrs := strings.Split(os.Getenv("REDIS_ADDR"), ",")
-	var dispatcher = &events.SyncDispatcher{}
+	dispatcher := &events.SyncDispatcher{}
 	var e1, e2 *leader.Election
-	var driver = NewRedisDriver(redis.NewUniversalClient(&redis.UniversalOptions{Addrs: addrs}), key.New("testElection"), WithPollInterval(time.Millisecond), WithExpiration(time.Second))
+	driver := NewRedisDriver(redis.NewUniversalClient(&redis.UniversalOptions{Addrs: addrs}), key.New("testElection"), WithPollInterval(time.Millisecond), WithExpiration(time.Second))
 
 	e1 = leader.NewElection(dispatcher, driver)
 	e2 = leader.NewElection(dispatcher, driver)

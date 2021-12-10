@@ -175,7 +175,7 @@ func New(opts ...CoreOption) *C {
 	diContainer := values.diProvider(conf)
 	dispatcher := values.eventDispatcherProvider(conf)
 
-	var c = C{
+	c := C{
 		AppName:        appName,
 		Env:            env,
 		ConfigAccessor: config.WithAccessor(conf),

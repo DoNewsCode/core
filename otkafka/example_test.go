@@ -54,5 +54,4 @@ func Example_reader() {
 	})
 	// Output:
 	// hello
-
 }

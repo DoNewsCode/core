@@ -47,10 +47,8 @@ func TestServeIn_signalWatch(t *testing.T) {
 		group.Add(func() error {
 			return errors.New("some err")
 		}, func(err error) {
-
 		})
 		err = group.Run()
 		assert.Contains(t, buf.String(), "context canceled")
 	})
-
 }

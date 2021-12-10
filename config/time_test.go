@@ -10,7 +10,7 @@ import (
 )
 
 func TestDuration_UnmarshalJSON(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		name     string
 		value    string
 		expected Duration
@@ -40,7 +40,7 @@ func TestDuration_UnmarshalJSON(t *testing.T) {
 }
 
 func TestDuration_UnmarshalYaml(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		name     string
 		value    string
 		expected Duration
@@ -70,7 +70,7 @@ func TestDuration_UnmarshalYaml(t *testing.T) {
 }
 
 func TestDuration_MarshalJSON(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		name         string
 		value        interface{}
 		expectedJSON string

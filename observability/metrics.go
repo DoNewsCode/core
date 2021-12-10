@@ -73,7 +73,6 @@ func ProvideGORMMetrics(in MetricsIn) *otgorm.Gauges {
 			Help: "number of in use connections",
 		}, []string{"dbname", "driver"}, in.Registerer),
 	)
-
 }
 
 // ProvideRedisMetrics returns a RedisMetrics that measures the connection info in redis.

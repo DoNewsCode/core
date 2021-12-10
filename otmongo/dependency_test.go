@@ -50,7 +50,6 @@ func TestNewMongoFactory(t *testing.T) {
 		assert.Equal(t, c.reloadable, dispatcher.ListenerCount(events.OnReload) == 1)
 		cleanup()
 	}
-
 }
 
 func TestProvideConfigs(t *testing.T) {

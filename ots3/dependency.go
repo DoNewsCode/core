@@ -70,7 +70,6 @@ func provideFactory(option *providersOption) func(p factoryIn) Factory {
 	}
 	return func(p factoryIn) Factory {
 		factory := di.NewFactory(func(name string) (di.Pair, error) {
-
 			var conf S3Config
 
 			if err := p.Conf.Unmarshal(fmt.Sprintf("s3.%s", name), &conf); err != nil {
@@ -100,7 +99,6 @@ func provideFactory(option *providersOption) func(p factoryIn) Factory {
 		}
 
 		return s3Factory
-
 	}
 }
 
@@ -168,7 +166,8 @@ func provideConfig() configOut {
 						Bucket:       "mybucket",
 						CdnUrl:       "",
 					},
-				}},
+				},
+			},
 			Comment: "The s3 configuration",
 		},
 	}

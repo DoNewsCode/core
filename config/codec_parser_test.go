@@ -1,11 +1,12 @@
 package config
 
 import (
+	"io/ioutil"
+	"testing"
+
 	"github.com/DoNewsCode/core/codec/yaml"
 	yaml2 "github.com/knadh/koanf/parsers/yaml"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"testing"
 )
 
 func TestCodecParser_Marshal(t *testing.T) {

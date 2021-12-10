@@ -24,7 +24,6 @@ type ConfigUnmarshaler interface {
 // ConfigUnmarshaler is much smaller and thus much easier to customize.
 type ConfigAccessor interface {
 	ConfigUnmarshaler
-
 	String(string) string
 	Int(string) int
 	Strings(string) []string

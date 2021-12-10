@@ -107,5 +107,4 @@ end
 		return fmt.Errorf("unable to resign: %w", err)
 	}
 	return nil
-
 }
