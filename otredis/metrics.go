@@ -24,7 +24,7 @@ type Gauges struct {
 	IdleConns  metrics.Gauge
 	StaleConns metrics.Gauge
 
-	dbName string
+	dbName bool
 }
 
 // DBName sets the dbname label of redis metrics.
@@ -37,12 +37,20 @@ func (g *Gauges) DBName(dbName string) *Gauges {
 		TotalConns: g.TotalConns.With(withValues...),
 		IdleConns:  g.IdleConns.With(withValues...),
 		StaleConns: g.StaleConns.With(withValues...),
-		dbName:     dbName,
+		dbName:     true,
 	}
 }
 
 // Observe records the redis pool stats. It should be called periodically.
 func (g *Gauges) Observe(stats *redis.PoolStats) {
+	if !g.dbName {
+		g.Hits = g.Hits.With("dbname", "")
+		g.Misses = g.Misses.With("dbname", "")
+		g.Timeouts = g.Timeouts.With("dbname", "")
+		g.TotalConns = g.TotalConns.With("dbname", "")
+		g.IdleConns = g.IdleConns.With("dbname", "")
+		g.StaleConns = g.StaleConns.With("dbname", "")
+	}
 
 	g.Hits.Set(float64(stats.Hits))
 

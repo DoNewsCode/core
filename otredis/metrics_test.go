@@ -9,7 +9,10 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otredis/mocks"
+	"github.com/go-kit/kit/metrics/generic"
+	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCollector(t *testing.T) {
@@ -48,4 +51,18 @@ func TestCollector(t *testing.T) {
 		c := newCollector(factory, g, time.Nanosecond)
 		c.collectConnectionStats()
 	})
+}
+
+func TestObserve(t *testing.T) {
+	m := generic.NewGauge("foo")
+	g := Gauges{
+		Hits:       m,
+		Misses:     m,
+		Timeouts:   m,
+		TotalConns: m,
+		IdleConns:  m,
+		StaleConns: m,
+	}
+	g.Observe(&redis.PoolStats{})
+	assert.ElementsMatch(t, g.Hits.(*generic.Gauge).LabelValues(), []string{"dbname", ""})
 }

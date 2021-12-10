@@ -1,6 +1,7 @@
 package otgorm
 
 import (
+	"database/sql"
 	"os"
 	"testing"
 	"time"
@@ -8,7 +9,9 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otgorm/mocks"
+	"github.com/go-kit/kit/metrics/generic"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCollector(t *testing.T) {
@@ -21,22 +24,25 @@ func TestCollector(t *testing.T) {
 	defer ctrl.Finish()
 
 	m := mock_metrics.NewMockGauge(ctrl)
-	var g = Gauges{
-		InUse: m,
-		Idle:  m,
-		Open:  m,
-	}
+	var g = NewGauges(m, m, m)
 	m.EXPECT().With(gomock.Any()).MinTimes(3).Return(m)
 	m.EXPECT().Set(gomock.Any()).Times(3)
 
 	c := core.New()
 	c.ProvideEssentials()
 	c.Provide(Providers())
-	c.Provide(di.Deps{func() *Gauges { return &g }})
+	c.Provide(di.Deps{func() *Gauges { return g }})
 
 	c.Invoke(func(factory Factory, g *Gauges) {
 		factory.Make("default")
 		c := newCollector(factory, g, time.Nanosecond)
 		c.collectConnectionStats()
 	})
+}
+
+func TestObserve(t *testing.T) {
+	foo := generic.NewGauge("foo")
+	gauges := NewGauges(foo, foo, foo)
+	gauges.Observe(sql.DBStats{})
+	assert.ElementsMatch(t, gauges.idle.(*generic.Gauge).LabelValues(), []string{"dbname", "", "driver", ""})
 }

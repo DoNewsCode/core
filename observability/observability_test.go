@@ -67,11 +67,7 @@ func TestProvideGORMMetrics(t *testing.T) {
 			t.Error(err)
 		}
 		stats := d.Stats()
-		withValues := []string{"dbname", "default", "driver", db.Name()}
-
-		g.Idle.With(withValues...).Set(float64(stats.Idle))
-		g.InUse.With(withValues...).Set(float64(stats.InUse))
-		g.Open.With(withValues...).Set(float64(stats.OpenConnections))
+		g.Driver("default").DBName(db.Name()).Observe(stats)
 	})
 }
 
