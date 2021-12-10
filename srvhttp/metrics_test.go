@@ -11,9 +11,7 @@ import (
 )
 
 func TestRequestDurationSeconds(t *testing.T) {
-	rds := &RequestDurationSeconds{
-		histogram: generic.NewHistogram("foo", 2),
-	}
+	rds := NewRequestDurationSeconds(generic.NewHistogram("foo", 2))
 	rds = rds.Module("m").Service("s").Route("r")
 	rds.Observe(5)
 
@@ -29,9 +27,7 @@ func TestRequestDurationSeconds(t *testing.T) {
 }
 
 func TestRequestDurationSeconds_noPanicWhenMissingLabels(t *testing.T) {
-	rds := &RequestDurationSeconds{
-		histogram: generic.NewHistogram("foo", 2),
-	}
+	rds := NewRequestDurationSeconds(generic.NewHistogram("foo", 2))
 	rds.Observe(50)
 	assert.ElementsMatch(t, []string{"module", "", "service", "", "route", ""}, rds.histogram.(*generic.Histogram).LabelValues())
 }
