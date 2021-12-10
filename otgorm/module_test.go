@@ -132,11 +132,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	)
 	c.ProvideEssentials()
 	c.Provide(di.Deps{func() *Gauges {
-		return &Gauges{
-			Idle:  idle,
-			InUse: inUse,
-			Open:  open,
-		}
+		return NewGauges(idle, inUse, open)
 	}})
 	c.Provide(Providers())
 	c.AddModuleFunc(New)

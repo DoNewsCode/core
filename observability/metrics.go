@@ -19,9 +19,9 @@ type MetricsIn struct {
 	Registerer stdprometheus.Registerer `optional:"true"`
 }
 
-// ProvideHTTPRequestDurationSeconds returns a metrics.Histogram that is designed to measure incoming HTTP requests
-// to the system. Note it has three labels: "module", "service", "route". If any label is missing,
-// the system will panic.
+// ProvideHTTPRequestDurationSeconds returns a *srvhttp.RequestDurationSeconds
+// that is designed to measure incoming HTTP requests to the system. Note it has
+// three labels: "module", "service", "route".
 func ProvideHTTPRequestDurationSeconds(in MetricsIn) *srvhttp.RequestDurationSeconds {
 	http := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
 		Name: "http_request_duration_seconds",
@@ -33,14 +33,12 @@ func ProvideHTTPRequestDurationSeconds(in MetricsIn) *srvhttp.RequestDurationSec
 	}
 	in.Registerer.MustRegister(http)
 
-	return &srvhttp.RequestDurationSeconds{
-		Histogram: prometheus.NewHistogram(http),
-	}
+	return srvhttp.NewRequestDurationSeconds(prometheus.NewHistogram(http))
 }
 
-// ProvideGRPCRequestDurationSeconds returns a metrics.Histogram that is designed to measure incoming GRPC requests
-// to the system. Note it has three labels: "module", "service", "route". If any label is missing,
-// the system will panic.
+// ProvideGRPCRequestDurationSeconds returns a *srvgrpc.RequestDurationSeconds
+// that is designed to measure incoming GRPC requests to the system. Note it has
+// three labels: "module", "service", "route".
 func ProvideGRPCRequestDurationSeconds(in MetricsIn) *srvgrpc.RequestDurationSeconds {
 	grpc := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
 		Name: "grpc_request_duration_seconds",
@@ -52,31 +50,30 @@ func ProvideGRPCRequestDurationSeconds(in MetricsIn) *srvgrpc.RequestDurationSec
 	}
 	in.Registerer.MustRegister(grpc)
 
-	return &srvgrpc.RequestDurationSeconds{
-		Histogram: prometheus.NewHistogram(grpc),
-	}
+	return srvgrpc.NewRequestDurationSeconds(prometheus.NewHistogram(grpc))
 }
 
-// ProvideGORMMetrics returns a *otgorm.Gauges that measures the connection info in databases.
-// It is meant to be consumed by the otgorm.Providers.
+// ProvideGORMMetrics returns a *otgorm.Gauges that measures the connection info
+// in databases. It is meant to be consumed by the otgorm.Providers.
 func ProvideGORMMetrics(in MetricsIn) *otgorm.Gauges {
 	if in.Registerer == nil {
 		in.Registerer = stdprometheus.DefaultRegisterer
 	}
-	return &otgorm.Gauges{
-		Idle: newGaugeFrom(stdprometheus.GaugeOpts{
+	return otgorm.NewGauges(
+		newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "gorm_idle_connections",
 			Help: "number of idle connections",
 		}, []string{"dbname", "driver"}, in.Registerer),
-		Open: newGaugeFrom(stdprometheus.GaugeOpts{
+		newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "gorm_open_connections",
 			Help: "number of open connections",
 		}, []string{"dbname", "driver"}, in.Registerer),
-		InUse: newGaugeFrom(stdprometheus.GaugeOpts{
+		newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "gorm_in_use_connections",
 			Help: "number of in use connections",
 		}, []string{"dbname", "driver"}, in.Registerer),
-	}
+	)
+
 }
 
 // ProvideRedisMetrics returns a RedisMetrics that measures the connection info in redis.

@@ -16,7 +16,7 @@ Providers returns a set of providers available in package observability
 		contract.Env
 	Provides:
 		opentracing.Tracer
-		metrics.Histogram
+		*srvhttp.RequestDurationSeconds
 */
 func Providers() di.Deps {
 	return di.Deps{
