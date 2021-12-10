@@ -21,8 +21,7 @@ type MetricsIn struct {
 
 // ProvideHTTPRequestDurationSeconds returns a *srvhttp.RequestDurationSeconds
 // that is designed to measure incoming HTTP requests to the system. Note it has
-// three labels: "module", "service", "route". If any label is missing, the
-// system will panic.
+// three labels: "module", "service", "route".
 func ProvideHTTPRequestDurationSeconds(in MetricsIn) *srvhttp.RequestDurationSeconds {
 	http := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
 		Name: "http_request_duration_seconds",
@@ -39,8 +38,7 @@ func ProvideHTTPRequestDurationSeconds(in MetricsIn) *srvhttp.RequestDurationSec
 
 // ProvideGRPCRequestDurationSeconds returns a *srvgrpc.RequestDurationSeconds
 // that is designed to measure incoming GRPC requests to the system. Note it has
-// three labels: "module", "service", "route". If any label is missing, the
-// system will panic.
+// three labels: "module", "service", "route".
 func ProvideGRPCRequestDurationSeconds(in MetricsIn) *srvgrpc.RequestDurationSeconds {
 	grpc := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
 		Name: "grpc_request_duration_seconds",
