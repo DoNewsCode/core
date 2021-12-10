@@ -41,8 +41,7 @@ func TestServerError_FromStatus(t *testing.T) {
 	assert.True(t, IsAbortedErr(result))
 }
 
-type testPrinter struct {
-}
+type testPrinter struct{}
 
 func (t testPrinter) Sprintf(msg string, val ...interface{}) string {
 	return strings.ToUpper(msg)
@@ -92,7 +91,6 @@ func TestWrap(t *testing.T) {
 			status := testError.GRPCStatus()
 			assert.Equal(t, codes.Aborted, status.Code())
 			assert.Equal(t, testError.Error(), status.Message())
-
 		})
 	}
 }

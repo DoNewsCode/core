@@ -29,7 +29,7 @@ func TestRemote(t *testing.T) {
 
 	r := Provider(cfg, "config.yaml")
 
-	var testVal = "name: app"
+	testVal := "name: app"
 	// PREPARE TEST DATA
 	if err := put(r, testVal); err != nil {
 		t.Fatal(err)
@@ -42,7 +42,7 @@ func TestRemote(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, testVal, string(bytes))
 
-	var ch = make(chan string)
+	ch := make(chan string)
 	go r.Watch(ctx, func() error {
 		bytes, err := r.ReadBytes()
 		if err != nil {

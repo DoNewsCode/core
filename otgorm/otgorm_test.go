@@ -47,5 +47,4 @@ func TestHook(t *testing.T) {
 	assert.NotEmpty(t, tracer.FinishedSpans())
 
 	assert.True(t, interceptorCalled)
-
 }

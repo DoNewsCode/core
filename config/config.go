@@ -92,7 +92,7 @@ func NewConfig(options ...Option) (*KoanfAdapter, error) {
 // an error occurred, Reload will return early and abort the rest of the
 // reloading.
 func (k *KoanfAdapter) Reload() error {
-	var tmp = koanf.New(".")
+	tmp := koanf.New(".")
 
 	for i := len(k.layers) - 1; i >= 0; i-- {
 		err := tmp.Load(k.layers[i].Provider, k.layers[i].Parser)

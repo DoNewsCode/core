@@ -64,7 +64,6 @@ func ExampleC_Provide() {
 }
 
 func Example_minimal() {
-
 	// Spin up a real server
 	c := core.Default(core.WithInline("log.level", "none"))
 	c.AddModule(core.HttpFunc(func(router *mux.Router) {
@@ -94,7 +93,6 @@ func Example_minimal() {
 }
 
 func ExampleC_stack() {
-
 	fs := flag.NewFlagSet("example", flag.ContinueOnError)
 	fs.String("log.level", "error", "the log level")
 	// Spin up a real server

@@ -60,12 +60,12 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 		rollbackId string
 		logger     = logging.WithLevel(m.logger)
 	)
-	var migrateCmd = &cobra.Command{
+	migrateCmd := &cobra.Command{
 		Use:   "migrate [database]",
 		Short: "Migrate gorm tables",
 		Long:  `Run all gorm table migrations.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var connection = "default"
+			connection := "default"
 			if len(args) > 0 {
 				connection = args[0]
 			}
@@ -98,12 +98,12 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 	migrateCmd.Flags().StringVarP(&rollbackId, "rollback", "r", "", "rollback to the given migration id")
 	migrateCmd.Flag("rollback").NoOptDefVal = "-1"
 
-	var seedCmd = &cobra.Command{
+	seedCmd := &cobra.Command{
 		Use:   "seed [database]",
 		Short: "seed the database",
 		Long:  `use the provided seeds to bootstrap fake data in database`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var connection = "default"
+			connection := "default"
 			if len(args) > 0 {
 				connection = args[0]
 			}
@@ -124,7 +124,7 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 	}
 	seedCmd.Flags().BoolVarP(&force, "force", "f", false, "seeding in production requires force flag to be set")
 
-	var databaseCmd = &cobra.Command{
+	databaseCmd := &cobra.Command{
 		Use:     "database",
 		Aliases: []string{"db"},
 		Short:   "manage database",

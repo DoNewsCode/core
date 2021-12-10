@@ -155,8 +155,10 @@ func TestC_Provide(t *testing.T) {
 	assert.Len(t, c.Modules(), 2)
 }
 
-type a struct{}
-type b struct{}
+type (
+	a struct{}
+	b struct{}
+)
 
 func mockConstructor(b b) (a, func(), error) {
 	return a{}, func() {}, nil

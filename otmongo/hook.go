@@ -9,7 +9,6 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
 	"go.mongodb.org/mongo-driver/event"
 )
 
@@ -67,8 +66,7 @@ func (m *monitor) Finished(evt *event.CommandFinishedEvent, err error) {
 		return
 	}
 	if err != nil {
-		ext.Error.Set(span, true)
-		span.LogFields(log.Error(err))
+		ext.LogError(span, err)
 	}
 	span.Finish()
 }

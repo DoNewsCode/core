@@ -58,9 +58,7 @@ func provideMongoFactory(providerOption *providersOption) func(p factoryIn) (Fac
 	}
 	return func(p factoryIn) (Factory, func()) {
 		factory := di.NewFactory(func(name string) (di.Pair, error) {
-			var (
-				conf struct{ URI string }
-			)
+			var conf struct{ URI string }
 			if err := p.Conf.Unmarshal(fmt.Sprintf("mongo.%s", name), &conf); err != nil {
 				return di.Pair{}, fmt.Errorf("mongo configuration %s not valid: %w", name, err)
 			}
@@ -91,7 +89,6 @@ func provideMongoFactory(providerOption *providersOption) func(p factoryIn) (Fac
 		}
 		return f, f.Close
 	}
-
 }
 
 func provideDefaultClient(maker Maker) (*mongo.Client, error) {

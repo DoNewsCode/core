@@ -44,7 +44,6 @@ func TestNewRedisFactory(t *testing.T) {
 			cleanup()
 		})
 	}
-
 }
 
 func TestProvideConfigs(t *testing.T) {

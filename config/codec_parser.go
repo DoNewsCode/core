@@ -12,7 +12,7 @@ type CodecParser struct {
 
 // Unmarshal converts the bytes to map
 func (c CodecParser) Unmarshal(bytes []byte) (map[string]interface{}, error) {
-	var m = make(map[string]interface{})
+	m := make(map[string]interface{})
 	if err := c.Codec.Unmarshal(bytes, &m); err != nil {
 		return m, err
 	}

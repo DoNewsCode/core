@@ -174,12 +174,11 @@ func (s serveIn) signalWatch(ctx context.Context, logger logging.LevelLogger) (f
 }
 
 func newServeCmd(s serveIn) *cobra.Command {
-	var serveCmd = &cobra.Command{
+	serveCmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Start the server",
 		Long:  `Start the gRPC server, HTTP server, and cron job runner.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			var (
 				g run.Group
 				l = logging.WithLevel(s.Logger)

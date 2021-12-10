@@ -51,5 +51,4 @@ func TestTracing(t *testing.T) {
 	assert.NotNil(t, response)
 	assert.NotEmpty(t, tracer.FinishedSpans())
 	assert.True(t, interceptorCalled)
-
 }

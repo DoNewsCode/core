@@ -17,9 +17,8 @@ import (
 )
 
 func setup() *cobra.Command {
-
-	var config, _ = NewConfig()
-	var mod = Module{
+	config, _ := NewConfig()
+	mod := Module{
 		conf: config,
 		exportedConfigs: []ExportedConfig{
 			{
@@ -61,7 +60,6 @@ func tearDown() {
 }
 
 func TestModule_ProvideCommand_initCmd(t *testing.T) {
-
 	cases := []struct {
 		name     string
 		output   string

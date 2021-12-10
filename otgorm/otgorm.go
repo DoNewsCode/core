@@ -56,7 +56,9 @@ func (c *callbacks) after(db *gorm.DB, operation string) {
 	if operation == "" {
 		operation = strings.ToUpper(strings.Split(db.Statement.SQL.String(), " ")[0])
 	}
-	ext.Error.Set(span, db.Error != nil)
+	if db.Error != nil {
+		ext.LogError(span, db.Error)
+	}
 	ext.DBStatement.Set(span, db.Statement.SQL.String())
 	span.SetTag("db.table", db.Statement.Table)
 	span.SetTag("db.method", operation)

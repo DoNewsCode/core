@@ -28,5 +28,4 @@ func Example() {
 	// Output:
 	// 100
 	// event
-
 }

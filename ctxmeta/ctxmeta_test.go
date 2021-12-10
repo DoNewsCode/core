@@ -37,7 +37,6 @@ func TestContextMeta_crud(t *testing.T) {
 	baggage.Delete("foo")
 	_, err = baggage.Get("foo")
 	assert.ErrorIs(t, err, ErrNotFound)
-
 }
 
 func TestContextMeta_ErrNoBaggae(t *testing.T) {

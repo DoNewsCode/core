@@ -73,7 +73,6 @@ func provide(option *providersOption) func(in in) (out, error) {
 		e := NewElection(in.Dispatcher, driver)
 		return out{Election: e, Status: e.status}, nil
 	}
-
 }
 
 // Module marks out as a module.
@@ -100,7 +99,6 @@ type DriverArgs struct {
 }
 
 func newDefaultDriver(args DriverArgs) (Driver, error) {
-
 	var diDriver struct {
 		di.In
 		Driver `optional:"true"`

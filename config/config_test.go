@@ -36,14 +36,13 @@ func TestKoanfAdapter_race(t *gotesting.T) {
 		go ka.Reload()
 		ka.String("string")
 	}
-
 }
 
 func TestKoanfAdapter_Watch(t *gotesting.T) {
 	f, _ := ioutil.TempFile(os.TempDir(), "*")
 	defer os.Remove(f.Name())
 
-	ioutil.WriteFile(f.Name(), []byte("foo: baz"), 0644)
+	ioutil.WriteFile(f.Name(), []byte("foo: baz"), 0o644)
 
 	ka, err := NewConfig(
 		WithProviderLayer(file.Provider(f.Name()), yaml.Parser()),
@@ -54,7 +53,7 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var ch = make(chan struct{})
+	ch := make(chan struct{})
 	go func() {
 		ka.watcher.Watch(ctx, func() error {
 			assert.NoError(t, ka.Reload(), "reload should be successful")
@@ -65,8 +64,8 @@ func TestKoanfAdapter_Watch(t *gotesting.T) {
 		})
 	}()
 	time.Sleep(time.Second)
-	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
-	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0644)
+	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0o644)
+	ioutil.WriteFile(f.Name(), []byte("foo: bar"), 0o644)
 	<-ch
 
 	// The following test is flaky on CI. Unable to reproduce locally.

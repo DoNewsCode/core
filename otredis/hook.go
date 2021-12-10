@@ -5,11 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
-
 	"github.com/go-redis/redis/v8"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 // hook is borrowed from https://github.com/gjbae1212/opentracing-go-redis/blob/master/hook.go
@@ -38,8 +36,7 @@ func (h hook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	if span != nil {
 		// if context is raised an error.
 		if ctx.Err() != nil {
-			ext.Error.Set(span, true)
-			span.LogFields(log.Error(ctx.Err()))
+			ext.LogError(span, ctx.Err())
 		}
 		span.Finish()
 	}
@@ -68,8 +65,7 @@ func (h hook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) erro
 	if span != nil {
 		// if context is raised an error.
 		if ctx.Err() != nil {
-			ext.Error.Set(span, true)
-			span.LogFields(log.Error(ctx.Err()))
+			ext.LogError(span, ctx.Err())
 		}
 		span.Finish()
 	}

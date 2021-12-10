@@ -23,7 +23,7 @@ func Example_minimum() {
 }
 
 func Example_configurationStack() {
-	var fs = flag.NewFlagSet("config", flag.ContinueOnError)
+	fs := flag.NewFlagSet("config", flag.ContinueOnError)
 	fs.String("foo", "", "foo value")
 	fs.Parse([]string{"-foo", "bar"})
 	conf, _ := config.NewConfig(

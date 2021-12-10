@@ -13,7 +13,6 @@ import (
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 )
 
@@ -88,8 +87,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	c.tracer.Inject(clientSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	response, err := c.underlying.Do(req)
 	if err != nil {
-		ext.Error.Set(clientSpan, true)
-		clientSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
+		ext.LogError(clientSpan, err)
 		return response, err
 	}
 
@@ -104,22 +102,19 @@ func (c *Client) logRequest(req *http.Request, span opentracing.Span) {
 	}
 	body, err := req.GetBody()
 	if err != nil {
-		ext.Error.Set(span, true)
-		span.LogKV("error", errors.Wrap(err, "cannot get request body"))
+		ext.LogError(span, errors.Wrap(err, "cannot get request body"))
 		return
 	}
 	defer body.Close()
 
 	byt, err := ioutil.ReadAll(io.LimitReader(body, int64(c.responseLogThreshold)))
 	if err != nil {
-		ext.Error.Set(span, true)
-		span.LogKV("error", errors.Wrap(err, "cannot read request body"))
+		ext.LogError(span, errors.Wrap(err, "cannot read request body"))
 		return
 	}
 	if span != nil {
 		span.LogKV("request", string(byt))
 	}
-
 }
 
 func (c *Client) logResponse(response *http.Response, span opentracing.Span) {
@@ -128,8 +123,7 @@ func (c *Client) logResponse(response *http.Response, span opentracing.Span) {
 	}
 	byt, err := ioutil.ReadAll(io.LimitReader(response.Body, int64(c.responseLogThreshold)))
 	if err != nil {
-		ext.Error.Set(span, true)
-		span.LogFields(log.Error(err))
+		ext.LogError(span, err)
 		return
 	}
 	if span != nil {

@@ -79,9 +79,7 @@ func TestFactory_malfunctionConstructor(t *testing.T) {
 func TestFactory_Watch(t *testing.T) {
 	t.Parallel()
 
-	var (
-		mockConf = "foo"
-	)
+	mockConf := "foo"
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	f := NewFactory(func(_ string) (Pair, error) {
@@ -157,7 +155,6 @@ func TestFactory_SubscribeReloadEventFrom(t *testing.T) {
 	case <-time.After(4 * time.Second):
 		t.Fatalf("foo should be closed by now")
 	}
-
 }
 
 func BenchmarkFactory_slowConn(b *testing.B) {

@@ -12,6 +12,7 @@ import (
 type MockEvent struct {
 	value int
 }
+
 type MockListener struct {
 	topic interface{}
 	test  func(event interface{}) error

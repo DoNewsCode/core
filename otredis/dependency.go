@@ -175,7 +175,6 @@ func provideRedisFactory(option *providersOption) func(p factoryIn) (factoryOut,
 
 		return redisOut, redisFactory.Close
 	}
-
 }
 
 func provideDefaultClient(maker Maker) (redis.UniversalClient, error) {

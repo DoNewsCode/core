@@ -91,7 +91,7 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 				exportedConfigs = m.exportedConfigs
 			}
 			if len(args) >= 1 {
-				var copy = make([]ExportedConfig, 0)
+				copy := make([]ExportedConfig, 0)
 				for i := range m.exportedConfigs {
 					for j := 0; j < len(args); j++ {
 						if args[j] == m.exportedConfigs[i].Owner {
@@ -145,7 +145,7 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 				exportedConfigs = m.exportedConfigs
 			}
 			if len(args) >= 1 {
-				var copy = make([]ExportedConfig, 0)
+				copy := make([]ExportedConfig, 0)
 				for i := range m.exportedConfigs {
 					for j := 0; j < len(args); j++ {
 						if args[j] == m.exportedConfigs[i].Owner {

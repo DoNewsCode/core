@@ -21,7 +21,7 @@ func TestElection(t *testing.T) {
 		return
 	}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
-	var dispatcher = &events.SyncDispatcher{}
+	dispatcher := &events.SyncDispatcher{}
 	var e1, e2 Election
 
 	client, err := clientv3.New(clientv3.Config{Endpoints: addrs, DialTimeout: 2 * time.Second})

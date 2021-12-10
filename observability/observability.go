@@ -50,7 +50,6 @@ type configOut struct {
 }
 
 func provideConfig() configOut {
-
 	var conf map[string]interface{}
 	_ = yaml.Unmarshal([]byte(sample), &conf)
 	configs := []config.ExportedConfig{
