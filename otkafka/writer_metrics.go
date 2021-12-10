@@ -35,7 +35,7 @@ type WriterStats struct {
 	BatchSize  AggStats
 	BatchBytes AggStats
 
-	writer string
+	writer bool
 }
 
 // Writer sets the writer label in WriterStats.
@@ -83,13 +83,16 @@ func (w *WriterStats) Writer(writer string) *WriterStats {
 			Avg: w.BatchBytes.Avg.With(withValues...),
 		},
 		Async:  w.Async.With(withValues...),
-		writer: writer,
+		writer: true,
 	}
 }
 
 // Observe records the writer stats. It should called periodically.
 func (w *WriterStats) Observe(stats kafka.WriterStats) *WriterStats {
 	withValues := []string{"topic", stats.Topic}
+	if !w.writer {
+		withValues = append(withValues, "writer", "")
+	}
 
 	w.Writes.With(withValues...).Add(float64(stats.Writes))
 	w.Messages.With(withValues...).Add(float64(stats.Messages))

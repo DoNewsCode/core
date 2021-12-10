@@ -16,22 +16,31 @@ type collector struct {
 
 // Gauges is a collection of metrics for database connection info.
 type Gauges struct {
-	Idle  metrics.Gauge
-	InUse metrics.Gauge
-	Open  metrics.Gauge
+	idle  metrics.Gauge
+	inUse metrics.Gauge
+	open  metrics.Gauge
 
-	dbName string
-	driver string
+	dbName bool
+	driver bool
+}
+
+// NewGauges returns a new Gauges.
+func NewGauges(idle, inUse, open metrics.Gauge) *Gauges {
+	return &Gauges{
+		idle:  idle,
+		inUse: inUse,
+		open:  open,
+	}
 }
 
 // DBName sets the dbname label of metrics.
 func (g *Gauges) DBName(dbName string) *Gauges {
 	withValues := []string{"dbname", dbName}
 	return &Gauges{
-		Idle:   g.Idle.With(withValues...),
-		InUse:  g.InUse.With(withValues...),
-		Open:   g.Open.With(withValues...),
-		dbName: dbName,
+		idle:   g.idle.With(withValues...),
+		inUse:  g.inUse.With(withValues...),
+		open:   g.open.With(withValues...),
+		dbName: true,
 		driver: g.driver,
 	}
 }
@@ -40,19 +49,29 @@ func (g *Gauges) DBName(dbName string) *Gauges {
 func (g *Gauges) Driver(driver string) *Gauges {
 	withValues := []string{"driver", driver}
 	return &Gauges{
-		Idle:   g.Idle.With(withValues...),
-		InUse:  g.InUse.With(withValues...),
-		Open:   g.Open.With(withValues...),
+		idle:   g.idle.With(withValues...),
+		inUse:  g.inUse.With(withValues...),
+		open:   g.open.With(withValues...),
 		dbName: g.dbName,
-		driver: driver,
+		driver: true,
 	}
 }
 
 // Observe records the DBStats collected. It should be called periodically.
 func (g *Gauges) Observe(stats sql.DBStats) {
-	g.Idle.Set(float64(stats.Idle))
-	g.InUse.Set(float64(stats.InUse))
-	g.Open.Set(float64(stats.OpenConnections))
+	if !g.dbName {
+		g.idle = g.idle.With("dbname", "")
+		g.inUse = g.inUse.With("dbname", "")
+		g.open = g.open.With("dbname", "")
+	}
+	if !g.driver {
+		g.idle = g.idle.With("driver", "")
+		g.inUse = g.inUse.With("driver", "")
+		g.open = g.open.With("driver", "")
+	}
+	g.idle.Set(float64(stats.Idle))
+	g.inUse.Set(float64(stats.InUse))
+	g.open.Set(float64(stats.OpenConnections))
 }
 
 // newCollector creates a new database wrapper containing the name of the database,

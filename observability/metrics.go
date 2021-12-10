@@ -52,9 +52,7 @@ func ProvideGRPCRequestDurationSeconds(in MetricsIn) *srvgrpc.RequestDurationSec
 	}
 	in.Registerer.MustRegister(grpc)
 
-	return &srvgrpc.RequestDurationSeconds{
-		Histogram: prometheus.NewHistogram(grpc),
-	}
+	return srvgrpc.NewRequestDurationSeconds(prometheus.NewHistogram(grpc))
 }
 
 // ProvideGORMMetrics returns a *otgorm.Gauges that measures the connection info
@@ -63,20 +61,21 @@ func ProvideGORMMetrics(in MetricsIn) *otgorm.Gauges {
 	if in.Registerer == nil {
 		in.Registerer = stdprometheus.DefaultRegisterer
 	}
-	return &otgorm.Gauges{
-		Idle: newGaugeFrom(stdprometheus.GaugeOpts{
+	return otgorm.NewGauges(
+		newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "gorm_idle_connections",
 			Help: "number of idle connections",
 		}, []string{"dbname", "driver"}, in.Registerer),
-		Open: newGaugeFrom(stdprometheus.GaugeOpts{
+		newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "gorm_open_connections",
 			Help: "number of open connections",
 		}, []string{"dbname", "driver"}, in.Registerer),
-		InUse: newGaugeFrom(stdprometheus.GaugeOpts{
+		newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "gorm_in_use_connections",
 			Help: "number of in use connections",
 		}, []string{"dbname", "driver"}, in.Registerer),
-	}
+	)
+
 }
 
 // ProvideRedisMetrics returns a RedisMetrics that measures the connection info in redis.
