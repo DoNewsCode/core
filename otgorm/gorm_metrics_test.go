@@ -1,6 +1,7 @@
 package otgorm
 
 import (
+	"database/sql"
 	"os"
 	"testing"
 	"time"
@@ -8,7 +9,9 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otgorm/mocks"
+	"github.com/go-kit/kit/metrics/generic"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCollector(t *testing.T) {
@@ -35,4 +38,11 @@ func TestCollector(t *testing.T) {
 		c := newCollector(factory, g, time.Nanosecond)
 		c.collectConnectionStats()
 	})
+}
+
+func TestObserve(t *testing.T) {
+	foo := generic.NewGauge("foo")
+	gauges := NewGauges(foo, foo, foo)
+	gauges.Observe(sql.DBStats{})
+	assert.ElementsMatch(t, gauges.idle.(*generic.Gauge).LabelValues(), []string{"dbname", "", "driver", ""})
 }
