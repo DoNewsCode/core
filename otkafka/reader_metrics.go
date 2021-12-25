@@ -44,25 +44,23 @@ type ReaderStats struct {
 	FetchSize  AggStats
 	FetchBytes AggStats
 
-	reader    string
-	readerSet bool
+	reader *string
 }
 
 // Reader sets the writer label in WriterStats.
 func (r *ReaderStats) Reader(reader string) *ReaderStats {
 	stats := *r
-	stats.reader = reader
-	stats.readerSet = true
+	stats.reader = &reader
 	return &stats
 }
 
 // Observe records the reader stats. It should be called periodically.
 func (r *ReaderStats) Observe(stats kafka.ReaderStats) {
 	withValues := []string{"client_id", stats.ClientID, "topic", stats.Topic, "partition", stats.Partition}
-	if !r.readerSet {
+	if r.reader == nil {
 		withValues = append(withValues, "reader", "default")
 	} else {
-		withValues = append(withValues, "reader", r.reader)
+		withValues = append(withValues, "reader", *r.reader)
 	}
 
 	r.Dials.With(withValues...).Add(float64(stats.Dials))

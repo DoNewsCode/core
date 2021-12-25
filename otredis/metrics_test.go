@@ -27,12 +27,12 @@ func TestCollector(t *testing.T) {
 
 	m := mock_metrics.NewMockGauge(ctrl)
 	g := Gauges{
-		hits:       m,
-		misses:     m,
-		timeouts:   m,
-		totalConns: m,
-		idleConns:  m,
-		staleConns: m,
+		Hits:       m,
+		Misses:     m,
+		Timeouts:   m,
+		TotalConns: m,
+		IdleConns:  m,
+		StaleConns: m,
 	}
 	m.EXPECT().With(gomock.Any()).MinTimes(1).Return(m)
 	m.EXPECT().Set(gomock.Any()).MinTimes(1)
@@ -55,7 +55,14 @@ func TestCollector(t *testing.T) {
 
 func TestObserve(t *testing.T) {
 	m := &stub.Gauge{}
-	g := NewGauges(m, m, m, m, m, m)
+	g := Gauges{
+		Hits:       m,
+		Misses:     m,
+		Timeouts:   m,
+		TotalConns: m,
+		IdleConns:  m,
+		StaleConns: m,
+	}
 	g.Observe(&redis.PoolStats{})
 	assert.ElementsMatch(t, m.LabelValues, []string{"dbname", "default"})
 }

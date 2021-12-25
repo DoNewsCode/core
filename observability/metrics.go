@@ -110,31 +110,32 @@ func ProvideRedisMetrics(in MetricsIn) *otredis.Gauges {
 	if in.Registerer == nil {
 		in.Registerer = stdprometheus.DefaultRegisterer
 	}
-	return otredis.NewGauges(
-		newGaugeFrom(stdprometheus.GaugeOpts{
+	return &otredis.Gauges{
+		Hits: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_hit_connections",
 			Help: "number of times free connection was found in the pool",
 		}, []string{"dbname"}, in.Registerer),
-		newGaugeFrom(stdprometheus.GaugeOpts{
+		Misses: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_miss_connections",
 			Help: "number of times free connection was NOT found in the pool",
 		}, []string{"dbname"}, in.Registerer),
-		newGaugeFrom(stdprometheus.GaugeOpts{
+		Timeouts: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_timeout_connections",
 			Help: "number of times a wait timeout occurred",
 		}, []string{"dbname"}, in.Registerer),
-		newGaugeFrom(stdprometheus.GaugeOpts{
+		TotalConns: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_total_connections",
 			Help: "number of total connections in the pool",
 		}, []string{"dbname"}, in.Registerer),
-		newGaugeFrom(stdprometheus.GaugeOpts{
+		IdleConns: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_idle_connections",
 			Help: "number of idle connections in the pool",
 		}, []string{"dbname"}, in.Registerer),
-		newGaugeFrom(stdprometheus.GaugeOpts{
+		StaleConns: newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: "redis_stale_connections",
 			Help: "number of stale connections removed from the pool",
-		}, []string{"dbname"}, in.Registerer))
+		}, []string{"dbname"}, in.Registerer),
+	}
 }
 
 // ProvideKafkaReaderMetrics returns a *otkafka.ReaderStats that measures the reader info in kafka.
