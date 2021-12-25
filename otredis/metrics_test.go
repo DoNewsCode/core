@@ -1,6 +1,7 @@
 package otredis
 
 import (
+	"github.com/DoNewsCode/core/internal/stub"
 	"os"
 	"strings"
 	"testing"
@@ -9,7 +10,6 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otredis/mocks"
-	"github.com/go-kit/kit/metrics/generic"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -27,12 +27,12 @@ func TestCollector(t *testing.T) {
 
 	m := mock_metrics.NewMockGauge(ctrl)
 	g := Gauges{
-		Hits:       m,
-		Misses:     m,
-		Timeouts:   m,
-		TotalConns: m,
-		IdleConns:  m,
-		StaleConns: m,
+		hits:       m,
+		misses:     m,
+		timeouts:   m,
+		totalConns: m,
+		idleConns:  m,
+		staleConns: m,
 	}
 	m.EXPECT().With(gomock.Any()).MinTimes(1).Return(m)
 	m.EXPECT().Set(gomock.Any()).MinTimes(1)
@@ -54,15 +54,8 @@ func TestCollector(t *testing.T) {
 }
 
 func TestObserve(t *testing.T) {
-	m := generic.NewGauge("foo")
-	g := Gauges{
-		Hits:       m,
-		Misses:     m,
-		Timeouts:   m,
-		TotalConns: m,
-		IdleConns:  m,
-		StaleConns: m,
-	}
+	m := &stub.Gauge{}
+	g := NewGauges(m, m, m, m, m, m)
 	g.Observe(&redis.PoolStats{})
-	assert.ElementsMatch(t, g.Hits.(*generic.Gauge).LabelValues(), []string{"dbname", ""})
+	assert.ElementsMatch(t, m.LabelValues, []string{"dbname", "default"})
 }

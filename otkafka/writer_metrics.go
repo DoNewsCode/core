@@ -35,63 +35,25 @@ type WriterStats struct {
 	BatchSize  AggStats
 	BatchBytes AggStats
 
-	writer bool
+	writerSet bool
+	writer    string
 }
 
 // Writer sets the writer label in WriterStats.
 func (w *WriterStats) Writer(writer string) *WriterStats {
-	withValues := []string{"writer", writer}
-	return &WriterStats{
-		Writes:       w.Writes.With(withValues...),
-		Messages:     w.Messages.With(withValues...),
-		Bytes:        w.Bytes.With(withValues...),
-		Errors:       w.Errors.With(withValues...),
-		MaxAttempts:  w.MaxAttempts.With(withValues...),
-		MaxBatchSize: w.MaxBatchSize.With(withValues...),
-		BatchTimeout: w.BatchTimeout.With(withValues...),
-		ReadTimeout:  w.ReadTimeout.With(withValues...),
-		WriteTimeout: w.WriteTimeout.With(withValues...),
-		RequiredAcks: w.RequiredAcks.With(withValues...),
-		BatchTime: AggStats{
-			Min: w.BatchTime.Min.With(withValues...),
-			Max: w.BatchTime.Max.With(withValues...),
-			Avg: w.BatchTime.Avg.With(withValues...),
-		},
-		WriteTime: AggStats{
-			Min: w.WriteTime.Min.With(withValues...),
-			Max: w.WriteTime.Max.With(withValues...),
-			Avg: w.WriteTime.Avg.With(withValues...),
-		},
-		Retries: AggStats{
-			Min: w.Retries.Min.With(withValues...),
-			Max: w.Retries.Max.With(withValues...),
-			Avg: w.Retries.Avg.With(withValues...),
-		},
-		WaitTime: AggStats{
-			Min: w.WaitTime.Min.With(withValues...),
-			Max: w.WaitTime.Max.With(withValues...),
-			Avg: w.WaitTime.Avg.With(withValues...),
-		},
-		BatchSize: AggStats{
-			Min: w.BatchSize.Min.With(withValues...),
-			Max: w.BatchSize.Max.With(withValues...),
-			Avg: w.BatchSize.Avg.With(withValues...),
-		},
-		BatchBytes: AggStats{
-			Min: w.BatchBytes.Min.With(withValues...),
-			Max: w.BatchBytes.Max.With(withValues...),
-			Avg: w.BatchBytes.Avg.With(withValues...),
-		},
-		Async:  w.Async.With(withValues...),
-		writer: true,
-	}
+	stats := *w
+	stats.writerSet = true
+	stats.writer = writer
+	return &stats
 }
 
 // Observe records the writer stats. It should called periodically.
 func (w *WriterStats) Observe(stats kafka.WriterStats) *WriterStats {
 	withValues := []string{"topic", stats.Topic}
-	if !w.writer {
+	if !w.writerSet {
 		withValues = append(withValues, "writer", "")
+	} else {
+		withValues = append(withValues, "writer", w.writer)
 	}
 
 	w.Writes.With(withValues...).Add(float64(stats.Writes))

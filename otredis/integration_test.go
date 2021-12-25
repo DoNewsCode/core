@@ -45,12 +45,12 @@ func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 	c.ProvideEssentials()
 	c.Provide(di.Deps{func() *Gauges {
 		return &Gauges{
-			Hits:       m,
-			Misses:     m,
-			Timeouts:   m,
-			TotalConns: m,
-			IdleConns:  m,
-			StaleConns: m,
+			hits:       m,
+			misses:     m,
+			timeouts:   m,
+			totalConns: m,
+			idleConns:  m,
+			staleConns: m,
 		}
 	}})
 	c.Provide(Providers(WithConfigInterceptor(func(name string, opts *redis.UniversalOptions) {

@@ -1,4 +1,4 @@
-//go:generate mockgen -destination=./mocks/metrics.go github.com/go-kit/kit/metrics Gauge
+//go:generate mockgen -destination=./mocks/metrics_test.go github.com/go-kit/kit/metrics Gauge
 
 package otredis
 
@@ -17,52 +17,64 @@ type collector struct {
 
 // Gauges is a collection of metrics for redis connection info.
 type Gauges struct {
-	Hits       metrics.Gauge
-	Misses     metrics.Gauge
-	Timeouts   metrics.Gauge
-	TotalConns metrics.Gauge
-	IdleConns  metrics.Gauge
-	StaleConns metrics.Gauge
+	hits       metrics.Gauge
+	misses     metrics.Gauge
+	timeouts   metrics.Gauge
+	totalConns metrics.Gauge
+	idleConns  metrics.Gauge
+	staleConns metrics.Gauge
 
-	dbName bool
+	dbName string
+}
+
+// NewGauges constructs a new *Gauges. The default dbName label is set to "default".
+func NewGauges(
+	hits metrics.Gauge,
+	misses metrics.Gauge,
+	timeouts metrics.Gauge,
+	totalConns metrics.Gauge,
+	idleConns metrics.Gauge,
+	staleConns metrics.Gauge,
+) *Gauges {
+	return &Gauges{
+		hits:       hits,
+		misses:     misses,
+		timeouts:   timeouts,
+		totalConns: totalConns,
+		idleConns:  idleConns,
+		staleConns: staleConns,
+		dbName:     "default",
+	}
 }
 
 // DBName sets the dbname label of redis metrics.
 func (g *Gauges) DBName(dbName string) *Gauges {
-	withValues := []string{"dbname", dbName}
 	return &Gauges{
-		Hits:       g.Hits.With(withValues...),
-		Misses:     g.Misses.With(withValues...),
-		Timeouts:   g.Timeouts.With(withValues...),
-		TotalConns: g.TotalConns.With(withValues...),
-		IdleConns:  g.IdleConns.With(withValues...),
-		StaleConns: g.StaleConns.With(withValues...),
-		dbName:     true,
+		hits:       g.hits,
+		misses:     g.misses,
+		timeouts:   g.timeouts,
+		totalConns: g.totalConns,
+		idleConns:  g.idleConns,
+		staleConns: g.staleConns,
+		dbName:     dbName,
 	}
 }
 
 // Observe records the redis pool stats. It should be called periodically.
 func (g *Gauges) Observe(stats *redis.PoolStats) {
-	if !g.dbName {
-		g.Hits = g.Hits.With("dbname", "")
-		g.Misses = g.Misses.With("dbname", "")
-		g.Timeouts = g.Timeouts.With("dbname", "")
-		g.TotalConns = g.TotalConns.With("dbname", "")
-		g.IdleConns = g.IdleConns.With("dbname", "")
-		g.StaleConns = g.StaleConns.With("dbname", "")
-	}
+	withValues := []string{"dbname", g.dbName}
 
-	g.Hits.Set(float64(stats.Hits))
+	g.hits.With(withValues...).Set(float64(stats.Hits))
 
-	g.Misses.Set(float64(stats.Misses))
+	g.misses.With(withValues...).Set(float64(stats.Misses))
 
-	g.Timeouts.Set(float64(stats.Timeouts))
+	g.timeouts.With(withValues...).Set(float64(stats.Timeouts))
 
-	g.TotalConns.Set(float64(stats.TotalConns))
+	g.totalConns.With(withValues...).Set(float64(stats.TotalConns))
 
-	g.IdleConns.Set(float64(stats.IdleConns))
+	g.idleConns.With(withValues...).Set(float64(stats.IdleConns))
 
-	g.StaleConns.Set(float64(stats.StaleConns))
+	g.staleConns.With(withValues...).Set(float64(stats.StaleConns))
 }
 
 // newCollector creates a new redis wrapper containing the name of the redis.
