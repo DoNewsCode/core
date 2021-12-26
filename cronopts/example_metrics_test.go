@@ -16,12 +16,12 @@ type CronModule struct {
 }
 
 func NewCronModule(metrics *cronopts.CronJobMetrics) CronModule {
-	return CronModule{metrics: metrics}
+	return CronModule{metrics: metrics.Module("test_module")}
 }
 
 func (c CronModule) ProvideCron(crontab *cron.Cron) {
 	// Create a new cron job, and measure its execution durations.
-	crontab.AddJob("* * * * *", c.metrics.Job("test_job").Wrap(cron.FuncJob(func() {
+	crontab.AddJob("* * * * *", c.metrics.Job("test_job").Measure(cron.FuncJob(func() {
 		fmt.Println("running")
 		// For 50% chance, the job may fail. Report it to metrics collector.
 		if rand.Float64() > 0.5 {

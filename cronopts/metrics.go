@@ -52,8 +52,8 @@ func (c *CronJobMetrics) Fail() {
 	c.cronJobFailCount.With("module", c.module, "job", c.job).Add(1)
 }
 
-// Wrap wraps the given job and records the duration and success.
-func (c *CronJobMetrics) Wrap(job cron.Job) cron.Job {
+// Measure wraps the given job and records the duration and success.
+func (c *CronJobMetrics) Measure(job cron.Job) cron.Job {
 	return cron.FuncJob(func() {
 		start := time.Now()
 		defer c.cronJobDurationSeconds.With("module", c.module, "job", c.job).Observe(time.Since(start).Seconds())
@@ -63,5 +63,5 @@ func (c *CronJobMetrics) Wrap(job cron.Job) cron.Job {
 
 // Measure returns a job wrapper that wraps the given job and records the duration and success.
 func Measure(c *CronJobMetrics) cron.JobWrapper {
-	return c.Wrap
+	return c.Measure
 }
