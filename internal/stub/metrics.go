@@ -14,7 +14,7 @@ func (h *Histogram) With(labelValues ...string) metrics.Histogram {
 	return h
 }
 
-//	Observe records the given value.
+// Observe records the given value.
 func (h *Histogram) Observe(value float64) {
 	h.ObservedValue = value
 }
