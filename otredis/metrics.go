@@ -1,4 +1,4 @@
-//go:generate mockgen -destination=./mocks/metrics.go github.com/go-kit/kit/metrics Gauge
+//go:generate mockgen -destination=./mocks/metrics_test.go github.com/go-kit/kit/metrics Gauge
 
 package otredis
 
@@ -24,45 +24,35 @@ type Gauges struct {
 	IdleConns  metrics.Gauge
 	StaleConns metrics.Gauge
 
-	dbName bool
+	dbName *string
 }
 
 // DBName sets the dbname label of redis metrics.
 func (g *Gauges) DBName(dbName string) *Gauges {
-	withValues := []string{"dbname", dbName}
 	return &Gauges{
-		Hits:       g.Hits.With(withValues...),
-		Misses:     g.Misses.With(withValues...),
-		Timeouts:   g.Timeouts.With(withValues...),
-		TotalConns: g.TotalConns.With(withValues...),
-		IdleConns:  g.IdleConns.With(withValues...),
-		StaleConns: g.StaleConns.With(withValues...),
-		dbName:     true,
+		Hits:       g.Hits,
+		Misses:     g.Misses,
+		Timeouts:   g.Timeouts,
+		TotalConns: g.TotalConns,
+		IdleConns:  g.IdleConns,
+		StaleConns: g.StaleConns,
+		dbName:     &dbName,
 	}
 }
 
 // Observe records the redis pool stats. It should be called periodically.
 func (g *Gauges) Observe(stats *redis.PoolStats) {
-	if !g.dbName {
-		g.Hits = g.Hits.With("dbname", "")
-		g.Misses = g.Misses.With("dbname", "")
-		g.Timeouts = g.Timeouts.With("dbname", "")
-		g.TotalConns = g.TotalConns.With("dbname", "")
-		g.IdleConns = g.IdleConns.With("dbname", "")
-		g.StaleConns = g.StaleConns.With("dbname", "")
+	withValues := []string{"dbname", "default"}
+	if g.dbName != nil {
+		withValues = []string{"dbname", *g.dbName}
 	}
 
-	g.Hits.Set(float64(stats.Hits))
-
-	g.Misses.Set(float64(stats.Misses))
-
-	g.Timeouts.Set(float64(stats.Timeouts))
-
-	g.TotalConns.Set(float64(stats.TotalConns))
-
-	g.IdleConns.Set(float64(stats.IdleConns))
-
-	g.StaleConns.Set(float64(stats.StaleConns))
+	g.Hits.With(withValues...).Set(float64(stats.Hits))
+	g.Misses.With(withValues...).Set(float64(stats.Misses))
+	g.Timeouts.With(withValues...).Set(float64(stats.Timeouts))
+	g.TotalConns.With(withValues...).Set(float64(stats.TotalConns))
+	g.IdleConns.With(withValues...).Set(float64(stats.IdleConns))
+	g.StaleConns.With(withValues...).Set(float64(stats.StaleConns))
 }
 
 // newCollector creates a new redis wrapper containing the name of the redis.

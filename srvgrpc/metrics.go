@@ -36,29 +36,35 @@ func Metrics(metrics *RequestDurationSeconds) grpc.UnaryServerInterceptor {
 	}
 }
 
-// RequestDurationSeconds is a wrapper around a histogram that measures the request latency.
+// RequestDurationSeconds is a wrapper around a histogram that measures the
+// request latency. The RequestDurationSeconds exposes label setters such as
+// module, service and route. If a label is set more than once, the one set last
+// will take precedence.
 type RequestDurationSeconds struct {
 	// histogram is the underlying histogram of RequestDurationSeconds.
 	histogram metrics.Histogram
 
 	// labels
-	module  bool
-	service bool
-	route   bool
+	module  string
+	service string
+	route   string
 }
 
 // NewRequestDurationSeconds returns a new RequestDurationSeconds instance.
 func NewRequestDurationSeconds(histogram metrics.Histogram) *RequestDurationSeconds {
 	return &RequestDurationSeconds{
 		histogram: histogram,
+		module:    "unknown",
+		service:   "unknown",
+		route:     "unknown",
 	}
 }
 
 // Module specifies the module label for RequestDurationSeconds.
 func (r *RequestDurationSeconds) Module(module string) *RequestDurationSeconds {
 	return &RequestDurationSeconds{
-		histogram: r.histogram.With("module", module),
-		module:    true,
+		histogram: r.histogram,
+		module:    module,
 		service:   r.service,
 		route:     r.route,
 	}
@@ -67,9 +73,9 @@ func (r *RequestDurationSeconds) Module(module string) *RequestDurationSeconds {
 // Service specifies the service label for RequestDurationSeconds.
 func (r *RequestDurationSeconds) Service(service string) *RequestDurationSeconds {
 	return &RequestDurationSeconds{
-		histogram: r.histogram.With("service", service),
+		histogram: r.histogram,
 		module:    r.module,
-		service:   true,
+		service:   service,
 		route:     r.route,
 	}
 }
@@ -77,23 +83,14 @@ func (r *RequestDurationSeconds) Service(service string) *RequestDurationSeconds
 // Route specifies the method label for RequestDurationSeconds.
 func (r *RequestDurationSeconds) Route(route string) *RequestDurationSeconds {
 	return &RequestDurationSeconds{
-		histogram: r.histogram.With("route", route),
+		histogram: r.histogram,
 		module:    r.module,
 		service:   r.service,
-		route:     true,
+		route:     route,
 	}
 }
 
 // Observe records the time taken to process the request.
 func (r RequestDurationSeconds) Observe(seconds float64) {
-	if !r.module {
-		r.histogram = r.histogram.With("module", "")
-	}
-	if !r.service {
-		r.histogram = r.histogram.With("service", "")
-	}
-	if !r.route {
-		r.histogram = r.histogram.With("route", "")
-	}
-	r.histogram.Observe(seconds)
+	r.histogram.With("module", r.module, "service", r.service, "route", r.route).Observe(seconds)
 }

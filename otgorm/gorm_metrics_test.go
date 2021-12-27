@@ -2,6 +2,7 @@ package otgorm
 
 import (
 	"database/sql"
+	"github.com/DoNewsCode/core/internal/stub"
 	"os"
 	"testing"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otgorm/mocks"
-	"github.com/go-kit/kit/metrics/generic"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,8 +41,8 @@ func TestCollector(t *testing.T) {
 }
 
 func TestObserve(t *testing.T) {
-	foo := generic.NewGauge("foo")
+	foo := &stub.Gauge{}
 	gauges := NewGauges(foo, foo, foo)
 	gauges.Observe(sql.DBStats{})
-	assert.ElementsMatch(t, gauges.idle.(*generic.Gauge).LabelValues(), []string{"dbname", "", "driver", ""})
+	assert.ElementsMatch(t, foo.LabelValues, []string{"dbname", "unknown", "driver", "default"})
 }

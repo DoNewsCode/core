@@ -185,7 +185,7 @@ type stackTracer interface {
 	StackTrace() errors.StackTrace
 }
 
-// StackTrace implements the interface of errors.Wrap()
+// StackTrace implements the interface of errors.Measure()
 func (e *Error) StackTrace() errors.StackTrace {
 	if e.err == nil {
 		return nil
