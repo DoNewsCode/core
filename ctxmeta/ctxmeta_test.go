@@ -39,7 +39,7 @@ func TestContextMeta_crud(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
-func TestContextMeta_ErrNoBaggae(t *testing.T) {
+func TestContextMeta_ErrNoBaggage(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -155,5 +155,25 @@ func TestMetadata_global(t *testing.T) {
 
 	baggage3 := DefaultMetadata.GetBaggage(ctx)
 	world, _ = baggage3.Get("hello")
+	assert.Equal(t, "world", world)
+}
+
+func TestMetadata_GetOrInjectBaggage(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	baggage1, ctx := GetOrInjectBaggage(ctx)
+	baggage1.Set("hello", "world")
+
+	baggage2 := GetBaggage(ctx)
+	world, _ := baggage2.Get("hello")
+	assert.Equal(t, "world", world)
+
+	baggage3 := DefaultMetadata.GetBaggage(ctx)
+	world, _ = baggage3.Get("hello")
+	assert.Equal(t, "world", world)
+
+	baggage4, _ := GetOrInjectBaggage(ctx)
+	world, _ = baggage4.Get("hello")
 	assert.Equal(t, "world", world)
 }
