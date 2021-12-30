@@ -172,4 +172,8 @@ func TestMetadata_GetOrInjectBaggage(t *testing.T) {
 	baggage3 := DefaultMetadata.GetBaggage(ctx)
 	world, _ = baggage3.Get("hello")
 	assert.Equal(t, "world", world)
+
+	baggage4, _ := GetOrInjectBaggage(ctx)
+	world, _ = baggage4.Get("hello")
+	assert.Equal(t, "world", world)
 }
