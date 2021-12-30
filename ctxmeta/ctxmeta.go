@@ -6,12 +6,12 @@
 package ctxmeta
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"reflect"
+    "context"
+    "errors"
+    "fmt"
+    "reflect"
 
-	"github.com/DoNewsCode/core/contract"
+    "github.com/DoNewsCode/core/contract"
 )
 
 var _ contract.ConfigUnmarshaler = (*Baggage)(nil)
@@ -19,8 +19,8 @@ var _ contract.ConfigUnmarshaler = (*Baggage)(nil)
 // KeyVal combines a string key with its abstract value into a single tuple.
 // It's used internally, and as a return type for Slice.
 type KeyVal struct {
-	Key string
-	Val interface{}
+    Key string
+    Val interface{}
 }
 
 // ErrNoBaggage is returned by accessor methods when they're called on a nil
@@ -46,7 +46,7 @@ var ErrNotFound = errors.New("key not found")
 // context, and set or get metadata. At the end of the request, all metadata
 // collected will be available from any point in the callstack.
 type Baggage struct {
-	c chan []KeyVal
+    c chan []KeyVal
 }
 
 // Unmarshal get the value at given path, and store it into the target variable. Target must
@@ -54,142 +54,142 @@ type Baggage struct {
 // is not found, and ErrIncompatibleType if the found value is not assignable to
 // target. Unmarshal also implements contract.ConfigUnmarshaler.
 func (b *Baggage) Unmarshal(path string, target interface{}) error {
-	val, err := b.Get(path)
-	if err != nil {
-		return err
-	}
+    val, err := b.Get(path)
+    if err != nil {
+        return err
+    }
 
-	v := reflect.ValueOf(target)
-	t := v.Type()
-	if t.Kind() != reflect.Ptr || v.IsNil() {
-		return fmt.Errorf("target must be a non-nil pointer")
-	}
+    v := reflect.ValueOf(target)
+    t := v.Type()
+    if t.Kind() != reflect.Ptr || v.IsNil() {
+        return fmt.Errorf("target must be a non-nil pointer")
+    }
 
-	targetType := t.Elem()
-	if !reflect.TypeOf(val).AssignableTo(targetType) {
-		return ErrIncompatibleType
-	}
+    targetType := t.Elem()
+    if !reflect.TypeOf(val).AssignableTo(targetType) {
+        return ErrIncompatibleType
+    }
 
-	v.Elem().Set(reflect.ValueOf(val))
-	return nil
+    v.Elem().Set(reflect.ValueOf(val))
+    return nil
 }
 
 // Get the value associated with key, or return ErrNotFound. If this method is
 // called on a nil Baggage pointer, it returns ErrNoBaggage.
 func (b *Baggage) Get(key string) (value interface{}, err error) {
-	if b == nil {
-		return nil, ErrNoBaggage
-	}
+    if b == nil {
+        return nil, ErrNoBaggage
+    }
 
-	s := <-b.c
-	defer func() { b.c <- s }()
+    s := <-b.c
+    defer func() { b.c <- s }()
 
-	for _, kv := range s {
-		if kv.Key == key {
-			return kv.Val, nil
-		}
-	}
+    for _, kv := range s {
+        if kv.Key == key {
+            return kv.Val, nil
+        }
+    }
 
-	return nil, ErrNotFound
+    return nil, ErrNotFound
 }
 
 // Set key to value. If key already exists, it will be overwritten. If this method
 // is called on a nil Baggage pointer, it returns ErrNoBaggage.
 func (b *Baggage) Set(key string, value interface{}) (err error) {
-	if b == nil {
-		return ErrNoBaggage
-	}
+    if b == nil {
+        return ErrNoBaggage
+    }
 
-	s := <-b.c
-	defer func() { b.c <- s }()
+    s := <-b.c
+    defer func() { b.c <- s }()
 
-	for i := range s {
-		if s[i].Key == key {
-			s[i].Val = value
-			s = append(s[:i], append(s[i+1:], s[i])...)
-			return nil
-		}
-	}
+    for i := range s {
+        if s[i].Key == key {
+            s[i].Val = value
+            s = append(s[:i], append(s[i+1:], s[i])...)
+            return nil
+        }
+    }
 
-	s = append(s, KeyVal{key, value})
+    s = append(s, KeyVal{key, value})
 
-	return nil
+    return nil
 }
 
 // Update key to the value returned from the callback. If key doesn't exist, it
 // returns ErrNotFound. If this method is called on a nil Baggage pointer, it
 // returns ErrNoBaggage.
 func (b *Baggage) Update(key string, callback func(value interface{}) interface{}) (err error) {
-	if b == nil {
-		return ErrNoBaggage
-	}
+    if b == nil {
+        return ErrNoBaggage
+    }
 
-	s := <-b.c
-	defer func() { b.c <- s }()
+    s := <-b.c
+    defer func() { b.c <- s }()
 
-	for i := range s {
-		if s[i].Key == key {
-			s[i].Val = callback(s[i].Val)
-			return nil
-		}
-	}
+    for i := range s {
+        if s[i].Key == key {
+            s[i].Val = callback(s[i].Val)
+            return nil
+        }
+    }
 
-	return ErrNotFound
+    return ErrNotFound
 }
 
 // Delete key from baggage. If key doesn't exist, it returns ErrNotFound. If the
 // MetadataSet is not associated with an initialized baggage, it returns
 // ErrNoBaggage.
 func (b *Baggage) Delete(key interface{}) (err error) {
-	if b == nil {
-		return ErrNoBaggage
-	}
-	s := <-b.c
-	defer func() { b.c <- s }()
+    if b == nil {
+        return ErrNoBaggage
+    }
+    s := <-b.c
+    defer func() { b.c <- s }()
 
-	for i := range s {
-		if s[i].Key == key {
-			s = append(s[:i], s[i+1:]...)
-			return nil
-		}
-	}
+    for i := range s {
+        if s[i].Key == key {
+            s = append(s[:i], s[i+1:]...)
+            return nil
+        }
+    }
 
-	return ErrNotFound
+    return ErrNotFound
 }
 
 // Slice returns a slice of key/value pairs in the order in which they were set.
 func (b *Baggage) Slice() []KeyVal {
-	if b == nil {
-		return nil
-	}
-	s := <-b.c
-	defer func() { b.c <- s }()
+    if b == nil {
+        return nil
+    }
+    s := <-b.c
+    defer func() { b.c <- s }()
 
-	r := make([]KeyVal, len(s))
-	copy(r, s)
-	return r
+    r := make([]KeyVal, len(s))
+    copy(r, s)
+    return r
 }
 
 // Map returns a map of key to value.
 func (b *Baggage) Map() map[string]interface{} {
-	if b == nil {
-		return nil
-	}
+    if b == nil {
+        return nil
+    }
 
-	s := <-b.c
-	defer func() { b.c <- s }()
+    s := <-b.c
+    defer func() { b.c <- s }()
 
-	mp := make(map[string]interface{}, len(s))
-	for _, kv := range s {
-		mp[kv.Key] = kv.Val
-	}
-	return mp
+    mp := make(map[string]interface{}, len(s))
+    for _, kv := range s {
+        mp[kv.Key] = kv.Val
+    }
+    return mp
 }
 
 // MetadataSet is a group key to the contextual data stored the context.
 // The data stored with different MetadataSet instances are not shared.
 type MetadataSet struct {
-	key *struct{}
+    key *struct{}
 }
 
 // DefaultMetadata contains the default key for Baggage in the context. Use this if there
@@ -199,7 +199,7 @@ var DefaultMetadata = MetadataSet{key: &struct{}{}}
 // New constructs a new set of metadata. This metadata can be used to retrieve a group of contextual data.
 // The data stored with different MetadataSet instances are not shared.
 func New() *MetadataSet {
-	return &MetadataSet{key: &struct{}{}}
+    return &MetadataSet{key: &struct{}{}}
 }
 
 // Inject constructs a Baggage object and injects it into the provided context
@@ -207,18 +207,28 @@ func New() *MetadataSet {
 // context for all further operations. The returned Baggage can be queried at any
 // point for metadata collected over the life of the context.
 func (m *MetadataSet) Inject(ctx context.Context) (*Baggage, context.Context) {
-	c := make(chan []KeyVal, 1)
-	c <- make([]KeyVal, 0, 32)
-	d := &Baggage{c: c}
-	return d, context.WithValue(ctx, m.key, d)
+    c := make(chan []KeyVal, 1)
+    c <- make([]KeyVal, 0, 32)
+    d := &Baggage{c: c}
+    return d, context.WithValue(ctx, m.key, d)
 }
 
 // GetBaggage returns the Baggage stored in the context.
 func (m *MetadataSet) GetBaggage(ctx context.Context) *Baggage {
-	if val, ok := ctx.Value(m.key).(*Baggage); ok {
-		return val
-	}
-	return nil
+    if val, ok := ctx.Value(m.key).(*Baggage); ok {
+        return val
+    }
+    return nil
+}
+
+// StartBaggage creates and returns Baggage. using Baggage found within the context.
+// If that doesn't exist it creates new Baggage. It also returns a context.Context
+// object built around the returned Baggage.
+func (m *MetadataSet) StartBaggage(ctx context.Context) (*Baggage, context.Context) {
+    if baggage := m.GetBaggage(ctx); baggage != nil {
+        return baggage, ctx
+    }
+    return m.Inject(ctx)
 }
 
 // Inject constructs a Baggage object and injects it into the provided context
@@ -226,10 +236,17 @@ func (m *MetadataSet) GetBaggage(ctx context.Context) *Baggage {
 // operations. The returned Data can be queried at any point for metadata
 // collected over the life of the context.
 func Inject(ctx context.Context) (*Baggage, context.Context) {
-	return DefaultMetadata.Inject(ctx)
+    return DefaultMetadata.Inject(ctx)
 }
 
 // GetBaggage returns the default Baggage stored in the context.
 func GetBaggage(ctx context.Context) *Baggage {
-	return DefaultMetadata.GetBaggage(ctx)
+    return DefaultMetadata.GetBaggage(ctx)
+}
+
+// StartBaggage creates and returns Baggage. using Baggage found within the context.
+// If that doesn't exist it creates new Baggage. It also returns a context.Context
+// object built around the returned Baggage.
+func StartBaggage(ctx context.Context) (*Baggage, context.Context) {
+    return DefaultMetadata.StartBaggage(ctx)
 }
