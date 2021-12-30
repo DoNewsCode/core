@@ -221,6 +221,16 @@ func (m *MetadataSet) GetBaggage(ctx context.Context) *Baggage {
 	return nil
 }
 
+// GetOrInjectBaggage creates and returns Baggage. using Baggage found within the context.
+// If that doesn't exist it creates new Baggage. It also returns a context.Context
+// object built around the returned Baggage.
+func (m *MetadataSet) GetOrInjectBaggage(ctx context.Context) (*Baggage, context.Context) {
+	if baggage := m.GetBaggage(ctx); baggage != nil {
+		return baggage, ctx
+	}
+	return m.Inject(ctx)
+}
+
 // Inject constructs a Baggage object and injects it into the provided context
 // under the default context key. Use the returned context for all further
 // operations. The returned Data can be queried at any point for metadata
@@ -232,4 +242,11 @@ func Inject(ctx context.Context) (*Baggage, context.Context) {
 // GetBaggage returns the default Baggage stored in the context.
 func GetBaggage(ctx context.Context) *Baggage {
 	return DefaultMetadata.GetBaggage(ctx)
+}
+
+// GetOrInjectBaggage creates and returns Baggage. using Baggage found within the context.
+// If that doesn't exist it creates new Baggage. It also returns a context.Context
+// object built around the returned Baggage.
+func GetOrInjectBaggage(ctx context.Context) (*Baggage, context.Context) {
+	return DefaultMetadata.GetOrInjectBaggage(ctx)
 }
