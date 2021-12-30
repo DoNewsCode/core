@@ -1,4 +1,17 @@
 
+<a name="v0.11.0"></a>
+## [v0.11.0](https://github.com/DoNewsCode/core/compare/v0.10.4...v0.11.0) (2021-12-27)
+
+### ♻️ Code Refactoring
+
+* **observability:** avoid panics caused by missing labels ([#213](https://github.com/DoNewsCode/core/issues/213)) (@[谷溪](guxi99@gmail.com))
+
+### ✨ Features
+
+* add cronjob metrics ([#215](https://github.com/DoNewsCode/core/issues/215)) (@[谷溪](guxi99@gmail.com))
+* simple span error log and gofumpt ([#214](https://github.com/DoNewsCode/core/issues/214)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+
 <a name="v0.10.4"></a>
 ## [v0.10.4](https://github.com/DoNewsCode/core/compare/v0.10.3...v0.10.4) (2021-11-18)
 

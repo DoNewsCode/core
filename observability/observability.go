@@ -28,6 +28,7 @@ func Providers() di.Deps {
 		ProvideRedisMetrics,
 		ProvideKafkaReaderMetrics,
 		ProvideKafkaWriterMetrics,
+		ProvideCronJobMetrics,
 		provideConfig,
 	}
 }

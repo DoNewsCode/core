@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"github.com/DoNewsCode/core/cronopts"
 	"os"
 	"strings"
 	"testing"
@@ -78,14 +79,16 @@ func TestProvideRedisMetrics(t *testing.T) {
 	c.Provide(otredis.Providers())
 	c.Invoke(func(cli redis.UniversalClient, g *otredis.Gauges) {
 		stats := cli.PoolStats()
-		withValues := []string{"dbname", "default"}
+		g.Observe(stats)
+	})
+}
 
-		g.Hits.With(withValues...).Set(float64(stats.Hits))
-		g.Misses.With(withValues...).Set(float64(stats.Misses))
-		g.Timeouts.With(withValues...).Set(float64(stats.Timeouts))
-		g.TotalConns.With(withValues...).Set(float64(stats.TotalConns))
-		g.IdleConns.With(withValues...).Set(float64(stats.IdleConns))
-		g.StaleConns.With(withValues...).Set(float64(stats.StaleConns))
+func TestProvideCronjobMetrics(t *testing.T) {
+	c := core.New()
+	c.ProvideEssentials()
+	c.Provide(Providers())
+	c.Invoke(func(metrics *cronopts.CronJobMetrics) {
+		metrics.Fail()
 	})
 }
 

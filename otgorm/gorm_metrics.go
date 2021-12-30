@@ -20,58 +20,48 @@ type Gauges struct {
 	inUse metrics.Gauge
 	open  metrics.Gauge
 
-	dbName bool
-	driver bool
+	dbName string
+	driver string
 }
 
 // NewGauges returns a new Gauges.
 func NewGauges(idle, inUse, open metrics.Gauge) *Gauges {
 	return &Gauges{
-		idle:  idle,
-		inUse: inUse,
-		open:  open,
+		idle:   idle,
+		inUse:  inUse,
+		open:   open,
+		dbName: "unknown",
+		driver: "default",
 	}
 }
 
 // DBName sets the dbname label of metrics.
 func (g *Gauges) DBName(dbName string) *Gauges {
-	withValues := []string{"dbname", dbName}
 	return &Gauges{
-		idle:   g.idle.With(withValues...),
-		inUse:  g.inUse.With(withValues...),
-		open:   g.open.With(withValues...),
-		dbName: true,
+		idle:   g.idle,
+		inUse:  g.inUse,
+		open:   g.open,
+		dbName: dbName,
 		driver: g.driver,
 	}
 }
 
 // Driver sets the driver label of metrics.
 func (g *Gauges) Driver(driver string) *Gauges {
-	withValues := []string{"driver", driver}
 	return &Gauges{
-		idle:   g.idle.With(withValues...),
-		inUse:  g.inUse.With(withValues...),
-		open:   g.open.With(withValues...),
+		idle:   g.idle,
+		inUse:  g.inUse,
+		open:   g.open,
 		dbName: g.dbName,
-		driver: true,
+		driver: driver,
 	}
 }
 
 // Observe records the DBStats collected. It should be called periodically.
 func (g *Gauges) Observe(stats sql.DBStats) {
-	if !g.dbName {
-		g.idle = g.idle.With("dbname", "")
-		g.inUse = g.inUse.With("dbname", "")
-		g.open = g.open.With("dbname", "")
-	}
-	if !g.driver {
-		g.idle = g.idle.With("driver", "")
-		g.inUse = g.inUse.With("driver", "")
-		g.open = g.open.With("driver", "")
-	}
-	g.idle.Set(float64(stats.Idle))
-	g.inUse.Set(float64(stats.InUse))
-	g.open.Set(float64(stats.OpenConnections))
+	g.idle.With("dbname", g.dbName, "driver", g.driver).Set(float64(stats.Idle))
+	g.inUse.With("dbname", g.dbName, "driver", g.driver).Set(float64(stats.InUse))
+	g.open.With("dbname", g.dbName, "driver", g.driver).Set(float64(stats.OpenConnections))
 }
 
 // newCollector creates a new database wrapper containing the name of the database,
