@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -21,16 +22,19 @@ func TestServeIn_signalWatch(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("stop when signal received", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("TestServeIn_signalWatch/stop_when_signal_received only works on unix")
+		}
 		var group run.Group
 		group.Add(do, cancel)
 		group.Add(func() error {
 			time.Sleep(time.Second)
 			p, err := os.FindProcess(os.Getpid())
 			if err != nil {
-				t.Skip("TestServeIn_signalWatch only works on unix")
+				return err
 			}
 			if err := p.Signal(os.Interrupt); err != nil {
-				t.Skip("TestServeIn_signalWatch only works on unix")
+				return err
 			}
 			// trigger the signal twice should be ok.
 			p.Signal(os.Interrupt)
