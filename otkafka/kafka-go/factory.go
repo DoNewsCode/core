@@ -1,4 +1,4 @@
-package otkafka
+package kafka_go
 
 import (
 	"github.com/DoNewsCode/core/di"

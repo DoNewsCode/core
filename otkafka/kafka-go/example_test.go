@@ -1,13 +1,13 @@
-package otkafka_test
+package kafka_go_test
 
 import (
 	"context"
 	"fmt"
+	"github.com/DoNewsCode/core/otkafka/kafka-go"
 	"os"
 	"strings"
 
 	"github.com/DoNewsCode/core"
-	"github.com/DoNewsCode/core/otkafka"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/segmentio/kafka-go"
 )
@@ -24,13 +24,13 @@ func Example_reader() {
 		},
 		"kafka": map[string]interface{}{
 			"reader": map[string]interface{}{
-				"default": otkafka.ReaderConfig{
+				"default": kafka_go.ReaderConfig{
 					Brokers: brokers,
 					Topic:   "example",
 				},
 			},
 			"writer": map[string]interface{}{
-				"default": otkafka.WriterConfig{
+				"default": kafka_go.WriterConfig{
 					Brokers: brokers,
 					Topic:   "example",
 				},
@@ -38,7 +38,7 @@ func Example_reader() {
 		},
 	}
 	c := core.Default(core.WithConfigStack(confmap.Provider(conf, "."), nil))
-	c.Provide(otkafka.Providers())
+	c.Provide(kafka_go.Providers())
 	c.Invoke(func(writer *kafka.Writer) {
 		err := writer.WriteMessages(context.Background(), kafka.Message{Value: []byte(`hello`)})
 		if err != nil {

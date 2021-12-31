@@ -1,4 +1,4 @@
-package otkafka
+package franz_go
 
 import (
 	"net"

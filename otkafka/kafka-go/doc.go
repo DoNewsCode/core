@@ -39,4 +39,4 @@ writers/readers are provided by github.com/segmentio/kafka-go.
 	})
 
 */
-package otkafka
+package kafka_go

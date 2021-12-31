@@ -1,4 +1,4 @@
-package otkafka
+package kafka_go
 
 import "github.com/segmentio/kafka-go"
 
