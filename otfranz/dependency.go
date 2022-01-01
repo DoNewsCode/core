@@ -103,7 +103,9 @@ func provideFactory(p factoryIn, interceptor Interceptor) (Factory, func()) {
 		if err != nil {
 			return di.Pair{}, fmt.Errorf("kafka configuration %s not valid: %w", name, err)
 		}
-		conf.Logger = &KafkaLogAdapter{Logging: level.Debug(p.Logger)}
+		if p.Logger != nil {
+			conf.Logger = &KafkaLogAdapter{Logging: level.Debug(p.Logger)}
+		}
 
 		interceptor(name, &conf)
 		// converts Config to []kgo.Opt
