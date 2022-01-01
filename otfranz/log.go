@@ -10,10 +10,12 @@ type KafkaLogAdapter struct {
 	Logging log.Logger
 }
 
+// Level implements kgo.Logger.
 func (w *KafkaLogAdapter) Level() kgo.LogLevel {
 	return kgo.LogLevelDebug
 }
 
+// Log implements kgo.Logger.
 func (w *KafkaLogAdapter) Log(_ kgo.LogLevel, msg string, keyvals ...interface{}) {
 	kvs := []interface{}{
 		"msg", msg,
