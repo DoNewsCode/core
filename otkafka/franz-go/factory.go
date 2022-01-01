@@ -8,7 +8,7 @@ import (
 // Factory is a *di.Factory that creates *kafka.Client.
 //
 // Unlike other database providers, the kafka factories don't bundle a default
-// kafka reader/writer. It is suggested to use Topic name as the identifier of
+// kafka client. It is suggested to use Topic name as the identifier of
 // kafka config rather than an opaque name such as default.
 type Factory struct {
 	*di.Factory

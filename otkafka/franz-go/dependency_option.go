@@ -1,7 +1,7 @@
 package franz_go
 
-// Interceptor is an interceptor that makes last minute change to a *kafka.ReaderConfig
-// during kafka.Reader's creation
+// Interceptor is an interceptor that makes last minute change to a *Config
+// during kgo.Client's creation
 type Interceptor func(name string, config *Config)
 
 type providersOption struct {
@@ -13,7 +13,7 @@ type providersOption struct {
 type ProvidersOptionFunc func(options *providersOption)
 
 // WithInterceptor instructs the Providers to accept the
-// ReaderInterceptor so that users can change reader config during runtime. This can
+// Interceptor so that users can change config during runtime. This can
 // be useful when some dynamic computations on configs are required.
 func WithInterceptor(interceptor Interceptor) ProvidersOptionFunc {
 	return func(options *providersOption) {
@@ -21,7 +21,7 @@ func WithInterceptor(interceptor Interceptor) ProvidersOptionFunc {
 	}
 }
 
-// WithReload toggles whether the writer factory should reload cached instances upon
+// WithReload toggles whether the factory should reload cached instances upon
 // OnReload event.
 func WithReload(shouldReload bool) ProvidersOptionFunc {
 	return func(options *providersOption) {

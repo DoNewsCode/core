@@ -2,112 +2,111 @@ package franz_go
 
 import (
 	"context"
+	"net"
+	"time"
+
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/kmsg"
 	"github.com/twmb/franz-go/pkg/kversion"
 	"github.com/twmb/franz-go/pkg/sasl"
-	"net"
-	"time"
 )
 
-// Config is a configuration object used to create new instances of
-// kgo.Opt.
+// Config is a configuration object used to create new instances of *kgo.Client.
 type Config struct {
-	Id                     string // client ID
-	DialFn                 func(context.Context, string, string) (net.Conn, error)
-	RequestTimeoutOverhead time.Duration
-	ConnIdleTimeout        time.Duration
+	Id                     string                                                  `json:"id" yaml:"id"` // client ID
+	DialFn                 func(context.Context, string, string) (net.Conn, error) `json:"-" yaml:"-"`
+	RequestTimeoutOverhead time.Duration                                           `json:"request_timeout_overhead" yaml:"request_timeout_overhead"`
+	ConnIdleTimeout        time.Duration                                           `json:"conn_idle_timeout" yaml:"conn_idle_timeout"`
 
-	SoftwareName    string // KIP-511
-	SoftwareVersion string // KIP-511
+	SoftwareName    string `json:"software_name" yaml:"software_name"`       // KIP-511
+	SoftwareVersion string `json:"software_version" yaml:"software_version"` // KIP-511
 
-	Logger kgo.Logger
+	Logger kgo.Logger `json:"logger" yaml:"logger"`
 
-	SeedBrokers []string
-	MaxVersions *kversion.Versions
-	MinVersions *kversion.Versions
+	SeedBrokers []string           `json:"seed_brokers" yaml:"seed_brokers"`
+	MaxVersions *kversion.Versions `json:"-" yaml:"-"`
+	MinVersions *kversion.Versions `json:"-" yaml:"-"`
 
-	RetryBackoff func(int) time.Duration
-	Retries      int
-	RetryTimeout time.Duration
+	RetryBackoff func(int) time.Duration `json:"-" yaml:"-"`
+	Retries      int                     `json:"retries" yaml:"retries"`
+	RetryTimeout time.Duration           `json:"retry_timeout" yaml:"retry_timeout"`
 
-	MaxBrokerWriteBytes int32
-	MaxBrokerReadBytes  int32
+	MaxBrokerWriteBytes int32 `json:"max_broker_write_bytes" yaml:"max_broker_write_bytes"`
+	MaxBrokerReadBytes  int32 `json:"max_broker_read_bytes" yaml:"max_broker_read_bytes"`
 
-	AllowAutoTopicCreation bool
+	AllowAutoTopicCreation bool `json:"allow_auto_topic_creation" yaml:"allow_auto_topic_creation"`
 
-	MetadataMaxAge time.Duration
-	MetadataMinAge time.Duration
+	MetadataMaxAge time.Duration `json:"metadata_max_age" yaml:"metadata_max_age"`
+	MetadataMinAge time.Duration `json:"metadata_min_age" yaml:"metadata_min_age"`
 
-	Sasls []sasl.Mechanism
+	Sasls []sasl.Mechanism `json:"-" yaml:"-"`
 
-	Hooks []kgo.Hook
+	Hooks []kgo.Hook `json:"-" yaml:"-"`
 
 	//////////////////////
 	// PRODUCER SECTION //
 	//////////////////////
 
-	TxnID               string
-	TxnTimeout          time.Duration
-	Acks                int16
-	DisableIdempotency  bool
-	Compression         []kgo.CompressionCodec // order of preference
-	DefaultProduceTopic string
-	MaxRecordBatchBytes int32
-	MaxBufferedRecords  int
-	ProduceTimeout      time.Duration
-	RecordRetries       int
-	Linger              time.Duration
-	RecordTimeout       time.Duration
-	ManualFlushing      bool
-	Partitioner         kgo.Partitioner
-	StopOnDataLoss      bool
-	OnDataLoss          func(string, int32)
+	TxnID               string                 `json:"txn_id" yaml:"txn_id"`
+	TxnTimeout          time.Duration          `json:"txn_timeout" yaml:"txn_timeout"`
+	Acks                int16                  `json:"acks" yaml:"acks"`
+	DisableIdempotency  bool                   `json:"disable_idempotency" yaml:"disable_idempotency"`
+	Compression         []kgo.CompressionCodec `json:"-" yaml:"-"` // order of preference
+	DefaultProduceTopic string                 `json:"default_produce_topic" yaml:"default_produce_topic"`
+	MaxRecordBatchBytes int32                  `json:"max_record_batch_bytes" yaml:"max_record_batch_bytes"`
+	MaxBufferedRecords  int                    `json:"max_buffered_records" yaml:"max_buffered_records"`
+	ProduceTimeout      time.Duration          `json:"produce_timeout" yaml:"produce_timeout"`
+	RecordRetries       int                    `json:"record_retries" yaml:"record_retries"`
+	Linger              time.Duration          `json:"linger" yaml:"linger"`
+	RecordTimeout       time.Duration          `json:"record_timeout" yaml:"record_timeout"`
+	ManualFlushing      bool                   `json:"manual_flushing" yaml:"manual_flushing"`
+	Partitioner         kgo.Partitioner        `json:"-" yaml:"-"`
+	StopOnDataLoss      bool                   `json:"stop_on_data_loss" yaml:"stop_on_data_loss"`
+	OnDataLoss          func(string, int32)    `json:"-" yaml:"-"`
 
 	//////////////////////
 	// CONSUMER SECTION //
 	//////////////////////
 
-	MaxWait              time.Duration
-	MinBytes             int32
-	MaxBytes             int32
-	MaxPartBytes         int32
-	ResetOffset          kgo.Offset
-	IsolationLevel       int8
-	KeepControl          bool
-	Rack                 string
-	MaxConcurrentFetches int
-	DisableFetchSessions bool
-	Topics               []string                        // topics to consume; if regex is true, values are compiled regular expressions
-	Partitions           map[string]map[int32]kgo.Offset // partitions to directly consume from
-	Regex                bool
+	MaxWait      time.Duration `json:"max_wait" yaml:"max_wait"`
+	MinBytes     int32         `json:"min_bytes" yaml:"min_bytes"`
+	MaxBytes     int32         `json:"max_bytes" yaml:"max_bytes"`
+	MaxPartBytes int32         `json:"max_part_bytes" yaml:"max_part_bytes"`
+
+	ResetOffset struct {
+		At       int64 `json:"at" yaml:"at"`
+		Relative int64 `json:"relative" yaml:"relative"`
+		Epoch    int32 `json:"epoch" yaml:"epoch"`
+	} `json:"reset_offset" yaml:"reset_offset"`
+	IsolationLevel       int8                            `json:"isolation_level" yaml:"isolation_level"`
+	KeepControl          bool                            `json:"keep_control" yaml:"keep_control"`
+	Rack                 string                          `json:"rack" yaml:"rack"`
+	MaxConcurrentFetches int                             `json:"max_concurrent_fetches" yaml:"max_concurrent_fetches"`
+	DisableFetchSessions bool                            `json:"disable_fetch_sessions" yaml:"disable_fetch_sessions"`
+	Topics               []string                        `json:"topics" yaml:"topics"` // topics to consume; if regex is true, values are compiled regular expressions
+	Partitions           map[string]map[int32]kgo.Offset `json:"-" yaml:"-"`           // partitions to directly consume from
+	Regex                bool                            `json:"regex" yaml:"regex"`
 
 	////////////////////////////
 	// CONSUMER GROUP SECTION //
 	////////////////////////////
 
-	Group              string              // group we are in
-	InstanceID         string              // optional group instance ID
-	Balancers          []kgo.GroupBalancer // balancers we can use
-	Protocol           string              // "consumer" by default, expected to never be overridden
-	SessionTimeout     time.Duration
-	RebalanceTimeout   time.Duration
-	HeartbeatInterval  time.Duration
-	RequireStable      bool
-	OnAssigned         func(context.Context, *kgo.Client, map[string][]int32)
-	OnRevoked          func(context.Context, *kgo.Client, map[string][]int32)
-	OnLost             func(context.Context, *kgo.Client, map[string][]int32)
-	AutocommitDisable  bool // true if autocommit was disabled or we are transactional
-	AutocommitGreedy   bool
-	AutocommitMarks    bool
-	AutocommitInterval time.Duration
-	CommitCallback     func(*kgo.Client, *kmsg.OffsetCommitRequest, *kmsg.OffsetCommitResponse, error)
-}
-
-func newConfig() Config {
-	return Config{
-		Acks: -1,
-	}
+	Group              string                                                                          `json:"group" yaml:"group"`             // group we are in
+	InstanceID         string                                                                          `json:"instance_id" yaml:"instance_id"` // optional group instance ID
+	Balancers          []kgo.GroupBalancer                                                             `json:"-" yaml:"-"`                     // balancers we can use
+	Protocol           string                                                                          `json:"protocol" yaml:"protocol"`       // "consumer" by default, expected to never be overridden
+	SessionTimeout     time.Duration                                                                   `json:"session_timeout" yaml:"session_timeout"`
+	RebalanceTimeout   time.Duration                                                                   `json:"rebalance_timeout" yaml:"rebalance_timeout"`
+	HeartbeatInterval  time.Duration                                                                   `json:"heartbeat_interval" yaml:"heartbeat_interval"`
+	RequireStable      bool                                                                            `json:"require_stable" yaml:"require_stable"`
+	OnAssigned         func(context.Context, *kgo.Client, map[string][]int32)                          `json:"-" yaml:"-"`
+	OnRevoked          func(context.Context, *kgo.Client, map[string][]int32)                          `json:"-" yaml:"-"`
+	OnLost             func(context.Context, *kgo.Client, map[string][]int32)                          `json:"-" yaml:"-"`
+	AutocommitDisable  bool                                                                            `json:"autocommit_disable" yaml:"autocommit_disable"` // true if autocommit was disabled or we are transactional
+	AutocommitGreedy   bool                                                                            `json:"autocommit_greedy" yaml:"autocommit_greedy"`
+	AutocommitMarks    bool                                                                            `json:"autocommit_marks" yaml:"autocommit_marks"`
+	AutocommitInterval time.Duration                                                                   `json:"autocommit_interval" yaml:"autocommit_interval"`
+	CommitCallback     func(*kgo.Client, *kmsg.OffsetCommitRequest, *kmsg.OffsetCommitResponse, error) `json:"-" yaml:"-"`
 }
 
 func fromConfig(conf Config) (opts []kgo.Opt) {
@@ -189,6 +188,8 @@ func fromConfig(conf Config) (opts []kgo.Opt) {
 
 	if conf.DisableIdempotency {
 		opts = append(opts, kgo.DisableIdempotentWrite())
+	} else {
+		opts = append(opts, kgo.RequiredAcks(kgo.AllISRAcks()))
 	}
 	if len(conf.Compression) > 0 {
 		opts = append(opts, kgo.ProducerBatchCompression(conf.Compression...))
@@ -238,9 +239,25 @@ func fromConfig(conf Config) (opts []kgo.Opt) {
 	if conf.MaxPartBytes > 0 {
 		opts = append(opts, kgo.FetchMaxPartitionBytes(conf.MaxPartBytes))
 	}
-	if conf.ResetOffset.String() != "" {
-		opts = append(opts, kgo.ConsumeResetOffset(conf.ResetOffset))
+
+	resetOffset := kgo.NewOffset()
+	setResetOffset := false
+	if conf.ResetOffset.At != 0 {
+		resetOffset.At(conf.ResetOffset.At)
+		setResetOffset = true
 	}
+	if conf.ResetOffset.Relative != 0 {
+		resetOffset.Relative(conf.ResetOffset.Relative)
+		setResetOffset = true
+	}
+	if conf.ResetOffset.Epoch != 0 {
+		resetOffset.WithEpoch(conf.ResetOffset.Epoch)
+		setResetOffset = true
+	}
+	if setResetOffset {
+		opts = append(opts, kgo.ConsumeResetOffset(resetOffset))
+	}
+
 	if conf.IsolationLevel == 0 {
 		opts = append(opts, kgo.FetchIsolationLevel(kgo.ReadUncommitted()))
 	}

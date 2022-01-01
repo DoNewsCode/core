@@ -1,52 +1,69 @@
 package franz_go
 
 import (
-	"net"
+	"context"
+	"errors"
+	"fmt"
 	"os"
-	"strconv"
+	"strings"
 	"testing"
 
-	"github.com/segmentio/kafka-go"
+	"github.com/twmb/franz-go/pkg/kerr"
+	"github.com/twmb/franz-go/pkg/kgo"
+	"github.com/twmb/franz-go/pkg/kmsg"
 )
 
+const franzTestTopic = "franz-test"
+
 func TestMain(m *testing.M) {
+	var cleanup func()
 	if os.Getenv("KAFKA_ADDR") != "" {
-		setupTopic(os.Getenv("KAFKA_ADDR"))
+		cleanup = setupTopic(os.Getenv("KAFKA_ADDR"))
 	}
-	os.Exit(m.Run())
+	code := m.Run()
+	if cleanup != nil {
+		cleanup()
+	}
+	os.Exit(code)
 }
 
-func setupTopic(addr string) {
-	topics := []string{"trace", "test", "example"}
-
-	conn, err := kafka.Dial("tcp", addr)
+func setupTopic(addr string) func() {
+	adm, err := kgo.NewClient(kgo.SeedBrokers(strings.Split(addr, ",")...))
 	if err != nil {
-		panic(err.Error())
+		panic(fmt.Sprintf("unable to create admin client: %v", err))
 	}
-	defer conn.Close()
+	topic := franzTestTopic
 
-	controller, err := conn.Controller()
-	if err != nil {
-		panic(err.Error())
-	}
-	var controllerConn *kafka.Conn
-	controllerConn, err = kafka.Dial("tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
-	if err != nil {
-		panic(err.Error())
-	}
-	defer controllerConn.Close()
+	req := kmsg.NewPtrCreateTopicsRequest()
+	reqTopic := kmsg.NewCreateTopicsRequestTopic()
+	reqTopic.Topic = topic
+	reqTopic.NumPartitions = 1
+	reqTopic.ReplicationFactor = 1
+	req.Topics = append(req.Topics, reqTopic)
 
-	topicConfigs := make([]kafka.TopicConfig, 0)
-	for _, topic := range topics {
-		topicConfigs = append(topicConfigs, kafka.TopicConfig{
-			Topic:             topic,
-			NumPartitions:     1,
-			ReplicationFactor: 1,
-		})
+	resp, err := req.RequestWith(context.Background(), adm)
+	if err == nil {
+		err = kerr.ErrorForCode(resp.Topics[0].ErrorCode)
+	}
+	if err != nil {
+		if !errors.Is(err, kerr.TopicAlreadyExists) {
+			panic(err)
+		}
 	}
 
-	err = controllerConn.CreateTopics(topicConfigs...)
-	if err != nil {
-		panic(err.Error())
+	return func() {
+		req := kmsg.NewPtrDeleteTopicsRequest()
+		req.TopicNames = []string{topic}
+		reqTopic := kmsg.NewDeleteTopicsRequestTopic()
+		reqTopic.Topic = kmsg.StringPtr(topic)
+		req.Topics = append(req.Topics, reqTopic)
+
+		resp, err := req.RequestWith(context.Background(), adm)
+		if err == nil {
+			err = kerr.ErrorForCode(resp.Topics[0].ErrorCode)
+		}
+		if err != nil {
+			panic(err)
+		}
 	}
 }

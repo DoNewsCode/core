@@ -10,13 +10,18 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	var cleanup func()
 	if os.Getenv("KAFKA_ADDR") != "" {
-		setupTopic(os.Getenv("KAFKA_ADDR"))
+		cleanup = setupTopic(os.Getenv("KAFKA_ADDR"))
 	}
-	os.Exit(m.Run())
+	code := m.Run()
+	if cleanup != nil {
+		cleanup()
+	}
+	os.Exit(code)
 }
 
-func setupTopic(addr string) {
+func setupTopic(addr string) func() {
 	topics := []string{"trace", "test", "example"}
 
 	conn, err := kafka.Dial("tcp", addr)
@@ -34,7 +39,6 @@ func setupTopic(addr string) {
 	if err != nil {
 		panic(err.Error())
 	}
-	defer controllerConn.Close()
 
 	topicConfigs := make([]kafka.TopicConfig, 0)
 	for _, topic := range topics {
@@ -48,5 +52,13 @@ func setupTopic(addr string) {
 	err = controllerConn.CreateTopics(topicConfigs...)
 	if err != nil {
 		panic(err.Error())
+	}
+
+	return func() {
+		defer controllerConn.Close()
+		err := controllerConn.DeleteTopics(topics...)
+		if err != nil {
+			panic(err)
+		}
 	}
 }

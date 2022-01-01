@@ -2,6 +2,7 @@ package franz_go
 
 import (
 	"fmt"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
@@ -12,23 +13,17 @@ import (
 )
 
 /*
-Providers is a set of dependencies including ReaderMaker, WriterMaker and exported configs.
+Providers is a set of dependencies including Factory,Maker and exported configs.
 	Depends On:
 		contract.ConfigAccessor
 		log.Logger
 	Provide:
-		ReaderFactory
-		WriterFactory
-		ReaderMaker
-		WriterMaker
-		*kafka.Reader
-		*kafka.Writer
-		*readerCollector
-		*writerCollector
+		Factory
+		Maker
 */
 func Providers(optionFunc ...ProvidersOptionFunc) di.Deps {
 	option := providersOption{
-		interceptor: func(name string, reader *Config) {},
+		interceptor: func(name string, conf *Config) {},
 	}
 	for _, f := range optionFunc {
 		f(&option)
@@ -40,12 +35,12 @@ func Providers(optionFunc ...ProvidersOptionFunc) di.Deps {
 	}
 }
 
-// Maker models a WriterFactory
+// Maker models a Factory
 type Maker interface {
 	Make(name string) (*kgo.Client, error)
 }
 
-// factoryIn is a injection parameter for provideReaderFactory.
+// factoryIn is an injection parameter for provideFactory.
 type factoryIn struct {
 	di.In
 
@@ -97,21 +92,20 @@ func provideKafkaFactory(option *providersOption) func(p factoryIn) (factoryOut,
 	}
 }
 
-// provideFactory creates the Factory. It is valid
-// dependency option for package core.
+// provideFactory creates the Factory. It is valid dependency option for package core.
 func provideFactory(p factoryIn, interceptor Interceptor) (Factory, func()) {
 	factory := di.NewFactory(func(name string) (di.Pair, error) {
 		var (
-			err error
+			err  error
+			conf Config
 		)
-		var conf = newConfig()
 		err = p.Conf.Unmarshal(fmt.Sprintf("kafka.%s", name), &conf)
 		if err != nil {
 			return di.Pair{}, fmt.Errorf("kafka configuration %s not valid: %w", name, err)
 		}
 		conf.Logger = &KafkaLogAdapter{Logging: level.Debug(p.Logger)}
-		interceptor(name, &conf)
 
+		interceptor(name, &conf)
 		// converts Config to []kgo.Opt
 		opts := fromConfig(conf)
 
