@@ -27,21 +27,36 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func testTopics(topics ...string) (*kmsg.CreateTopicsRequest, *kmsg.DeleteTopicsRequest) {
+	creq := kmsg.NewPtrCreateTopicsRequest()
+	dreq := kmsg.NewPtrDeleteTopicsRequest()
+	dreq.TopicNames = topics
+
+	for _, topic := range topics {
+		creqTopic := kmsg.NewCreateTopicsRequestTopic()
+		creqTopic.Topic = topic
+		creqTopic.NumPartitions = 1
+		creqTopic.ReplicationFactor = 1
+		creq.Topics = append(creq.Topics, creqTopic)
+
+		dreqTopic := kmsg.NewDeleteTopicsRequestTopic()
+		dreqTopic.Topic = kmsg.StringPtr(topic)
+		dreq.Topics = append(dreq.Topics, dreqTopic)
+	}
+	return creq, dreq
+}
+
 func setupTopic(addr string) func() {
+	topics := []string{franzTestTopic, "franz-foo", "franz-bar"}
+
 	adm, err := kgo.NewClient(kgo.SeedBrokers(strings.Split(addr, ",")...))
 	if err != nil {
 		panic(fmt.Sprintf("unable to create admin client: %v", err))
 	}
-	topic := franzTestTopic
 
-	req := kmsg.NewPtrCreateTopicsRequest()
-	reqTopic := kmsg.NewCreateTopicsRequestTopic()
-	reqTopic.Topic = topic
-	reqTopic.NumPartitions = 1
-	reqTopic.ReplicationFactor = 1
-	req.Topics = append(req.Topics, reqTopic)
+	creq, dreq := testTopics(topics...)
 
-	resp, err := req.RequestWith(context.Background(), adm)
+	resp, err := creq.RequestWith(context.Background(), adm)
 	if err == nil {
 		err = kerr.ErrorForCode(resp.Topics[0].ErrorCode)
 	}
@@ -52,16 +67,7 @@ func setupTopic(addr string) func() {
 	}
 
 	return func() {
-		req := kmsg.NewPtrDeleteTopicsRequest()
-		req.TopicNames = []string{topic}
-		reqTopic := kmsg.NewDeleteTopicsRequestTopic()
-		reqTopic.Topic = kmsg.StringPtr(topic)
-		req.Topics = append(req.Topics, reqTopic)
-
-		resp, err := req.RequestWith(context.Background(), adm)
-		if err == nil {
-			err = kerr.ErrorForCode(resp.Topics[0].ErrorCode)
-		}
+		_, err := dreq.RequestWith(context.Background(), adm)
 		if err != nil {
 			panic(err)
 		}
