@@ -13,7 +13,7 @@ import (
 
 // Config is a configuration object used to create new instances of *kgo.Client.
 type Config struct {
-	Id                     string                                                  `json:"id" yaml:"id"` // client ID
+	ID                     string                                                  `json:"id" yaml:"id"` // client ID
 	DialFn                 func(context.Context, string, string) (net.Conn, error) `json:"-" yaml:"-"`
 	RequestTimeoutOverhead time.Duration                                           `json:"request_timeout_overhead" yaml:"request_timeout_overhead"`
 	ConnIdleTimeout        time.Duration                                           `json:"conn_idle_timeout" yaml:"conn_idle_timeout"`
@@ -110,8 +110,8 @@ type Config struct {
 }
 
 func fromConfig(conf Config) (opts []kgo.Opt) {
-	if conf.Id != "" {
-		opts = append(opts, kgo.ClientID(conf.Id))
+	if conf.ID != "" {
+		opts = append(opts, kgo.ClientID(conf.ID))
 	}
 	if conf.DialFn != nil {
 		opts = append(opts, kgo.Dialer(conf.DialFn))
