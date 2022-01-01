@@ -1,4 +1,4 @@
-package franz_go
+package otfranz
 
 import (
 	"github.com/go-kit/log"

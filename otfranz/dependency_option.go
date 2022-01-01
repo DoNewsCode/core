@@ -1,4 +1,4 @@
-package franz_go
+package otfranz
 
 // Interceptor is an interceptor that makes last minute change to a *Config
 // during kgo.Client's creation

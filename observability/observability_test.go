@@ -1,15 +1,15 @@
 package observability
 
 import (
-	"github.com/DoNewsCode/core/cronopts"
-	"github.com/DoNewsCode/core/otkafka/kafka-go"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/cronopts"
 	"github.com/DoNewsCode/core/otgorm"
+	"github.com/DoNewsCode/core/otkafka"
 	"github.com/DoNewsCode/core/otredis"
 	"github.com/go-kit/log"
 	"github.com/go-redis/redis/v8"
@@ -106,8 +106,8 @@ func TestProvideKafkaMetrics(t *testing.T) {
 	)
 	c.ProvideEssentials()
 	c.Provide(Providers())
-	c.Provide(kafka_go.Providers())
-	c.Invoke(func(w *kafka.Writer, ws *kafka_go.WriterStats) {
+	c.Provide(otkafka.Providers())
+	c.Invoke(func(w *kafka.Writer, ws *otkafka.WriterStats) {
 		stats := w.Stats()
 		withValues := []string{"writer", "default", "topic", stats.Topic}
 
@@ -153,7 +153,7 @@ func TestProvideKafkaMetrics(t *testing.T) {
 		ws.Async.With(withValues...).Set(async)
 	})
 
-	c.Invoke(func(r *kafka.Reader, rs *kafka_go.ReaderStats) {
+	c.Invoke(func(r *kafka.Reader, rs *otkafka.ReaderStats) {
 		stats := r.Stats()
 		withValues := []string{
 			"reader", "default",

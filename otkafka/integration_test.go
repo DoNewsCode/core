@@ -1,9 +1,8 @@
-package kafka_go
+package otkafka
 
 import (
 	"context"
 	"encoding/json"
-	"github.com/DoNewsCode/core/otkafka/kafka-go/mocks"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/otkafka/mocks"
 	"github.com/golang/mock/gomock"
 	knoaf_json "github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/file"
