@@ -134,7 +134,7 @@ type configOut struct {
 func provideConfig() configOut {
 	configs := []config.ExportedConfig{
 		{
-			Owner: "franz-kafka",
+			Owner: "otfranz",
 			Data: map[string]interface{}{
 				"kafka": map[string]interface{}{
 					"default": Config{

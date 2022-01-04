@@ -12,6 +12,7 @@ import (
 )
 
 // Config is a configuration object used to create new instances of *kgo.Client.
+// The detailed configuration check should be referred to kgo.cfg.validate method.
 type Config struct {
 	ID                     string                                                  `json:"id" yaml:"id"` // client ID
 	DialFn                 func(context.Context, string, string) (net.Conn, error) `json:"-" yaml:"-"`
