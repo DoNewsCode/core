@@ -28,7 +28,7 @@ func ExampleWithLevel() {
 	levelLogger := logging.WithLevel(logger)
 	levelLogger.Info("hello")
 	// Output:
-	// {"caller":"example_test.go:28","level":"info","msg":"hello"}
+	// {"caller":"example_test.go:29","level":"info","msg":"hello"}
 }
 
 func Example_sprintf() {
