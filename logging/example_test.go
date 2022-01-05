@@ -2,6 +2,7 @@ package logging_test
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DoNewsCode/core/ctxmeta"
 	"github.com/DoNewsCode/core/logging"
@@ -28,6 +29,22 @@ func ExampleWithLevel() {
 	levelLogger.Info("hello")
 	// Output:
 	// {"caller":"example_test.go:28","level":"info","msg":"hello"}
+}
+
+func Example_sprintf() {
+	logger := logging.NewLogger("json")
+	// Set log level to info
+	logger = level.NewFilter(logger, level.AllowInfo())
+	levelLogger := logging.WithLevel(logger)
+
+	// Let's try to log some debug messages. They are filtered by log level, so you should see no output.
+	// The cost of fmt.Sprintf is paid event if the log is filtered out. This sometimes can be a huge performance downside.
+	levelLogger.Debugw("record some data", "data", fmt.Sprintf("%+v", []int{1, 2, 3}))
+	// Or better, we can use logging.Sprintf to avoid the cost if the log is not actually written to the output.
+	levelLogger.Debugw("record some data", "data", logging.Sprintf("%+v", []int{1, 2, 3}))
+
+	// Output:
+	//
 }
 
 func ExampleWithContext() {
