@@ -19,7 +19,6 @@ package logging
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strings"
 
@@ -141,23 +140,19 @@ type levelLogger struct {
 }
 
 func (l levelLogger) Debugf(s string, i ...interface{}) {
-	s = fmt.Sprintf(s, i...)
-	_ = level.Debug(l).Log("msg", s)
+	_ = level.Debug(l).Log("msg", Sprintf(s, i...))
 }
 
 func (l levelLogger) Infof(s string, i ...interface{}) {
-	s = fmt.Sprintf(s, i...)
-	_ = level.Info(l).Log("msg", s)
+	_ = level.Info(l).Log("msg", Sprintf(s, i...))
 }
 
 func (l levelLogger) Warnf(s string, i ...interface{}) {
-	s = fmt.Sprintf(s, i...)
-	_ = level.Warn(l).Log("msg", s)
+	_ = level.Warn(l).Log("msg", Sprintf(s, i...))
 }
 
 func (l levelLogger) Errf(s string, i ...interface{}) {
-	s = fmt.Sprintf(s, i...)
-	_ = level.Error(l).Log("msg", s)
+	_ = level.Error(l).Log("msg", Sprintf(s, i...))
 }
 
 func (l levelLogger) Debugw(s string, fields ...interface{}) {
@@ -181,19 +176,19 @@ func (l levelLogger) Errw(s string, fields ...interface{}) {
 }
 
 func (l levelLogger) Debug(args ...interface{}) {
-	_ = level.Debug(l).Log("msg", fmt.Sprint(args...))
+	_ = level.Debug(l).Log("msg", Sprint(args...))
 }
 
 func (l levelLogger) Info(args ...interface{}) {
-	_ = level.Info(l).Log("msg", fmt.Sprint(args...))
+	_ = level.Info(l).Log("msg", Sprint(args...))
 }
 
 func (l levelLogger) Warn(args ...interface{}) {
-	_ = level.Warn(l).Log("msg", fmt.Sprint(args...))
+	_ = level.Warn(l).Log("msg", Sprint(args...))
 }
 
 func (l levelLogger) Err(args ...interface{}) {
-	_ = level.Error(l).Log("msg", fmt.Sprint(args...))
+	_ = level.Error(l).Log("msg", Sprint(args...))
 }
 
 // WithLevel decorates the logger and returns a contract.LevelLogger.

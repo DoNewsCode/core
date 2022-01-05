@@ -70,3 +70,35 @@ func TestSpanLogger(t *testing.T) {
 
 	assert.Equal(t, []interface{}{"foo", "bar", "baz", "qux"}, mock.received)
 }
+
+type mockValue struct{}
+
+func (m mockValue) String() string {
+	// potentially expensive, but the cost is avoided because we have set a higher log level.
+	panic("should not reach here")
+}
+
+func TestPerformanceOptimization(t *testing.T) {
+	var buf bytes.Buffer
+	for _, c := range []struct {
+		name   string
+		logger log.Logger
+	}{
+		{
+			"json",
+			log.NewJSONLogger(&buf),
+		},
+		{
+			"logfmt",
+			log.NewLogfmtLogger(&buf),
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			l := level.NewFilter(c.logger, LevelFilter("error"))
+			ll := WithLevel(l)
+			ll.Debug(mockValue{})
+			ll.Debugw("bar", "foo", mockValue{})
+			ll.Debugf("%s", mockValue{})
+		})
+	}
+}
