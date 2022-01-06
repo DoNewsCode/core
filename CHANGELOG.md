@@ -1,4 +1,16 @@
 
+<a name="v0.11.1"></a>
+## [v0.11.1](https://github.com/DoNewsCode/core/compare/v0.11.0...v0.11.1) (2022-01-05)
+
+### ⚡️ Performance
+
+* logger performance optimization ([#219](https://github.com/DoNewsCode/core/issues/219)) (@[谷溪](guxi99@gmail.com))
+
+### ✨ Features
+
+* add GetOrInjectBaggage ([#217](https://github.com/DoNewsCode/core/issues/217)) (@[Trock](35254251+GGXXLL@users.noreply.github.com))
+
+
 <a name="v0.11.0"></a>
 ## [v0.11.0](https://github.com/DoNewsCode/core/compare/v0.10.4...v0.11.0) (2021-12-27)
 
