@@ -1,9 +1,10 @@
 package otfranz
 
 import (
+	"testing"
+
 	"github.com/DoNewsCode/core/config"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_fromConfig(t *testing.T) {

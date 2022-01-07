@@ -114,10 +114,10 @@ func TestProduceAndConsume(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	record := &kgo.Record{Value: []byte("bar")}
-	cli.Produce(ctx, record, func(_ *kgo.Record, err error) {
+	cli.Produce(ctx, record, func(r *kgo.Record, err error) {
 		defer wg.Done()
 		if err != nil {
-			t.Fatalf("record had a produce error: %v\n", err)
+			t.Fatalf("produce error: %v\n", err)
 		}
 	})
 	wg.Wait()
@@ -135,7 +135,7 @@ func TestProduceAndConsume(t *testing.T) {
 	// We can iterate through a record iterator...
 	iter := fetches.RecordIter()
 	if iter.Done() {
-		t.Fatal("no message consumed")
+		t.Fatal("no message")
 	}
 	rec := iter.Next()
 	assert.Equal(t, record.Value, rec.Value)

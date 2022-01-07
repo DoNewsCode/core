@@ -15,8 +15,10 @@ import (
 /*
 Providers is a set of dependencies including Factory,Maker and exported configs.
 	Depends On:
-		contract.ConfigAccessor
+		opentracing.Tracer
+		contract.ConfigUnmarshaler
 		log.Logger
+		contract.Dispatcher
 	Provide:
 		Factory
 		Maker
