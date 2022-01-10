@@ -18,6 +18,8 @@ func Test_fromConfig(t *testing.T) {
 		},
 	}}
 
+	// There are many options that can not be decoded.
+	// This test is necessary to prevent missing tags of "-".
 	err := kf.Unmarshal("kafka.default", &conf)
 	if err != nil {
 		t.Fatal(err)

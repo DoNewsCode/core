@@ -101,12 +101,18 @@ func provideFactory(p factoryIn, interceptor Interceptor) (Factory, func()) {
 			err  error
 			conf Config
 		)
+
 		err = p.Conf.Unmarshal(fmt.Sprintf("kafka.%s", name), &conf)
 		if err != nil {
 			return di.Pair{}, fmt.Errorf("kafka configuration %s not valid: %w", name, err)
 		}
 		if p.Logger != nil {
-			conf.Logger = &KafkaLogAdapter{Logging: level.Debug(p.Logger)}
+			var logLevel string
+			err = p.Conf.Unmarshal("log.level", &logLevel)
+			if err != nil {
+				logLevel = "debug"
+			}
+			conf.Logger = FranzLogAdapter(logLevel, p.Logger)
 		}
 
 		interceptor(name, &conf)
