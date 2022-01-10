@@ -51,7 +51,7 @@ require (
 )
 
 require (
-	github.com/twmb/franz-go v1.2.7-0.20211221031712-1ac15de786fa
+	github.com/twmb/franz-go v1.3.1
 	github.com/twmb/franz-go/pkg/kmsg v0.0.0-20211127185622-3b34db0c6d1e
 )
 
