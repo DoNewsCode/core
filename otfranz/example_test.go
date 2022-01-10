@@ -26,9 +26,9 @@ func Example() {
 		"kafka": map[string]interface{}{
 			"default": otfranz.Config{
 				SeedBrokers:            brokers,
-				DefaultProduceTopic:    "example",
+				DefaultProduceTopic:    "franz-example",
 				AllowAutoTopicCreation: true,
-				Topics:                 []string{"example"},
+				Topics:                 []string{"franz-example"},
 				Group:                  "franz-test",
 			},
 		},
