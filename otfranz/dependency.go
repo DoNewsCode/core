@@ -146,11 +146,14 @@ func provideConfig() configOut {
 			Data: map[string]interface{}{
 				"kafka": map[string]interface{}{
 					"default": Config{
-						SeedBrokers: []string{"127.0.0.1:9092"},
+						SeedBrokers:         []string{"127.0.0.1:9092"},
+						DefaultProduceTopic: "example",
+						Topics:              []string{"example"},
+						Group:               "example",
 					},
 				},
 			},
-			Comment: "",
+			Comment: "The configuration of kafka with franz-go",
 		},
 	}
 	return configOut{Config: configs}

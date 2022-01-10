@@ -270,7 +270,7 @@ func provideConfig() configOut {
 					Interval: config.Duration{Duration: 15 * time.Second},
 				},
 			},
-			Comment: "",
+			Comment: "The configuration of kafka with kafka-go",
 		},
 	}
 	return configOut{Config: configs}
