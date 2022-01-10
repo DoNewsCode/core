@@ -25,11 +25,10 @@ func Example() {
 		},
 		"kafka": map[string]interface{}{
 			"default": otfranz.Config{
-				SeedBrokers:            brokers,
-				DefaultProduceTopic:    "franz-example",
-				AllowAutoTopicCreation: true,
-				Topics:                 []string{"franz-example"},
-				Group:                  "franz-test",
+				SeedBrokers:         brokers,
+				DefaultProduceTopic: "franz-example",
+				Topics:              []string{"franz-example"},
+				Group:               "franz-test",
 			},
 		},
 	}

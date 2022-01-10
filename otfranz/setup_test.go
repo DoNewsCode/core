@@ -45,7 +45,7 @@ func testTopics(topics ...string) (*kmsg.CreateTopicsRequest, *kmsg.DeleteTopics
 }
 
 func setupTopic(addr string) func() {
-	topics := []string{"franz-test", "franz-tracing", "franz-foo", "franz-bar"}
+	topics := []string{"franz-test", "franz-tracing", "franz-example", "franz-foo", "franz-bar"}
 
 	adm, err := kgo.NewClient(kgo.SeedBrokers(strings.Split(addr, ",")...))
 	if err != nil {
