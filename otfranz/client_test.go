@@ -15,7 +15,7 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-func TestClient_ProduceWithTracer(t *testing.T) {
+func TestClient_ProduceWithTracing(t *testing.T) {
 	if os.Getenv("KAFKA_ADDR") == "" {
 		t.Skip("set KAFKA_ADDR to run TestProvideFactory")
 		return
@@ -41,13 +41,18 @@ func TestClient_ProduceWithTracer(t *testing.T) {
 
 	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "test")
 	record := &kgo.Record{Value: []byte("bar")}
-	clientWithTrace.ProduceWithTracer(ctx, record, func(r *kgo.Record, err error) {
+	clientWithTrace.ProduceWithTracing(ctx, record, func(r *kgo.Record, err error) {
 		if err != nil {
 			t.Fatalf("produce error: %v\n", err)
 		}
 	})
 	time.Sleep(time.Second)
-	assert.Len(t, tracer.FinishedSpans(), 1)
+
+	if err := clientWithTrace.ProduceSyncWithTracing(ctx, record).FirstErr(); err != nil {
+		t.Fatalf("produce sync error: %v\n", err)
+	}
+
+	assert.Len(t, tracer.FinishedSpans(), 2)
 	span.Finish()
 
 }

@@ -18,16 +18,13 @@ func NewClient(client *kgo.Client, tracer opentracing.Tracer) *Client {
 	return &Client{Client: client, tracer: tracer}
 }
 
-// ProduceWithTracer wrap Produce method with tracing.
-func (c *Client) ProduceWithTracer(ctx context.Context, r *kgo.Record, promise func(*kgo.Record, error)) {
+// ProduceWithTracing wrap Produce method with tracing.
+func (c *Client) ProduceWithTracing(ctx context.Context, r *kgo.Record, promise func(*kgo.Record, error)) {
 	if c.tracer == nil {
 		c.Produce(ctx, r, promise)
 		return
 	}
-	if opentracing.SpanFromContext(ctx) == nil {
-		c.Produce(ctx, r, promise)
-		return
-	}
+
 	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, c.tracer, "kafka producer")
 	defer span.Finish()
 
@@ -41,4 +38,18 @@ func (c *Client) ProduceWithTracer(ctx context.Context, r *kgo.Record, promise f
 			promise(record, err)
 		}
 	})
+}
+
+// ProduceSyncWithTracing wrap ProduceSync method with tracing.
+func (c *Client) ProduceSyncWithTracing(ctx context.Context, rs ...*kgo.Record) kgo.ProduceResults {
+	if c.tracer == nil {
+		return c.ProduceSync(ctx, rs...)
+	}
+
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, c.tracer, "kafka producer")
+	defer span.Finish()
+
+	ext.SpanKind.Set(span, ext.SpanKindProducerEnum)
+
+	return c.ProduceSync(ctx, rs...)
 }
