@@ -13,8 +13,6 @@ import (
 	"github.com/twmb/franz-go/pkg/kmsg"
 )
 
-const franzTestTopic = "franz-test"
-
 func TestMain(m *testing.M) {
 	var cleanup func()
 	if os.Getenv("KAFKA_ADDR") != "" {
@@ -47,7 +45,7 @@ func testTopics(topics ...string) (*kmsg.CreateTopicsRequest, *kmsg.DeleteTopics
 }
 
 func setupTopic(addr string) func() {
-	topics := []string{franzTestTopic, "franz-foo", "franz-bar"}
+	topics := []string{"franz-test", "franz-tracing", "franz-foo", "franz-bar"}
 
 	adm, err := kgo.NewClient(kgo.SeedBrokers(strings.Split(addr, ",")...))
 	if err != nil {

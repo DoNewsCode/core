@@ -30,11 +30,11 @@ func TestProvideFactory(t *testing.T) {
 		Conf: config.MapAdapter{"kafka": map[string]Config{
 			"default": {
 				SeedBrokers: addrs,
-				Topics:      []string{franzTestTopic},
+				Topics:      []string{"franz-test"},
 			},
 			"alternative": {
 				SeedBrokers: addrs,
-				Topics:      []string{franzTestTopic},
+				Topics:      []string{"franz-test"},
 			},
 		}},
 	}, func(name string, config *Config) {})
@@ -65,11 +65,11 @@ func TestProvideKafka(t *testing.T) {
 				Conf: config.MapAdapter{"kafka": map[string]Config{
 					"default": {
 						SeedBrokers: nil,
-						Topics:      []string{franzTestTopic},
+						Topics:      []string{"franz-test"},
 					},
 					"alternative": {
 						SeedBrokers: nil,
-						Topics:      []string{franzTestTopic},
+						Topics:      []string{"franz-test"},
 					},
 				}},
 				Dispatcher: dispatcher,
@@ -98,8 +98,8 @@ func TestProduceAndConsume(t *testing.T) {
 		Conf: config.MapAdapter{"kafka": map[string]Config{
 			"default": {
 				SeedBrokers:         addrs,
-				DefaultProduceTopic: franzTestTopic,
-				Topics:              []string{franzTestTopic},
+				DefaultProduceTopic: "franz-test",
+				Topics:              []string{"franz-test"},
 				Group:               "franz-test",
 			},
 		}},

@@ -26,7 +26,7 @@ func TestClient_ProduceWithTracing(t *testing.T) {
 		Conf: config.MapAdapter{"kafka": map[string]Config{
 			"default": {
 				SeedBrokers:         addrs,
-				DefaultProduceTopic: franzTestTopic,
+				DefaultProduceTopic: "franz-tracing",
 			},
 		}},
 	}, func(name string, config *Config) {})
