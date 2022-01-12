@@ -9,7 +9,7 @@ import (
 )
 
 // This example shows how to pass results to the next vertex or the dag caller.
-func ExampleDag_run() {
+func ExampleDAG_run() {
 	d := dag.New()
 	v1 := d.AddVertex(func(ctx context.Context) error {
 		ctxmeta.GetBaggage(ctx).Set("v1Result", "foo")

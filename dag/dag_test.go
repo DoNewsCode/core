@@ -21,7 +21,7 @@ func TestDag_AddVertex(t *testing.T) {
 	assert.Equal(t, dag.order(), 2)
 }
 
-func TestDag_AddEdge(t *testing.T) {
+func TestDag_addEdge(t *testing.T) {
 	t.Run("normal addEdge", func(t *testing.T) {
 		dag := New()
 		e1 := dag.AddVertex(func(ctx context.Context) error { return nil })
