@@ -15,7 +15,7 @@ import (
 
 func TestUniversal_error_propagation(t *testing.T) {
 	d := dag.New()
-	d.AddVertex(func(ctx context.Context) error { return errors.New("!") })
+	d.AddVertex(func(ctx context.Context) error { return errors.New("oops") })
 	j := NewFromDAG(
 		"should return error",
 		d,
