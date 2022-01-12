@@ -52,6 +52,11 @@ func (c *CronJobMetrics) Fail() {
 	c.cronJobFailCount.With("module", c.module, "job", c.job).Add(1)
 }
 
+// Observe records the duration of the job.
+func (c *CronJobMetrics) Observe(value float64) {
+	c.cronJobDurationSeconds.With("module", c.module, "job", c.job).Observe(value)
+}
+
 // Measure wraps the given job and records the duration and success.
 func (c *CronJobMetrics) Measure(job cron.Job) cron.Job {
 	return cron.FuncJob(func() {

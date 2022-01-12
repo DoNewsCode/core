@@ -71,6 +71,7 @@ func NewLogger(format string) (logger log.Logger) {
 		}
 		logger = term.NewLogger(os.Stdout, log.NewLogfmtLogger, colorFn)
 		logger = log.With(log.NewSyncLogger(logger), "ts", log.DefaultTimestampUTC)
+
 		return logger
 	}
 }
