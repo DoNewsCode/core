@@ -84,11 +84,6 @@ func (d *DAG) AddEdges(edges Edges) error {
 	return nil
 }
 
-func (d *DAG) addEdge(from, to VertexID) error {
-	d.vertexes[from].addChild(d.vertexes[to])
-	return nil
-}
-
 // Run runs the dag. Vertexes with no dependency will be scheduled concurrently
 // while the inked vertexes will be scheduled sequentially. The Scheduler
 // optimizes the execution path so that the overall dag execution time is
