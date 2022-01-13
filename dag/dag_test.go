@@ -47,6 +47,25 @@ func TestDag_addEdge(t *testing.T) {
 	})
 }
 
+func TestDag_addEdges(t *testing.T) {
+	t.Run("normal addEdges", func(t *testing.T) {
+		dag := New()
+		e1 := dag.AddVertex(func(ctx context.Context) error { return nil })
+		e2 := dag.AddVertex(func(ctx context.Context) error { return nil })
+		assert.NoError(t, dag.AddEdges(Edges{{e1, e2}}))
+	})
+
+	t.Run("circular deps", func(t *testing.T) {
+		dag := New()
+		e1 := dag.AddVertex(func(ctx context.Context) error { return nil })
+		e2 := dag.AddVertex(func(ctx context.Context) error { return nil })
+		e3 := dag.AddVertex(func(ctx context.Context) error { return nil })
+
+		dag.AddEdges(Edges{{e1, e2, e3}})
+		assert.Error(t, dag.AddEdge(e3, e1))
+	})
+}
+
 func TestDag_Run(t *testing.T) {
 	t.Parallel()
 	makeJob := func(expectedLevel int32, level *int32, executed *int32) func(ctx context.Context) error {

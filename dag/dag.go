@@ -60,6 +60,18 @@ func (d *DAG) AddEdge(from, to VertexID) error {
 	return nil
 }
 
+// AddEdges adds multiple edges in one batch. See AddEdge for more details.
+func (d *DAG) AddEdges(edges Edges) error {
+	for _, edge := range edges {
+		for i := 0; i < len(edge)-1; i++ {
+			if err := d.AddEdge(edge[i], edge[i+1]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // Run runs the dag. Vertexes with no dependency will be scheduled concurrently
 // while the inked vertexes will be scheduled sequentially. The Scheduler
 // optimizes the execution path so that the overall dag execution time is

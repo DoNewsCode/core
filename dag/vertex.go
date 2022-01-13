@@ -13,6 +13,9 @@ import (
 // VertexID is the identifier of Vertex in a directed acyclic graph.
 type VertexID int
 
+// Edges is a group of edges that are connected to a vertex.
+type Edges [][]VertexID
+
 type vertex struct {
 	id       int
 	name     string
