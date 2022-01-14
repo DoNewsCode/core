@@ -2,11 +2,13 @@ package srvgrpc
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 // MetricsModule exposes prometheus metrics. Here only provides a simple call,
@@ -30,9 +32,13 @@ func Metrics(metrics *RequestDurationSeconds) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		start := time.Now()
 		defer func() {
-			metrics.Route(info.FullMethod).Observe(time.Since(start).Seconds())
+			if s, ok := status.FromError(err); ok {
+				metrics = metrics.Status(int(s.Code()))
+			}
+			metrics.Route(info.FullMethod).Observe(time.Since(start))
 		}()
-		return handler(ctx, req)
+		resp, err = handler(ctx, req)
+		return resp, err
 	}
 }
 
@@ -48,6 +54,7 @@ type RequestDurationSeconds struct {
 	module  string
 	service string
 	route   string
+	status  int
 }
 
 // NewRequestDurationSeconds returns a new RequestDurationSeconds instance.
@@ -57,6 +64,7 @@ func NewRequestDurationSeconds(histogram metrics.Histogram) *RequestDurationSeco
 		module:    "unknown",
 		service:   "unknown",
 		route:     "unknown",
+		status:    0,
 	}
 }
 
@@ -77,6 +85,7 @@ func (r *RequestDurationSeconds) Service(service string) *RequestDurationSeconds
 		module:    r.module,
 		service:   service,
 		route:     r.route,
+		status:    r.status,
 	}
 }
 
@@ -87,10 +96,31 @@ func (r *RequestDurationSeconds) Route(route string) *RequestDurationSeconds {
 		module:    r.module,
 		service:   r.service,
 		route:     route,
+		status:    r.status,
+	}
+}
+
+// Status specifies the status label for RequestDurationSeconds.
+func (r *RequestDurationSeconds) Status(status int) *RequestDurationSeconds {
+	return &RequestDurationSeconds{
+		histogram: r.histogram,
+		module:    r.module,
+		service:   r.service,
+		route:     r.route,
+		status:    status,
 	}
 }
 
 // Observe records the time taken to process the request.
-func (r RequestDurationSeconds) Observe(seconds float64) {
-	r.histogram.With("module", r.module, "service", r.service, "route", r.route).Observe(seconds)
+func (r RequestDurationSeconds) Observe(duration time.Duration) {
+	r.histogram.With(
+		"module",
+		r.module,
+		"service",
+		r.service,
+		"route",
+		r.route,
+		"status",
+		strconv.Itoa(r.status),
+	).Observe(duration.Seconds())
 }
