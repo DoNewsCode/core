@@ -2,9 +2,20 @@ package stub
 
 import "github.com/go-kit/kit/metrics"
 
+type LabelValues []string
+
+func (l LabelValues) Label(name string) string {
+	for i := 0; i < len(l); i += 2 {
+		if l[i] == name {
+			return l[i+1]
+		}
+	}
+	return ""
+}
+
 // Histogram is a stub implementation of the go-kit metrics.Histogram interface.
 type Histogram struct {
-	LabelValues   []string
+	LabelValues   LabelValues
 	ObservedValue float64
 }
 

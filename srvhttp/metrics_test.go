@@ -1,11 +1,12 @@
 package srvhttp
 
 import (
-	"github.com/DoNewsCode/core/internal/stub"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/DoNewsCode/core/internal/stub"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -13,11 +14,11 @@ import (
 func TestRequestDurationSeconds(t *testing.T) {
 	histogram := &stub.Histogram{}
 	rds := NewRequestDurationSeconds(histogram)
-	rds = rds.Module("m").Service("s").Route("r")
-	rds.Observe(5)
+	rds = rds.Module("m").Service("s").Route("r").Status(8)
+	rds.Observe(5 * time.Second)
 
 	assert.Equal(t, 5.0, histogram.ObservedValue)
-	assert.ElementsMatch(t, []string{"module", "m", "service", "s", "route", "r"}, histogram.LabelValues)
+	assert.ElementsMatch(t, []string{"module", "m", "service", "s", "route", "r", "status", "8"}, histogram.LabelValues)
 
 	f := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		time.Sleep(time.Millisecond)
