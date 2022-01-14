@@ -22,6 +22,6 @@ func Example() {
 			Module("module").
 			Service("service").
 			Route("route").
-			Observe(time.Since(start).Seconds())
+			Observe(time.Since(start))
 	})
 }

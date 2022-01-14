@@ -27,7 +27,7 @@ func ProvideHTTPRequestDurationSeconds(in MetricsIn) *srvhttp.RequestDurationSec
 	http := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
 		Name: "http_request_duration_seconds",
 		Help: "Total time spent serving requests.",
-	}, []string{"module", "service", "route"})
+	}, []string{"module", "service", "route", "status"})
 
 	if in.Registerer == nil {
 		in.Registerer = stdprometheus.DefaultRegisterer
@@ -44,7 +44,7 @@ func ProvideGRPCRequestDurationSeconds(in MetricsIn) *srvgrpc.RequestDurationSec
 	grpc := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
 		Name: "grpc_request_duration_seconds",
 		Help: "Total time spent serving requests.",
-	}, []string{"module", "service", "route"})
+	}, []string{"module", "service", "route", "status"})
 
 	if in.Registerer == nil {
 		in.Registerer = stdprometheus.DefaultRegisterer

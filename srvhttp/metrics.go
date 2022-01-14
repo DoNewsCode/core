@@ -2,8 +2,10 @@ package srvhttp
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/felixge/httpsnoop"
 	"github.com/go-kit/kit/metrics"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -22,21 +24,19 @@ func (m MetricsModule) ProvideHTTP(router *mux.Router) {
 func Metrics(metrics *RequestDurationSeconds) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			start := time.Now()
-			defer func() {
-				route := mux.CurrentRoute(request)
-				if route == nil {
-					metrics.Route("").Observe(time.Since(start).Seconds())
-					return
-				}
-				path, err := route.GetPathTemplate()
-				if err != nil {
-					metrics.Route("").Observe(time.Since(start).Seconds())
-					return
-				}
-				metrics.Route(path).Observe(time.Since(start).Seconds())
-			}()
-			handler.ServeHTTP(writer, request)
+			collection := httpsnoop.CaptureMetrics(handler, writer, request)
+			metrics = metrics.Status(collection.Code)
+			route := mux.CurrentRoute(request)
+			if route == nil {
+				metrics.Route("").Observe(collection.Duration)
+				return
+			}
+			path, err := route.GetPathTemplate()
+			if err != nil {
+				metrics.Route("").Observe(collection.Duration)
+				return
+			}
+			metrics.Route(path).Observe(collection.Duration)
 		})
 	}
 }
@@ -53,6 +53,7 @@ type RequestDurationSeconds struct {
 	module  string
 	service string
 	route   string
+	status  int
 }
 
 // NewRequestDurationSeconds returns a new RequestDurationSeconds. The default
@@ -63,6 +64,7 @@ func NewRequestDurationSeconds(histogram metrics.Histogram) *RequestDurationSeco
 		module:    "unknown",
 		service:   "unknown",
 		route:     "unknown",
+		status:    0,
 	}
 }
 
@@ -73,6 +75,7 @@ func (r *RequestDurationSeconds) Module(module string) *RequestDurationSeconds {
 		module:    module,
 		service:   r.service,
 		route:     r.route,
+		status:    r.status,
 	}
 }
 
@@ -83,6 +86,7 @@ func (r *RequestDurationSeconds) Service(service string) *RequestDurationSeconds
 		module:    r.module,
 		service:   service,
 		route:     r.route,
+		status:    r.status,
 	}
 }
 
@@ -93,10 +97,31 @@ func (r *RequestDurationSeconds) Route(route string) *RequestDurationSeconds {
 		module:    r.module,
 		service:   r.service,
 		route:     route,
+		status:    r.status,
+	}
+}
+
+// Status specifies the status label for RequestDurationSeconds.
+func (r *RequestDurationSeconds) Status(status int) *RequestDurationSeconds {
+	return &RequestDurationSeconds{
+		histogram: r.histogram,
+		module:    r.module,
+		service:   r.service,
+		route:     r.route,
+		status:    status,
 	}
 }
 
 // Observe records the time taken to process the request.
-func (r *RequestDurationSeconds) Observe(seconds float64) {
-	r.histogram.With("module", r.module, "service", r.service, "route", r.route).Observe(seconds)
+func (r *RequestDurationSeconds) Observe(duration time.Duration) {
+	r.histogram.With(
+		"module",
+		r.module,
+		"service",
+		r.service,
+		"route",
+		r.route,
+		"status",
+		strconv.Itoa(r.status),
+	).Observe(duration.Seconds())
 }

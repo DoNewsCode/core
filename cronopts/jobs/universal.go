@@ -57,7 +57,7 @@ func WithMetrics(metrics *cronopts.CronJobMetrics) func(universal Universal) Uni
 			Do: func(ctx context.Context) error {
 				start := time.Now()
 				metrics = metrics.Job(universal.Name)
-				defer metrics.Observe(time.Since(start).Seconds())
+				defer metrics.Observe(time.Since(start))
 				err := universal.Do(ctx)
 				if err != nil {
 					metrics.Fail()
