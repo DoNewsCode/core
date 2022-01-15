@@ -37,11 +37,11 @@ func WithMetrics(metrics *CronJobMetrics) JobOptions {
 		innerRun := descriptor.Run
 		descriptor.Run = func(ctx context.Context) error {
 			start := time.Now()
-			metrics = metrics.Job(descriptor.Name).Schedule(descriptor.RawSpec)
-			defer metrics.Observe(time.Since(start))
+			m := metrics.Job(descriptor.Name).Schedule(descriptor.RawSpec)
+			defer m.Observe(time.Since(start))
 			err := innerRun(ctx)
 			if err != nil {
-				metrics.Fail()
+				m.Fail()
 				return err
 			}
 			return nil
