@@ -56,18 +56,18 @@ func WithLogging(logger log.Logger) JobOptions {
 		descriptor.Run = func(ctx context.Context) error {
 			due := GetCurrentSchedule(ctx)
 			delayed := time.Since(due)
-			logger = logging.WithContext(logger, ctx)
+			l := logging.WithContext(logger, ctx)
 			if delayed > time.Second {
-				log.With(logger, "delayed", delayed)
+				l = log.With(l, "delayed", delayed)
 			}
-			logger = log.With(logger, "job", descriptor.Name, "schedule", descriptor.RawSpec)
-			logger.Log("msg", logging.Sprintf("job %s started", descriptor.Name))
+			l = log.With(l, "job", descriptor.Name, "schedule", descriptor.RawSpec)
+			l.Log("msg", logging.Sprintf("job %s started", descriptor.Name))
 			err := innerRun(ctx)
 			if err != nil {
-				logger.Log("msg", logging.Sprintf("job %s finished with error: %s", descriptor.Name, err))
+				l.Log("msg", logging.Sprintf("job %s finished with error: %s", descriptor.Name, err))
 				return err
 			}
-			logger.Log("msg", logging.Sprintf("job %s completed", descriptor.Name))
+			l.Log("msg", logging.Sprintf("job %s completed", descriptor.Name))
 			return nil
 		}
 	}
