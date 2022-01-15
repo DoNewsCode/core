@@ -10,6 +10,7 @@ import (
 	deprecatedcron "github.com/robfig/cron/v3"
 	"os"
 	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -62,22 +63,22 @@ func TestServeIn_signalWatch(t *testing.T) {
 }
 
 type OldCronModule struct {
-	CanRun bool
+	CanRun uint32
 }
 
 func (module *OldCronModule) ProvideCron(crontab *deprecatedcron.Cron) {
 	crontab.AddFunc("* * * * * *", func() {
-		module.CanRun = true
+		atomic.StoreUint32(&module.CanRun, 1)
 	})
 }
 
 type NewCronModule struct {
-	CanRun bool
+	CanRun uint32
 }
 
 func (module *NewCronModule) ProvideCron(crontab *cron.Cron) {
 	crontab.Add("* * * * * *", func(ctx context.Context) error {
-		module.CanRun = true
+		atomic.StoreUint32(&module.CanRun, 1)
 		return nil
 	})
 }
@@ -101,6 +102,6 @@ func TestServeIn_cron_deprecation(t *testing.T) {
 	defer cancel()
 
 	c.Serve(ctx)
-	assert.True(t, mOld.CanRun)
-	assert.True(t, mNew.CanRun)
+	assert.True(t, mOld.CanRun == 1)
+	assert.True(t, mNew.CanRun == 1)
 }

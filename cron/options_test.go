@@ -30,7 +30,7 @@ func (m mockParser) Parse(spec string) (cron.Schedule, error) {
 func TestJobOption(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
-	logger := log.NewLogfmtLogger(&buf)
+	logger := log.NewSyncLogger(log.NewLogfmtLogger(&buf))
 	hist := stub.Histogram{}
 	count := stub.Counter{}
 	metric := NewCronJobMetrics(&hist, &count)
