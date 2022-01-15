@@ -31,7 +31,7 @@ type serveIn struct {
 	Dispatcher     contract.Dispatcher
 	Config         contract.ConfigAccessor
 	Logger         log.Logger
-	Container      contract.Container
+	Container      *container.Container
 	HTTPServer     *http.Server         `optional:"true"`
 	GRPCServer     *grpc.Server         `optional:"true"`
 	DeprecatedCron *deprecatedcron.Cron `optional:"true"`
@@ -142,21 +142,20 @@ func (s serveIn) cronServe(ctx context.Context, logger logging.LevelLogger) (fun
 	if s.Config.Bool("cron.disable") {
 		return nil, nil, nil
 	}
-	if mContainer, ok := s.Container.(interface{ ApplyCron(*cron.Cron) }); ok {
-		if s.Cron == nil {
-			s.Cron = cron.New(cron.Config{GlobalOptions: []cron.JobOption{cron.WithLogging(log.With(s.Logger, "tag", "cron"))}})
-		}
-		mContainer.ApplyCron(s.Cron)
-		if len(s.Cron.Descriptors()) > 0 {
-			ctx, cancel := context.WithCancel(ctx)
-			return func() error {
-					logger.Infof("cron runner started")
-					return s.Cron.Run(ctx)
-				}, func(err error) {
-					cancel()
-				}, nil
-		}
+	if s.Cron == nil {
+		s.Cron = cron.New(cron.Config{GlobalOptions: []cron.JobOption{cron.WithLogging(log.With(s.Logger, "tag", "cron"))}})
 	}
+	s.Container.ApplyCron(s.Cron)
+	if len(s.Cron.Descriptors()) > 0 {
+		ctx, cancel := context.WithCancel(ctx)
+		return func() error {
+				logger.Infof("cron runner started")
+				return s.Cron.Run(ctx)
+			}, func(err error) {
+				cancel()
+			}, nil
+	}
+
 	return nil, nil, nil
 }
 
@@ -164,23 +163,22 @@ func (s serveIn) cronServeDeprecated(ctx context.Context, logger logging.LevelLo
 	if s.Config.Bool("cron.disable") {
 		return nil, nil, nil
 	}
-	if mContainer, ok := s.Container.(interface{ ApplyDeprecatedCron(*deprecatedcron.Cron) }); ok {
-		if s.DeprecatedCron == nil {
-			logger := log.With(s.Logger, "tag", "cron")
-			s.DeprecatedCron = deprecatedcron.New(deprecatedcron.WithLogger(cronopts.CronLogAdapter{Logging: logger}))
-		}
-		mContainer.ApplyDeprecatedCron(s.DeprecatedCron)
-		if len(s.DeprecatedCron.Entries()) > 0 {
-			return func() error {
-					logger.Infof("cron runner started")
-					logger.Warn("Directly using github.com/robfig/cron/v3 is deprecated. Please migrate to github.com/DoNewsCode/core/cron")
-					s.DeprecatedCron.Run()
-					return nil
-				}, func(err error) {
-					<-s.DeprecatedCron.Stop().Done()
-				}, nil
-		}
+	if s.DeprecatedCron == nil {
+		logger := log.With(s.Logger, "tag", "cron")
+		s.DeprecatedCron = deprecatedcron.New(deprecatedcron.WithLogger(cronopts.CronLogAdapter{Logging: logger}))
 	}
+	s.Container.ApplyDeprecatedCron(s.DeprecatedCron)
+	if len(s.DeprecatedCron.Entries()) > 0 {
+		return func() error {
+				logger.Infof("cron runner started")
+				logger.Warn("Directly using github.com/robfig/cron/v3 is deprecated. Please migrate to github.com/DoNewsCode/core/cron")
+				s.DeprecatedCron.Run()
+				return nil
+			}, func(err error) {
+				<-s.DeprecatedCron.Stop().Done()
+			}, nil
+	}
+
 	return nil, nil, nil
 }
 

@@ -32,7 +32,7 @@ type C struct {
 	Env     contract.Env
 	contract.ConfigAccessor
 	logging.LevelLogger
-	contract.Container
+	*container.Container
 	contract.Dispatcher
 	di *dig.Container
 }
@@ -330,6 +330,7 @@ func (c *C) ProvideEssentials() {
 		Env               contract.Env
 		AppName           contract.AppName
 		Container         contract.Container
+		ConcreteContainer *container.Container
 		ConfigUnmarshaler contract.ConfigUnmarshaler
 		ConfigAccessor    contract.ConfigAccessor
 		ConfigRouter      contract.ConfigRouter
@@ -346,6 +347,7 @@ func (c *C) ProvideEssentials() {
 			Env:               c.Env,
 			AppName:           c.AppName,
 			Container:         c.Container,
+			ConcreteContainer: c.Container,
 			ConfigUnmarshaler: c.ConfigAccessor,
 			ConfigAccessor:    c.ConfigAccessor,
 			Logger:            c.LevelLogger,
