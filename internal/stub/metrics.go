@@ -2,8 +2,10 @@ package stub
 
 import "github.com/go-kit/kit/metrics"
 
+// LabelValues contains the set of labels and their corresponding values.
 type LabelValues []string
 
+// Label returns the label of given name.
 func (l LabelValues) Label(name string) string {
 	for i := 0; i < len(l); i += 2 {
 		if l[i] == name {
