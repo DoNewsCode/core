@@ -27,7 +27,7 @@ func (m mockParser) Parse(spec string) (cron.Schedule, error) {
 	}), nil
 }
 
-func TestMiddleware_generic(t *testing.T) {
+func TestJobOption(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
 	logger := log.NewLogfmtLogger(&buf)
