@@ -32,5 +32,5 @@ func TestRequestDurationSeconds_noPanicWhenMissingLabels(t *testing.T) {
 	histogram := &stub.Histogram{}
 	rds := NewRequestDurationSeconds(histogram)
 	rds.Observe(50)
-	assert.ElementsMatch(t, []string{"module", "unknown", "service", "unknown", "route", "unknown"}, histogram.LabelValues)
+	assert.ElementsMatch(t, []string{"module", "unknown", "service", "unknown", "route", "unknown", "status", "0"}, histogram.LabelValues)
 }
