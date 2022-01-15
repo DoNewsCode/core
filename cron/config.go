@@ -13,7 +13,7 @@ type Config struct {
 	// Location is the timezone to use in parsing cron expressions.
 	Location *time.Location
 	// GlobalOptions are the job options that are applied to all jobs.
-	GlobalOptions []JobOptions
+	GlobalOptions []JobOption
 	// EnableSeconds is whether to enable seconds in the cron expression.
 	EnableSeconds bool
 }

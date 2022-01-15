@@ -144,7 +144,7 @@ func (s serveIn) cronServe(ctx context.Context, logger logging.LevelLogger) (fun
 	}
 	if mContainer, ok := s.Container.(interface{ ApplyCron(*cron.Cron) }); ok {
 		if s.Cron == nil {
-			s.Cron = cron.New(cron.Config{GlobalOptions: []cron.JobOptions{cron.WithLogging(log.With(s.Logger, "tag", "cron"))}})
+			s.Cron = cron.New(cron.Config{GlobalOptions: []cron.JobOption{cron.WithLogging(log.With(s.Logger, "tag", "cron"))}})
 		}
 		mContainer.ApplyCron(s.Cron)
 		if len(s.Cron.Descriptors()) > 0 {

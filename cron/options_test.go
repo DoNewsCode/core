@@ -41,13 +41,13 @@ func TestJobOption(t *testing.T) {
 
 	for _, ca := range []struct {
 		name    string
-		stacks  []JobOptions
+		stacks  []JobOption
 		job     func(context.Context) error
 		asserts func(t *testing.T)
 	}{
 		{
 			"name and logging",
-			[]JobOptions{
+			[]JobOption{
 				WithName("test"),
 				WithLogging(logger),
 			},
@@ -67,7 +67,7 @@ func TestJobOption(t *testing.T) {
 		},
 		{
 			"error and logging",
-			[]JobOptions{
+			[]JobOption{
 				WithLogging(logger),
 			},
 			func(ctx context.Context) error {
@@ -86,7 +86,7 @@ func TestJobOption(t *testing.T) {
 		},
 		{
 			"metrics",
-			[]JobOptions{
+			[]JobOption{
 				WithMetrics(metric),
 			},
 			func(ctx context.Context) error {
@@ -105,7 +105,7 @@ func TestJobOption(t *testing.T) {
 		},
 		{
 			"error and metrics",
-			[]JobOptions{
+			[]JobOption{
 				WithMetrics(metric),
 			},
 			func(ctx context.Context) error {
@@ -124,7 +124,7 @@ func TestJobOption(t *testing.T) {
 		},
 		{
 			"tracing",
-			[]JobOptions{
+			[]JobOption{
 				WithTracing(&tracer),
 			},
 			func(ctx context.Context) error {
@@ -139,7 +139,7 @@ func TestJobOption(t *testing.T) {
 		},
 		{
 			"error tracing",
-			[]JobOptions{
+			[]JobOption{
 				WithTracing(&tracer),
 			},
 			func(ctx context.Context) error {
@@ -158,7 +158,7 @@ func TestJobOption(t *testing.T) {
 		},
 		{
 			"panic",
-			[]JobOptions{
+			[]JobOption{
 				Recover(logger),
 			},
 			func(ctx context.Context) error {
@@ -173,7 +173,7 @@ func TestJobOption(t *testing.T) {
 		},
 		{
 			"skip if overlap",
-			[]JobOptions{
+			[]JobOption{
 				SkipIfOverlap(),
 			},
 			func(ctx context.Context) error {
@@ -190,7 +190,7 @@ func TestJobOption(t *testing.T) {
 		},
 		{
 			"delay if overlap",
-			[]JobOptions{
+			[]JobOption{
 				DelayIfOverlap(),
 			},
 			func(ctx context.Context) error {
@@ -216,7 +216,7 @@ func TestJobOption(t *testing.T) {
 		},
 		{
 			"timeout if overlap",
-			[]JobOptions{
+			[]JobOption{
 				TimeoutIfOverlap(),
 			},
 			func(ctx context.Context) error {

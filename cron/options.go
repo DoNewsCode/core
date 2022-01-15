@@ -14,25 +14,25 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// JobOptions is a middleware for cron jobs.
-type JobOptions func(descriptors *JobDescriptor)
+// JobOption is a middleware for cron jobs.
+type JobOption func(descriptors *JobDescriptor)
 
 // WithName sets the name of the job.
-func WithName(name string) JobOptions {
+func WithName(name string) JobOption {
 	return func(descriptor *JobDescriptor) {
 		descriptor.Name = name
 	}
 }
 
 // WithSchedule sets the cron schedule of the job.
-func WithSchedule(schedule cron.Schedule) JobOptions {
+func WithSchedule(schedule cron.Schedule) JobOption {
 	return func(descriptor *JobDescriptor) {
 		descriptor.Schedule = schedule
 	}
 }
 
 // WithMetrics returns a new JobDescriptor that will report metrics.
-func WithMetrics(metrics *CronJobMetrics) JobOptions {
+func WithMetrics(metrics *CronJobMetrics) JobOption {
 	return func(descriptor *JobDescriptor) {
 		innerRun := descriptor.Run
 		descriptor.Run = func(ctx context.Context) error {
@@ -50,7 +50,7 @@ func WithMetrics(metrics *CronJobMetrics) JobOptions {
 }
 
 // WithLogging returns a new Universal job that will log.
-func WithLogging(logger log.Logger) JobOptions {
+func WithLogging(logger log.Logger) JobOption {
 	return func(descriptor *JobDescriptor) {
 		innerRun := descriptor.Run
 		descriptor.Run = func(ctx context.Context) error {
@@ -74,7 +74,7 @@ func WithLogging(logger log.Logger) JobOptions {
 }
 
 // WithTracing returns a new Universal job that will trace.
-func WithTracing(tracer opentracing.Tracer) JobOptions {
+func WithTracing(tracer opentracing.Tracer) JobOption {
 	return func(descriptor *JobDescriptor) {
 		innerRun := descriptor.Run
 		descriptor.Run = func(ctx context.Context) error {
@@ -92,7 +92,7 @@ func WithTracing(tracer opentracing.Tracer) JobOptions {
 }
 
 // SkipIfOverlap returns a new JobDescriptor that will skip the job if it overlaps with another job.
-func SkipIfOverlap() JobOptions {
+func SkipIfOverlap() JobOption {
 	ch := make(chan struct{}, 1)
 	return func(descriptor *JobDescriptor) {
 		innerRun := descriptor.Run
@@ -111,7 +111,7 @@ func SkipIfOverlap() JobOptions {
 }
 
 // DelayIfOverlap returns a new JobDescriptor that will delay the job if it overlaps with another job.
-func DelayIfOverlap() JobOptions {
+func DelayIfOverlap() JobOption {
 	ch := make(chan struct{}, 1)
 	return func(descriptor *JobDescriptor) {
 		innerRun := descriptor.Run
@@ -126,7 +126,7 @@ func DelayIfOverlap() JobOptions {
 }
 
 // TimeoutIfOverlap returns a new JobDescriptor that will cancel the job's context if the next schedule is due.
-func TimeoutIfOverlap() JobOptions {
+func TimeoutIfOverlap() JobOption {
 	return func(descriptor *JobDescriptor) {
 		innerRun := descriptor.Run
 		descriptor.Run = func(ctx context.Context) error {
@@ -141,7 +141,7 @@ func TimeoutIfOverlap() JobOptions {
 }
 
 // Recover returns a new JobDescriptor that will recover from panics.
-func Recover(logger log.Logger) JobOptions {
+func Recover(logger log.Logger) JobOption {
 	return func(descriptor *JobDescriptor) {
 		innerRun := descriptor.Run
 		descriptor.Run = func(ctx context.Context) error {

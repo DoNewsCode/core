@@ -19,7 +19,7 @@ type Cron struct {
 	parser           cron.ScheduleParser
 	lock             *sync.Cond
 	jobDescriptors   jobDescriptors
-	globalMiddleware []JobOptions
+	globalMiddleware []JobOption
 	location         *time.Location
 	nextID           int
 	quitWaiter       sync.WaitGroup
@@ -51,7 +51,7 @@ func New(config Config) *Cron {
 // Add adds a new job to the cron scheduler.A list of middleware can be supplied.
 // Note the error returned by the runner will be discarded. It is the user's
 // responsibility to handle the error via middleware.
-func (c *Cron) Add(spec string, runner func(ctx context.Context) error, middleware ...JobOptions) (JobID, error) {
+func (c *Cron) Add(spec string, runner func(ctx context.Context) error, middleware ...JobOption) (JobID, error) {
 	schedule, err := c.parser.Parse(spec)
 	if err != nil {
 		return 0, err
