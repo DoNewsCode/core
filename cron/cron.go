@@ -85,6 +85,7 @@ func (c *Cron) Add(spec string, runner func(ctx context.Context) error, middlewa
 	return jobDescriptor.ID, nil
 }
 
+// Remove removes a job from the cron scheduler.
 func (c *Cron) Remove(id JobID) {
 	c.lock.L.Lock()
 	defer c.lock.L.Unlock()
