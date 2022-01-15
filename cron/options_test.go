@@ -204,8 +204,8 @@ func TestJobOption(t *testing.T) {
 				return nil
 			},
 			func(t *testing.T) {
-				if entryCount < 4 {
-					t.Errorf("expect entry at least 4 times, got %d", entryCount)
+				if entryCount < 3 {
+					t.Errorf("expect entry at least 3 times, got %d", entryCount)
 				}
 				if concurrentAccess {
 					t.Errorf("conncurrent access not allowed")
@@ -220,14 +220,10 @@ func TestJobOption(t *testing.T) {
 				TimeoutIfOverlap(),
 			},
 			func(ctx context.Context) error {
-				entryCount++
 				<-ctx.Done()
 				return nil
 			},
 			func(t *testing.T) {
-				if entryCount < 3 {
-					t.Errorf("expect entry at least 4 times, got %d", entryCount)
-				}
 			},
 		},
 	} {
