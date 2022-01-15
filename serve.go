@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/DoNewsCode/core/container"
 	"github.com/DoNewsCode/core/contract"
 	cron "github.com/DoNewsCode/core/cron"
 	"github.com/DoNewsCode/core/deprecated_cronopts"
@@ -31,7 +30,7 @@ type serveIn struct {
 	Dispatcher     contract.Dispatcher
 	Config         contract.ConfigAccessor
 	Logger         log.Logger
-	Container      *container.Container
+	Container      contract.Container
 	HTTPServer     *http.Server         `optional:"true"`
 	GRPCServer     *grpc.Server         `optional:"true"`
 	DeprecatedCron *deprecatedcron.Cron `optional:"true"`
@@ -44,7 +43,7 @@ func NewServeModule(in serveIn) serveModule {
 	}
 }
 
-var _ container.CommandProvider = (*serveModule)(nil)
+var _ CommandProvider = (*serveModule)(nil)
 
 type serveModule struct {
 	in serveIn
@@ -65,7 +64,7 @@ func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (fun
 		s.HTTPServer = &http.Server{}
 	}
 	router := mux.NewRouter()
-	s.Container.ApplyRouter(router)
+	applyRouter(s.Container, router)
 
 	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		tpl, _ := route.GetPathTemplate()
@@ -106,7 +105,7 @@ func (s serveIn) grpcServe(ctx context.Context, logger logging.LevelLogger) (fun
 	if s.GRPCServer == nil {
 		s.GRPCServer = grpc.NewServer()
 	}
-	s.Container.ApplyGRPCServer(s.GRPCServer)
+	applyGRPCServer(s.Container, s.GRPCServer)
 
 	for module, info := range s.GRPCServer.GetServiceInfo() {
 		for _, method := range info.Methods {
@@ -145,7 +144,7 @@ func (s serveIn) cronServe(ctx context.Context, logger logging.LevelLogger) (fun
 	if s.Cron == nil {
 		s.Cron = cron.New(cron.Config{GlobalOptions: []cron.JobOption{cron.WithLogging(log.With(s.Logger, "tag", "cron"))}})
 	}
-	s.Container.ApplyCron(s.Cron)
+	applyCron(s.Container, s.Cron)
 	if len(s.Cron.Descriptors()) > 0 {
 		ctx, cancel := context.WithCancel(ctx)
 		return func() error {
@@ -167,7 +166,7 @@ func (s serveIn) cronServeDeprecated(ctx context.Context, logger logging.LevelLo
 		logger := log.With(s.Logger, "tag", "cron")
 		s.DeprecatedCron = deprecatedcron.New(deprecatedcron.WithLogger(cronopts.CronLogAdapter{Logging: logger}))
 	}
-	s.Container.ApplyDeprecatedCron(s.DeprecatedCron)
+	applyDeprecatedCron(s.Container, s.DeprecatedCron)
 	if len(s.DeprecatedCron.Entries()) > 0 {
 		return func() error {
 				logger.Infof("cron runner started")
@@ -236,7 +235,7 @@ func newServeCmd(s serveIn) *cobra.Command {
 			}
 
 			// Additional run groups
-			s.Container.ApplyRunGroup(&g)
+			applyRunGroup(s.Container, &g)
 
 			if err := g.Run(); err != nil {
 				return err
@@ -247,4 +246,49 @@ func newServeCmd(s serveIn) *cobra.Command {
 		},
 	}
 	return serveCmd
+}
+
+func applyRouter(ctn contract.Container, router *mux.Router) {
+	modules := ctn.Modules()
+	for i := range modules {
+		if p, ok := modules[i].(HTTPProvider); ok {
+			p.ProvideHTTP(router)
+		}
+	}
+}
+
+func applyGRPCServer(ctn contract.Container, server *grpc.Server) {
+	modules := ctn.Modules()
+	for i := range modules {
+		if p, ok := modules[i].(GRPCProvider); ok {
+			p.ProvideGRPC(server)
+		}
+	}
+}
+
+func applyRunGroup(ctn contract.Container, group *run.Group) {
+	modules := ctn.Modules()
+	for i := range modules {
+		if p, ok := modules[i].(RunProvider); ok {
+			p.ProvideRunGroup(group)
+		}
+	}
+}
+
+func applyCron(ctn contract.Container, cron *cron.Cron) {
+	modules := ctn.Modules()
+	for i := range modules {
+		if p, ok := modules[i].(CronProvider); ok {
+			p.ProvideCron(cron)
+		}
+	}
+}
+
+func applyDeprecatedCron(ctn contract.Container, crontab *deprecatedcron.Cron) {
+	modules := ctn.Modules()
+	for i := range modules {
+		if p, ok := modules[i].(DeprecatedCronProvider); ok {
+			p.ProvideCron(crontab)
+		}
+	}
 }

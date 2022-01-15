@@ -9,6 +9,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"github.com/spf13/cobra"
 	"reflect"
 
 	"github.com/DoNewsCode/core/codec/yaml"
@@ -330,7 +331,6 @@ func (c *C) ProvideEssentials() {
 		Env               contract.Env
 		AppName           contract.AppName
 		Container         contract.Container
-		ConcreteContainer *container.Container
 		ConfigUnmarshaler contract.ConfigUnmarshaler
 		ConfigAccessor    contract.ConfigAccessor
 		ConfigRouter      contract.ConfigRouter
@@ -347,7 +347,6 @@ func (c *C) ProvideEssentials() {
 			Env:               c.Env,
 			AppName:           c.AppName,
 			Container:         c.Container,
-			ConcreteContainer: c.Container,
 			ConfigUnmarshaler: c.ConfigAccessor,
 			ConfigAccessor:    c.ConfigAccessor,
 			Logger:            c.LevelLogger,
@@ -373,6 +372,17 @@ func (c *C) Serve(ctx context.Context) error {
 		cmd := newServeCmd(in)
 		return cmd.ExecuteContext(ctx)
 	})
+}
+
+// Shutdown iterates through every CloserProvider registered in the container,
+// and calls them in the reversed order of registration.
+func (c *C) Shutdown() {
+	modules := c.Modules()
+	for i := range modules {
+		if closer, ok := modules[len(modules)-i-1].(CloserProvider); ok {
+			closer.ProvideCloser()
+		}
+	}
 }
 
 // AddModuleFunc add the module after Invoking its' constructor. Clean up
@@ -403,6 +413,17 @@ func (c *C) AddModuleFunc(constructor interface{}) {
 	err := c.di.Invoke(fn.Interface())
 	if err != nil {
 		panic(err)
+	}
+}
+
+// ApplyRootCommand iterates through every CommandProvider registered in the container,
+// and introduce the root *cobra.Command to everyone.
+func (c *C) ApplyRootCommand(command *cobra.Command) {
+	modules := c.Modules()
+	for i := range modules {
+		if p, ok := modules[i].(CommandProvider); ok {
+			p.ProvideCommand(command)
+		}
 	}
 }
 
