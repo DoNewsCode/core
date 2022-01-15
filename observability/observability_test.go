@@ -1,13 +1,13 @@
 package observability
 
 import (
-	"github.com/DoNewsCode/core/cronopts"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/cron"
 	"github.com/DoNewsCode/core/otgorm"
 	"github.com/DoNewsCode/core/otkafka"
 	"github.com/DoNewsCode/core/otredis"
@@ -87,7 +87,7 @@ func TestProvideCronjobMetrics(t *testing.T) {
 	c := core.New()
 	c.ProvideEssentials()
 	c.Provide(Providers())
-	c.Invoke(func(metrics *cronopts.CronJobMetrics) {
+	c.Invoke(func(metrics *cron.CronJobMetrics) {
 		metrics.Fail()
 	})
 }

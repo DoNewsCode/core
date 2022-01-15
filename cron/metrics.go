@@ -1,10 +1,8 @@
-package cronopts
+package cron
 
 import (
-	"time"
-
 	"github.com/go-kit/kit/metrics"
-	"github.com/robfig/cron/v3"
+	"time"
 )
 
 // CronJobMetrics collects metrics for cron jobs.
@@ -13,8 +11,9 @@ type CronJobMetrics struct {
 	cronJobFailCount       metrics.Counter
 
 	// labels that has been set
-	module string
-	job    string
+	module   string
+	job      string
+	schedule string
 }
 
 // NewCronJobMetrics constructs a new *CronJobMetrics, setting default labels to "unknown".
@@ -24,6 +23,7 @@ func NewCronJobMetrics(histogram metrics.Histogram, counter metrics.Counter) *Cr
 		cronJobFailCount:       counter,
 		module:                 "unknown",
 		job:                    "unknown",
+		schedule:               "unknown",
 	}
 }
 
@@ -34,6 +34,7 @@ func (c *CronJobMetrics) Module(module string) *CronJobMetrics {
 		cronJobFailCount:       c.cronJobFailCount,
 		module:                 module,
 		job:                    c.job,
+		schedule:               c.schedule,
 	}
 }
 
@@ -44,29 +45,27 @@ func (c *CronJobMetrics) Job(job string) *CronJobMetrics {
 		cronJobFailCount:       c.cronJobFailCount,
 		module:                 c.module,
 		job:                    job,
+		schedule:               c.schedule,
+	}
+}
+
+// Schedule specifies the schedule label for CronJobMetrics.
+func (c *CronJobMetrics) Schedule(schedule string) *CronJobMetrics {
+	return &CronJobMetrics{
+		cronJobDurationSeconds: c.cronJobDurationSeconds,
+		cronJobFailCount:       c.cronJobFailCount,
+		module:                 c.module,
+		job:                    c.job,
+		schedule:               schedule,
 	}
 }
 
 // Fail marks the job as failed.
 func (c *CronJobMetrics) Fail() {
-	c.cronJobFailCount.With("module", c.module, "job", c.job).Add(1)
+	c.cronJobFailCount.With("module", c.module, "job", c.job, "schedule", c.schedule).Add(1)
 }
 
 // Observe records the duration of the job.
 func (c *CronJobMetrics) Observe(duration time.Duration) {
-	c.cronJobDurationSeconds.With("module", c.module, "job", c.job).Observe(duration.Seconds())
-}
-
-// Measure wraps the given job and records the duration and success.
-func (c *CronJobMetrics) Measure(job cron.Job) cron.Job {
-	return cron.FuncJob(func() {
-		start := time.Now()
-		defer c.cronJobDurationSeconds.With("module", c.module, "job", c.job).Observe(time.Since(start).Seconds())
-		job.Run()
-	})
-}
-
-// Measure returns a job wrapper that wraps the given job and records the duration and success.
-func Measure(c *CronJobMetrics) cron.JobWrapper {
-	return c.Measure
+	c.cronJobDurationSeconds.With("module", c.module, "job", c.job, "schedule", c.schedule).Observe(duration.Seconds())
 }

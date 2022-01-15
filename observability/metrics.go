@@ -1,7 +1,7 @@
 package observability
 
 import (
-	"github.com/DoNewsCode/core/cronopts"
+	"github.com/DoNewsCode/core/cron"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otgorm"
 	"github.com/DoNewsCode/core/otkafka"
@@ -54,14 +54,14 @@ func ProvideGRPCRequestDurationSeconds(in MetricsIn) *srvgrpc.RequestDurationSec
 	return srvgrpc.NewRequestDurationSeconds(prometheus.NewHistogram(grpc))
 }
 
-// ProvideCronJobMetrics returns a *cronopts.CronJobMetrics that is designed to
+// ProvideCronJobMetrics returns a *deprecated_cronopts.CronJobMetrics that is designed to
 // measure cron job metrics. The returned metrics can be used like this:
-//  metrics := cronopts.NewCronJobMetrics(...)
+//  metrics := deprecated_cronopts.NewCronJobMetrics(...)
 //  job := cron.NewChain(
 //  	cron.Recover(logger),
-//  	cronopts.Measure(metrics),
+//  	deprecated_cronopts.Measure(metrics),
 //	).Then(job)
-func ProvideCronJobMetrics(in MetricsIn) *cronopts.CronJobMetrics {
+func ProvideCronJobMetrics(in MetricsIn) *cron.CronJobMetrics {
 	histogram := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
 		Name: "cronjob_duration_seconds",
 		Help: "Total time spent running cron jobs.",
@@ -79,7 +79,7 @@ func ProvideCronJobMetrics(in MetricsIn) *cronopts.CronJobMetrics {
 	in.Registerer.MustRegister(histogram)
 	in.Registerer.MustRegister(counter)
 
-	return cronopts.NewCronJobMetrics(prometheus.NewHistogram(histogram), prometheus.NewCounter(counter))
+	return cron.NewCronJobMetrics(prometheus.NewHistogram(histogram), prometheus.NewCounter(counter))
 }
 
 // ProvideGORMMetrics returns a *otgorm.Gauges that measures the connection info

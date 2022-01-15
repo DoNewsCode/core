@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/DoNewsCode/core/cron"
+	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/observability"
+	deprecatedcron "github.com/robfig/cron/v3"
 	"os"
 	"runtime"
 	"testing"
@@ -55,4 +59,48 @@ func TestServeIn_signalWatch(t *testing.T) {
 		err = group.Run()
 		assert.Contains(t, buf.String(), "context canceled")
 	})
+}
+
+type OldCronModule struct {
+	CanRun bool
+}
+
+func (module *OldCronModule) ProvideCron(crontab *deprecatedcron.Cron) {
+	crontab.AddFunc("* * * * * *", func() {
+		module.CanRun = true
+	})
+}
+
+type NewCronModule struct {
+	CanRun bool
+}
+
+func (module *NewCronModule) ProvideCron(crontab *cron.Cron) {
+	crontab.Add("* * * * * *", func(ctx context.Context) error {
+		module.CanRun = true
+		return nil
+	})
+}
+
+func TestServeIn_cron_deprecation(t *testing.T) {
+	c := Default(WithInline("grpc.disable", true), WithInline("http.disable", true))
+	c.Provide(observability.Providers())
+	c.Provide(
+		di.Deps{func() *deprecatedcron.Cron {
+			return deprecatedcron.New(deprecatedcron.WithSeconds())
+		}, func() *cron.Cron {
+			return cron.New(cron.Config{EnableSeconds: true})
+		}},
+	)
+
+	mOld := OldCronModule{}
+	mNew := NewCronModule{}
+	c.AddModule(&mOld)
+	c.AddModule(&mNew)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	c.Serve(ctx)
+	assert.True(t, mOld.CanRun)
+	assert.True(t, mNew.CanRun)
 }

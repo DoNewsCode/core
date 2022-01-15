@@ -1,3 +1,7 @@
+// Package cron is a partial rewrite based on the github.com/robfig/cron/v3
+// package. The API in this package enforces context passing and error
+// propagation, and consequently enables better logging, metrics and tracing
+// support.
 package cron
 
 import (
@@ -10,33 +14,44 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+// Cron schedules jobs to be run on the specified schedule.
 type Cron struct {
-	parser            cron.ScheduleParser
-	lock              *sync.Cond
-	jobDescriptors    jobDescriptors
-	globalMiddleware  []JobMiddleware
-	location          *time.Location
-	nextID            int
-	quitWaiter        sync.WaitGroup
-	baseContext       context.Context
-	baseContextCancel func()
+	parser           cron.ScheduleParser
+	lock             *sync.Cond
+	jobDescriptors   jobDescriptors
+	globalMiddleware []JobOptions
+	location         *time.Location
+	nextID           int
+	quitWaiter       sync.WaitGroup
 }
 
-func New(options ...Option) *Cron {
+// New returns a new Cron instance.
+func New(config Config) *Cron {
 	c := &Cron{
-		parser:      cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor),
-		location:    time.Local,
-		nextID:      1,
-		lock:        sync.NewCond(&sync.Mutex{}),
-		baseContext: context.Background(),
+		parser:           config.Parser,
+		lock:             sync.NewCond(&sync.Mutex{}),
+		jobDescriptors:   jobDescriptors{},
+		globalMiddleware: config.GlobalOptions,
+		location:         config.Location,
+		nextID:           1,
 	}
-	for _, f := range options {
-		f(c)
+	if config.Parser == nil {
+		if config.EnableSeconds {
+			c.parser = cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
+		} else {
+			c.parser = cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
+		}
+	}
+	if config.Location == nil {
+		c.location = time.Local
 	}
 	return c
 }
 
-func (c *Cron) Add(spec string, runner func(ctx context.Context) error, middleware ...JobMiddleware) (JobID, error) {
+// Add adds a new job to the cron scheduler.A list of middleware can be supplied.
+// Note the error returned by the runner will be discarded. It is the user's
+// responsibility to handle the error via middleware.
+func (c *Cron) Add(spec string, runner func(ctx context.Context) error, middleware ...JobOptions) (JobID, error) {
 	schedule, err := c.parser.Parse(spec)
 	if err != nil {
 		return 0, err
@@ -49,10 +64,10 @@ func (c *Cron) Add(spec string, runner func(ctx context.Context) error, middlewa
 		next:     schedule.Next(c.now()),
 	}
 
-	middleware = append(middleware, c.globalMiddleware...)
+	middleware = append(c.globalMiddleware, middleware...)
 
-	for i := len(middleware) - 1; i > 0; i-- {
-		jobDescriptor = middleware[i](jobDescriptor)
+	for i := len(middleware) - 1; i >= 0; i-- {
+		middleware[i](&jobDescriptor)
 	}
 
 	c.lock.L.Lock()
@@ -81,6 +96,20 @@ func (c *Cron) Remove(id JobID) {
 	}
 }
 
+// Descriptors returns a list of all job descriptors.
+func (c *Cron) Descriptors() []JobDescriptor {
+	var descriptors []JobDescriptor
+
+	c.lock.L.Lock()
+	defer c.lock.L.Unlock()
+
+	for _, descriptor := range c.jobDescriptors {
+		descriptors = append(descriptors, *descriptor)
+	}
+	return descriptors
+}
+
+// Run starts the cron scheduler. It is a blocking call.
 func (c *Cron) Run(ctx context.Context) error {
 	defer c.quitWaiter.Wait()
 
@@ -178,14 +207,23 @@ func (j *jobDescriptors) Pop() (v interface{}) {
 	return v
 }
 
+// JobID is the identifier of jobs.
 type JobID int
 
+// JobDescriptor contains the information about jobs.
 type JobDescriptor struct {
-	ID       JobID
-	Name     string
-	RawSpec  string
+	// ID is the identifier of job
+	ID JobID
+	// Name is an optional field typically added by WithName. It can be useful in logging and metrics.
+	Name string
+	// RawSpec contains the string format of cron schedule format.
+	RawSpec string
+	// Schedule is the parsed version of RawSpec. It can be overridden by WithSchedule.
 	Schedule cron.Schedule
-	next     time.Time
-	prev     time.Time
-	Run      func(ctx context.Context) error
+	// Run is the actual work to be done.
+	Run func(ctx context.Context) error
+	// next is the next time the job should run.
+	next time.Time
+	// prev is the last time the job ran.
+	prev time.Time
 }

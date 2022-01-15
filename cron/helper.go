@@ -10,6 +10,7 @@ var (
 	nextContextKey = struct{}{}
 )
 
+// GetCurrentSchedule returns the current schedule for the given context.
 func GetCurrentSchedule(ctx context.Context) time.Time {
 	if ctx == nil {
 		return time.Time{}
@@ -20,6 +21,7 @@ func GetCurrentSchedule(ctx context.Context) time.Time {
 	return time.Time{}
 }
 
+// GetNextSchedule returns the next schedule for the given context.
 func GetNextSchedule(ctx context.Context) time.Time {
 	if ctx == nil {
 		return time.Time{}

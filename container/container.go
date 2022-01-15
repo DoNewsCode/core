@@ -5,18 +5,24 @@ package container
 
 import (
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/cron"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
-	"github.com/robfig/cron/v3"
+	deprecatedcron "github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
 
 var _ contract.Container = (*Container)(nil)
 
-// CronProvider provides cron jobs.
+// DeprecatedCronProvider provides cron jobs.
+// Deprecated: CronProvider is deprecated. Use CronProvider instead
+type DeprecatedCronProvider interface {
+	ProvideCron(crontab *deprecatedcron.Cron)
+}
+
 type CronProvider interface {
-	ProvideCron(crontab *cron.Cron)
+	ProvideCron(cron *cron.Cron)
 }
 
 // CommandProvider provides cobra.Command.
@@ -47,13 +53,14 @@ type RunProvider interface {
 
 // Container holds all modules registered.
 type Container struct {
-	httpProviders    []func(router *mux.Router)
-	grpcProviders    []func(server *grpc.Server)
-	closerProviders  []func()
-	runProviders     []func(g *run.Group)
-	modules          []interface{}
-	cronProviders    []func(crontab *cron.Cron)
-	commandProviders []func(command *cobra.Command)
+	httpProviders           []func(router *mux.Router)
+	grpcProviders           []func(server *grpc.Server)
+	closerProviders         []func()
+	runProviders            []func(g *run.Group)
+	modules                 []interface{}
+	cronProviders           []func(cron *cron.Cron)
+	deprecatedCronProviders []func(cron *deprecatedcron.Cron)
+	commandProviders        []func(command *cobra.Command)
 }
 
 // ApplyRouter iterates through every HTTPProvider registered in the container,
@@ -107,6 +114,16 @@ func (c *Container) Modules() []interface{} {
 	return c.modules
 }
 
+// ApplyDeprecatedCron iterates through every CronProvider registered in the container,
+// and introduce the *deprecatedcron.Cron to everyone.
+//
+// Deprecated: migrate to ApplyCron.
+func (c *Container) ApplyDeprecatedCron(crontab *deprecatedcron.Cron) {
+	for _, p := range c.deprecatedCronProviders {
+		p(crontab)
+	}
+}
+
 // ApplyCron iterates through every CronProvider registered in the container,
 // and introduce the *cron.Cron to everyone.
 func (c *Container) ApplyCron(crontab *cron.Cron) {
@@ -129,6 +146,9 @@ func (c *Container) AddModule(module interface{}) {
 	}
 	if p, ok := module.(GRPCProvider); ok {
 		c.grpcProviders = append(c.grpcProviders, p.ProvideGRPC)
+	}
+	if p, ok := module.(DeprecatedCronProvider); ok {
+		c.deprecatedCronProviders = append(c.deprecatedCronProviders, p.ProvideCron)
 	}
 	if p, ok := module.(CronProvider); ok {
 		c.cronProviders = append(c.cronProviders, p.ProvideCron)
