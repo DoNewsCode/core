@@ -65,12 +65,12 @@ func ProvideCronJobMetrics(in MetricsIn) *cron.CronJobMetrics {
 	histogram := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{
 		Name: "cronjob_duration_seconds",
 		Help: "Total time spent running cron jobs.",
-	}, []string{"module", "job"})
+	}, []string{"module", "job", "schedule"})
 
 	counter := stdprometheus.NewCounterVec(stdprometheus.CounterOpts{
 		Name: "cronjob_failures_total",
 		Help: "Total number of cron jobs that failed.",
-	}, []string{"module", "job"})
+	}, []string{"module", "job", "schedule"})
 
 	if in.Registerer == nil {
 		in.Registerer = stdprometheus.DefaultRegisterer
