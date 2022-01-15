@@ -55,7 +55,7 @@ func WithLogging(logger log.Logger) JobOptions {
 		innerRun := descriptor.Run
 		descriptor.Run = func(ctx context.Context) error {
 			due := GetCurrentSchedule(ctx)
-			delayed := due.Sub(time.Now())
+			delayed := time.Now().Sub(due)
 			logger = logging.WithContext(logger, ctx)
 			if delayed > time.Second {
 				log.With(logger, "delayed", delayed)
