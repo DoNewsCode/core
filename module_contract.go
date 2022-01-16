@@ -15,6 +15,7 @@ type DeprecatedCronProvider interface {
 	ProvideCron(crontab *cron.Cron)
 }
 
+// CronProvider provides cron jobs.
 type CronProvider interface {
 	ProvideCron(cron *cron2.Cron)
 }
