@@ -333,7 +333,11 @@ func TestModule_hotReload(t *testing.T) {
 	c.AddModuleFunc(config.New)
 
 	var group run.Group
-	c.ApplyRunGroup(&group)
+	for _, m := range c.Modules() {
+		if p, ok := m.(core.RunProvider); ok {
+			p.ProvideRunGroup(&group)
+		}
+	}
 	group.Add(func() error {
 		<-ctx.Done()
 		return ctx.Err()
