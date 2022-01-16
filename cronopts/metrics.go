@@ -53,8 +53,8 @@ func (c *CronJobMetrics) Fail() {
 }
 
 // Observe records the duration of the job.
-func (c *CronJobMetrics) Observe(value float64) {
-	c.cronJobDurationSeconds.With("module", c.module, "job", c.job).Observe(value)
+func (c *CronJobMetrics) Observe(duration time.Duration) {
+	c.cronJobDurationSeconds.With("module", c.module, "job", c.job).Observe(duration.Seconds())
 }
 
 // Measure wraps the given job and records the duration and success.
