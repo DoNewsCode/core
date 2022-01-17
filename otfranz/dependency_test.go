@@ -27,16 +27,18 @@ func TestProvideFactory(t *testing.T) {
 	}
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideFactory(factoryIn{
-		Conf: config.MapAdapter{"kafka": map[string]Config{
-			"default": {
-				SeedBrokers: addrs,
-				Topics:      []string{"franz-test"},
+		Conf: config.MapAdapter{
+			"kafka": map[string]Config{
+				"default": {
+					SeedBrokers: addrs,
+					Topics:      []string{"franz-test"},
+				},
+				"alternative": {
+					SeedBrokers: addrs,
+					Topics:      []string{"franz-test"},
+				},
 			},
-			"alternative": {
-				SeedBrokers: addrs,
-				Topics:      []string{"franz-test"},
-			},
-		}},
+		},
 	}, func(name string, config *Config) {})
 	def, err := factory.Make("default")
 	assert.NoError(t, err)

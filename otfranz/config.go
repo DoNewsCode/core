@@ -22,7 +22,7 @@ type Config struct {
 	SoftwareName    string `json:"software_name" yaml:"software_name"`       // KIP-511
 	SoftwareVersion string `json:"software_version" yaml:"software_version"` // KIP-511
 
-	Logger kgo.Logger `json:"logger" yaml:"logger"`
+	Logger kgo.Logger `json:"-" yaml:"-"`
 
 	SeedBrokers []string           `json:"seed_brokers" yaml:"seed_brokers"`
 	MaxVersions *kversion.Versions `json:"-" yaml:"-"`

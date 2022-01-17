@@ -56,3 +56,45 @@ func TestClient_ProduceWithTracing(t *testing.T) {
 	span.Finish()
 
 }
+
+func TestClient_ProduceWithOutTracing(t *testing.T) {
+	if os.Getenv("KAFKA_ADDR") == "" {
+		t.Skip("set KAFKA_ADDR to run TestProvideFactory")
+		return
+	}
+	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
+	factory, cleanup := provideFactory(factoryIn{
+		Logger: log.NewNopLogger(),
+		Conf: config.MapAdapter{"kafka": map[string]Config{
+			"default": {
+				SeedBrokers:         addrs,
+				DefaultProduceTopic: "franz-tracing",
+			},
+		}},
+	}, func(name string, config *Config) {})
+	defer cleanup()
+	cli, err := factory.Make("default")
+	assert.NoError(t, err)
+	assert.NotNil(t, cli)
+
+	clientWithTrace := NewClient(cli, nil)
+
+	record := &kgo.Record{Value: []byte("bar")}
+
+	tracer := mocktracer.New()
+	span, ctx := opentracing.StartSpanFromContextWithTracer(context.Background(), tracer, "test")
+
+	clientWithTrace.ProduceWithTracing(ctx, record, func(r *kgo.Record, err error) {
+		if err != nil {
+			t.Fatalf("produce error: %v\n", err)
+		}
+	})
+	time.Sleep(time.Second)
+
+	if err := clientWithTrace.ProduceSyncWithTracing(ctx, record).FirstErr(); err != nil {
+		t.Fatalf("produce sync error: %v\n", err)
+	}
+	assert.Len(t, tracer.FinishedSpans(), 0)
+	span.Finish()
+
+}

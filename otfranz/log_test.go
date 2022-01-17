@@ -21,6 +21,9 @@ func Test_logAdapter(t *testing.T) {
 
 		{"info-debug", "info", kgo.LogLevelDebug, ""},
 		{"info-info", "info", kgo.LogLevelInfo, "msg=foo\n"},
+
+		{"warn", "warn", kgo.LogLevelWarn, "msg=foo\n"},
+		{"error", "error", kgo.LogLevelError, "msg=foo\n"},
 	}
 
 	for _, c := range cases {
