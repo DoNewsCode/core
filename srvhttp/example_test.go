@@ -23,7 +23,12 @@ func Example_modules() {
 	c.AddModule(srvhttp.DebugModule{})
 
 	router := mux.NewRouter()
-	c.ApplyRouter(router)
+	modules := c.Modules()
+	for i := range modules {
+		if m, ok := modules[i].(core.HTTPProvider); ok {
+			m.ProvideHTTP(router)
+		}
+	}
 	http.ListenAndServe(":8080", router)
 }
 
