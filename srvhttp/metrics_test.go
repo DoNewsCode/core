@@ -3,6 +3,7 @@ package srvhttp
 import (
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -33,4 +34,24 @@ func TestRequestDurationSeconds_noPanicWhenMissingLabels(t *testing.T) {
 	rds := NewRequestDurationSeconds(histogram)
 	rds.Observe(50)
 	assert.ElementsMatch(t, []string{"module", "unknown", "service", "unknown", "route", "unknown", "status", "0"}, histogram.LabelValues)
+}
+
+func TestRequestDurationSeconds_data_races(t *testing.T) {
+	histogram := &stub.Histogram{}
+	rds := NewRequestDurationSeconds(histogram)
+
+	f := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		time.Sleep(time.Millisecond)
+	})
+	h := Metrics(rds)(f)
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			h.ServeHTTP(nil, httptest.NewRequest(http.MethodGet, "/", nil))
+			wg.Done()
+		}()
+
+	}
+	wg.Wait()
 }

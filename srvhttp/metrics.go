@@ -25,7 +25,7 @@ func Metrics(metrics *RequestDurationSeconds) func(handler http.Handler) http.Ha
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			collection := httpsnoop.CaptureMetrics(handler, writer, request)
-			metrics = metrics.Status(collection.Code)
+			metrics := metrics.Status(collection.Code)
 			route := mux.CurrentRoute(request)
 			if route == nil {
 				metrics.Route("").Observe(collection.Duration)
