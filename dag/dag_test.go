@@ -63,6 +63,17 @@ func TestDag_addEdges(t *testing.T) {
 
 		dag.AddEdges(Edges{{e1, e2, e3}})
 		assert.Error(t, dag.AddEdge(e3, e1))
+		assert.Equal(t, len(dag.edgesFrom(int(e3))), 0)
+	})
+
+	t.Run("valid edges before adding", func(t *testing.T) {
+		dag := New()
+		e1 := dag.AddVertex(func(ctx context.Context) error { return nil })
+		e2 := dag.AddVertex(func(ctx context.Context) error { return nil })
+		e3 := dag.AddVertex(func(ctx context.Context) error { return nil })
+
+		assert.Error(t, dag.AddEdges(Edges{{e1, e2, e3, 5}}))
+		assert.Equal(t, len(dag.edgesFrom(int(e1))), 0)
 	})
 }
 

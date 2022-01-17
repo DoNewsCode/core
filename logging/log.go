@@ -119,6 +119,15 @@ func (s spanLogger) Log(keyvals ...interface{}) error {
 // WithContext decorates the log.Logger with information form context. If there is an opentracing span
 // in the context, the span will receive the logger output as well.
 func WithContext(logger log.Logger, ctx context.Context) log.Logger {
+	span := opentracing.SpanFromContext(ctx)
+	if span == nil {
+		return WithBaggage(logger, ctx)
+	}
+	return WithBaggage(spanLogger{span: span, base: logger}, ctx)
+}
+
+// WithBaggage decorates the log.Logger with information form context.
+func WithBaggage(logger log.Logger, ctx context.Context) log.Logger {
 	var args []interface{}
 
 	bag := ctxmeta.GetBaggage(ctx)
@@ -129,11 +138,7 @@ func WithContext(logger log.Logger, ctx context.Context) log.Logger {
 
 	base := log.With(logger, args...)
 
-	span := opentracing.SpanFromContext(ctx)
-	if span == nil {
-		return base
-	}
-	return spanLogger{span: span, base: logger, kvs: args}
+	return base
 }
 
 type levelLogger struct {
