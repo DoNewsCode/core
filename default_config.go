@@ -95,8 +95,9 @@ func ProvideLogger(conf contract.ConfigUnmarshaler, appName contract.AppName, en
 		format = "logfmt"
 	}
 	logger := logging.NewLogger(format)
+	logger = level.NewFilter(logger, logging.LevelFilter(lvl))
 	logger = level.NewInjector(logger, level.DebugValue())
-	return level.NewFilter(logger, logging.LevelFilter(lvl))
+	return logger
 }
 
 // ProvideDi is the default DiProvider for package Core.

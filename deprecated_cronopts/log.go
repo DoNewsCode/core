@@ -1,4 +1,4 @@
-// Package cronopts contains the options for cron.
+// Package cronopts contains the options for cron. This package is deprecated. Use package cron instead.
 package cronopts
 
 import (
