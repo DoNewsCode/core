@@ -31,11 +31,12 @@ func (m MetricsModule) ProvideGRPC(server *grpc.Server) {
 func Metrics(metrics *RequestDurationSeconds) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		start := time.Now()
+		metrics := metrics.Route(info.FullMethod)
 		defer func() {
 			if s, ok := status.FromError(err); ok {
 				metrics = metrics.Status(int(s.Code()))
 			}
-			metrics.Route(info.FullMethod).Observe(time.Since(start))
+			metrics.Observe(time.Since(start))
 		}()
 		resp, err = handler(ctx, req)
 		return resp, err

@@ -2,6 +2,7 @@ package srvgrpc
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -37,4 +38,22 @@ func TestMetrics(t *testing.T) {
 	rds := NewRequestDurationSeconds(histogram)
 	Metrics(rds)(context.Background(), nil, &grpc.UnaryServerInfo{FullMethod: "/"}, handler)
 	assert.Equal(t, "2", histogram.LabelValues.Label("status"))
+}
+
+func TestMetrics_data_races(t *testing.T) {
+	handler := grpc.UnaryHandler(func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+	histogram := &stub.Histogram{}
+	rds := NewRequestDurationSeconds(histogram)
+	h := Metrics(rds)
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			h(context.Background(), nil, &grpc.UnaryServerInfo{FullMethod: "/"}, handler)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
 }
