@@ -1,8 +1,9 @@
 package stub
 
 import (
-	"github.com/go-kit/kit/metrics"
 	"sync"
+
+	"github.com/go-kit/kit/metrics"
 )
 
 // LabelValues contains the set of labels and their corresponding values.

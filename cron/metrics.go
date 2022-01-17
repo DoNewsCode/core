@@ -1,8 +1,9 @@
 package cron
 
 import (
-	"github.com/go-kit/kit/metrics"
 	"time"
+
+	"github.com/go-kit/kit/metrics"
 )
 
 // CronJobMetrics collects metrics for cron jobs.
@@ -10,7 +11,7 @@ type CronJobMetrics struct {
 	cronJobDurationSeconds metrics.Histogram
 	cronJobFailCount       metrics.Counter
 
-	// labels that has been set
+	// labels that have been set
 	module   string
 	job      string
 	schedule string

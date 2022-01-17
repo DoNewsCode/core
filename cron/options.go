@@ -83,7 +83,7 @@ func WithTracing(tracer opentracing.Tracer) JobOption {
 			span.SetTag("schedule", descriptor.RawSpec)
 			err := innerRun(ctx)
 			if err != nil {
-				ext.Error.Set(span, true)
+				ext.LogError(span, err)
 				return err
 			}
 			return nil

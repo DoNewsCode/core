@@ -54,12 +54,12 @@ func ProvideGRPCRequestDurationSeconds(in MetricsIn) *srvgrpc.RequestDurationSec
 	return srvgrpc.NewRequestDurationSeconds(prometheus.NewHistogram(grpc))
 }
 
-// ProvideCronJobMetrics returns a *deprecated_cronopts.CronJobMetrics that is designed to
+// ProvideCronJobMetrics returns a *cron.CronJobMetrics that is designed to
 // measure cron job metrics. The returned metrics can be used like this:
-//  metrics := deprecated_cronopts.NewCronJobMetrics(...)
+//  metrics := cron.NewCronJobMetrics(...)
 //  job := cron.NewChain(
 //  	cron.Recover(logger),
-//  	deprecated_cronopts.Measure(metrics),
+//  	cron.Measure(metrics),
 //	).Then(job)
 func ProvideCronJobMetrics(in MetricsIn) *cron.CronJobMetrics {
 	histogram := stdprometheus.NewHistogramVec(stdprometheus.HistogramOpts{

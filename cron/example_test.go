@@ -3,11 +3,12 @@ package cron_test
 import (
 	"context"
 	"fmt"
+	"time"
+	
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/cron"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/observability"
-	"time"
 )
 
 type CronModule struct {

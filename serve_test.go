@@ -4,19 +4,19 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/DoNewsCode/core/cron"
-	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/observability"
-	deprecatedcron "github.com/robfig/cron/v3"
 	"os"
 	"runtime"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/DoNewsCode/core/cron"
+	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
+	"github.com/DoNewsCode/core/observability"
 	"github.com/go-kit/log"
 	"github.com/oklog/run"
+	deprecatedcron "github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/assert"
 )
 

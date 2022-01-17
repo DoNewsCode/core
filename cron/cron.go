@@ -148,20 +148,20 @@ func (c *Cron) Run(ctx context.Context) error {
 				if c.jobDescriptors[0].next.After(now) || c.jobDescriptors[0].next.IsZero() {
 					break
 				}
-				descriptor := heap.Pop(&c.jobDescriptors)
+				descriptor := heap.Pop(&c.jobDescriptors).(*JobDescriptor)
 
-				descriptor.(*JobDescriptor).prev = descriptor.(*JobDescriptor).next
-				descriptor.(*JobDescriptor).next = descriptor.(*JobDescriptor).Schedule.Next(now)
+				descriptor.prev = descriptor.next
+				descriptor.next = descriptor.Schedule.Next(now)
 				heap.Push(&c.jobDescriptors, descriptor)
 
 				var innerCtx context.Context
-				innerCtx = context.WithValue(ctx, prevContextKey, descriptor.(*JobDescriptor).prev)
-				innerCtx = context.WithValue(innerCtx, nextContextKey, descriptor.(*JobDescriptor).next)
+				innerCtx = context.WithValue(ctx, prevContextKey, descriptor.prev)
+				innerCtx = context.WithValue(innerCtx, nextContextKey, descriptor.next)
 
 				c.quitWaiter.Add(1)
 				go func() {
 					defer c.quitWaiter.Done()
-					descriptor.(*JobDescriptor).Run(innerCtx)
+					descriptor.Run(innerCtx)
 				}()
 			}
 			c.lock.L.Unlock()

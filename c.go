@@ -9,7 +9,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/cobra"
 	"reflect"
 
 	"github.com/DoNewsCode/core/codec/yaml"
@@ -22,6 +21,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/file"
+	"github.com/spf13/cobra"
 	"go.uber.org/dig"
 )
 
@@ -225,7 +225,7 @@ func (c *C) AddModule(modules ...interface{}) {
 	}
 }
 
-// Provide adds a dependencies provider to the core. Note the dependency provider
+// Provide adds dependencies provider to the core. Note the dependency provider
 // must be a function in the form of:
 //
 //  func(foo Foo) Bar
@@ -385,7 +385,7 @@ func (c *C) Shutdown() {
 	}
 }
 
-// AddModuleFunc add the module after Invoking its' constructor. Clean up
+// AddModuleFunc add the module after Invoking its constructor. Clean up
 // functions and errors are handled automatically.
 func (c *C) AddModuleFunc(constructor interface{}) {
 	c.provide(constructor)

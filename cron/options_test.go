@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/DoNewsCode/core/internal/stub"
 	"github.com/go-kit/log"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/robfig/cron/v3"
-	"strings"
-	"testing"
-	"time"
 )
 
 type mockScheduler func(now time.Time) time.Time // mockScheduler is a function that returns the next time to run
