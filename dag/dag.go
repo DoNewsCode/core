@@ -45,9 +45,13 @@ func (d *DAG) AddVertex(work func(ctx context.Context) error, option ...VertexOp
 //
 // If the new edge leads to a cycle, AddEdge will return error.
 func (d *DAG) AddEdge(from, to VertexID) error {
-	if err := d.addEdge(from, to); err != nil {
-		return err
+	if len(d.vertexes) <= int(from) || from < 0 {
+		return errors.Errorf("invalid vertex id %d", from)
 	}
+	if to < 0 || len(d.vertexes) <= int(to) {
+		return errors.Errorf("invalid vertex id %d", to)
+	}
+	d.vertexes[from].addChild(d.vertexes[to])
 	if yes, edges := IsAcyclic(d); !yes {
 		d.vertexes[from].removeChild(d.vertexes[to])
 		return errors.Errorf("dag is not acyclic: %s", d.fmtEdges(edges))
@@ -58,10 +62,15 @@ func (d *DAG) AddEdge(from, to VertexID) error {
 // AddEdges adds multiple edges in one batch. See AddEdge for more details.
 func (d *DAG) AddEdges(edges Edges) error {
 	for _, edge := range edges {
-		for i := 0; i < len(edge)-1; i++ {
-			if err := d.addEdge(edge[i], edge[i+1]); err != nil {
-				return err
+		for i := 0; i < len(edge); i++ {
+			if len(d.vertexes) <= int(edge[i]) || edge[i] < 0 {
+				return errors.Errorf("invalid vertex id %d", edge[i])
 			}
+		}
+	}
+	for _, edge := range edges {
+		for i := 0; i < len(edge)-1; i++ {
+			d.vertexes[edge[i]].addChild(d.vertexes[edge[i+1]])
 		}
 	}
 	if yes, badEdges := IsAcyclic(d); !yes {
@@ -72,17 +81,6 @@ func (d *DAG) AddEdges(edges Edges) error {
 		}
 		return errors.Errorf("dag is not acyclic: %s", d.fmtEdges(badEdges))
 	}
-	return nil
-}
-
-func (d *DAG) addEdge(from, to VertexID) error {
-	if len(d.vertexes) <= int(from) || from < 0 {
-		return errors.Errorf("invalid vertex id %d", from)
-	}
-	if to < 0 || len(d.vertexes) <= int(to) {
-		return errors.Errorf("invalid vertex id %d", to)
-	}
-	d.vertexes[from].addChild(d.vertexes[to])
 	return nil
 }
 
