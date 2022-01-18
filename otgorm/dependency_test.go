@@ -19,12 +19,12 @@ func TestProvideDBFactory(t *testing.T) {
 		t.Skip("set MYSQL_DSN to run TestProvideDBFactory")
 		return
 	}
-	gorms := map[string]map[string]interface{}{
-		"default": {
+	gorms := map[string]interface{}{
+		"default": map[string]interface{}{
 			"database": "sqlite",
 			"dsn":      ":memory:",
 		},
-		"alternative": {
+		"alternative": map[string]interface{}{
 			"database": "mysql",
 			"dsn":      os.Getenv("MYSQL_DSN"),
 		},

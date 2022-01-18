@@ -1,7 +1,6 @@
 package otkafka
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -37,7 +36,6 @@ func TestProvideReaderFactory(t *testing.T) {
 			},
 		}},
 	}, func(name string, reader *kafka.ReaderConfig) {})
-	fmt.Printf("%#v\n", factory)
 	def, err := factory.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
@@ -56,12 +54,12 @@ func TestProvideWriterFactory(t *testing.T) {
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideWriterFactory(factoryIn{
 		In: di.In{},
-		Conf: config.MapAdapter{"kafka.writer": map[string]map[string]interface{}{
-			"default": {
+		Conf: config.MapAdapter{"kafka.writer": map[string]interface{}{
+			"default": map[string]interface{}{
 				"brokers": addrs,
 				"topic":   "Test",
 			},
-			"alternative": {
+			"alternative": map[string]interface{}{
 				"brokers": addrs,
 				"topic":   "Test",
 			},
