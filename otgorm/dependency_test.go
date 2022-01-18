@@ -14,19 +14,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type m map[string]interface{}
-
 func TestProvideDBFactory(t *testing.T) {
 	if os.Getenv("MYSQL_DSN") == "" {
 		t.Skip("set MYSQL_DSN to run TestProvideDBFactory")
 		return
 	}
-	gorms := map[string]m{
-		"default": m{
+	gorms := map[string]map[string]interface{}{
+		"default": {
 			"database": "sqlite",
 			"dsn":      ":memory:",
 		},
-		"alternative": m{
+		"alternative": {
 			"database": "mysql",
 			"dsn":      os.Getenv("MYSQL_DSN"),
 		},
