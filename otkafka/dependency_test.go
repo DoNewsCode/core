@@ -18,6 +18,8 @@ func TestProvideConfigs(t *testing.T) {
 	assert.NotEmpty(t, c.Config)
 }
 
+type m map[string]interface{}
+
 func TestProvideReaderFactory(t *testing.T) {
 	if os.Getenv("KAFKA_ADDR") == "" {
 		t.Skip("set KAFKA_ADDR to run TestProvideReaderFactory")
@@ -25,14 +27,14 @@ func TestProvideReaderFactory(t *testing.T) {
 	}
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideReaderFactory(factoryIn{
-		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
-			"default": {
-				Brokers: addrs,
-				Topic:   "Test",
+		Conf: config.MapAdapter{"kafka.reader": m{
+			"default": m{
+				"brokers": addrs,
+				"topic":   "Test",
 			},
-			"alternative": {
-				Brokers: addrs,
-				Topic:   "Test",
+			"alternative": m{
+				"brokers": addrs,
+				"topic":   "Test",
 			},
 		}},
 	}, func(name string, reader *kafka.ReaderConfig) {})
