@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/ClickHouse/clickhouse-go v1.4.5 // indirect
 	github.com/aws/aws-sdk-go v1.40.45
+	github.com/felixge/httpsnoop v1.0.1
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
@@ -17,7 +18,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-version v1.3.0 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
-	github.com/knadh/koanf v0.15.0
+	github.com/knadh/koanf v1.4.0
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/oklog/run v1.1.0
 	github.com/olivere/elastic/v7 v7.0.22
@@ -50,8 +51,6 @@ require (
 	gorm.io/gorm v1.21.10
 )
 
-require github.com/felixge/httpsnoop v1.0.1
-
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -76,6 +75,8 @@ require (
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-sqlite3 v1.14.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

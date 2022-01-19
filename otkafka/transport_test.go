@@ -27,10 +27,10 @@ func TestTransport_RoundTrip(t *testing.T) {
 	factory, cleanup := provideWriterFactory(factoryIn{
 		Tracer: tracer,
 		In:     di.In{},
-		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
-			"default": {
-				Brokers: addrs,
-				Topic:   "Test",
+		Conf: config.MapAdapter{"kafka.writer": map[string]interface{}{
+			"default": map[string]interface{}{
+				"brokers": addrs,
+				"topic":   "Test",
 			},
 		}},
 		Logger: log.NewNopLogger(),

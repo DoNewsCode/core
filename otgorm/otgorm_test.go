@@ -26,12 +26,14 @@ func TestHook(t *testing.T) {
 		},
 		drivers: map[string]func(dsn string) gorm.Dialector{"sqlite": sqlite.Open},
 	})(factoryIn{
-		Conf: config.MapAdapter{"gorm": map[string]databaseConf{
-			"default": {
-				Database: "sqlite",
-				Dsn:      ":memory:",
+		Conf: config.MapAdapter{
+			"gorm": map[string]interface{}{
+				"default": map[string]interface{}{
+					"database": "sqlite",
+					"dsn":      ":memory:",
+				},
 			},
-		}},
+		},
 		Logger: log.NewNopLogger(),
 		Tracer: tracer,
 	})
