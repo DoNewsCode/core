@@ -316,7 +316,7 @@ func (c *C) provide(constructor interface{}) {
 		}
 		return filteredOuts
 	})
-	options = append(options, dig.LocationForPC(reflect.ValueOf(constructor).Pointer()))
+	options = append([]dig.ProvideOption{dig.LocationForPC(reflect.ValueOf(constructor).Pointer())}, options...)
 	err := c.di.Provide(fn.Interface(), options...)
 	if err != nil {
 		panic(err)
