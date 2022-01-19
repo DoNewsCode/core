@@ -37,9 +37,9 @@ func TestNewEsFactory(t *testing.T) {
 	addrs := strings.Split(os.Getenv("ELASTICSEARCH_ADDR"), ",")
 	t.Run("normal construction", func(t *testing.T) {
 		esFactory, cleanup := provideEsFactory(&providersOption{})(factoryIn{
-			Conf: config.MapAdapter{"es": map[string]Config{
-				"default":     {URL: addrs},
-				"alternative": {URL: addrs},
+			Conf: config.MapAdapter{"es": map[string]interface{}{
+				"default":     map[string]interface{}{"url": addrs},
+				"alternative": map[string]interface{}{"url": addrs},
 			}},
 			Logger:    log.NewNopLogger(),
 			Populator: Populator{},
@@ -86,9 +86,9 @@ func TestNewEsFactory(t *testing.T) {
 
 	t.Run("should not connect to ES", func(t *testing.T) {
 		esFactory, cleanup := provideEsFactory(&providersOption{})(factoryIn{
-			Conf: config.MapAdapter{"es": map[string]Config{
+			Conf: config.MapAdapter{"es": map[string]interface{}{
 				// elasticsearch server doesn't exist at this port
-				"default": {URL: []string{"http://127.0.0.1:9999"}},
+				"default": map[string]interface{}{"url": []string{"http://127.0.0.1:9999"}},
 			}},
 			Logger:    log.NewNopLogger(),
 			Populator: Populator{},
@@ -102,9 +102,9 @@ func TestNewEsFactory(t *testing.T) {
 	t.Run("should not reload if the providersOption forbids", func(t *testing.T) {
 		dispatcher := &events.SyncDispatcher{}
 		esFactory, cleanup := provideEsFactory(&providersOption{})(factoryIn{
-			Conf: config.MapAdapter{"es": map[string]Config{
+			Conf: config.MapAdapter{"es": map[string]interface{}{
 				// elasticsearch server doesn't exist at this port
-				"default": {URL: []string{"http://127.0.0.1:9999"}},
+				"default": map[string]interface{}{"url": []string{"http://127.0.0.1:9999"}},
 			}},
 			Logger:     log.NewNopLogger(),
 			Populator:  Populator{},
@@ -125,9 +125,9 @@ func TestNewEsFactory(t *testing.T) {
 	t.Run("should reload if the providersOption allows", func(t *testing.T) {
 		dispatcher := &events.SyncDispatcher{}
 		esFactory, cleanup := provideEsFactory(&providersOption{reloadable: true})(factoryIn{
-			Conf: config.MapAdapter{"es": map[string]Config{
+			Conf: config.MapAdapter{"es": map[string]interface{}{
 				// elasticsearch server doesn't exist at this port
-				"default": {URL: []string{"http://127.0.0.1:9999"}},
+				"default": map[string]interface{}{"url": []string{"http://127.0.0.1:9999"}},
 			}},
 			Logger:     log.NewNopLogger(),
 			Populator:  Populator{},
