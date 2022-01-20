@@ -179,7 +179,7 @@ func TestJobOption(t *testing.T) {
 			},
 			func(ctx context.Context) error {
 				entryCount++
-				time.Sleep(5 * time.Millisecond)
+				time.Sleep(6 * time.Millisecond)
 				return nil
 			},
 			func(t *testing.T) {
