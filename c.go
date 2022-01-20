@@ -35,7 +35,8 @@ type C struct {
 	logging.LevelLogger
 	*container.Container
 	contract.Dispatcher
-	di *dig.Container
+	di         *dig.Container
+	baseLogger log.Logger
 }
 
 // ConfParser models a parser for configuration. For example, yaml.Parser.
@@ -184,6 +185,7 @@ func New(opts ...CoreOption) *C {
 		Container:      &container.Container{},
 		Dispatcher:     dispatcher,
 		di:             diContainer,
+		baseLogger:     logger,
 	}
 	return &c
 }
@@ -318,7 +320,7 @@ func (c *C) provide(constructor interface{}) {
 		}
 		return filteredOuts
 	})
-	options = append(options, dig.LocationForPC(reflect.ValueOf(constructor).Pointer()))
+	options = append([]dig.ProvideOption{dig.LocationForPC(reflect.ValueOf(constructor).Pointer())}, options...)
 	err := c.di.Provide(fn.Interface(), options...)
 	if err != nil {
 		panic(err)
@@ -351,7 +353,7 @@ func (c *C) ProvideEssentials() {
 			Container:         c.Container,
 			ConfigUnmarshaler: c.ConfigAccessor,
 			ConfigAccessor:    c.ConfigAccessor,
-			Logger:            c.LevelLogger,
+			Logger:            c.baseLogger,
 			LevelLogger:       c.LevelLogger,
 			Dispatcher:        c.Dispatcher,
 			DIPopulator:       di.IntoPopulator(c.di),

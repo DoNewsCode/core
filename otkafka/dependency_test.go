@@ -25,14 +25,14 @@ func TestProvideReaderFactory(t *testing.T) {
 	}
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideReaderFactory(factoryIn{
-		Conf: config.MapAdapter{"kafka.reader": map[string]ReaderConfig{
-			"default": {
-				Brokers: addrs,
-				Topic:   "Test",
+		Conf: config.MapAdapter{"kafka.reader": map[string]interface{}{
+			"default": map[string]interface{}{
+				"brokers": addrs,
+				"topic":   "Test",
 			},
-			"alternative": {
-				Brokers: addrs,
-				Topic:   "Test",
+			"alternative": map[string]interface{}{
+				"brokers": addrs,
+				"topic":   "Test",
 			},
 		}},
 	}, func(name string, reader *kafka.ReaderConfig) {})
@@ -54,14 +54,14 @@ func TestProvideWriterFactory(t *testing.T) {
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideWriterFactory(factoryIn{
 		In: di.In{},
-		Conf: config.MapAdapter{"kafka.writer": map[string]WriterConfig{
-			"default": {
-				Brokers: addrs,
-				Topic:   "Test",
+		Conf: config.MapAdapter{"kafka.writer": map[string]interface{}{
+			"default": map[string]interface{}{
+				"brokers": addrs,
+				"topic":   "Test",
 			},
-			"alternative": {
-				Brokers: addrs,
-				Topic:   "Test",
+			"alternative": map[string]interface{}{
+				"brokers": addrs,
+				"topic":   "Test",
 			},
 		}},
 	}, func(name string, writer *kafka.Writer) {})
