@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"math/rand"
-	"runtime"
 	"testing"
 	"time"
 
@@ -115,41 +114,21 @@ func TestFactory_Watch(t *testing.T) {
 func TestFactory_SubscribeReloadEventFrom(t *testing.T) {
 	t.Parallel()
 
-	var (
-		ptr = &struct {
-			Dummy string
-		}{Dummy: "dummy"}
-		closed = make(chan struct{})
-	)
+	closed := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	f := NewFactory(func(_ string) (Pair, error) {
 		return Pair{
-			Conn:   ptr,
+			Conn:   &struct{}{},
 			Closer: func() { close(closed) },
 		}, nil
 	})
 	dispatcher := events.SyncDispatcher{}
 	f.SubscribeReloadEventFrom(&dispatcher)
 
-	foo, err := f.Make("default")
-	assert.NoError(t, err)
-	assert.Same(t, ptr, foo)
-
+	f.Make("default")
 	_ = dispatcher.Dispatch(ctx, events.OnReload, events.OnReloadPayload{})
 
-	// We don't want to interrupt ongoing request, so foo should not be closed by now
-	select {
-	case <-closed:
-		t.Fatalf("foo should not be closed.")
-	default:
-	}
-
-	// now that foo is garbage collected, we can safely close foo.
-	ptr = nil //nolint
-	foo = nil //nolint
-	runtime.GC()
-	cancel()
 	select {
 	case <-closed:
 	case <-time.After(4 * time.Second):

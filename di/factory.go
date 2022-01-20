@@ -2,8 +2,6 @@ package di
 
 import (
 	"context"
-	"reflect"
-	"runtime"
 	"sync"
 
 	"golang.org/x/sync/singleflight"
@@ -69,17 +67,7 @@ func (f *Factory) SubscribeReloadEventFrom(dispatcher contract.Dispatcher) {
 				if pair.Closer == nil {
 					return true
 				}
-				finalized := make(chan struct{})
-				if reflect.TypeOf(pair.Conn).Kind() == reflect.Ptr {
-					runtime.SetFinalizer(pair.Conn, func(_ interface{}) { finalized <- struct{}{} })
-				}
-				go func() {
-					select {
-					case <-ctx.Done():
-					case <-finalized:
-					}
-					pair.Closer()
-				}()
+				pair.Closer()
 				return true
 			})
 			return nil
