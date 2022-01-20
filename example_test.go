@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
+	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/basicflag"
@@ -29,13 +31,31 @@ func ExampleC_AddModuleFunc() {
 	// core.cleanup core_test.Foo
 }
 
-func ExampleC_AddModule() {
+func ExampleC_AddModule_simple() {
 	type Foo struct{}
 	c := core.New()
 	c.AddModule(Foo{})
 	fmt.Printf("%T\n", c.Modules()...)
 	// Output:
 	// core_test.Foo
+}
+
+func ExampleC_AddModule_inject() {
+	type Foo struct {
+		di.In
+		Logger log.Logger
+	}
+	var f Foo
+	c := core.New()
+	c.Provide(di.Deps{func() log.Logger {
+		return log.NewLogfmtLogger(os.Stdout)
+	}})
+	// If the module embeds di.In (directly or indirectly via pointer), then DI will
+	// populate its fields.
+	c.AddModule(&f)
+	f.Logger.Log("msg", "hello")
+	// Output:
+	// msg=hello
 }
 
 func ExampleC_Provide() {

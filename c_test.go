@@ -191,7 +191,7 @@ func TestC_cleanup(t *testing.T) {
 		}
 	}})
 	c.Invoke(func(_ struct{}) {})
-	c.AddModule(func() func() {
+	c.AddModule(func() closer {
 		return func() {
 			moduleCleanupCalled = true
 		}
@@ -215,4 +215,43 @@ func TestContainer_Shutdown(t *testing.T) {
 	container.AddModule(closer(func() { assert.Equal(t, 0, seq); seq = 3 }))
 	container.Shutdown()
 	assert.Equal(t, 1, seq)
+}
+
+func TestC_AddModule(t *testing.T) {
+	type Module struct {
+		di.In
+		Int   int
+		Float float64 `optional:"true"`
+	}
+	for _, c := range []struct {
+		name      string
+		module    interface{}
+		assertion func(t *testing.T, c *C)
+	}{
+		{
+			"di.In",
+			Module{Float: 2.0},
+			func(t *testing.T, c *C) {
+				assert.Equal(t, 1, c.Modules()[0].(Module).Int)
+				assert.Equal(t, 0.0, c.Modules()[0].(Module).Float)
+			},
+		},
+		{
+			"*di.In",
+			&Module{Float: 2.0},
+			func(t *testing.T, c *C) {
+				assert.Equal(t, 1, c.Modules()[0].(*Module).Int)
+				assert.Equal(t, 0.0, c.Modules()[0].(*Module).Float)
+			},
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			cc := New()
+			cc.Provide(di.Deps{func() int {
+				return 1
+			}})
+			cc.AddModule(c.module)
+			c.assertion(t, cc)
+		})
+	}
 }

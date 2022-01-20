@@ -198,33 +198,35 @@ func Default(opts ...CoreOption) *C {
 	return c
 }
 
-// AddModule adds one or more module(s) to the core. If any of the variadic
-// arguments is an error, it would panic. This makes it easy to consume
-// constructors directly, so instead of writing:
-//
-//  component, err := components.New()
-//  if err != nil {
-//    panic(err)
-//  }
-//  c.AddModule(component)
-//
-// You can write:
-//
-//  c.AddModule(component.New())
+// AddModule adds a module to the core.
 //
 // A Module is a group of functionality. It must provide some runnable stuff:
 // http handlers, grpc handlers, cron jobs, one-time command, etc.
-func (c *C) AddModule(modules ...interface{}) {
-	for i := range modules {
-		switch x := modules[i].(type) {
-		case error:
-			panic(x)
-		case func():
-			c.Container.AddModule(cleanup(x))
-		default:
-			c.Container.AddModule(x)
+//
+// Optionally if the module embeds di.In, its fields will be injected by DI
+// container. The semantics of injection follows the same rule of dig.Invoke.
+// Note that the module added in this way will not retain any original field
+// values, i.e. the module will only contain fields populated by DI container.
+func (c *C) AddModule(module interface{}) {
+	t := reflect.TypeOf(module)
+	if t.Kind() == reflect.Ptr && dig.IsIn(t.Elem()) {
+		err := di.IntoPopulator(c.di).Populate(module)
+		if err != nil {
+			panic(err)
 		}
+		c.Container.AddModule(module)
+		return
 	}
+	if dig.IsIn(t) {
+		copy := reflect.New(t)
+		err := di.IntoPopulator(c.di).Populate(copy.Interface())
+		if err != nil {
+			panic(err)
+		}
+		c.Container.AddModule(copy.Elem().Interface())
+		return
+	}
+	c.Container.AddModule(module)
 }
 
 // Provide adds dependencies provider to the core. Note the dependency provider
