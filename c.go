@@ -207,14 +207,14 @@ func Default(opts ...CoreOption) *C {
 // container. The semantics of injection follows the same rule of dig.Invoke.
 // Note that the module added in this way will not retain any original field
 // values, i.e. the module will only contain fields populated by DI container.
-func (c *C) AddModule(modules interface{}) {
-	t := reflect.TypeOf(modules)
+func (c *C) AddModule(module interface{}) {
+	t := reflect.TypeOf(module)
 	if t.Kind() == reflect.Ptr && dig.IsIn(t.Elem()) {
-		err := di.IntoPopulator(c.di).Populate(modules)
+		err := di.IntoPopulator(c.di).Populate(module)
 		if err != nil {
 			panic(err)
 		}
-		c.Container.AddModule(modules)
+		c.Container.AddModule(module)
 		return
 	}
 	if dig.IsIn(t) {
@@ -226,7 +226,7 @@ func (c *C) AddModule(modules interface{}) {
 		c.Container.AddModule(copy.Elem().Interface())
 		return
 	}
-	c.Container.AddModule(modules)
+	c.Container.AddModule(module)
 }
 
 // Provide adds dependencies provider to the core. Note the dependency provider
