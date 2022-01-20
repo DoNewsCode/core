@@ -1,6 +1,81 @@
 
+<a name="v0.12.0"></a>
+## [v0.12.0](https://github.com/DoNewsCode/core/compare/v0.11.1...v0.12.0) (2022-01-20)
+
+### ♻️ Code Refactoring
+
+* **cron:** replace cron implementation. ([#226](https://github.com/DoNewsCode/core/issues/226)) (@[谷溪](guxi99@gmail.com))
+
+### ✨ Features
+
+* add module field injection ([#234](https://github.com/DoNewsCode/core/issues/234)) (@[谷溪](guxi99@gmail.com))
+* **dag:** add dag package. ([#222](https://github.com/DoNewsCode/core/issues/222)) (@[谷溪](guxi99@gmail.com))
+* **logging:** add WithBaggage ([#225](https://github.com/DoNewsCode/core/issues/225)) (@[谷溪](guxi99@gmail.com))
+* **observability:** capture transport status ([#224](https://github.com/DoNewsCode/core/issues/224)) (@[谷溪](guxi99@gmail.com))
+
+### 🐛 Bug Fixes
+
+* avoid extra logger wraps  ([#232](https://github.com/DoNewsCode/core/issues/232)) (@[谷溪](guxi99@gmail.com))
+* prepend dig.LocationForPC instead of append ([#231](https://github.com/DoNewsCode/core/issues/231)) (@[谷溪](guxi99@gmail.com))
+* **dag:** validate edges in AddEdges before adding them. ([#223](https://github.com/DoNewsCode/core/issues/223)) (@[谷溪](guxi99@gmail.com))
+* **deps:** upgrade github.com/go-redis/redis/v8 to v8.11.4 ([#221](https://github.com/DoNewsCode/core/issues/221)) (@[江湖大牛](nfangxu@gmail.com))
+* **factory:** on reload, close the connection right away. ([#235](https://github.com/DoNewsCode/core/issues/235)) (@[谷溪](guxi99@gmail.com))
+* **observability:** data races ([#227](https://github.com/DoNewsCode/core/issues/227)) (@[谷溪](guxi99@gmail.com))
+
+### BREAKING CHANGE
+
+
+most Observe() methods now take a time.Duration instead of float64.
+
+* wip: new cron package
+
+* refactor(cron): remove cronopts, add cron
+
+This PR replaces the cron implementation.
+
+the new cron package github/DoNewsCode/core/cron is not compatible with github.com/robfig/cron/v3. See examples for how to migrate.
+
+* refactor(cron): deprecate cronopts, add cron
+
+This PR replaces the cron implementation.
+
+the new cron package github/DoNewsCode/core/cron is not compatible with github.com/robfig/cron/v3. See examples for how to migrate.
+
+* fix: delayed time calculation
+
+* refactor: change job middleware to job options
+
+* fix: use time.Since
+
+* fix: inconsistent labels
+
+* fix: race
+
+* fix: race
+
+* fix: race
+
+* fix: race
+
+* fix: race
+
+* fix: rename JobOptions to JobOption
+
+* refactor: Reduce the API interface of Container
+
+* refactor: Reduce the API interface of Container
+
+* refactor: Reduce the API interface of Container
+
+* refactor: Reduce the API interface of Container
+
+* fix: minor adjustments of docs,imports
+
+most Observe() methods now take a time.Duration instead of float64.
+
+
 <a name="v0.11.1"></a>
-## [v0.11.1](https://github.com/DoNewsCode/core/compare/v0.11.0...v0.11.1) (2022-01-05)
+## [v0.11.1](https://github.com/DoNewsCode/core/compare/v0.11.0...v0.11.1) (2022-01-06)
 
 ### ⚡️ Performance
 
