@@ -59,14 +59,14 @@ type factoryIn struct {
 
 // Provide creates Factory and *elastic.Client. It is a valid dependency for
 // package core.
-func provideEsFactory(option *providersOption) func(p factoryIn) (Factory, func()) {
+func provideEsFactory(option *providersOption) func(p factoryIn) (Factory[elastic.Client], func()) {
 	if option.interceptor == nil {
 		option.interceptor = func(name string, opt *Config) {}
 	}
 	if option.clientConstructor == nil {
 		option.clientConstructor = newClient
 	}
-	return func(p factoryIn) (Factory, func()) {
+	return func(p factoryIn) (Factory[elastic.Client], func()) {
 		factory := di.NewFactory(func(name string) (di.Pair, error) {
 			var conf Config
 			if err := p.Conf.Unmarshal(fmt.Sprintf("es.%s", name), &conf); err != nil {
@@ -84,10 +84,10 @@ func provideEsFactory(option *providersOption) func(p factoryIn) (Factory, func(
 				Populator: p.Populator,
 			})
 			if err != nil {
-				return di.Pair{}, err
+				return di.Pair[elastic.Client]{}, err
 			}
 
-			return di.Pair{
+			return di.Pair[elastic.Client]{
 				Conn: client,
 				Closer: func() {
 					client.Stop()

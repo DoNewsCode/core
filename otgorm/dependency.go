@@ -10,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/eventsv2"
 	"github.com/go-kit/log"
 	"github.com/oklog/run"
 	"github.com/opentracing/opentracing-go"
@@ -74,11 +75,11 @@ type metricsConf struct {
 type factoryIn struct {
 	di.In
 
-	Conf       contract.ConfigUnmarshaler
-	Logger     log.Logger
-	Tracer     opentracing.Tracer  `optional:"true"`
-	Gauges     *Gauges             `optional:"true"`
-	Dispatcher contract.Dispatcher `optional:"true"`
+	Conf          contract.ConfigUnmarshaler
+	Logger        log.Logger
+	Tracer        opentracing.Tracer      `optional:"true"`
+	Gauges        *Gauges                 `optional:"true"`
+	OnReloadEvent *eventsv2.OnReloadEvent `optional:"true"`
 }
 
 // databaseOut is the result of provideDatabaseOut. *gorm.DB is not a interface
@@ -185,7 +186,7 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			options.interceptor = func(name string, conf *gorm.Config) {}
 		}
 
-		factory := di.NewFactory(func(name string) (di.Pair, error) {
+		factory := di.NewFactory[*gorm.DB](func(name string) (di.Pair[*gorm.DB], error) {
 			var (
 				dialector gorm.Dialector
 				conf      databaseConf
@@ -204,28 +205,29 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			options.interceptor(name, gormConfig)
 			conn, cleanup, err = provideGormDB(dialector, gormConfig, factoryIn.Tracer)
 			if err != nil {
-				return di.Pair{}, err
+				return di.Pair[*gorm.DB]{}, err
 			}
-			return di.Pair{
+			return di.Pair[*gorm.DB]{
 				Conn:   conn,
 				Closer: cleanup,
 			}, err
 		})
-		dbFactory := Factory{factory}
-		if options.reloadable {
-			dbFactory.SubscribeReloadEventFrom(factoryIn.Dispatcher)
+		if options.reloadable && factoryIn.OnReloadEvent != nil {
+			factoryIn.OnReloadEvent.Subscribe(func(ctx context.Context, event interface{}) error {
+				return factory.Reload(ctx)
+			})
 		}
 
 		var collector *collector
 		if factoryIn.Gauges != nil {
 			var interval time.Duration = 15 * time.Second
 			factoryIn.Conf.Unmarshal("gormMetrics.interval", &interval)
-			collector = newCollector(dbFactory, factoryIn.Gauges, interval)
+			collector = newCollector(factory, factoryIn.Gauges, interval)
 		}
 		return databaseOut{
-			Factory:   dbFactory,
+			Factory:   factory,
 			Collector: collector,
-		}, dbFactory.Close, nil
+		}, factory.Close, nil
 	}
 }
 

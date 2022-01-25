@@ -9,7 +9,7 @@ import (
 )
 
 type collector struct {
-	factory  Factory
+	factory  *Factory
 	gauges   *Gauges
 	interval time.Duration
 }
@@ -66,7 +66,7 @@ func (g *Gauges) Observe(stats sql.DBStats) {
 
 // newCollector creates a new database wrapper containing the name of the database,
 // it's driver and the (sql) database itself.
-func newCollector(factory Factory, gauges *Gauges, interval time.Duration) *collector {
+func newCollector(factory *Factory, gauges *Gauges, interval time.Duration) *collector {
 	return &collector{
 		factory:  factory,
 		gauges:   gauges,
@@ -77,7 +77,7 @@ func newCollector(factory Factory, gauges *Gauges, interval time.Duration) *coll
 // collectConnectionStats collects database connections for Prometheus to scrape.
 func (d *collector) collectConnectionStats() {
 	for k, v := range d.factory.List() {
-		conn := v.Conn.(*gorm.DB)
+		conn := v.Conn
 		db, _ := conn.DB()
 		stats := db.Stats()
 		d.gauges.DBName(k).Driver(conn.Name()).Observe(stats)

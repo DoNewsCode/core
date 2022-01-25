@@ -5,40 +5,37 @@ import (
 	"sync"
 
 	"golang.org/x/sync/singleflight"
-
-	"github.com/DoNewsCode/core/contract"
-	"github.com/DoNewsCode/core/events"
 )
 
 // Pair is a tuple representing a connection and a closer function
-type Pair struct {
-	Conn   interface{}
+type Pair[T any] struct {
+	Conn   T
 	Closer func()
 }
 
 // Factory is a concurrent safe, generic factory for databases and connections.
-type Factory struct {
+type Factory[T any] struct {
 	group       singleflight.Group
 	cache       sync.Map
-	constructor func(name string) (Pair, error)
+	constructor func(name string) (Pair[T], error)
 	reloadOnce  sync.Once
 }
 
 // NewFactory creates a new factory.
-func NewFactory(constructor func(name string) (Pair, error)) *Factory {
-	return &Factory{
+func NewFactory[T any](constructor func(name string) (Pair[T], error)) *Factory[T] {
+	return &Factory[T]{
 		constructor: constructor,
 	}
 }
 
 // Make creates an instance under the provided name. It an instance is already
 // created and it is not nil, that instance is returned to the caller.
-func (f *Factory) Make(name string) (interface{}, error) {
+func (f *Factory[T]) Make(name string) (T, error) {
 	var err error
 
 	conn, err, _ := f.group.Do(name, func() (interface{}, error) {
 		if slot, ok := f.cache.Load(name); ok {
-			return slot.(Pair).Conn, nil
+			return slot.(Pair[T]).Conn, nil
 		}
 		slot, err := f.constructor(name)
 		if err != nil {
@@ -48,38 +45,36 @@ func (f *Factory) Make(name string) (interface{}, error) {
 		return slot.Conn, nil
 	})
 	if err != nil {
-		return nil, err
+		var zero T
+		return zero, err
 	}
-	return conn, nil
+	return conn.(T), nil
 }
 
-// SubscribeReloadEventFrom subscribes to the reload events from dispatcher and then notifies the di
-// factory to clear its cache and shutdown all connections gracefully.
-func (f *Factory) SubscribeReloadEventFrom(dispatcher contract.Dispatcher) {
-	if dispatcher == nil {
-		return
-	}
-	f.reloadOnce.Do(func() {
-		dispatcher.Subscribe(events.Listen(events.OnReload, func(ctx context.Context, event interface{}) error {
-			f.cache.Range(func(key, value interface{}) bool {
-				defer f.cache.Delete(key)
-				pair := value.(Pair)
-				if pair.Closer == nil {
-					return true
-				}
-				pair.Closer()
+// Reload reloads the factory, purging all cached connections.
+func (f *Factory[T]) Reload(ctx context.Context) error {
+	f.cache.Range(func(key, value interface{}) bool {
+		select {
+		case <-ctx.Done():
+			return false
+		default:
+			f.cache.Delete(key)
+			pair := value.(Pair[T])
+			if pair.Closer == nil {
 				return true
-			})
-			return nil
-		}))
+			}
+			pair.Closer()
+			return true
+		}
 	})
+	return ctx.Err()
 }
 
 // List lists created instance in the factory.
-func (f *Factory) List() map[string]Pair {
-	out := make(map[string]Pair)
+func (f *Factory[T]) List() map[string]Pair[T] {
+	out := make(map[string]Pair[T])
 	f.cache.Range(func(key, value interface{}) bool {
-		out[key.(string)] = value.(Pair)
+		out[key.(string)] = value.(Pair[T])
 		return true
 	})
 	return out
@@ -87,29 +82,29 @@ func (f *Factory) List() map[string]Pair {
 
 // Close closes every connection created by the factory. Connections are closed
 // concurrently.
-func (f *Factory) Close() {
+func (f *Factory[T]) Close() {
 	var wg sync.WaitGroup
 	f.cache.Range(func(key, value interface{}) bool {
 		defer f.cache.Delete(key)
 
-		if value.(Pair).Closer == nil {
+		if value.(Pair[T]).Closer == nil {
 			return true
 		}
 		wg.Add(1)
-		go func(value Pair) {
+		go func(value Pair[T]) {
+			defer wg.Done()
 			value.Closer()
-			wg.Done()
-		}(value.(Pair))
+		}(value.(Pair[T]))
 		return true
 	})
 	wg.Wait()
 }
 
 // CloseConn closes a specific connection in the factory.
-func (f *Factory) CloseConn(name string) {
+func (f *Factory[T]) CloseConn(name string) {
 	if value, loaded := f.cache.LoadAndDelete(name); loaded {
-		if value.(Pair).Closer != nil {
-			value.(Pair).Closer()
+		if value.(Pair[T]).Closer != nil {
+			value.(Pair[T]).Closer()
 		}
 	}
 }
