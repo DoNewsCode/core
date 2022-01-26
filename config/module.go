@@ -20,8 +20,8 @@ import (
 // This module triggers ReloadedEvent on configuration change.
 type Module struct {
 	conf            *KoanfAdapter
+	dispatcher      contract.ConfigReloadDispatcher
 	exportedConfigs []ExportedConfig
-	dispatcher      ReloadDispatcher
 }
 
 // ConfigIn is the injection parameter for config.New.
@@ -29,7 +29,7 @@ type ConfigIn struct {
 	di.In
 
 	Conf            contract.ConfigAccessor
-	Dispatcher      ReloadDispatcher `optional:"true"`
+	dispatcher      contract.ConfigReloadDispatcher
 	ExportedConfigs []ExportedConfig `group:"config"`
 }
 
@@ -48,7 +48,7 @@ func New(p ConfigIn) (Module, error) {
 	}
 
 	return Module{
-		dispatcher:      p.Dispatcher,
+		dispatcher:      p.dispatcher,
 		conf:            adapter,
 		exportedConfigs: p.ExportedConfigs,
 	}, nil

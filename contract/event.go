@@ -13,3 +13,8 @@ type Listener interface {
 	Listen() (topic interface{})
 	Process(ctx context.Context, payload interface{}) error
 }
+
+type ConfigReloadDispatcher interface {
+	Dispatch(ctx context.Context, Config ConfigUnmarshaler) error
+	Subscribe(func(ctx context.Context, Config ConfigUnmarshaler) error) int
+}

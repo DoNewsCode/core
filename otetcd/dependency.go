@@ -8,7 +8,6 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/eventsv2"
 	"github.com/go-kit/log"
 	"github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
@@ -76,8 +75,8 @@ type factoryIn struct {
 
 	Logger        log.Logger
 	Conf          contract.ConfigUnmarshaler
-	Tracer        opentracing.Tracer      `optional:"true"`
-	OnReloadEvent *eventsv2.OnReloadEvent `optional:"true"`
+	Tracer        opentracing.Tracer              `optional:"true"`
+	OnReloadEvent contract.ConfigReloadDispatcher `optional:"true"`
 }
 
 // provideFactory creates Factory. It is a valid
@@ -130,7 +129,7 @@ func provideFactory(option *providersOption) func(p factoryIn) (*Factory, func()
 			}, nil
 		})
 		if option.reloadable && p.OnReloadEvent != nil {
-			p.OnReloadEvent.Subscribe(func(_ context.Context, _ eventsv2.OnReloadPayload) error {
+			p.OnReloadEvent.Subscribe(func(_ context.Context, _ contract.ConfigUnmarshaler) error {
 				factory.Close()
 				return nil
 			})

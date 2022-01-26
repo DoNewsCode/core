@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DoNewsCode/core/eventsv2"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
@@ -172,9 +172,9 @@ func TestModule_Watch(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		dispatcher := &eventsv2.OnReloadEvent{}
-		dispatcher.Subscribe(func(ctx context.Context, event eventsv2.OnReloadPayload) error {
-			data := event.Unmarshaler.(*KoanfAdapter)
+		dispatcher := &OnReloadEvent{}
+		dispatcher.Subscribe(func(ctx context.Context, event contract.ConfigUnmarshaler) error {
+			data := event.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil
@@ -187,18 +187,21 @@ func TestModule_Watch(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		dispatcher := &eventsv2.OnReloadEvent{}
-		dispatcher.Subscribe(func(ctx context.Context, event eventsv2.OnReloadPayload) error {
-			data := event.Unmarshaler.(*KoanfAdapter)
+		dispatcher := &OnReloadEvent{}
+		dispatcher.Subscribe(func(ctx context.Context, event contract.ConfigUnmarshaler) error {
+			data := event.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil
 		})
 
-		conf, _ := NewConfig(WithProviderLayer(confmap.Provider(map[string]interface{}{"foo": "bar"}, "."), nil), WithWatcher(&MockWatcher{}))
+		conf, _ := NewConfig(
+			WithDispatcher(dispatcher),
+			WithProviderLayer(confmap.Provider(map[string]interface{}{"foo": "bar"}, "."), nil),
+			WithWatcher(&MockWatcher{}),
+		)
 		module, _ := New(ConfigIn{
-			Conf:       conf,
-			Dispatcher: dispatcher,
+			Conf: conf,
 		})
 		var g run.Group
 		g.Add(func() error {

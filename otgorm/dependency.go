@@ -10,7 +10,6 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/eventsv2"
 	"github.com/go-kit/log"
 	"github.com/oklog/run"
 	"github.com/opentracing/opentracing-go"
@@ -77,9 +76,9 @@ type factoryIn struct {
 
 	Conf          contract.ConfigUnmarshaler
 	Logger        log.Logger
-	Tracer        opentracing.Tracer      `optional:"true"`
-	Gauges        *Gauges                 `optional:"true"`
-	OnReloadEvent *eventsv2.OnReloadEvent `optional:"true"`
+	Tracer        opentracing.Tracer              `optional:"true"`
+	Gauges        *Gauges                         `optional:"true"`
+	OnReloadEvent contract.ConfigReloadDispatcher `optional:"true"`
 }
 
 // databaseOut is the result of provideDatabaseOut. *gorm.DB is not a interface
@@ -213,7 +212,7 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			}, err
 		})
 		if options.reloadable && factoryIn.OnReloadEvent != nil {
-			factoryIn.OnReloadEvent.Subscribe(func(_ context.Context, _ eventsv2.OnReloadPayload) error {
+			factoryIn.OnReloadEvent.Subscribe(func(_ context.Context, _ contract.ConfigUnmarshaler) error {
 				factory.Close()
 				return nil
 			})

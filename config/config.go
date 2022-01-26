@@ -8,22 +8,17 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/contract"
-	"github.com/DoNewsCode/core/eventsv2"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/mitchellh/mapstructure"
 )
-
-type ReloadDispatcher interface {
-	Dispatch(ctx context.Context, event eventsv2.OnReloadPayload) error
-}
 
 // KoanfAdapter is an implementation of contract.ConfigUnmarshaler based on Koanf (https://github.com/knadh/koanf).
 type KoanfAdapter struct {
 	layers     []ProviderSet
 	validators []Validator
 	watcher    contract.ConfigWatcher
-	dispatcher ReloadDispatcher
+	dispatcher contract.ConfigReloadDispatcher
 	delimiter  string
 	rwlock     sync.RWMutex
 	K          *koanf.Koanf
@@ -62,7 +57,7 @@ func WithDelimiter(delimiter string) Option {
 }
 
 // WithDispatcher changes the default dispatcher of Koanf.
-func WithDispatcher(dispatcher ReloadDispatcher) Option {
+func WithDispatcher(dispatcher contract.ConfigReloadDispatcher) Option {
 	return func(option *KoanfAdapter) {
 		option.dispatcher = dispatcher
 	}
@@ -116,7 +111,7 @@ func (k *KoanfAdapter) Reload() error {
 	k.rwlock.Unlock()
 
 	if k.dispatcher != nil {
-		k.dispatcher.Dispatch(context.Background(), eventsv2.OnReloadPayload{Unmarshaler: k})
+		k.dispatcher.Dispatch(context.Background(), k)
 	}
 
 	return nil

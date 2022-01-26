@@ -17,6 +17,7 @@ import (
 	"github.com/DoNewsCode/core/container"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/eventsv2"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/log"
 	"github.com/knadh/koanf/providers/confmap"
@@ -332,32 +333,33 @@ func (c *C) ProvideEssentials() {
 	type coreDependencies struct {
 		di.Out
 
-		Env               contract.Env
-		AppName           contract.AppName
-		Container         contract.Container
-		ConfigUnmarshaler contract.ConfigUnmarshaler
-		ConfigAccessor    contract.ConfigAccessor
-		ConfigRouter      contract.ConfigRouter
-		ConfigWatcher     contract.ConfigWatcher
-		DIPopulator       contract.DIPopulator
-		Logger            log.Logger
-		LevelLogger       logging.LevelLogger
-		Dispatcher        contract.Dispatcher
-		DefaultConfigs    []config.ExportedConfig `group:"config,flatten"`
+		Env                    contract.Env
+		AppName                contract.AppName
+		Container              contract.Container
+		ConfigUnmarshaler      contract.ConfigUnmarshaler
+		ConfigReloadDispatcher contract.ConfigReloadDispatcher
+		ConfigAccessor         contract.ConfigAccessor
+		ConfigRouter           contract.ConfigRouter
+		ConfigWatcher          contract.ConfigWatcher
+		DIPopulator            contract.DIPopulator
+		Logger                 log.Logger
+		LevelLogger            logging.LevelLogger
+		Reload                 config.OnReloadEvent
+		DefaultConfigs         []config.ExportedConfig `group:"config,flatten"`
 	}
 
 	c.provide(func() coreDependencies {
 		coreDependencies := coreDependencies{
-			Env:               c.Env,
-			AppName:           c.AppName,
-			Container:         c.Container,
-			ConfigUnmarshaler: c.ConfigAccessor,
-			ConfigAccessor:    c.ConfigAccessor,
-			Logger:            c.baseLogger,
-			LevelLogger:       c.LevelLogger,
-			Dispatcher:        c.Dispatcher,
-			DIPopulator:       di.IntoPopulator(c.di),
-			DefaultConfigs:    provideDefaultConfig(),
+			Env:                    c.Env,
+			AppName:                c.AppName,
+			Container:              c.Container,
+			ConfigUnmarshaler:      c.ConfigAccessor,
+			ConfigAccessor:         c.ConfigAccessor,
+			Logger:                 c.baseLogger,
+			LevelLogger:            c.LevelLogger,
+			ConfigReloadDispatcher: &eventsv2.Event[contract.ConfigUnmarshaler]{},
+			DIPopulator:            di.IntoPopulator(c.di),
+			DefaultConfigs:         provideDefaultConfig(),
 		}
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {
 			coreDependencies.ConfigRouter = cc
