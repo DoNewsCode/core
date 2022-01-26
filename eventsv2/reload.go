@@ -2,8 +2,8 @@ package eventsv2
 
 import "github.com/DoNewsCode/core/contract"
 
-type OnReloadEvent = Event[OnReload]
+type OnReloadEvent = Event[OnReloadPayload]
 
-type OnReload struct {
-	Accessor contract.ConfigAccessor
+type OnReloadPayload struct {
+	Unmarshaler contract.ConfigUnmarshaler
 }

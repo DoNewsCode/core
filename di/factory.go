@@ -1,7 +1,6 @@
 package di
 
 import (
-	"context"
 	"sync"
 
 	"golang.org/x/sync/singleflight"
@@ -13,7 +12,7 @@ type Pair[T any] struct {
 	Closer func()
 }
 
-// Factory is a concurrent safe, generic factory for databases and connections.
+// Factory is a concurrent safe, generic factory for connections to databases and external network services.
 type Factory[T any] struct {
 	group       singleflight.Group
 	cache       sync.Map
@@ -21,15 +20,16 @@ type Factory[T any] struct {
 	reloadOnce  sync.Once
 }
 
-// NewFactory creates a new factory.
+// NewFactory creates a new factory. The constructor is a function that is called to create a new connection.
 func NewFactory[T any](constructor func(name string) (Pair[T], error)) *Factory[T] {
 	return &Factory[T]{
 		constructor: constructor,
 	}
 }
 
-// Make creates an instance under the provided name. It an instance is already
-// created and it is not nil, that instance is returned to the caller.
+// Make returns a connection of the given name. If the connection was already
+// created, it is returned from the cache. If not, a new connection will be
+// established by calling the constructor.
 func (f *Factory[T]) Make(name string) (T, error) {
 	var err error
 
@@ -51,23 +51,18 @@ func (f *Factory[T]) Make(name string) (T, error) {
 	return conn.(T), nil
 }
 
-// Reload reloads the factory, purging all cached connections.
-func (f *Factory[T]) Reload(ctx context.Context) error {
+// Close reloads the factory, purging all cached connections.
+func (f *Factory[T]) Close() {
 	f.cache.Range(func(key, value interface{}) bool {
-		select {
-		case <-ctx.Done():
-			return false
-		default:
-			f.cache.Delete(key)
-			pair := value.(Pair[T])
-			if pair.Closer == nil {
-				return true
-			}
-			pair.Closer()
+		f.cache.Delete(key)
+		pair := value.(Pair[T])
+		if pair.Closer == nil {
 			return true
 		}
+		pair.Closer()
+		return true
+
 	})
-	return ctx.Err()
 }
 
 // List lists created instance in the factory.
@@ -78,26 +73,6 @@ func (f *Factory[T]) List() map[string]Pair[T] {
 		return true
 	})
 	return out
-}
-
-// Close closes every connection created by the factory. Connections are closed
-// concurrently.
-func (f *Factory[T]) Close() {
-	var wg sync.WaitGroup
-	f.cache.Range(func(key, value interface{}) bool {
-		defer f.cache.Delete(key)
-
-		if value.(Pair[T]).Closer == nil {
-			return true
-		}
-		wg.Add(1)
-		go func(value Pair[T]) {
-			defer wg.Done()
-			value.Closer()
-		}(value.(Pair[T]))
-		return true
-	})
-	wg.Wait()
 }
 
 // CloseConn closes a specific connection in the factory.

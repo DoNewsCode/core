@@ -21,7 +21,7 @@ import (
 type Module struct {
 	conf            *KoanfAdapter
 	exportedConfigs []ExportedConfig
-	dispatcher      contract.Dispatcher
+	dispatcher      ReloadDispatcher
 }
 
 // ConfigIn is the injection parameter for config.New.
@@ -29,8 +29,8 @@ type ConfigIn struct {
 	di.In
 
 	Conf            contract.ConfigAccessor
-	Dispatcher      contract.Dispatcher `optional:"true"`
-	ExportedConfigs []ExportedConfig    `group:"config"`
+	Dispatcher      ReloadDispatcher `optional:"true"`
+	ExportedConfigs []ExportedConfig `group:"config"`
 }
 
 // New creates a new config module. It contains the init command.

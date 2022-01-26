@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"gorm.io/gorm"
 )
 
 type collector struct {

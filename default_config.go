@@ -8,6 +8,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/eventsv2"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -53,6 +54,7 @@ func ProvideConfig(configStack []config.ProviderSet, configWatcher contract.Conf
 		stack = append(stack, config.WithProviderLayer(layer.Provider, layer.Parser))
 	}
 	stack = append(stack, config.WithProviderLayer(rawbytes.Provider([]byte(defaultConfig)), yaml.Parser()))
+	stack = append(stack, config.WithDispatcher(&eventsv2.OnReloadEvent{}))
 	if configWatcher != nil {
 		stack = append(stack, config.WithWatcher(configWatcher))
 	}

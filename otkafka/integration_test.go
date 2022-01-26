@@ -358,7 +358,7 @@ func TestModule_hotReload(t *testing.T) {
 		assert.Equal(t, "foo", writer.Topic)
 	})
 
-	// Reload config
+	// Close config
 	conf["kafka"].(map[string]interface{})["writer"].(map[string]interface{})["default"].(map[string]interface{})["topic"] = "bar"
 	conf["kafka"].(map[string]interface{})["reader"].(map[string]interface{})["default"].(map[string]interface{})["topic"] = "bar"
 	overwriteFile(path, conf)

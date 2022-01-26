@@ -44,7 +44,7 @@ func Providers(opt ...ProvidersOptionFunc) di.Deps {
 		provideConfig,
 		provideDefaultDatabase,
 		provideDBFactory(&o),
-		di.Bind(new(Factory), new(Maker)),
+		di.Bind(new(*Factory), new(Maker)),
 	}
 }
 
@@ -87,7 +87,7 @@ type factoryIn struct {
 type databaseOut struct {
 	di.Out
 
-	Factory   Factory
+	Factory   *Factory
 	Collector *collector
 }
 
@@ -186,7 +186,7 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			options.interceptor = func(name string, conf *gorm.Config) {}
 		}
 
-		factory := di.NewFactory[*gorm.DB](func(name string) (di.Pair[*gorm.DB], error) {
+		factory := di.NewFactory[*gorm.DB](func(name string) (pair di.Pair[*gorm.DB], err error) {
 			var (
 				dialector gorm.Dialector
 				conf      databaseConf
@@ -195,17 +195,17 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			)
 			factoryIn := factoryIn
 			if err := factoryIn.Conf.Unmarshal(fmt.Sprintf("gorm.%s", name), &conf); err != nil {
-				return di.Pair{}, fmt.Errorf("database configuration %s not valid: %w", name, err)
+				return pair, fmt.Errorf("database configuration %s not valid: %w", name, err)
 			}
-			dialector, err := provideDialector(&conf, options.drivers)
+			dialector, err = provideDialector(&conf, options.drivers)
 			if err != nil {
-				return di.Pair{}, err
+				return pair, err
 			}
 			gormConfig := provideGormConfig(logger, &conf)
 			options.interceptor(name, gormConfig)
 			conn, cleanup, err = provideGormDB(dialector, gormConfig, factoryIn.Tracer)
 			if err != nil {
-				return di.Pair[*gorm.DB]{}, err
+				return pair, err
 			}
 			return di.Pair[*gorm.DB]{
 				Conn:   conn,
@@ -213,8 +213,9 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			}, err
 		})
 		if options.reloadable && factoryIn.OnReloadEvent != nil {
-			factoryIn.OnReloadEvent.Subscribe(func(ctx context.Context, event interface{}) error {
-				return factory.Reload(ctx)
+			factoryIn.OnReloadEvent.Subscribe(func(_ context.Context, _ eventsv2.OnReloadPayload) error {
+				factory.Close()
+				return nil
 			})
 		}
 

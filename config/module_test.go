@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/eventsv2"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
@@ -172,13 +172,13 @@ func TestModule_Watch(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		dispatcher := &events.SyncDispatcher{}
-		dispatcher.Subscribe(events.Listen(events.OnReload, func(ctx context.Context, event interface{}) error {
-			data := event.(events.OnReloadPayload).NewConf.(*KoanfAdapter)
+		dispatcher := &eventsv2.OnReloadEvent{}
+		dispatcher.Subscribe(func(ctx context.Context, event eventsv2.OnReloadPayload) error {
+			data := event.Unmarshaler.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil
-		}))
+		})
 		conf, _ := NewConfig(WithDispatcher(dispatcher), WithProviderLayer(confmap.Provider(map[string]interface{}{"foo": "bar"}, "."), nil))
 		conf.Watch(ctx)
 	})
@@ -187,13 +187,13 @@ func TestModule_Watch(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		dispatcher := &events.SyncDispatcher{}
-		dispatcher.Subscribe(events.Listen(events.OnReload, func(ctx context.Context, event interface{}) error {
-			data := event.(events.OnReloadPayload).NewConf.(*KoanfAdapter)
+		dispatcher := &eventsv2.OnReloadEvent{}
+		dispatcher.Subscribe(func(ctx context.Context, event eventsv2.OnReloadPayload) error {
+			data := event.Unmarshaler.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil
-		}))
+		})
 
 		conf, _ := NewConfig(WithProviderLayer(confmap.Provider(map[string]interface{}{"foo": "bar"}, "."), nil), WithWatcher(&MockWatcher{}))
 		module, _ := New(ConfigIn{

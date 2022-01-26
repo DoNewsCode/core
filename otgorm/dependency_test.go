@@ -35,10 +35,9 @@ func TestProvideDBFactory(t *testing.T) {
 			t.Run(driverName, func(t *testing.T) {
 				dispatcher := &events.SyncDispatcher{}
 				out, cleanup, _ := provideDBFactory(&providersOption{reloadable: reloadable})(factoryIn{
-					Conf:       config.MapAdapter{"gorm": gorms},
-					Logger:     log.NewNopLogger(),
-					Tracer:     nil,
-					Dispatcher: dispatcher,
+					Conf:   config.MapAdapter{"gorm": gorms},
+					Logger: log.NewNopLogger(),
+					Tracer: nil,
 				})
 				defer cleanup()
 				db, err := out.Factory.Make(driverName)
@@ -63,7 +62,7 @@ func TestGorm(t *testing.T) {
 	c.Provide(Providers())
 	c.Invoke(func(
 		d1 Maker,
-		d2 Factory,
+		d2 *Factory,
 		d3 struct {
 			di.In
 			Cfg []config.ExportedConfig `group:"config"`
