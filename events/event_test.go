@@ -1,4 +1,4 @@
-package eventsv2
+package events
 
 import (
 	"context"
@@ -35,23 +35,23 @@ func TestEvent(t *testing.T) {
 		{
 			"one success listener",
 			func(e *Event[TestResult]) {
-				e.Subscribe(successListener)
+				e.On(successListener)
 			},
 			1,
 		},
 		{
 			"two success listener",
 			func(e *Event[TestResult]) {
-				e.Subscribe(successListener)
-				e.Subscribe(successListener)
+				e.On(successListener)
+				e.On(successListener)
 			},
 			2,
 		},
 		{
 			"one fail listener & one success listener",
 			func(e *Event[TestResult]) {
-				e.Subscribe(failListener)
-				e.Subscribe(successListener)
+				e.On(failListener)
+				e.On(successListener)
 			},
 			1,
 		},
@@ -66,7 +66,7 @@ func TestEvent(t *testing.T) {
 		{
 			"one fail listener",
 			func(e *Event[TestResult]) {
-				e.Subscribe(failListener)
+				e.On(failListener)
 			},
 			1,
 		},
@@ -76,7 +76,7 @@ func TestEvent(t *testing.T) {
 			var count int
 			event := &Event[TestResult]{}
 			c.action(event)
-			event.Dispatch(context.Background(), TestResult{Count: &count})
+			event.Fire(context.Background(), TestResult{Count: &count})
 			if count != c.expected {
 				t.Errorf("expected %d listeners, got %d", c.expected, count)
 			}
@@ -107,7 +107,7 @@ func TestEvent_DoubleFiring(t *testing.T) {
 		{
 			"one success listener",
 			func(e *Event[TestResult]) {
-				e.Subscribe(successListener)
+				e.On(successListener)
 			},
 			2,
 		},
@@ -119,9 +119,9 @@ func TestEvent_DoubleFiring(t *testing.T) {
 			1,
 		},
 		{
-			"subscribeOnce",
+			"once",
 			func(e *Event[TestResult]) {
-				e.SubscribeOnce(successListener)
+				e.Once(successListener)
 			},
 			1,
 		},
@@ -131,8 +131,8 @@ func TestEvent_DoubleFiring(t *testing.T) {
 			var count int
 			event := &Event[TestResult]{}
 			c.action(event)
-			event.Dispatch(context.Background(), TestResult{Count: &count})
-			event.Dispatch(context.Background(), TestResult{Count: &count})
+			event.Fire(context.Background(), TestResult{Count: &count})
+			event.Fire(context.Background(), TestResult{Count: &count})
 			if count != c.expected {
 				t.Errorf("expected %d listeners, got %d", c.expected, count)
 			}
@@ -153,11 +153,11 @@ func TestEvent_Races(t *testing.T) {
 		wg.Add(4)
 		go func() {
 			defer wg.Done()
-			event.Dispatch(ctx, struct{}{})
+			event.Fire(ctx, struct{}{})
 		}()
 		go func() {
 			defer wg.Done()
-			event.SubscribeOnce(func(ctx context.Context, event struct{}) error {
+			event.Once(func(ctx context.Context, event struct{}) error {
 				return nil
 			})
 		}()

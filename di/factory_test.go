@@ -89,7 +89,7 @@ func TestFactory_Watch(t *testing.T) {
 	assert.Equal(t, "foo", *foo)
 
 	mockConf = "bar"
-	f.Reload()
+	f.Close()
 
 	foo, err = f.Make("default")
 	assert.NoError(t, err)

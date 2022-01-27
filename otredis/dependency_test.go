@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
 	"github.com/go-kit/log"
 	"github.com/go-redis/redis/v8"
@@ -23,7 +24,7 @@ func TestNewRedisFactory(t *testing.T) {
 		{"not reload", false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			dispatcher := &events.SyncDispatcher{}
+			dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
 			redisOut, cleanup := provideRedisFactory(&providersOption{reloadable: c.reload})(factoryIn{
 				Conf: config.MapAdapter{"redis": map[string]RedisUniversalOptions{
 					"default":     {},

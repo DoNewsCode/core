@@ -14,13 +14,13 @@ import (
 	"github.com/DoNewsCode/core/contract"
 )
 
-var _ contract.ConfigUnmarshaler = (*Baggage)(nil)
+var _ contract.ConfigUnmarshaler = (*Baggage[string, any])(nil)
 
 // KeyVal combines a string key with its abstract value into a single tuple.
 // It's used internally, and as a return type for Slice.
-type KeyVal struct {
-	Key string
-	Val interface{}
+type KeyVal[K comparable, V any] struct {
+	Key K
+	Val V
 }
 
 // ErrNoBaggage is returned by accessor methods when they're called on a nil
@@ -45,15 +45,15 @@ var ErrNotFound = errors.New("key not found")
 // Use the From helper function to retrieve a previously-injected Baggage from a
 // context, and set or get metadata. At the end of the request, all metadata
 // collected will be available from any point in the callstack.
-type Baggage struct {
-	c chan []KeyVal
+type Baggage[K comparable, V any] struct {
+	ch chan []KeyVal[K, V]
 }
 
 // Unmarshal get the value at given path, and store it into the target variable. Target must
 // be a pointer to an assignable type. Unmarshal will return ErrNotFound if the key
 // is not found, and ErrIncompatibleType if the found value is not assignable to
 // target. Unmarshal also implements contract.ConfigUnmarshaler.
-func (b *Baggage) Unmarshal(path string, target interface{}) error {
+func (b *Baggage[K, V]) Unmarshal(path K, target interface{}) error {
 	val, err := b.Get(path)
 	if err != nil {
 		return err
@@ -76,13 +76,13 @@ func (b *Baggage) Unmarshal(path string, target interface{}) error {
 
 // Get the value associated with key, or return ErrNotFound. If this method is
 // called on a nil Baggage pointer, it returns ErrNoBaggage.
-func (b *Baggage) Get(key string) (value interface{}, err error) {
+func (b *Baggage[K, V]) Get(key K) (value V, err error) {
 	if b == nil {
-		return nil, ErrNoBaggage
+		return value, ErrNoBaggage
 	}
 
-	s := <-b.c
-	defer func() { b.c <- s }()
+	s := <-b.ch
+	defer func() { b.ch <- s }()
 
 	for _, kv := range s {
 		if kv.Key == key {
@@ -90,18 +90,18 @@ func (b *Baggage) Get(key string) (value interface{}, err error) {
 		}
 	}
 
-	return nil, ErrNotFound
+	return value, ErrNotFound
 }
 
 // Set key to value. If key already exists, it will be overwritten. If this method
 // is called on a nil Baggage pointer, it returns ErrNoBaggage.
-func (b *Baggage) Set(key string, value interface{}) (err error) {
+func (b *Baggage[K, V]) Set(key K, value V) (err error) {
 	if b == nil {
 		return ErrNoBaggage
 	}
 
-	s := <-b.c
-	defer func() { b.c <- s }()
+	s := <-b.ch
+	defer func() { b.ch <- s }()
 
 	for i := range s {
 		if s[i].Key == key {
@@ -111,7 +111,7 @@ func (b *Baggage) Set(key string, value interface{}) (err error) {
 		}
 	}
 
-	s = append(s, KeyVal{key, value})
+	s = append(s, KeyVal[K, V]{key, value})
 
 	return nil
 }
@@ -119,13 +119,13 @@ func (b *Baggage) Set(key string, value interface{}) (err error) {
 // Update key to the value returned from the callback. If key doesn't exist, it
 // returns ErrNotFound. If this method is called on a nil Baggage pointer, it
 // returns ErrNoBaggage.
-func (b *Baggage) Update(key string, callback func(value interface{}) interface{}) (err error) {
+func (b *Baggage[K, V]) Update(key K, callback func(value V) V) (err error) {
 	if b == nil {
 		return ErrNoBaggage
 	}
 
-	s := <-b.c
-	defer func() { b.c <- s }()
+	s := <-b.ch
+	defer func() { b.ch <- s }()
 
 	for i := range s {
 		if s[i].Key == key {
@@ -140,12 +140,12 @@ func (b *Baggage) Update(key string, callback func(value interface{}) interface{
 // Delete key from baggage. If key doesn't exist, it returns ErrNotFound. If the
 // MetadataSet is not associated with an initialized baggage, it returns
 // ErrNoBaggage.
-func (b *Baggage) Delete(key interface{}) (err error) {
+func (b *Baggage[K, V]) Delete(key K) (err error) {
 	if b == nil {
 		return ErrNoBaggage
 	}
-	s := <-b.c
-	defer func() { b.c <- s }()
+	s := <-b.ch
+	defer func() { b.ch <- s }()
 
 	for i := range s {
 		if s[i].Key == key {
@@ -158,28 +158,28 @@ func (b *Baggage) Delete(key interface{}) (err error) {
 }
 
 // Slice returns a slice of key/value pairs in the order in which they were set.
-func (b *Baggage) Slice() []KeyVal {
+func (b *Baggage[K, V]) Slice() []KeyVal[K, V] {
 	if b == nil {
 		return nil
 	}
-	s := <-b.c
-	defer func() { b.c <- s }()
+	s := <-b.ch
+	defer func() { b.ch <- s }()
 
-	r := make([]KeyVal, len(s))
+	r := make([]KeyVal[K, V], len(s))
 	copy(r, s)
 	return r
 }
 
 // Map returns a map of key to value.
-func (b *Baggage) Map() map[string]interface{} {
+func (b *Baggage[K, V]) Map() map[K]V {
 	if b == nil {
 		return nil
 	}
 
-	s := <-b.c
-	defer func() { b.c <- s }()
+	s := <-b.ch
+	defer func() { b.ch <- s }()
 
-	mp := make(map[string]interface{}, len(s))
+	mp := make(map[K]V, len(s))
 	for _, kv := range s {
 		mp[kv.Key] = kv.Val
 	}
@@ -188,34 +188,35 @@ func (b *Baggage) Map() map[string]interface{} {
 
 // MetadataSet is a group key to the contextual data stored the context.
 // The data stored with different MetadataSet instances are not shared.
-type MetadataSet struct {
+type MetadataSet[K comparable, V any] struct {
 	key *struct{}
 }
 
 // DefaultMetadata contains the default key for Baggage in the context. Use this if there
 // is no need to categorize metadata, ie. put all data in one baggage.
-var DefaultMetadata = MetadataSet{key: &struct{}{}}
+var DefaultMetadata = MetadataSet[string, any]{key: &struct{}{}}
 
 // New constructs a new set of metadata. This metadata can be used to retrieve a group of contextual data.
 // The data stored with different MetadataSet instances are not shared.
-func New() *MetadataSet {
-	return &MetadataSet{key: &struct{}{}}
+func New[K comparable, V any]() *MetadataSet[K, V] {
+	return &MetadataSet[K, V]{key: &struct{}{}}
 }
 
 // Inject constructs a Baggage object and injects it into the provided context
 // under the context key determined the metadata instance. Use the returned
 // context for all further operations. The returned Baggage can be queried at any
 // point for metadata collected over the life of the context.
-func (m *MetadataSet) Inject(ctx context.Context) (*Baggage, context.Context) {
-	c := make(chan []KeyVal, 1)
-	c <- make([]KeyVal, 0, 32)
-	d := &Baggage{c: c}
+func (m *MetadataSet[K, V]) Inject(ctx context.Context) (*Baggage[K, V], context.Context) {
+	c := make(chan []KeyVal[K, V], 1)
+	c <- make([]KeyVal[K, V], 0, 32)
+	d := &Baggage[K, V]{}
+	d.ch = c
 	return d, context.WithValue(ctx, m.key, d)
 }
 
 // GetBaggage returns the Baggage stored in the context.
-func (m *MetadataSet) GetBaggage(ctx context.Context) *Baggage {
-	if val, ok := ctx.Value(m.key).(*Baggage); ok {
+func (m *MetadataSet[K, V]) GetBaggage(ctx context.Context) *Baggage[K, V] {
+	if val, ok := ctx.Value(m.key).(*Baggage[K, V]); ok {
 		return val
 	}
 	return nil
@@ -224,7 +225,7 @@ func (m *MetadataSet) GetBaggage(ctx context.Context) *Baggage {
 // GetOrInjectBaggage creates and returns Baggage. using Baggage found within the context.
 // If that doesn't exist it creates new Baggage. It also returns a context.Context
 // object built around the returned Baggage.
-func (m *MetadataSet) GetOrInjectBaggage(ctx context.Context) (*Baggage, context.Context) {
+func (m *MetadataSet[K, V]) GetOrInjectBaggage(ctx context.Context) (*Baggage[K, V], context.Context) {
 	if baggage := m.GetBaggage(ctx); baggage != nil {
 		return baggage, ctx
 	}
@@ -235,18 +236,18 @@ func (m *MetadataSet) GetOrInjectBaggage(ctx context.Context) (*Baggage, context
 // under the default context key. Use the returned context for all further
 // operations. The returned Data can be queried at any point for metadata
 // collected over the life of the context.
-func Inject(ctx context.Context) (*Baggage, context.Context) {
+func Inject(ctx context.Context) (*Baggage[string, any], context.Context) {
 	return DefaultMetadata.Inject(ctx)
 }
 
 // GetBaggage returns the default Baggage stored in the context.
-func GetBaggage(ctx context.Context) *Baggage {
+func GetBaggage(ctx context.Context) *Baggage[string, any] {
 	return DefaultMetadata.GetBaggage(ctx)
 }
 
 // GetOrInjectBaggage creates and returns Baggage. using Baggage found within the context.
 // If that doesn't exist it creates new Baggage. It also returns a context.Context
 // object built around the returned Baggage.
-func GetOrInjectBaggage(ctx context.Context) (*Baggage, context.Context) {
+func GetOrInjectBaggage(ctx context.Context) (*Baggage[string, any], context.Context) {
 	return DefaultMetadata.GetOrInjectBaggage(ctx)
 }

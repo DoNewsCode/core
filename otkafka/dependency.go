@@ -7,6 +7,7 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -63,17 +64,17 @@ type factoryIn struct {
 	Tracer      opentracing.Tracer `optional:"true"`
 	Conf        contract.ConfigUnmarshaler
 	Logger      log.Logger
-	ReaderStats *ReaderStats        `optional:"true"`
-	WriterStats *WriterStats        `optional:"true"`
-	Dispatcher  contract.Dispatcher `optional:"true"`
+	ReaderStats *ReaderStats           `optional:"true"`
+	WriterStats *WriterStats           `optional:"true"`
+	Dispatcher  lifecycle.ConfigReload `optional:"true"`
 }
 
 // factoryOut is the result of provideKafkaFactory.
 type factoryOut struct {
 	di.Out
 
-	ReaderFactory   ReaderFactory
-	WriterFactory   WriterFactory
+	ReaderFactory   *ReaderFactory
+	WriterFactory   *WriterFactory
 	Reader          *kafka.Reader
 	Writer          *kafka.Writer
 	ReaderCollector *readerCollector
@@ -161,13 +162,12 @@ func provideKafkaFactory(option *providersOption) func(p factoryIn) (factoryOut,
 			}
 		}
 
-		if p.Dispatcher != nil {
-			if option.writerReloadable {
-				wf.SubscribeReloadEventFrom(p.Dispatcher)
-			}
-			if option.readerReloadable {
-				rf.SubscribeReloadEventFrom(p.Dispatcher)
-			}
+		if option.writerReloadable && p.Dispatcher != nil {
+			p.Dispatcher.On(func(ctx context.Context, Config contract.ConfigUnmarshaler) error {
+				wf.Close()
+				rf.Close()
+				return nil
+			})
 		}
 
 		return factoryOut{
@@ -183,15 +183,14 @@ func provideKafkaFactory(option *providersOption) func(p factoryIn) (factoryOut,
 
 // provideReaderFactory creates the ReaderFactory. It is valid
 // dependency option for package core.
-func provideReaderFactory(p factoryIn, interceptor ReaderInterceptor) (ReaderFactory, func()) {
-	factory := di.NewFactory(func(name string) (di.Pair, error) {
+func provideReaderFactory(p factoryIn, interceptor ReaderInterceptor) (*ReaderFactory, func()) {
+	factory := di.NewFactory[*kafka.Reader](func(name string) (pair di.Pair[*kafka.Reader], err error) {
 		var (
-			err          error
 			readerConfig ReaderConfig
 		)
 		err = p.Conf.Unmarshal(fmt.Sprintf("kafka.reader.%s", name), &readerConfig)
 		if err != nil {
-			return di.Pair{}, fmt.Errorf("kafka reader configuration %s not valid: %w", name, err)
+			return pair, fmt.Errorf("kafka reader configuration %s not valid: %w", name, err)
 		}
 
 		// converts to the kafka.ReaderConfig from github.com/segmentio/kafka-go
@@ -200,27 +199,26 @@ func provideReaderFactory(p factoryIn, interceptor ReaderInterceptor) (ReaderFac
 		conf.ErrorLogger = KafkaLogAdapter{Logging: level.Warn(p.Logger)}
 		interceptor(name, &conf)
 		client := kafka.NewReader(conf)
-		return di.Pair{
+		return di.Pair[*kafka.Reader]{
 			Conn: client,
 			Closer: func() {
 				_ = client.Close()
 			},
 		}, nil
 	})
-	return ReaderFactory{factory}, factory.Close
+	return factory, factory.Close
 }
 
 // provideWriterFactory creates WriterFactory. It is a valid injection
 // option for package core.
-func provideWriterFactory(p factoryIn, interceptor WriterInterceptor) (WriterFactory, func()) {
-	factory := di.NewFactory(func(name string) (di.Pair, error) {
+func provideWriterFactory(p factoryIn, interceptor WriterInterceptor) (*WriterFactory, func()) {
+	factory := di.NewFactory[*kafka.Writer](func(name string) (pair di.Pair[*kafka.Writer], err error) {
 		var (
-			err          error
 			writerConfig WriterConfig
 		)
 		err = p.Conf.Unmarshal(fmt.Sprintf("kafka.writer.%s", name), &writerConfig)
 		if err != nil {
-			return di.Pair{}, fmt.Errorf("kafka writer configuration %s not valid: %w", name, err)
+			return pair, fmt.Errorf("kafka writer configuration %s not valid: %w", name, err)
 		}
 		writer := fromWriterConfig(writerConfig)
 		logger := log.With(p.Logger, "tag", "kafka")
@@ -229,14 +227,14 @@ func provideWriterFactory(p factoryIn, interceptor WriterInterceptor) (WriterFac
 		writer.Transport = NewTransport(kafka.DefaultTransport, p.Tracer)
 		interceptor(name, &writer)
 
-		return di.Pair{
+		return di.Pair[*kafka.Writer]{
 			Conn: &writer,
 			Closer: func() {
 				_ = writer.Close()
 			},
 		}, nil
 	})
-	return WriterFactory{factory}, factory.Close
+	return factory, factory.Close
 }
 
 type metricsConf struct {

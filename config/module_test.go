@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/events"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
@@ -172,8 +173,8 @@ func TestModule_Watch(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		dispatcher := &OnReloadEvent{}
-		dispatcher.Subscribe(func(ctx context.Context, event contract.ConfigUnmarshaler) error {
+		dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
+		dispatcher.On(func(ctx context.Context, event contract.ConfigUnmarshaler) error {
 			data := event.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
@@ -187,8 +188,8 @@ func TestModule_Watch(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		dispatcher := &OnReloadEvent{}
-		dispatcher.Subscribe(func(ctx context.Context, event contract.ConfigUnmarshaler) error {
+		dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
+		dispatcher.On(func(ctx context.Context, event contract.ConfigUnmarshaler) error {
 			data := event.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()

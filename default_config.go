@@ -7,6 +7,8 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
+	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/log"
@@ -105,9 +107,23 @@ func ProvideDi(conf contract.ConfigUnmarshaler) *dig.Container {
 	return dig.New()
 }
 
-// ProvideEventDispatcher is the default EventDispatcherProvider for package Core.
-func ProvideEventDispatcher(conf contract.ConfigUnmarshaler) contract.Dispatcher {
-	return &events.SyncDispatcher{}
+type lifecycleOut struct {
+	di.Out
+	lifecycle.ConfigReload
+	lifecycle.HTTPServerStart
+	lifecycle.HTTPServerShutdown
+	lifecycle.GRPCServerStart
+	lifecycle.GRPCServerShutdown
+}
+
+func provideLifecycle() lifecycleOut {
+	return lifecycleOut{
+		ConfigReload:       &events.Event[contract.ConfigUnmarshaler]{},
+		HTTPServerStart:    &events.Event[lifecycle.HTTPServerStartPayload]{},
+		HTTPServerShutdown: &events.Event[lifecycle.HTTPServerShutdownPayload]{},
+		GRPCServerStart:    &events.Event[lifecycle.GRPCServerStartPayload]{},
+		GRPCServerShutdown: &events.Event[lifecycle.GRPCServerShutdownPayload]{},
+	}
 }
 
 // provideDefaultConfig exports config for "name", "version", "env", "http", "grpc".

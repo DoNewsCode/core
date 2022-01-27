@@ -9,6 +9,7 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/log"
 	"github.com/oklog/run"
@@ -21,11 +22,11 @@ import (
 Providers returns a set of database related providers for package core. It includes
 the Maker, database configs and the default *gorm.DB instance.
 	Depends On:
-		contract.ConfigAccessor
+		contract.ConfigUnmarshaler
 		log.Logger
-		opentracing.Tracer    `optional:"true"`
-		Gauges `optional:"true"`
-		contract.Dispatcher `optional:"true"`
+		opentracing.Tracer     `optional:"true"`
+		*Gauges                `optional:"true"`
+		lifecycle.ConfigReload `optional:"true"`
 	Provide:
 		Maker
 		Factory
@@ -76,9 +77,9 @@ type factoryIn struct {
 
 	Conf          contract.ConfigUnmarshaler
 	Logger        log.Logger
-	Tracer        opentracing.Tracer              `optional:"true"`
-	Gauges        *Gauges                         `optional:"true"`
-	OnReloadEvent contract.ConfigReloadDispatcher `optional:"true"`
+	Tracer        opentracing.Tracer     `optional:"true"`
+	Gauges        *Gauges                `optional:"true"`
+	OnReloadEvent lifecycle.ConfigReload `optional:"true"`
 }
 
 // databaseOut is the result of provideDatabaseOut. *gorm.DB is not a interface
@@ -212,7 +213,7 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			}, err
 		})
 		if options.reloadable && factoryIn.OnReloadEvent != nil {
-			factoryIn.OnReloadEvent.Subscribe(func(_ context.Context, _ contract.ConfigUnmarshaler) error {
+			factoryIn.OnReloadEvent.On(func(_ context.Context, _ contract.ConfigUnmarshaler) error {
 				factory.Close()
 				return nil
 			})

@@ -17,7 +17,6 @@ import (
 	"github.com/DoNewsCode/core/container"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/eventsv2"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/log"
 	"github.com/knadh/koanf/providers/confmap"
@@ -35,7 +34,6 @@ type C struct {
 	contract.ConfigAccessor
 	logging.LevelLogger
 	*container.Container
-	contract.Dispatcher
 	di         *dig.Container
 	baseLogger log.Logger
 }
@@ -55,9 +53,6 @@ type ConfProvider interface {
 // ConfigProvider provides contract.ConfigAccessor to the core.
 type ConfigProvider func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigUnmarshaler
 
-// EventDispatcherProvider provides contract.Dispatcher to the core.
-type EventDispatcherProvider func(conf contract.ConfigUnmarshaler) contract.Dispatcher
-
 // DiProvider provides the *dig.Container to the core.
 type DiProvider func(conf contract.ConfigUnmarshaler) *dig.Container
 
@@ -75,12 +70,11 @@ type coreValues struct {
 	configStack   []config.ProviderSet
 	configWatcher contract.ConfigWatcher
 	// ConfProvider functions
-	configProvider          ConfigProvider
-	eventDispatcherProvider EventDispatcherProvider
-	diProvider              DiProvider
-	appNameProvider         AppNameProvider
-	envProvider             EnvProvider
-	loggerProvider          LoggerProvider
+	configProvider  ConfigProvider
+	diProvider      DiProvider
+	appNameProvider AppNameProvider
+	envProvider     EnvProvider
+	loggerProvider  LoggerProvider
 }
 
 // CoreOption is the option to modify core attribute.
@@ -149,24 +143,16 @@ func SetDiProvider(provider DiProvider) CoreOption {
 	}
 }
 
-// SetEventDispatcherProvider is a CoreOption to replaces the default EventDispatcherProvider.
-func SetEventDispatcherProvider(provider EventDispatcherProvider) CoreOption {
-	return func(values *coreValues) {
-		values.eventDispatcherProvider = provider
-	}
-}
-
 // New creates a new bare-bones C.
 func New(opts ...CoreOption) *C {
 	values := coreValues{
-		configStack:             []config.ProviderSet{},
-		configWatcher:           nil,
-		configProvider:          ProvideConfig,
-		appNameProvider:         ProvideAppName,
-		envProvider:             ProvideEnv,
-		loggerProvider:          ProvideLogger,
-		diProvider:              ProvideDi,
-		eventDispatcherProvider: ProvideEventDispatcher,
+		configStack:     []config.ProviderSet{},
+		configWatcher:   nil,
+		configProvider:  ProvideConfig,
+		appNameProvider: ProvideAppName,
+		envProvider:     ProvideEnv,
+		loggerProvider:  ProvideLogger,
+		diProvider:      ProvideDi,
 	}
 	for _, f := range opts {
 		f(&values)
@@ -176,7 +162,6 @@ func New(opts ...CoreOption) *C {
 	appName := values.appNameProvider(conf)
 	logger := values.loggerProvider(conf, appName, env)
 	diContainer := values.diProvider(conf)
-	dispatcher := values.eventDispatcherProvider(conf)
 
 	c := C{
 		AppName:        appName,
@@ -184,7 +169,6 @@ func New(opts ...CoreOption) *C {
 		ConfigAccessor: config.WithAccessor(conf),
 		LevelLogger:    logging.WithLevel(logger),
 		Container:      &container.Container{},
-		Dispatcher:     dispatcher,
 		di:             diContainer,
 		baseLogger:     logger,
 	}
@@ -333,33 +317,32 @@ func (c *C) ProvideEssentials() {
 	type coreDependencies struct {
 		di.Out
 
-		Env                    contract.Env
-		AppName                contract.AppName
-		Container              contract.Container
-		ConfigUnmarshaler      contract.ConfigUnmarshaler
-		ConfigReloadDispatcher contract.ConfigReloadDispatcher
-		ConfigAccessor         contract.ConfigAccessor
-		ConfigRouter           contract.ConfigRouter
-		ConfigWatcher          contract.ConfigWatcher
-		DIPopulator            contract.DIPopulator
-		Logger                 log.Logger
-		LevelLogger            logging.LevelLogger
-		Reload                 config.OnReloadEvent
-		DefaultConfigs         []config.ExportedConfig `group:"config,flatten"`
+		Env               contract.Env
+		AppName           contract.AppName
+		Container         contract.Container
+		ConfigUnmarshaler contract.ConfigUnmarshaler
+		ConfigAccessor    contract.ConfigAccessor
+		ConfigRouter      contract.ConfigRouter
+		ConfigWatcher     contract.ConfigWatcher
+		DIPopulator       contract.DIPopulator
+		Logger            log.Logger
+		Lifecycles        lifecycleOut
+		LevelLogger       logging.LevelLogger
+		DefaultConfigs    []config.ExportedConfig `group:"config,flatten"`
 	}
 
 	c.provide(func() coreDependencies {
 		coreDependencies := coreDependencies{
-			Env:                    c.Env,
-			AppName:                c.AppName,
-			Container:              c.Container,
-			ConfigUnmarshaler:      c.ConfigAccessor,
-			ConfigAccessor:         c.ConfigAccessor,
-			Logger:                 c.baseLogger,
-			LevelLogger:            c.LevelLogger,
-			ConfigReloadDispatcher: &eventsv2.Event[contract.ConfigUnmarshaler]{},
-			DIPopulator:            di.IntoPopulator(c.di),
-			DefaultConfigs:         provideDefaultConfig(),
+			Env:               c.Env,
+			AppName:           c.AppName,
+			Container:         c.Container,
+			ConfigUnmarshaler: c.ConfigAccessor,
+			ConfigAccessor:    c.ConfigAccessor,
+			Logger:            c.baseLogger,
+			Lifecycles:        provideLifecycle(),
+			LevelLogger:       c.LevelLogger,
+			DIPopulator:       di.IntoPopulator(c.di),
+			DefaultConfigs:    provideDefaultConfig(),
 		}
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {
 			coreDependencies.ConfigRouter = cc

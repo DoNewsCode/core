@@ -10,7 +10,7 @@ import (
 )
 
 type collector struct {
-	factory  Factory
+	factory  *Factory
 	gauges   *Gauges
 	interval time.Duration
 }
@@ -56,7 +56,7 @@ func (g *Gauges) Observe(stats *redis.PoolStats) {
 }
 
 // newCollector creates a new redis wrapper containing the name of the redis.
-func newCollector(factory Factory, gauges *Gauges, interval time.Duration) *collector {
+func newCollector(factory *Factory, gauges *Gauges, interval time.Duration) *collector {
 	return &collector{
 		factory:  factory,
 		gauges:   gauges,

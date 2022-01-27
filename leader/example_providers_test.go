@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core"
-	"github.com/DoNewsCode/core/contract"
-	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/leader"
 )
 
@@ -30,12 +28,12 @@ func Example_providers() {
 	c := core.Default(core.WithInline("log.level", "none"))
 	c.Provide(leader.Providers(leader.WithDriver(AlwaysLeaderDriver{})))
 
-	c.Invoke(func(dispatcher contract.Dispatcher, sts *leader.Status) {
-		dispatcher.Subscribe(events.Listen(leader.OnStatusChanged, func(ctx context.Context, event interface{}) error {
+	c.Invoke(func(statusChanged leader.StatusChanged) {
+		statusChanged.Subscribe(func(ctx context.Context, status *leader.Status) error {
 			// Becomes true when campaign succeeds and becomes false when resign
-			fmt.Println(event.(leader.OnStatusChangedPayload).Status.IsLeader())
+			fmt.Println(status.IsLeader())
 			return nil
-		}))
+		})
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/mitchellh/mapstructure"
@@ -18,7 +19,7 @@ type KoanfAdapter struct {
 	layers     []ProviderSet
 	validators []Validator
 	watcher    contract.ConfigWatcher
-	dispatcher contract.ConfigReloadDispatcher
+	dispatcher lifecycle.ConfigReload
 	delimiter  string
 	rwlock     sync.RWMutex
 	K          *koanf.Koanf
@@ -57,7 +58,7 @@ func WithDelimiter(delimiter string) Option {
 }
 
 // WithDispatcher changes the default dispatcher of Koanf.
-func WithDispatcher(dispatcher contract.ConfigReloadDispatcher) Option {
+func WithDispatcher(dispatcher lifecycle.ConfigReload) Option {
 	return func(option *KoanfAdapter) {
 		option.dispatcher = dispatcher
 	}
@@ -111,7 +112,7 @@ func (k *KoanfAdapter) Reload() error {
 	k.rwlock.Unlock()
 
 	if k.dispatcher != nil {
-		k.dispatcher.Dispatch(context.Background(), k)
+		k.dispatcher.Fire(context.Background(), k)
 	}
 
 	return nil
@@ -261,10 +262,7 @@ func (m MapAdapter) Route(s string) contract.ConfigUnmarshaler {
 }
 
 func stringToConfigDurationHookFunc() mapstructure.DecodeHookFunc {
-	return func(
-		f reflect.Type,
-		t reflect.Type,
-		data interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
 		if t != reflect.TypeOf(Duration{}) {
 			return data, nil
 		}

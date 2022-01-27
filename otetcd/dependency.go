@@ -7,6 +7,7 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
 	"github.com/go-kit/log"
 	"github.com/opentracing-contrib/go-grpc"
@@ -46,6 +47,7 @@ Providers returns a set of dependencies including the Maker, the default *client
 		log.Logger
 		contract.ConfigAccessor
 		opentracing.Tracer    `optional:"true"`
+		lifecycle.ConfigReload `optional:"true"`
 	Provide:
 		Maker
 		Factory
@@ -73,10 +75,10 @@ type EtcdConfigInterceptor func(name string, options *clientv3.Config)
 type factoryIn struct {
 	di.In
 
-	Logger        log.Logger
-	Conf          contract.ConfigUnmarshaler
-	Tracer        opentracing.Tracer              `optional:"true"`
-	OnReloadEvent contract.ConfigReloadDispatcher `optional:"true"`
+	Logger     log.Logger
+	Conf       contract.ConfigUnmarshaler
+	Tracer     opentracing.Tracer     `optional:"true"`
+	Dispatcher lifecycle.ConfigReload `optional:"true"`
 }
 
 // provideFactory creates Factory. It is a valid
@@ -128,8 +130,8 @@ func provideFactory(option *providersOption) func(p factoryIn) (*Factory, func()
 				},
 			}, nil
 		})
-		if option.reloadable && p.OnReloadEvent != nil {
-			p.OnReloadEvent.Subscribe(func(_ context.Context, _ contract.ConfigUnmarshaler) error {
+		if option.reloadable && p.Dispatcher != nil {
+			p.Dispatcher.On(func(_ context.Context, _ contract.ConfigUnmarshaler) error {
 				factory.Close()
 				return nil
 			})

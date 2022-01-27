@@ -8,7 +8,7 @@ import (
 )
 
 type readerCollector struct {
-	factory  ReaderFactory
+	factory  *ReaderFactory
 	stats    *ReaderStats
 	interval time.Duration
 }
@@ -101,7 +101,7 @@ func (r *ReaderStats) Observe(stats kafka.ReaderStats) {
 }
 
 // newCollector creates a new kafka reader wrapper containing the name of the reader.
-func newReaderCollector(factory ReaderFactory, stats *ReaderStats, interval time.Duration) *readerCollector {
+func newReaderCollector(factory *ReaderFactory, stats *ReaderStats, interval time.Duration) *readerCollector {
 	return &readerCollector{
 		factory:  factory,
 		stats:    stats,
@@ -112,7 +112,7 @@ func newReaderCollector(factory ReaderFactory, stats *ReaderStats, interval time
 // collectConnectionStats collects kafka reader info for Prometheus to scrape.
 func (d *readerCollector) collectConnectionStats() {
 	for k, v := range d.factory.List() {
-		reader := v.Conn.(*kafka.Reader)
+		reader := v.Conn
 		stats := reader.Stats()
 		d.stats.Reader(k).Observe(stats)
 	}

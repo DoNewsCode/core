@@ -58,9 +58,9 @@ func TestProvideFactory(t *testing.T) {
 						Endpoints: addrs,
 					},
 				}},
-				Logger:        log.NewNopLogger(),
-				Tracer:        nil,
-				OnReloadEvent: dispatcher,
+				Logger:     log.NewNopLogger(),
+				Tracer:     nil,
+				Dispatcher: dispatcher,
 			})
 			alt, err := out.Make("alternative")
 			assert.NoError(t, err)

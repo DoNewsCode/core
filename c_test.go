@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/config"
-	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
-	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/otgorm"
 	"github.com/DoNewsCode/core/srvgrpc"
 	"github.com/DoNewsCode/core/srvhttp"
@@ -31,34 +30,35 @@ func TestC_Serve(t *testing.T) {
 	c.AddModule(srvhttp.HealthCheckModule{})
 	c.AddModule(srvgrpc.HealthCheckModule{})
 
-	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(OnHTTPServerStart, func(ctx context.Context, start interface{}) error {
+	c.Invoke(func(dispatcher lifecycle.HTTPServerStart) {
+		dispatcher.On(func(ctx context.Context, start lifecycle.HTTPServerStartPayload) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19998", start.(OnHTTPServerStartPayload).Listener.Addr().String())
+			assert.Equal(t, "[::]:19998", start.Listener.Addr().String())
 			return nil
-		}))
+		})
 	})
-	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(OnHTTPServerShutdown, func(ctx context.Context, shutdown interface{}) error {
+	c.Invoke(func(dispatcher lifecycle.HTTPServerShutdown) {
+		dispatcher.On(func(ctx context.Context, shutdown lifecycle.HTTPServerShutdownPayload) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19998", shutdown.(OnHTTPServerShutdownPayload).Listener.Addr().String())
+			assert.Equal(t, "[::]:19998", shutdown.Listener.Addr().String())
 			return nil
-		}))
+		})
 	})
-	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(OnGRPCServerStart, func(ctx context.Context, start interface{}) error {
+	c.Invoke(func(dispatcher lifecycle.GRPCServerStart) {
+		dispatcher.On(func(ctx context.Context, start lifecycle.GRPCServerStartPayload) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19999", start.(OnGRPCServerStartPayload).Listener.Addr().String())
+			assert.Equal(t, "[::]:19999", start.Listener.Addr().String())
 			return nil
-		}))
+		})
 	})
-	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(OnGRPCServerShutdown, func(ctx context.Context, shutdown interface{}) error {
+	c.Invoke(func(dispatcher lifecycle.GRPCServerShutdown) {
+		dispatcher.On(func(ctx context.Context, shutdown lifecycle.GRPCServerShutdownPayload) error {
 			atomic.AddInt32(&called, 1)
-			assert.Equal(t, "[::]:19999", shutdown.(OnGRPCServerShutdownPayload).Listener.Addr().String())
+			assert.Equal(t, "[::]:19999", shutdown.Listener.Addr().String())
 			return nil
-		}))
+		})
 	})
+
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 	e := c.Serve(ctx)
@@ -77,29 +77,29 @@ func TestC_ServeDisable(t *testing.T) {
 	c.AddModule(srvhttp.HealthCheckModule{})
 	c.AddModule(srvgrpc.HealthCheckModule{})
 
-	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(OnHTTPServerStart, func(ctx context.Context, start interface{}) error {
+	c.Invoke(func(dispatcher lifecycle.HTTPServerStart) {
+		dispatcher.On(func(ctx context.Context, payload lifecycle.HTTPServerStartPayload) error {
 			atomic.AddInt32(&called, 1)
 			return nil
-		}))
+		})
 	})
-	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(OnHTTPServerShutdown, func(ctx context.Context, shutdown interface{}) error {
+	c.Invoke(func(dispatcher lifecycle.HTTPServerShutdown) {
+		dispatcher.On(func(ctx context.Context, payload lifecycle.HTTPServerShutdownPayload) error {
 			atomic.AddInt32(&called, 1)
 			return nil
-		}))
+		})
 	})
-	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(OnGRPCServerStart, func(ctx context.Context, start interface{}) error {
+	c.Invoke(func(dispatcher lifecycle.GRPCServerStart) {
+		dispatcher.On(func(ctx context.Context, payload lifecycle.GRPCServerStartPayload) error {
 			atomic.AddInt32(&called, 1)
 			return nil
-		}))
+		})
 	})
-	c.Invoke(func(dispatcher contract.Dispatcher) {
-		dispatcher.Subscribe(events.Listen(OnGRPCServerShutdown, func(ctx context.Context, shutdown interface{}) error {
+	c.Invoke(func(dispatcher lifecycle.GRPCServerShutdown) {
+		dispatcher.On(func(ctx context.Context, payload lifecycle.GRPCServerShutdownPayload) error {
 			atomic.AddInt32(&called, 1)
 			return nil
-		}))
+		})
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()

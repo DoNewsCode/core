@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/DoNewsCode/core/contract"
 	"go.uber.org/atomic"
 )
 
@@ -20,17 +19,22 @@ type Driver interface {
 	Resign(context.Context) error
 }
 
+type Dispatcher interface {
+	// Fire dispatches leader election status
+	Fire(ctx context.Context, status *Status) error
+}
+
 // Election is a struct that controls the leader election. Whenever the leader
 // status changed on this node, an event will be triggered. See example for how
 // to listen this event.
 type Election struct {
-	dispatcher contract.Dispatcher
+	dispatcher Dispatcher
 	status     *Status
 	driver     Driver
 }
 
 // NewElection returns a pointer to the newly constructed Election instance.
-func NewElection(dispatcher contract.Dispatcher, driver Driver) *Election {
+func NewElection(dispatcher Dispatcher, driver Driver) *Election {
 	return &Election{
 		dispatcher: dispatcher,
 		status:     &Status{isLeader: &atomic.Bool{}},
@@ -45,7 +49,7 @@ func (e *Election) Campaign(ctx context.Context) error {
 	}
 	e.status.isLeader.Store(true)
 	// trigger events
-	e.dispatcher.Dispatch(ctx, OnStatusChanged, OnStatusChangedPayload{Status: e.status})
+	e.dispatcher.Fire(ctx, e.status)
 	return nil
 }
 
@@ -55,7 +59,7 @@ func (e *Election) Resign(ctx context.Context) error {
 		return ErrNotALeader
 	}
 	// trigger events
-	defer e.dispatcher.Dispatch(ctx, OnStatusChanged, OnStatusChangedPayload{Status: e.status})
+	defer e.dispatcher.Fire(ctx, e.status)
 	defer e.status.isLeader.Store(false)
 	return e.driver.Resign(ctx)
 }
