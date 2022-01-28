@@ -51,9 +51,14 @@ func (e *Event[T]) Once(listener func(ctx context.Context, event T) error) {
 
 	e.nextID++
 	nextID := e.nextID
+	var once sync.Once
 	e.listeners = append(e.listeners, entry[T]{fn: func(ctx context.Context, event T) error {
-		defer e.unsubscribe(nextID)
-		return listener(ctx, event)
+		var err error
+		once.Do(func() {
+			e.unsubscribe(nextID)
+			err = listener(ctx, event)
+		})
+		return err
 	}, id: nextID})
 }
 
@@ -92,9 +97,14 @@ func (e *Event[T]) PrependOnce(listener func(ctx context.Context, event T) error
 	defer e.mu.Unlock()
 	e.nextID++
 	nextID := e.nextID
+	var once sync.Once
 	e.listeners = append([]entry[T]{{fn: func(ctx context.Context, event T) error {
-		defer e.unsubscribe(nextID)
-		return listener(ctx, event)
+		var err error
+		once.Do(func() {
+			e.unsubscribe(nextID)
+			err = listener(ctx, event)
+		})
+		return err
 	}, id: e.nextID}}, e.listeners...)
 }
 
