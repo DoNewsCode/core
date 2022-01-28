@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"gorm.io/gorm"
@@ -33,7 +34,7 @@ func TestProvideDBFactory(t *testing.T) {
 	for driverName := range gorms {
 		for _, reloadable := range []bool{true, false} {
 			t.Run(driverName, func(t *testing.T) {
-				dispatcher := &events.SyncDispatcher{}
+				dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
 				out, cleanup, _ := provideDBFactory(&providersOption{reloadable: reloadable})(factoryIn{
 					Conf:   config.MapAdapter{"gorm": gorms},
 					Logger: log.NewNopLogger(),
@@ -46,9 +47,9 @@ func TestProvideDBFactory(t *testing.T) {
 				assert.Equal(
 					t,
 					reloadable,
-					dispatcher.ListenerCount(events.OnReload) == 1,
+					dispatcher.ListenerCount() == 1,
 					"unexpected dispatcher count %d when reload = %t",
-					dispatcher.ListenerCount(events.OnReload),
+					dispatcher.ListenerCount(),
 					reloadable,
 				)
 			})

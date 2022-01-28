@@ -7,7 +7,9 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
@@ -48,7 +50,7 @@ func TestProvideFactory(t *testing.T) {
 		{"no reload", false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			dispatcher := &config.OnReloadEvent{}
+			dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
 			out, cleanup := provideFactory(&providersOption{reloadable: c.reload})(factoryIn{
 				Conf: config.MapAdapter{"etcd": map[string]Option{
 					"default": {

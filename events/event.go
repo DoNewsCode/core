@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"errors"
 	"sync"
 )
 
@@ -18,9 +17,6 @@ type Event[T any] struct {
 }
 
 func (e *Event[T]) Fire(ctx context.Context, event T) error {
-	if e == nil {
-		return errors.New("event is nil")
-	}
 	e.mu.RLock()
 	listeners := make([]entry[T], len(e.listeners))
 	copy(listeners, e.listeners)

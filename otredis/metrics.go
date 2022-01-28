@@ -67,7 +67,7 @@ func newCollector(factory *Factory, gauges *Gauges, interval time.Duration) *col
 // collectConnectionStats collects redis connections for Prometheus to scrape.
 func (d *collector) collectConnectionStats() {
 	for k, v := range d.factory.List() {
-		conn := v.Conn.(redis.UniversalClient)
+		conn := v.Conn
 		stats := conn.PoolStats()
 		d.gauges.DBName(k).Observe(stats)
 	}

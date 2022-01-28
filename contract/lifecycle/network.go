@@ -28,25 +28,25 @@ type GRPCServerShutdown interface {
 	On(func(ctx context.Context, payload GRPCServerShutdownPayload) error) (unsubscribe func())
 }
 
-// HTTPServerStartPayload is the payload of OnHTTPServerStart
+// HTTPServerStartPayload is the payload of HTTPServerStart event
 type HTTPServerStartPayload struct {
 	HTTPServer *http.Server
 	Listener   net.Listener
 }
 
-// HTTPServerShutdownPayload is the payload of OnHTTPServerShutdown
+// HTTPServerShutdownPayload is the payload of HTTPServerShutdown event
 type HTTPServerShutdownPayload struct {
 	HTTPServer *http.Server
 	Listener   net.Listener
 }
 
-// GRPCServerStartPayload is the payload of OnGRPCServerStart
+// GRPCServerStartPayload is the payload of GRPCServerStart event
 type GRPCServerStartPayload struct {
 	GRPCServer *grpc.Server
 	Listener   net.Listener
 }
 
-// GRPCServerShutdownPayload is the payload of OnGRPCServerShutdown
+// GRPCServerShutdownPayload is the payload of GRPCServerShutdown event
 type GRPCServerShutdownPayload struct {
 	GRPCServer *grpc.Server
 	Listener   net.Listener

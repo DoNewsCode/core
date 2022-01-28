@@ -137,7 +137,7 @@ func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 		}
 	}})
 	c.Provide(Providers())
-	c.Invoke(func(reader ReaderFactory, writer WriterFactory) {})
+	c.Invoke(func(reader *ReaderFactory, writer *WriterFactory) {})
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	c.Serve(ctx)
@@ -260,12 +260,12 @@ func TestCollector(t *testing.T) {
 	}})
 	c.Provide(Providers())
 
-	c.Invoke(func(rf ReaderFactory, s *ReaderStats) {
+	c.Invoke(func(rf *ReaderFactory, s *ReaderStats) {
 		rc := newReaderCollector(rf, s, time.Nanosecond)
 		rc.collectConnectionStats()
 	})
 
-	c.Invoke(func(wf WriterFactory, s *WriterStats) {
+	c.Invoke(func(wf *WriterFactory, s *WriterStats) {
 		wc := newWriterCollector(wf, s, time.Nanosecond)
 		wc.collectConnectionStats()
 	})
@@ -347,12 +347,12 @@ func TestModule_hotReload(t *testing.T) {
 	go group.Run()
 
 	// Test initial value
-	c.Invoke(func(f ReaderFactory) {
+	c.Invoke(func(f *ReaderFactory) {
 		reader, err := f.Make("default")
 		assert.NoError(t, err)
 		assert.Equal(t, "foo", reader.Config().Topic)
 	})
-	c.Invoke(func(f WriterFactory) {
+	c.Invoke(func(f *WriterFactory) {
 		writer, err := f.Make("default")
 		assert.NoError(t, err)
 		assert.Equal(t, "foo", writer.Topic)
@@ -366,12 +366,12 @@ func TestModule_hotReload(t *testing.T) {
 	<-cw.afterReload
 
 	// Test reloaded values
-	c.Invoke(func(f ReaderFactory) {
+	c.Invoke(func(f *ReaderFactory) {
 		reader, err := f.Make("default")
 		assert.NoError(t, err)
 		assert.Equal(t, "bar", reader.Config().Topic)
 	})
-	c.Invoke(func(f WriterFactory) {
+	c.Invoke(func(f *WriterFactory) {
 		writer, err := f.Make("default")
 		assert.NoError(t, err)
 		assert.Equal(t, "bar", writer.Topic)
