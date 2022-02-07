@@ -93,3 +93,25 @@ func TestServeIn_cron(t *testing.T) {
 	c.Serve(ctx)
 	assert.True(t, m.CanRun == 1)
 }
+
+type SimpleRunModule struct {
+	RunCount uint32
+}
+
+func (s *SimpleRunModule) Run(ctx context.Context) error {
+	atomic.AddUint32(&s.RunCount, 1)
+	return nil
+}
+
+func TestSimpleRun(t *testing.T) {
+	c := Default(
+		WithInline("grpc.disable", true),
+		WithInline("http.disable", true),
+		WithInline("cron.disable", true),
+		WithInline("log.level", "none"),
+	)
+	m := SimpleRunModule{}
+	c.AddModule(&m)
+	c.Serve(context.Background())
+	assert.Equal(t, uint32(1), m.RunCount)
+}
