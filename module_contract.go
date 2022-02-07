@@ -1,6 +1,8 @@
 package core
 
 import (
+	"context"
+
 	"github.com/DoNewsCode/core/cron"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
@@ -37,4 +39,11 @@ type CloserProvider interface {
 // actions. For example, kafka consumer can be started here.
 type RunProvider interface {
 	ProvideRunGroup(group *run.Group)
+}
+
+// Runnable provides a runnable actor. The core will call Run in an exclusive
+// goroutine, so it is safe for Run to block the execution. Return only when run
+// completes. The received context.Context is canceled at shutdown.
+type Runnable interface {
+	Run(ctx context.Context) error
 }

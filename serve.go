@@ -248,6 +248,14 @@ func applyRunGroup(ctn contract.Container, group *run.Group) {
 		if p, ok := modules[i].(RunProvider); ok {
 			p.ProvideRunGroup(group)
 		}
+		if p, ok := modules[i].(Runnable); ok {
+			ctx, cancel := context.WithCancel(context.Background())
+			group.Add(func() error {
+				return p.Run(ctx)
+			}, func(err error) {
+				cancel()
+			})
+		}
 	}
 }
 
