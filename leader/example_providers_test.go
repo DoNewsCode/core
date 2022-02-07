@@ -29,7 +29,7 @@ func Example_providers() {
 	c.Provide(leader.Providers(leader.WithDriver(AlwaysLeaderDriver{})))
 
 	c.Invoke(func(statusChanged leader.StatusChanged) {
-		statusChanged.Subscribe(func(ctx context.Context, status *leader.Status) error {
+		statusChanged.On(func(ctx context.Context, status *leader.Status) error {
 			// Becomes true when campaign succeeds and becomes false when resign
 			fmt.Println(status.IsLeader())
 			return nil

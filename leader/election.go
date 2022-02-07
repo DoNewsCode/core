@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"go.uber.org/atomic"
+	"sync/atomic"
 )
 
 // ErrNotALeader is an error triggered when Resign is called but the current node is not leader.
@@ -37,7 +36,7 @@ type Election struct {
 func NewElection(dispatcher Dispatcher, driver Driver) *Election {
 	return &Election{
 		dispatcher: dispatcher,
-		status:     &Status{isLeader: &atomic.Bool{}},
+		status:     &Status{isLeader: &atomic.Value{}},
 		driver:     driver,
 	}
 }
@@ -55,7 +54,7 @@ func (e *Election) Campaign(ctx context.Context) error {
 
 // Resign gives up the leadership.
 func (e *Election) Resign(ctx context.Context) error {
-	if !e.status.isLeader.Load() {
+	if !e.status.IsLeader() {
 		return ErrNotALeader
 	}
 	// trigger events
@@ -71,10 +70,13 @@ func (e *Election) Status() *Status {
 
 // Status is a type that describes whether the current node is leader.
 type Status struct {
-	isLeader *atomic.Bool
+	isLeader *atomic.Value
 }
 
 // IsLeader returns true if the current node is leader.
 func (s Status) IsLeader() bool {
-	return s.isLeader.Load()
+	if b, ok := s.isLeader.Load().(bool); ok {
+		return b
+	}
+	return false
 }

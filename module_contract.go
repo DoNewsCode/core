@@ -4,16 +4,9 @@ import (
 	cron2 "github.com/DoNewsCode/core/cron"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
-	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
-
-// DeprecatedCronProvider provides cron jobs.
-// Deprecated: CronProvider is deprecated. Use CronProvider instead
-type DeprecatedCronProvider interface {
-	ProvideCron(crontab *cron.Cron)
-}
 
 // CronProvider provides cron jobs.
 type CronProvider interface {

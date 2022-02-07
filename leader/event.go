@@ -2,6 +2,7 @@ package leader
 
 import "context"
 
+// StatusChanged is a channel for receiving StatusChanged events.
 type StatusChanged interface {
-	Subscribe(func(ctx context.Context, status *Status) error) int
+	On(func(ctx context.Context, status *Status) error) (unsubscribe func())
 }
