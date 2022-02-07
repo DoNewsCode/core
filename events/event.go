@@ -10,19 +10,21 @@ type entry[T any] struct {
 	fn func(ctx context.Context, event T) error
 }
 
+// Event is a generic event system.
 type Event[T any] struct {
 	nextID    int
 	mu        sync.RWMutex
 	listeners []entry[T]
 }
 
+// Fire fires the event to all listeners synchronously.
 func (e *Event[T]) Fire(ctx context.Context, event T) error {
 	e.mu.RLock()
 	listeners := make([]entry[T], len(e.listeners))
 	copy(listeners, e.listeners)
 	e.mu.RUnlock()
 
-	for i, _ := range listeners {
+	for i := range listeners {
 		err := listeners[i].fn(ctx, event)
 		if err != nil {
 			return err
@@ -31,6 +33,7 @@ func (e *Event[T]) Fire(ctx context.Context, event T) error {
 	return nil
 }
 
+// On registers a listener to the event at the bottom of the listener queue.
 func (e *Event[T]) On(listener func(ctx context.Context, event T) error) (unsubscribe func()) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -49,9 +52,14 @@ func (e *Event[T]) Once(listener func(ctx context.Context, event T) error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
+	var (
+		nextID int
+		once   sync.Once
+	)
+
 	e.nextID++
-	nextID := e.nextID
-	var once sync.Once
+	nextID = e.nextID
+
 	e.listeners = append(e.listeners, entry[T]{fn: func(ctx context.Context, event T) error {
 		var err error
 		once.Do(func() {
@@ -95,9 +103,15 @@ func (e *Event[T]) Prepend(listener func(ctx context.Context, event T) error) (u
 func (e *Event[T]) PrependOnce(listener func(ctx context.Context, event T) error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+
+	var (
+		nextID int
+		once   sync.Once
+	)
+
 	e.nextID++
-	nextID := e.nextID
-	var once sync.Once
+	nextID = e.nextID
+
 	e.listeners = append([]entry[T]{{fn: func(ctx context.Context, event T) error {
 		var err error
 		once.Do(func() {

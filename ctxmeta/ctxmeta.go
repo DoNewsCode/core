@@ -209,8 +209,7 @@ func New[K comparable, V any]() *MetadataSet[K, V] {
 func (m *MetadataSet[K, V]) Inject(ctx context.Context) (*Baggage[K, V], context.Context) {
 	c := make(chan []KeyVal[K, V], 1)
 	c <- make([]KeyVal[K, V], 0, 32)
-	d := &Baggage[K, V]{}
-	d.ch = c
+	d := &Baggage[K, V]{ch: c}
 	return d, context.WithValue(ctx, m.key, d)
 }
 
