@@ -326,8 +326,8 @@ func (c *C) ProvideEssentials() {
 		ConfigWatcher     contract.ConfigWatcher
 		DIPopulator       contract.DIPopulator
 		Logger            log.Logger
-		Lifecycles        lifecycleOut
 		LevelLogger       logging.LevelLogger
+		Lifecycles        lifecycleOut
 		DefaultConfigs    []config.ExportedConfig `group:"config,flatten"`
 	}
 
@@ -339,9 +339,9 @@ func (c *C) ProvideEssentials() {
 			ConfigUnmarshaler: c.ConfigAccessor,
 			ConfigAccessor:    c.ConfigAccessor,
 			Logger:            c.baseLogger,
-			Lifecycles:        provideLifecycle(),
 			LevelLogger:       c.LevelLogger,
 			DIPopulator:       di.IntoPopulator(c.di),
+			Lifecycles:        provideLifecycle(),
 			DefaultConfigs:    provideDefaultConfig(),
 		}
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {

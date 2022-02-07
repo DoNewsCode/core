@@ -17,7 +17,9 @@ type Event[T any] struct {
 	listeners []entry[T]
 }
 
-// Fire fires the event to all listeners synchronously.
+// Fire fires the event to all listeners synchronously. All registered listeners
+// will be copied before actually being called, so that it is safe to add or
+// remove listeners within listener callbacks.
 func (e *Event[T]) Fire(ctx context.Context, event T) error {
 	e.mu.RLock()
 	listeners := make([]entry[T], len(e.listeners))
@@ -49,13 +51,13 @@ func (e *Event[T]) On(listener func(ctx context.Context, event T) error) (unsubs
 // Once subscribes the listener to the dispatcher and unsubscribe the
 // listener once after the event is processed by the listener.
 func (e *Event[T]) Once(listener func(ctx context.Context, event T) error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
 	var (
 		nextID int
 		once   sync.Once
 	)
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
 
 	e.nextID++
 	nextID = e.nextID
@@ -101,13 +103,13 @@ func (e *Event[T]) Prepend(listener func(ctx context.Context, event T) error) (u
 // the top of the listener queue waiting for the same event. The listener will be
 // unsubscribed once after the event is processed by the listener .
 func (e *Event[T]) PrependOnce(listener func(ctx context.Context, event T) error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
 	var (
 		nextID int
 		once   sync.Once
 	)
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
 
 	e.nextID++
 	nextID = e.nextID

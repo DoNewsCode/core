@@ -1,7 +1,7 @@
 package core
 
 import (
-	cron2 "github.com/DoNewsCode/core/cron"
+	"github.com/DoNewsCode/core/cron"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
 	"github.com/spf13/cobra"
@@ -10,7 +10,7 @@ import (
 
 // CronProvider provides cron jobs.
 type CronProvider interface {
-	ProvideCron(cron *cron2.Cron)
+	ProvideCron(cron *cron.Cron)
 }
 
 // CommandProvider provides cobra.Command.
