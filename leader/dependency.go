@@ -62,8 +62,9 @@ func provide(option *providersOption) func(in in) (out, error) {
 		if option.driver != nil {
 			e := NewElection(dispatcher, option.driver)
 			return out{
-				Election: e,
-				Status:   e.status,
+				Election:   e,
+				Status:     e.status,
+				Dispatcher: dispatcher,
 			}, nil
 		}
 
