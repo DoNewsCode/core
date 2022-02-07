@@ -36,9 +36,10 @@ func TestProvideDBFactory(t *testing.T) {
 			t.Run(driverName, func(t *testing.T) {
 				dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
 				out, cleanup, _ := provideDBFactory(&providersOption{reloadable: reloadable})(factoryIn{
-					Conf:   config.MapAdapter{"gorm": gorms},
-					Logger: log.NewNopLogger(),
-					Tracer: nil,
+					Conf:          config.MapAdapter{"gorm": gorms},
+					Logger:        log.NewNopLogger(),
+					Tracer:        nil,
+					OnReloadEvent: dispatcher,
 				})
 				defer cleanup()
 				db, err := out.Factory.Make(driverName)

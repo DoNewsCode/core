@@ -111,7 +111,7 @@ func TestProvideKafka(t *testing.T) {
 			alt, err := Out.WriterFactory.Make("alternative")
 			assert.NoError(t, err)
 			assert.NotNil(t, alt)
-			assert.Equal(t, c.reloadable, dispatcher.ListenerCount() == 2)
+			assert.Equal(t, c.reloadable, dispatcher.ListenerCount() == 1)
 			cleanupReader()
 			cleanupWriter()
 		})
