@@ -40,14 +40,14 @@ type C struct {
 
 // ConfParser models a parser for configuration. For example, yaml.Parser.
 type ConfParser interface {
-	Unmarshal([]byte) (map[string]interface{}, error)
-	Marshal(map[string]interface{}) ([]byte, error)
+	Unmarshal([]byte) (map[string]any, error)
+	Marshal(map[string]any) ([]byte, error)
 }
 
 // ConfProvider models a configuration provider. For example, file.Provider.
 type ConfProvider interface {
 	ReadBytes() ([]byte, error)
-	Read() (map[string]interface{}, error)
+	Read() (map[string]any, error)
 }
 
 // ConfigProvider provides contract.ConfigAccessor to the core.
@@ -88,8 +88,8 @@ func WithYamlFile(path string) (CoreOption, CoreOption) {
 }
 
 // WithInline is a CoreOption that creates a inline config in the configuration stack.
-func WithInline(key string, entry interface{}) CoreOption {
-	return WithConfigStack(confmap.Provider(map[string]interface{}{
+func WithInline(key string, entry any) CoreOption {
+	return WithConfigStack(confmap.Provider(map[string]any{
 		key: entry,
 	}, "."), nil)
 }
@@ -192,7 +192,7 @@ func Default(opts ...CoreOption) *C {
 // container. The semantics of injection follows the same rule of dig.Invoke.
 // Note that the module added in this way will not retain any original field
 // values, i.e. the module will only contain fields populated by DI container.
-func (c *C) AddModule(module interface{}) {
+func (c *C) AddModule(module any) {
 	t := reflect.TypeOf(module)
 	if t.Kind() == reflect.Ptr && dig.IsIn(t.Elem()) {
 		err := di.IntoPopulator(c.di).Populate(module)
@@ -237,7 +237,7 @@ func (c *C) Provide(deps di.Deps) {
 	}
 }
 
-func (c *C) provide(constructor interface{}) {
+func (c *C) provide(constructor any) {
 	var (
 		options        []dig.ProvideOption
 		shouldMakeFunc bool
@@ -376,7 +376,7 @@ func (c *C) Shutdown() {
 
 // AddModuleFunc add the module after Invoking its constructor. Clean up
 // functions and errors are handled automatically.
-func (c *C) AddModuleFunc(constructor interface{}) {
+func (c *C) AddModuleFunc(constructor any) {
 	c.provide(constructor)
 	ftype := reflect.TypeOf(constructor)
 	targetTypes := make([]reflect.Type, 0)
@@ -424,7 +424,7 @@ func (c *C) ApplyRootCommand(command *cobra.Command) {
 //
 // It internally calls uber's dig library. Consult dig's documentation for
 // details. (https://pkg.go.dev/go.uber.org/dig)
-func (c *C) Invoke(function interface{}) {
+func (c *C) Invoke(function any) {
 	err := c.di.Invoke(function)
 	if err != nil {
 		panic(err)

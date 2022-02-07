@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/key"
+
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 )

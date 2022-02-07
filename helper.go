@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func getString(data map[string]interface{}, key ...string) (string, error) {
+func getString(data map[string]any, key ...string) (string, error) {
 	if len(key) <= 0 {
 		panic("key must be provided at least once")
 	}
@@ -15,7 +15,7 @@ func getString(data map[string]interface{}, key ...string) (string, error) {
 		if !ok {
 			return "", fmt.Errorf("%s doesn't exist", strings.Join(key[0:i+1], "."))
 		}
-		data, ok = value.(map[string]interface{})
+		data, ok = value.(map[string]any)
 		if !ok {
 			return "", fmt.Errorf("%s is not a map", strings.Join(key[0:i+1], "."))
 		}
@@ -31,7 +31,7 @@ func getString(data map[string]interface{}, key ...string) (string, error) {
 	return str, nil
 }
 
-func getBool(data map[string]interface{}, key ...string) (bool, error) {
+func getBool(data map[string]any, key ...string) (bool, error) {
 	if len(key) <= 0 {
 		panic("key must be provided at least once")
 	}
@@ -40,7 +40,7 @@ func getBool(data map[string]interface{}, key ...string) (bool, error) {
 		if !ok {
 			return false, fmt.Errorf("%s doesn't exist", strings.Join(key[0:i+1], "."))
 		}
-		data, ok = value.(map[string]interface{})
+		data, ok = value.(map[string]any)
 		if !ok {
 			return false, fmt.Errorf("%s is not a map", strings.Join(key[0:i+1], "."))
 		}

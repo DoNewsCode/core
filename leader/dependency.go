@@ -11,6 +11,7 @@ import (
 	"github.com/DoNewsCode/core/key"
 	"github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/DoNewsCode/core/otetcd"
+
 	"github.com/oklog/run"
 )
 
@@ -83,7 +84,7 @@ func provide(option *providersOption) func(in in) (out, error) {
 }
 
 // Module marks out as a module.
-func (m out) Module() interface{} { return m }
+func (m out) Module() any { return m }
 
 func (m out) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -156,8 +157,8 @@ func provideConfig() configOut {
 	return configOut{Config: []config.ExportedConfig{
 		{
 			Owner: "leader",
-			Data: map[string]interface{}{
-				"leader": map[string]interface{}{
+			Data: map[string]any{
+				"leader": map[string]any{
 					"etcdName": "default",
 				},
 			},

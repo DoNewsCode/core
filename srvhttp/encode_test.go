@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/unierr"
+
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,7 +32,7 @@ func (m *MockWriter) WriteHeader(statusCode int) {
 func TestEncoder(t *testing.T) {
 	cases := []struct {
 		name     string
-		input    interface{}
+		input    any
 		error    error
 		expected *MockWriter
 	}{

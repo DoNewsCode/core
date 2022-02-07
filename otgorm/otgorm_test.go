@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
+
 	"github.com/go-kit/log"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -27,8 +28,8 @@ func TestHook(t *testing.T) {
 		drivers: map[string]func(dsn string) gorm.Dialector{"sqlite": sqlite.Open},
 	})(factoryIn{
 		Conf: config.MapAdapter{
-			"gorm": map[string]interface{}{
-				"default": map[string]interface{}{
+			"gorm": map[string]any{
+				"default": map[string]any{
 					"database": "sqlite",
 					"dsn":      ":memory:",
 				},

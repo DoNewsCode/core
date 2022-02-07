@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/internal/stub"
-	"google.golang.org/grpc/status"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 func TestRequestDurationSeconds(t *testing.T) {
@@ -22,7 +22,7 @@ func TestRequestDurationSeconds(t *testing.T) {
 	assert.Equal(t, 5.0, histogram.ObservedValue)
 	assert.ElementsMatch(t, []string{"module", "m", "service", "s", "route", "r", "status", "1"}, histogram.LabelValues)
 
-	f := grpc.UnaryHandler(func(ctx context.Context, req interface{}) (interface{}, error) {
+	f := grpc.UnaryHandler(func(ctx context.Context, req any) (any, error) {
 		time.Sleep(time.Millisecond)
 		return nil, nil
 	})
@@ -31,7 +31,7 @@ func TestRequestDurationSeconds(t *testing.T) {
 }
 
 func TestMetrics(t *testing.T) {
-	handler := grpc.UnaryHandler(func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := grpc.UnaryHandler(func(ctx context.Context, req any) (any, error) {
 		return nil, status.Error(2, "error")
 	})
 	histogram := &stub.Histogram{}
@@ -41,7 +41,7 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestMetrics_data_races(t *testing.T) {
-	handler := grpc.UnaryHandler(func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := grpc.UnaryHandler(func(ctx context.Context, req any) (any, error) {
 		return nil, nil
 	})
 	histogram := &stub.Histogram{}

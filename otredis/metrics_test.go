@@ -1,7 +1,6 @@
 package otredis
 
 import (
-	"github.com/DoNewsCode/core/internal/stub"
 	"os"
 	"strings"
 	"testing"
@@ -9,7 +8,9 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal/stub"
 	"github.com/DoNewsCode/core/otredis/mocks"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +47,7 @@ func TestCollector(t *testing.T) {
 	c.Provide(Providers())
 	c.Provide(di.Deps{func() *Gauges { return &g }})
 
-	c.Invoke(func(factory Factory, g *Gauges) {
+	c.Invoke(func(factory *Factory, g *Gauges) {
 		factory.Make("default")
 		c := newCollector(factory, g, time.Nanosecond)
 		c.collectConnectionStats()

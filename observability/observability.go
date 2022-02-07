@@ -3,6 +3,7 @@ package observability
 import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -51,7 +52,7 @@ type configOut struct {
 }
 
 func provideConfig() configOut {
-	var conf map[string]interface{}
+	var conf map[string]any
 	_ = yaml.Unmarshal([]byte(sample), &conf)
 	configs := []config.ExportedConfig{
 		{

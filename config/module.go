@@ -12,6 +12,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -30,8 +31,8 @@ type ConfigIn struct {
 	di.In
 
 	Conf            contract.ConfigAccessor
-	dispatcher      lifecycle.ConfigReload
-	ExportedConfigs []ExportedConfig `group:"config"`
+	Dispatcher      lifecycle.ConfigReload `optional:"true"`
+	ExportedConfigs []ExportedConfig       `group:"config"`
 }
 
 // New creates a new config module. It contains the init command.
@@ -49,7 +50,7 @@ func New(p ConfigIn) (Module, error) {
 	}
 
 	return Module{
-		dispatcher:      p.dispatcher,
+		dispatcher:      p.Dispatcher,
 		conf:            adapter,
 		exportedConfigs: p.ExportedConfigs,
 	}, nil
@@ -81,7 +82,7 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 				handler         handler
 				targetFile      *os.File
 				exportedConfigs []ExportedConfig
-				confMap         map[string]interface{}
+				confMap         map[string]any
 				err             error
 			)
 			handler, err = getHandler(style)
@@ -135,7 +136,7 @@ func (m Module) ProvideCommand(command *cobra.Command) {
 				handler         handler
 				targetFile      *os.File
 				exportedConfigs []ExportedConfig
-				confMap         map[string]interface{}
+				confMap         map[string]any
 				err             error
 			)
 			handler, err = getHandler(style)
@@ -243,8 +244,8 @@ func getHandler(style string) (handler, error) {
 
 type handler interface {
 	flags() int
-	unmarshal(bytes []byte, o interface{}) error
-	write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error
+	unmarshal(bytes []byte, o any) error
+	write(file *os.File, configs []ExportedConfig, confMap map[string]any) error
 }
 
 type appendHandler struct {
@@ -255,11 +256,11 @@ func (y appendHandler) flags() int {
 	return os.O_APPEND | os.O_CREATE | os.O_RDWR
 }
 
-func (y appendHandler) unmarshal(bytes []byte, o interface{}) error {
+func (y appendHandler) unmarshal(bytes []byte, o any) error {
 	return y.codec.Unmarshal(bytes, o)
 }
 
-func (y appendHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error {
+func (y appendHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]any) error {
 out:
 	for i, config := range configs {
 		for k := range config.Data {
@@ -296,16 +297,16 @@ func (r rewriteHandler) flags() int {
 	return os.O_CREATE | os.O_RDWR
 }
 
-func (r rewriteHandler) unmarshal(bytes []byte, o interface{}) error {
+func (r rewriteHandler) unmarshal(bytes []byte, o any) error {
 	if len(bytes) == 0 {
 		bytes = []byte("{}")
 	}
 	return r.codec.Unmarshal(bytes, o)
 }
 
-func (r rewriteHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]interface{}) error {
+func (r rewriteHandler) write(file *os.File, configs []ExportedConfig, confMap map[string]any) error {
 	if confMap == nil {
-		confMap = make(map[string]interface{})
+		confMap = make(map[string]any)
 	}
 	for _, exportedConfig := range configs {
 		for k := range exportedConfig.Data {

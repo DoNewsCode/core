@@ -155,7 +155,7 @@ func provideConfig() configOut {
 		Config: []config.ExportedConfig{
 			{
 				Owner: "otetcd",
-				Data: map[string]interface{}{
+				Data: map[string]any{
 					"etcd": map[string]Option{
 						"default": {
 							Endpoints:            []string{"127.0.0.1:2379"},

@@ -13,6 +13,7 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/DoNewsCode/core/otetcd"
+
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 	"go.uber.org/dig"
@@ -76,7 +77,7 @@ type mockPopulator struct {
 	endpoints []string
 }
 
-func (m mockPopulator) Populate(target interface{}) error {
+func (m mockPopulator) Populate(target any) error {
 	c := dig.New()
 	c.Provide(func() contract.AppName {
 		return config.AppName("foo")

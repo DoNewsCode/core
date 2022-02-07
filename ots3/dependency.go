@@ -10,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-kit/log"
 	"github.com/opentracing/opentracing-go"
 )
@@ -159,7 +160,7 @@ func provideConfig() configOut {
 	configs := []config.ExportedConfig{
 		{
 			Owner: "ots3",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"s3": map[string]S3Config{
 					"default": {
 						AccessKey:    "http://127.0.0.1:9000",

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/DoNewsCode/core/config"
+
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/basicflag"
 	"github.com/knadh/koanf/providers/confmap"
@@ -31,7 +32,7 @@ func Example_configurationStack() {
 			basicflag.Provider(fs, "."), nil,
 		),
 		config.WithProviderLayer(
-			confmap.Provider(map[string]interface{}{"foo": "baz"}, "."), nil,
+			confmap.Provider(map[string]any{"foo": "baz"}, "."), nil,
 		),
 	)
 	// We have two layers of configuration, the first one from flags and the second one from a map.

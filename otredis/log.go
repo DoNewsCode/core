@@ -13,6 +13,6 @@ type RedisLogAdapter struct {
 }
 
 // Printf implements internal.Logging
-func (r RedisLogAdapter) Printf(ctx context.Context, s string, i ...interface{}) {
+func (r RedisLogAdapter) Printf(ctx context.Context, s string, i ...any) {
 	_ = r.Logging.Log("msg", fmt.Sprintf(s, i...))
 }

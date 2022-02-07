@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DoNewsCode/core/internal/stub"
-
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal/stub"
 	"github.com/DoNewsCode/core/otgorm/mocks"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )

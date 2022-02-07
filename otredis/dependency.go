@@ -9,6 +9,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/go-redis/redis/v8"
@@ -41,7 +42,7 @@ func Providers(opts ...ProvidersOptionFunc) di.Deps {
 		provideRedisFactory(&option),
 		provideDefaultClient,
 		provideConfig,
-		di.Bind(new(Factory), new(Maker)),
+		di.Bind(new(*Factory), new(Maker)),
 	}
 }
 
@@ -66,7 +67,7 @@ type factoryOut struct {
 }
 
 // Module implements di.Module
-func (m factoryOut) Module() interface{} {
+func (m factoryOut) Module() any {
 	return m
 }
 
@@ -199,7 +200,7 @@ func provideConfig() configOut {
 	configs := []config.ExportedConfig{
 		{
 			Owner: "otredis",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"redis": map[string]RedisUniversalOptions{
 					"default": {
 						Addrs: []string{"127.0.0.1:6379"},

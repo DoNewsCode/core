@@ -9,7 +9,7 @@ import (
 func TestContainer_AddModule(t *testing.T) {
 	cases := []struct {
 		name    string
-		module  interface{}
+		module  any
 		asserts func(t *testing.T, container Container)
 	}{
 		{

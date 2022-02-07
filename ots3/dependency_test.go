@@ -8,12 +8,13 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
+
 	"github.com/stretchr/testify/assert"
 )
 
 type Populator struct{}
 
-func (p Populator) Populate(target interface{}) error { return nil }
+func (p Populator) Populate(target any) error { return nil }
 
 func TestNewUploadManagerFactory(t *testing.T) {
 	s3out := provideFactory(&providersOption{})(factoryIn{

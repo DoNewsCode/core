@@ -10,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/key"
 	"github.com/DoNewsCode/core/leader"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 )

@@ -6,5 +6,5 @@ package contract
 type DIPopulator interface {
 	// Populate is just another way of fetching dependencies from container. It
 	// accepts a ptr to target, and populates the target from the container.
-	Populate(target interface{}) error
+	Populate(target any) error
 }

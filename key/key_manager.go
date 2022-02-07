@@ -83,12 +83,12 @@ func With(k contract.Keyer, parts ...string) manager {
 	return km.With(parts...)
 }
 
-// SpreadInterface likes Spread, but returns a slice of interface{}
-func SpreadInterface(k contract.Keyer) []interface{} {
+// SpreadInterface likes Spread, but returns a slice of any
+func SpreadInterface(k contract.Keyer) []any {
 	spreader := k.Spread()
-	out := make([]interface{}, len(spreader))
+	out := make([]any, len(spreader))
 	for i := range k.Spread() {
-		out[i] = interface{}(spreader[i])
+		out[i] = any(spreader[i])
 	}
 	return out
 }

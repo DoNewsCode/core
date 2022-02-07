@@ -9,6 +9,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/oklog/run"
@@ -82,7 +83,7 @@ type factoryOut struct {
 }
 
 // Module implements di.Modular
-func (f factoryOut) Module() interface{} {
+func (f factoryOut) Module() any {
 	return f
 }
 
@@ -251,14 +252,14 @@ func provideConfig() configOut {
 	configs := []config.ExportedConfig{
 		{
 			Owner: "kitkafka",
-			Data: map[string]interface{}{
-				"kafka": map[string]interface{}{
-					"reader": map[string]interface{}{
+			Data: map[string]any{
+				"kafka": map[string]any{
+					"reader": map[string]any{
 						"default": ReaderConfig{
 							Brokers: []string{"127.0.0.1:9092"},
 						},
 					},
-					"writer": map[string]interface{}{
+					"writer": map[string]any{
 						"default": WriterConfig{
 							Brokers: []string{"127.0.0.1:9092"},
 						},

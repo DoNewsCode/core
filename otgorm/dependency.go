@@ -11,6 +11,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-kit/log"
 	"github.com/oklog/run"
 	"github.com/opentracing/opentracing-go"
@@ -92,7 +93,7 @@ type databaseOut struct {
 }
 
 // Module implements di.Modular
-func (d databaseOut) Module() interface{} {
+func (d databaseOut) Module() any {
 	return d
 }
 
@@ -243,7 +244,7 @@ func provideConfig() configOut {
 	exported := []config.ExportedConfig{
 		{
 			Owner: "otgorm",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"gorm": map[string]databaseConf{
 					"default": {
 						Database:                                 "mysql",

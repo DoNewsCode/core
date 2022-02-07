@@ -6,6 +6,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
+
 	"github.com/go-kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf"
@@ -41,7 +42,7 @@ func TestNewRedisFactory(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, alt)
 			assert.NotNil(t, cleanup)
-			assert.Equal(t, c.reload, dispatcher.ListenerCount(events.OnReload) == 1)
+			assert.Equal(t, c.reload, dispatcher.ListenerCount() == 1)
 			cleanup()
 		})
 	}

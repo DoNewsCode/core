@@ -8,6 +8,7 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/otkafka"
+
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/segmentio/kafka-go"
 )
@@ -18,18 +19,18 @@ func Example_reader() {
 		return
 	}
 	brokers := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
-	conf := map[string]interface{}{
-		"log": map[string]interface{}{
+	conf := map[string]any{
+		"log": map[string]any{
 			"level": "none",
 		},
-		"kafka": map[string]interface{}{
-			"reader": map[string]interface{}{
+		"kafka": map[string]any{
+			"reader": map[string]any{
 				"default": otkafka.ReaderConfig{
 					Brokers: brokers,
 					Topic:   "example",
 				},
 			},
-			"writer": map[string]interface{}{
+			"writer": map[string]any{
 				"default": otkafka.WriterConfig{
 					Brokers: brokers,
 					Topic:   "example",

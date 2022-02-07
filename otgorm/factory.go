@@ -2,6 +2,7 @@ package otgorm
 
 import (
 	"github.com/DoNewsCode/core/di"
+
 	"gorm.io/gorm"
 )
 

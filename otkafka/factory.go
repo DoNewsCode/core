@@ -2,6 +2,7 @@ package otkafka
 
 import (
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/segmentio/kafka-go"
 )
 

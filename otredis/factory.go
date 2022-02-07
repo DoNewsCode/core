@@ -2,6 +2,7 @@ package otredis
 
 import (
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-redis/redis/v8"
 )
 

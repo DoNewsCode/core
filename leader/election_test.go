@@ -10,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/key"
 	leaderetcd2 "github.com/DoNewsCode/core/leader/leaderetcd"
+
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
 	"go.uber.org/atomic"

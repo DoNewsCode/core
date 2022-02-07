@@ -109,7 +109,7 @@ func (d *DAG) Run(ctx context.Context) error {
 	return errGroup.Wait()
 }
 
-func (d *DAG) fmtEdges(edges []int) interface{} {
+func (d *DAG) fmtEdges(edges []int) string {
 	var s []string
 	for _, edge := range edges {
 		if d.vertexes[edge].name != "" {

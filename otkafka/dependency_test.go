@@ -9,6 +9,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
+
 	"github.com/go-kit/log"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
@@ -26,12 +27,12 @@ func TestProvideReaderFactory(t *testing.T) {
 	}
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideReaderFactory(factoryIn{
-		Conf: config.MapAdapter{"kafka.reader": map[string]interface{}{
-			"default": map[string]interface{}{
+		Conf: config.MapAdapter{"kafka.reader": map[string]any{
+			"default": map[string]any{
 				"brokers": addrs,
 				"topic":   "Test",
 			},
-			"alternative": map[string]interface{}{
+			"alternative": map[string]any{
 				"brokers": addrs,
 				"topic":   "Test",
 			},
@@ -55,12 +56,12 @@ func TestProvideWriterFactory(t *testing.T) {
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideWriterFactory(factoryIn{
 		In: di.In{},
-		Conf: config.MapAdapter{"kafka.writer": map[string]interface{}{
-			"default": map[string]interface{}{
+		Conf: config.MapAdapter{"kafka.writer": map[string]any{
+			"default": map[string]any{
 				"brokers": addrs,
 				"topic":   "Test",
 			},
-			"alternative": map[string]interface{}{
+			"alternative": map[string]any{
 				"brokers": addrs,
 				"topic":   "Test",
 			},

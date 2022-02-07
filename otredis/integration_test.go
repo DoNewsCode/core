@@ -10,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	mock_metrics "github.com/DoNewsCode/core/otredis/mocks"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,7 @@ func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 
 	called := false
 
-	withValues := []interface{}{
+	withValues := []any{
 		gomock.Eq("dbname"),
 		gomock.Eq("default"),
 	}

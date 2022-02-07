@@ -22,13 +22,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/DoNewsCode/core/ctxmeta"
-	"github.com/opentracing/opentracing-go"
-
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/ctxmeta"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/go-kit/log/term"
+	"github.com/opentracing/opentracing-go"
 )
 
 // LevelLogger is an alias of contract.LevelLogger
@@ -45,7 +45,7 @@ func NewLogger(format string) (logger log.Logger) {
 		return logger
 	default:
 		// Color by level value
-		colorFn := func(keyvals ...interface{}) term.FgBgColor {
+		colorFn := func(keyvals ...any) term.FgBgColor {
 			for i := 0; i < len(keyvals)-1; i += 2 {
 				if keyvals[i] != "level" {
 					continue
@@ -96,16 +96,16 @@ func LevelFilter(levelCfg string) level.Option {
 }
 
 type span interface {
-	LogKV(alternatingKeyValues ...interface{})
+	LogKV(alternatingKeyValues ...any)
 }
 
 type spanLogger struct {
 	span span
 	base log.Logger
-	kvs  []interface{}
+	kvs  []any
 }
 
-func (s spanLogger) Log(keyvals ...interface{}) error {
+func (s spanLogger) Log(keyvals ...any) error {
 	for k := range s.kvs {
 		if f, ok := s.kvs[k].(log.Valuer); ok {
 			s.kvs[k] = f()
@@ -128,7 +128,7 @@ func WithContext(logger log.Logger, ctx context.Context) log.Logger {
 
 // WithBaggage decorates the log.Logger with information form context.
 func WithBaggage(logger log.Logger, ctx context.Context) log.Logger {
-	var args []interface{}
+	var args []any
 
 	bag := ctxmeta.GetBaggage(ctx)
 
@@ -145,55 +145,55 @@ type levelLogger struct {
 	log.Logger
 }
 
-func (l levelLogger) Debugf(s string, i ...interface{}) {
+func (l levelLogger) Debugf(s string, i ...any) {
 	_ = level.Debug(l).Log("msg", Sprintf(s, i...))
 }
 
-func (l levelLogger) Infof(s string, i ...interface{}) {
+func (l levelLogger) Infof(s string, i ...any) {
 	_ = level.Info(l).Log("msg", Sprintf(s, i...))
 }
 
-func (l levelLogger) Warnf(s string, i ...interface{}) {
+func (l levelLogger) Warnf(s string, i ...any) {
 	_ = level.Warn(l).Log("msg", Sprintf(s, i...))
 }
 
-func (l levelLogger) Errf(s string, i ...interface{}) {
+func (l levelLogger) Errf(s string, i ...any) {
 	_ = level.Error(l).Log("msg", Sprintf(s, i...))
 }
 
-func (l levelLogger) Debugw(s string, fields ...interface{}) {
+func (l levelLogger) Debugw(s string, fields ...any) {
 	m := append(fields, "msg", s)
 	_ = level.Debug(l).Log(m...)
 }
 
-func (l levelLogger) Infow(s string, fields ...interface{}) {
+func (l levelLogger) Infow(s string, fields ...any) {
 	m := append(fields, "msg", s)
 	_ = level.Info(l).Log(m...)
 }
 
-func (l levelLogger) Warnw(s string, fields ...interface{}) {
+func (l levelLogger) Warnw(s string, fields ...any) {
 	m := append(fields, "msg", s)
 	_ = level.Warn(l).Log(m...)
 }
 
-func (l levelLogger) Errw(s string, fields ...interface{}) {
+func (l levelLogger) Errw(s string, fields ...any) {
 	m := append(fields, "msg", s)
 	_ = level.Error(l).Log(m...)
 }
 
-func (l levelLogger) Debug(args ...interface{}) {
+func (l levelLogger) Debug(args ...any) {
 	_ = level.Debug(l).Log("msg", Sprint(args...))
 }
 
-func (l levelLogger) Info(args ...interface{}) {
+func (l levelLogger) Info(args ...any) {
 	_ = level.Info(l).Log("msg", Sprint(args...))
 }
 
-func (l levelLogger) Warn(args ...interface{}) {
+func (l levelLogger) Warn(args ...any) {
 	_ = level.Warn(l).Log("msg", Sprint(args...))
 }
 
-func (l levelLogger) Err(args ...interface{}) {
+func (l levelLogger) Err(args ...any) {
 	_ = level.Error(l).Log("msg", Sprint(args...))
 }
 

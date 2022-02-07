@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/ctxmeta"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/stretchr/testify/assert"
@@ -53,10 +54,10 @@ func TestWithContext(t *testing.T) {
 }
 
 type mockSpan struct {
-	received []interface{}
+	received []any
 }
 
-func (m *mockSpan) LogKV(alternatingKeyValues ...interface{}) {
+func (m *mockSpan) LogKV(alternatingKeyValues ...any) {
 	m.received = alternatingKeyValues
 }
 
@@ -65,10 +66,10 @@ func TestSpanLogger(t *testing.T) {
 	spanLogger{
 		span: &mock,
 		base: log.NewNopLogger(),
-		kvs:  []interface{}{"foo", log.Valuer(func() interface{} { return "bar" })},
+		kvs:  []any{"foo", log.Valuer(func() any { return "bar" })},
 	}.Log("baz", "qux")
 
-	assert.Equal(t, []interface{}{"foo", "bar", "baz", "qux"}, mock.received)
+	assert.Equal(t, []any{"foo", "bar", "baz", "qux"}, mock.received)
 }
 
 type mockValue struct{}

@@ -53,7 +53,7 @@ type Baggage[K comparable, V any] struct {
 // be a pointer to an assignable type. Unmarshal will return ErrNotFound if the key
 // is not found, and ErrIncompatibleType if the found value is not assignable to
 // target. Unmarshal also implements contract.ConfigUnmarshaler.
-func (b *Baggage[K, V]) Unmarshal(path K, target interface{}) error {
+func (b *Baggage[K, V]) Unmarshal(path K, target any) error {
 	val, err := b.Get(path)
 	if err != nil {
 		return err

@@ -21,6 +21,7 @@ import (
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/text"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -38,7 +39,7 @@ func New(code codes.Code, msg string) *Error {
 }
 
 // Newf returns New(code, fmt.Sprintf(format, args...)).
-func Newf(code codes.Code, format string, args ...interface{}) *Error {
+func Newf(code codes.Code, format string, args ...any) *Error {
 	return New(code, fmt.Sprintf(format, args...))
 }
 
@@ -62,7 +63,7 @@ func Wrap(err error, code codes.Code) *Error {
 // The wrapped error hence is mainly kept for tracing and debugging. The message
 // in the wrapped error becomes irrelevant as it is overwritten by the new
 // message.
-func Wrapf(err error, code codes.Code, format string, args ...interface{}) *Error {
+func Wrapf(err error, code codes.Code, format string, args ...any) *Error {
 	se := Wrap(err, code)
 	se.msg = format
 	se.args = args
@@ -78,7 +79,7 @@ func Wrapf(err error, code codes.Code, format string, args ...interface{}) *Erro
 type Error struct {
 	err  error
 	msg  string
-	args []interface{}
+	args []any
 	code codes.Code
 	// Printer can ben used to achieve i18n. By default it is a text.BasePrinter.
 	Printer contract.Printer
@@ -207,7 +208,7 @@ func IsUnknownErr(e error) bool {
 }
 
 // CanceledErr creates an Error with codes.Canceled
-func CanceledErr(e error, msgAndArgs ...interface{}) *Error {
+func CanceledErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.Canceled, e, msgAndArgs...)
 }
 
@@ -217,7 +218,7 @@ func IsCanceledErr(e error) bool {
 }
 
 // DeadlineExceededErr creates an Error with codes.DeadlineExceeded
-func DeadlineExceededErr(e error, msgAndArgs ...interface{}) *Error {
+func DeadlineExceededErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.DeadlineExceeded, e, msgAndArgs...)
 }
 
@@ -227,7 +228,7 @@ func IsDeadlineExceededErr(e error) bool {
 }
 
 // AlreadyExistsErr creates an Error with codes.AlreadyExists
-func AlreadyExistsErr(e error, msgAndArgs ...interface{}) *Error {
+func AlreadyExistsErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.AlreadyExists, e, msgAndArgs...)
 }
 
@@ -237,7 +238,7 @@ func IsAlreadyExistsErr(e error) bool {
 }
 
 // AbortedErr creates an Error with codes.Aborted
-func AbortedErr(e error, msgAndArgs ...interface{}) *Error {
+func AbortedErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.Aborted, e, msgAndArgs...)
 }
 
@@ -247,7 +248,7 @@ func IsAbortedErr(e error) bool {
 }
 
 // OutOfRangeErr creates an Error with codes.OutOfRange
-func OutOfRangeErr(e error, msgAndArgs ...interface{}) *Error {
+func OutOfRangeErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.OutOfRange, e, msgAndArgs...)
 }
 
@@ -257,7 +258,7 @@ func IsOutOfRangeErr(e error) bool {
 }
 
 // UnimplementedErr creates an Error with codes.Unimplemented
-func UnimplementedErr(e error, msgAndArgs ...interface{}) *Error {
+func UnimplementedErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.Unimplemented, e, msgAndArgs...)
 }
 
@@ -267,7 +268,7 @@ func IsUnimplementedErr(e error) bool {
 }
 
 // InternalErr creates an Error with codes.Internal
-func InternalErr(e error, msgAndArgs ...interface{}) *Error {
+func InternalErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.Internal, e, msgAndArgs...)
 }
 
@@ -277,7 +278,7 @@ func IsInternalErr(e error) bool {
 }
 
 // PermissionDeniedErr creates an Error with codes.PermissionDenied
-func PermissionDeniedErr(e error, msgAndArgs ...interface{}) *Error {
+func PermissionDeniedErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.PermissionDenied, e, msgAndArgs...)
 }
 
@@ -287,7 +288,7 @@ func IsPermissionDeniedErr(e error) bool {
 }
 
 // InvalidArgumentErr creates an Error with codes.InvalidArgument
-func InvalidArgumentErr(e error, msgAndArgs ...interface{}) *Error {
+func InvalidArgumentErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.InvalidArgument, e, msgAndArgs...)
 }
 
@@ -297,7 +298,7 @@ func IsInvalidArgumentErr(e error) bool {
 }
 
 // NotFoundErr creates an Error with codes.NotFound
-func NotFoundErr(e error, msgAndArgs ...interface{}) *Error {
+func NotFoundErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.NotFound, e, msgAndArgs...)
 }
 
@@ -307,7 +308,7 @@ func IsNotFoundErr(e error) bool {
 }
 
 // UnavailableErr creates an Error with codes.Unavailable
-func UnavailableErr(e error, msgAndArgs ...interface{}) *Error {
+func UnavailableErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.Unavailable, e, msgAndArgs...)
 }
 
@@ -317,7 +318,7 @@ func IsUnavailableErr(e error) bool {
 }
 
 // DataLossErr creates an Error with codes.DataLoss
-func DataLossErr(e error, msgAndArgs ...interface{}) *Error {
+func DataLossErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.DataLoss, e, msgAndArgs...)
 }
 
@@ -327,7 +328,7 @@ func IsDataLossErr(e error) bool {
 }
 
 // UnauthenticatedErr creates an Error with codes.Unauthenticated
-func UnauthenticatedErr(e error, msgAndArgs ...interface{}) *Error {
+func UnauthenticatedErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.Unauthenticated, e, msgAndArgs...)
 }
 
@@ -337,7 +338,7 @@ func IsUnauthenticatedErr(e error) bool {
 }
 
 // ResourceExhaustedErr creates an Error with codes.ResourceExhausted
-func ResourceExhaustedErr(e error, msgAndArgs ...interface{}) *Error {
+func ResourceExhaustedErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.ResourceExhausted, e, msgAndArgs...)
 }
 
@@ -347,7 +348,7 @@ func IsResourceExhaustedErr(e error) bool {
 }
 
 // FailedPreconditionErr creates an Error with codes.FailedPrecondition
-func FailedPreconditionErr(e error, msgAndArgs ...interface{}) *Error {
+func FailedPreconditionErr(e error, msgAndArgs ...any) *Error {
 	return err(codes.FailedPrecondition, e, msgAndArgs...)
 }
 
@@ -356,7 +357,7 @@ func IsFailedPreconditionErr(e error) bool {
 	return is(e, codes.FailedPrecondition)
 }
 
-func err(code codes.Code, e error, msgAndArgs ...interface{}) *Error {
+func err(code codes.Code, e error, msgAndArgs ...any) *Error {
 	if len(msgAndArgs) == 0 {
 		return Wrap(e, code)
 	}

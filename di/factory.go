@@ -33,7 +33,7 @@ func NewFactory[T any](constructor func(name string) (Pair[T], error)) *Factory[
 func (f *Factory[T]) Make(name string) (T, error) {
 	var err error
 
-	conn, err, _ := f.group.Do(name, func() (interface{}, error) {
+	conn, err, _ := f.group.Do(name, func() (any, error) {
 		if slot, ok := f.cache.Load(name); ok {
 			return slot.(Pair[T]).Conn, nil
 		}
@@ -53,7 +53,7 @@ func (f *Factory[T]) Make(name string) (T, error) {
 
 // Close reloads the factory, purging all cached connections.
 func (f *Factory[T]) Close() {
-	f.cache.Range(func(key, value interface{}) bool {
+	f.cache.Range(func(key, value any) bool {
 		f.cache.Delete(key)
 		pair := value.(Pair[T])
 		if pair.Closer == nil {
@@ -68,7 +68,7 @@ func (f *Factory[T]) Close() {
 // List lists created instance in the factory.
 func (f *Factory[T]) List() map[string]Pair[T] {
 	out := make(map[string]Pair[T])
-	f.cache.Range(func(key, value interface{}) bool {
+	f.cache.Range(func(key, value any) bool {
 		out[key.(string)] = value.(Pair[T])
 		return true
 	})

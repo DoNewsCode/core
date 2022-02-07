@@ -133,7 +133,7 @@ type m1 struct {
 	A int
 }
 
-func (m m1) Module() interface{} {
+func (m m1) Module() any {
 	return m
 }
 
@@ -141,7 +141,7 @@ type m2 struct {
 	A float32
 }
 
-func (m m2) Module() interface{} {
+func (m m2) Module() any {
 	return m
 }
 
@@ -225,7 +225,7 @@ func TestC_AddModule(t *testing.T) {
 	}
 	for _, c := range []struct {
 		name      string
-		module    interface{}
+		module    any
 		assertion func(t *testing.T, c *C)
 	}{
 		{

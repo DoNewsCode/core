@@ -6,6 +6,7 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
 )

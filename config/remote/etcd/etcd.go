@@ -9,6 +9,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+
 	"go.etcd.io/etcd/client/v3"
 )
 
@@ -55,7 +56,7 @@ func (r *ETCD) ReadBytes() ([]byte, error) {
 }
 
 // Read is not supported by the remote provider.
-func (r *ETCD) Read() (map[string]interface{}, error) {
+func (r *ETCD) Read() (map[string]any, error) {
 	return nil, errors.New("remote provider does not support this method")
 }
 

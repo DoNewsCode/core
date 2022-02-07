@@ -72,7 +72,7 @@ func TestDuration_UnmarshalYaml(t *testing.T) {
 func TestDuration_MarshalJSON(t *testing.T) {
 	cases := []struct {
 		name         string
-		value        interface{}
+		value        any
 		expectedJSON string
 		expectedYaml string
 	}{

@@ -11,8 +11,8 @@ type CodecParser struct {
 }
 
 // Unmarshal converts the bytes to map
-func (c CodecParser) Unmarshal(bytes []byte) (map[string]interface{}, error) {
-	m := make(map[string]interface{})
+func (c CodecParser) Unmarshal(bytes []byte) (map[string]any, error) {
+	m := make(map[string]any)
 	if err := c.Codec.Unmarshal(bytes, &m); err != nil {
 		return m, err
 	}
@@ -20,6 +20,6 @@ func (c CodecParser) Unmarshal(bytes []byte) (map[string]interface{}, error) {
 }
 
 // Marshal converts the map to bytes.
-func (c CodecParser) Marshal(m map[string]interface{}) ([]byte, error) {
+func (c CodecParser) Marshal(m map[string]any) ([]byte, error) {
 	return c.Codec.Marshal(m)
 }

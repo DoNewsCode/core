@@ -13,6 +13,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
 	mock_metrics "github.com/DoNewsCode/core/otkafka/mocks"
+
 	"github.com/golang/mock/gomock"
 	knoaf_json "github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/file"
@@ -302,7 +303,7 @@ func TestModule_hotReload(t *testing.T) {
 	cw.ch = make(chan struct{})
 	cw.afterReload = make(chan struct{})
 
-	conf := map[string]interface{}{
+	conf := map[string]any{
 		"http": map[string]bool{
 			"disable": true,
 		},
@@ -312,15 +313,15 @@ func TestModule_hotReload(t *testing.T) {
 		"cron": map[string]bool{
 			"disable": true,
 		},
-		"kafka": map[string]interface{}{
-			"reader": map[string]interface{}{
-				"default": map[string]interface{}{
+		"kafka": map[string]any{
+			"reader": map[string]any{
+				"default": map[string]any{
 					"brokers": addrs,
 					"topic":   "foo",
 				},
 			},
-			"writer": map[string]interface{}{
-				"default": map[string]interface{}{
+			"writer": map[string]any{
+				"default": map[string]any{
 					"brokers": addrs,
 					"topic":   "foo",
 				},
@@ -359,8 +360,8 @@ func TestModule_hotReload(t *testing.T) {
 	})
 
 	// Close config
-	conf["kafka"].(map[string]interface{})["writer"].(map[string]interface{})["default"].(map[string]interface{})["topic"] = "bar"
-	conf["kafka"].(map[string]interface{})["reader"].(map[string]interface{})["default"].(map[string]interface{})["topic"] = "bar"
+	conf["kafka"].(map[string]any)["writer"].(map[string]any)["default"].(map[string]any)["topic"] = "bar"
+	conf["kafka"].(map[string]any)["reader"].(map[string]any)["default"].(map[string]any)["topic"] = "bar"
 	overwriteFile(path, conf)
 	cw.ch <- struct{}{}
 	<-cw.afterReload
@@ -378,14 +379,14 @@ func TestModule_hotReload(t *testing.T) {
 	})
 }
 
-func createFile(content map[string]interface{}) string {
+func createFile(content map[string]any) string {
 	f, _ := ioutil.TempFile("", "*")
 	data, _ := json.Marshal(content)
 	ioutil.WriteFile(f.Name(), data, os.ModePerm)
 	return f.Name()
 }
 
-func overwriteFile(path string, content map[string]interface{}) {
+func overwriteFile(path string, content map[string]any) {
 	data, _ := json.Marshal(content)
 	ioutil.WriteFile(path, data, os.ModePerm)
 }

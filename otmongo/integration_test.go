@@ -1,10 +1,11 @@
 package otmongo
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/DoNewsCode/core"
-	"github.com/stretchr/testify/assert"
+
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 

@@ -22,7 +22,7 @@ func TestDefaultConfig_invalid(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{})
+				err := c.Validate(map[string]any{})
 				assert.Error(t, err)
 			}
 		}
@@ -32,8 +32,8 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
-					"http": map[string]interface{}{
+				err := c.Validate(map[string]any{
+					"http": map[string]any{
 						"addr":    "aaa",
 						"disable": false,
 					},
@@ -47,8 +47,8 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
-					"grpc": map[string]interface{}{
+				err := c.Validate(map[string]any{
+					"grpc": map[string]any{
 						"addr":    "aaa",
 						"disable": false,
 					},
@@ -62,8 +62,8 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
-					"http": map[string]interface{}{
+				err := c.Validate(map[string]any{
+					"http": map[string]any{
 						"addr":    "aaa",
 						"disable": true,
 					},
@@ -80,8 +80,8 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
-					"grpc": map[string]interface{}{
+				err := c.Validate(map[string]any{
+					"grpc": map[string]any{
 						"addr":    "aaa",
 						"disable": true,
 					},
@@ -98,7 +98,7 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
+				err := c.Validate(map[string]any{
 					"grpc": ":8080",
 				})
 				assert.Error(t, err)
@@ -110,8 +110,8 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
-					"grpc": map[string]interface{}{
+				err := c.Validate(map[string]any{
+					"grpc": map[string]any{
 						"disable": "",
 					},
 				})
@@ -124,7 +124,7 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
+				err := c.Validate(map[string]any{
 					"env": "bar",
 				})
 				assert.Error(t, err)
@@ -136,7 +136,7 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
+				err := c.Validate(map[string]any{
 					"app": 1,
 				})
 				assert.Error(t, err)
@@ -148,8 +148,8 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
-					"level": map[string]interface{}{
+				err := c.Validate(map[string]any{
+					"level": map[string]any{
 						"format": "json",
 						"level":  "all",
 					},
@@ -163,8 +163,8 @@ func TestDefaultConfig_invalid(t *testing.T) {
 		conf := provideDefaultConfig()
 		for _, c := range conf {
 			if c.Validate != nil {
-				err := c.Validate(map[string]interface{}{
-					"level": map[string]interface{}{
+				err := c.Validate(map[string]any{
+					"level": map[string]any{
 						"format": "foo",
 						"level":  "debug",
 					},
@@ -179,8 +179,8 @@ func TestDefaultConfig_network(t *testing.T) {
 	conf := provideDefaultConfig()
 	for _, c := range conf {
 		if c.Validate != nil {
-			err := c.Validate(map[string]interface{}{
-				"http": map[string]interface{}{
+			err := c.Validate(map[string]any{
+				"http": map[string]any{
 					"addr":    "aaa",
 					"disable": false,
 				},

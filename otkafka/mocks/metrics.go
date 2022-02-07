@@ -41,7 +41,7 @@ func (m *MockGauge) Add(arg0 float64) {
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockGaugeMockRecorder) Add(arg0 interface{}) *gomock.Call {
+func (mr *MockGaugeMockRecorder) Add(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockGauge)(nil).Add), arg0)
 }
@@ -53,7 +53,7 @@ func (m *MockGauge) Set(arg0 float64) {
 }
 
 // Set indicates an expected call of Set.
-func (mr *MockGaugeMockRecorder) Set(arg0 interface{}) *gomock.Call {
+func (mr *MockGaugeMockRecorder) Set(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockGauge)(nil).Set), arg0)
 }
@@ -61,7 +61,7 @@ func (mr *MockGaugeMockRecorder) Set(arg0 interface{}) *gomock.Call {
 // With mocks base method.
 func (m *MockGauge) With(arg0 ...string) metrics.Gauge {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{}
+	varargs := []any{}
 	for _, a := range arg0 {
 		varargs = append(varargs, a)
 	}
@@ -71,7 +71,7 @@ func (m *MockGauge) With(arg0 ...string) metrics.Gauge {
 }
 
 // With indicates an expected call of With.
-func (mr *MockGaugeMockRecorder) With(arg0 ...interface{}) *gomock.Call {
+func (mr *MockGaugeMockRecorder) With(arg0 ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "With", reflect.TypeOf((*MockGauge)(nil).With), arg0...)
 }
@@ -106,7 +106,7 @@ func (m *MockCounter) Add(arg0 float64) {
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockCounterMockRecorder) Add(arg0 interface{}) *gomock.Call {
+func (mr *MockCounterMockRecorder) Add(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockCounter)(nil).Add), arg0)
 }
@@ -114,7 +114,7 @@ func (mr *MockCounterMockRecorder) Add(arg0 interface{}) *gomock.Call {
 // With mocks base method.
 func (m *MockCounter) With(arg0 ...string) metrics.Counter {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{}
+	varargs := []any{}
 	for _, a := range arg0 {
 		varargs = append(varargs, a)
 	}
@@ -124,7 +124,7 @@ func (m *MockCounter) With(arg0 ...string) metrics.Counter {
 }
 
 // With indicates an expected call of With.
-func (mr *MockCounterMockRecorder) With(arg0 ...interface{}) *gomock.Call {
+func (mr *MockCounterMockRecorder) With(arg0 ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "With", reflect.TypeOf((*MockCounter)(nil).With), arg0...)
 }

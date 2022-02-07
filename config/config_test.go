@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/config/watcher"
+
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -154,13 +155,13 @@ func TestKoanfAdapter_Unmarshal_Yaml(t *gotesting.T) {
 func TestMapAdapter_Route(t *gotesting.T) {
 	t.Parallel()
 	m := MapAdapter(
-		map[string]interface{}{
-			"foo": map[string]interface{}{
+		map[string]any{
+			"foo": map[string]any{
 				"bar": "baz",
 			},
 		},
 	)
-	assert.Equal(t, MapAdapter(map[string]interface{}{
+	assert.Equal(t, MapAdapter(map[string]any{
 		"bar": "baz",
 	}), m.Route("foo"))
 	assert.Panics(t, func() {
@@ -171,16 +172,16 @@ func TestMapAdapter_Route(t *gotesting.T) {
 func TestMapAdapter_Unmarshal(t *gotesting.T) {
 	t.Parallel()
 	m := MapAdapter(
-		map[string]interface{}{
-			"foo": map[string]interface{}{
+		map[string]any{
+			"foo": map[string]any{
 				"bar": "baz",
 			},
 		},
 	)
-	var target map[string]interface{}
+	var target map[string]any
 	err := m.Unmarshal("foo", &target)
 	assert.NoError(t, err)
-	assert.Equal(t, map[string]interface{}{
+	assert.Equal(t, map[string]any{
 		"bar": "baz",
 	}, target)
 }
@@ -188,7 +189,7 @@ func TestMapAdapter_Unmarshal(t *gotesting.T) {
 func TestKoanfAdapter_Reload(t *gotesting.T) {
 	t.Parallel()
 	conf, err := NewConfig(
-		WithValidators(func(data map[string]interface{}) error {
+		WithValidators(func(data map[string]any) error {
 			return errors.New("bad config")
 		}),
 	)
@@ -197,7 +198,7 @@ func TestKoanfAdapter_Reload(t *gotesting.T) {
 }
 
 func TestUpgrade(t *gotesting.T) {
-	var m MapAdapter = map[string]interface{}{"foo": "bar"}
+	var m MapAdapter = map[string]any{"foo": "bar"}
 	upgraded := WithAccessor(m)
 
 	assert.Equal(t, float64(0), upgraded.Float64("foo"))

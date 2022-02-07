@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core"
+	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
-	"gorm.io/gorm"
 
-	"github.com/DoNewsCode/core/config"
 	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 func TestProvideDBFactory(t *testing.T) {
@@ -20,12 +20,12 @@ func TestProvideDBFactory(t *testing.T) {
 		t.Skip("set MYSQL_DSN to run TestProvideDBFactory")
 		return
 	}
-	gorms := map[string]interface{}{
-		"default": map[string]interface{}{
+	gorms := map[string]any{
+		"default": map[string]any{
 			"database": "sqlite",
 			"dsn":      ":memory:",
 		},
-		"alternative": map[string]interface{}{
+		"alternative": map[string]any{
 			"database": "mysql",
 			"dsn":      os.Getenv("MYSQL_DSN"),
 		},
