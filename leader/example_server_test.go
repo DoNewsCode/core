@@ -38,7 +38,7 @@ func Example_server() {
 	c.Provide(leader.Providers())
 	c.Invoke(func(statusChanged leader.StatusChanged) {
 		// This listener will be called twice. Once on becoming the leader and once on resigning the leader.
-		statusChanged.Subscribe(func(ctx context.Context, status *leader.Status) error {
+		statusChanged.On(func(ctx context.Context, status *leader.Status) error {
 			fmt.Println(status.IsLeader())
 			return nil
 		})

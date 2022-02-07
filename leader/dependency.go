@@ -37,7 +37,7 @@ func Providers(opt ...ProvidersOptionFunc) di.Deps {
 	return di.Deps{
 		provide(option),
 		provideConfig,
-		di.Bind(new(*events.Event[*Status]), new(*StatusChanged)),
+		di.Bind(new(*events.Event[*Status]), new(StatusChanged)),
 	}
 }
 
