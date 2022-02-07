@@ -11,6 +11,7 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/logging"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/knadh/koanf/parsers/yaml"

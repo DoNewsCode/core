@@ -2,6 +2,7 @@ package otetcd
 
 import (
 	"github.com/DoNewsCode/core/di"
+
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 

@@ -14,6 +14,7 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/DoNewsCode/core/observability"
+
 	"github.com/go-kit/log"
 	"github.com/oklog/run"
 	"github.com/stretchr/testify/assert"

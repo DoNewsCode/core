@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/config"
+
 	"github.com/go-kit/log"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"

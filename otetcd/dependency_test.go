@@ -10,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
+
 	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
@@ -23,9 +24,9 @@ func TestEtcd(t *testing.T) {
 		d1 Maker,
 		d2 *Factory,
 		d3 struct {
-			di.In
-			Cfg []config.ExportedConfig `group:"config"`
-		},
+		di.In
+		Cfg []config.ExportedConfig `group:"config"`
+	},
 		d4 *clientv3.Client,
 	) {
 		a := assert.New(t)

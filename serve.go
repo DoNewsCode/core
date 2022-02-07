@@ -11,9 +11,10 @@ import (
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/contract/lifecycle"
-	cron "github.com/DoNewsCode/core/cron"
+	"github.com/DoNewsCode/core/cron"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/gorilla/mux"
