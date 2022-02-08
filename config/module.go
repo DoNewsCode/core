@@ -22,7 +22,6 @@ import (
 // This module triggers ReloadedEvent on configuration change.
 type Module struct {
 	conf            *KoanfAdapter
-	dispatcher      lifecycle.ConfigReload
 	exportedConfigs []ExportedConfig
 }
 
@@ -49,8 +48,11 @@ func New(p ConfigIn) (Module, error) {
 		return Module{}, err
 	}
 
+	if p.Dispatcher != nil {
+		adapter.dispatcher = p.Dispatcher
+	}
+
 	return Module{
-		dispatcher:      p.Dispatcher,
 		conf:            adapter,
 		exportedConfigs: p.ExportedConfigs,
 	}, nil
@@ -60,7 +62,6 @@ func New(p ConfigIn) (Module, error) {
 func (m Module) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
 	group.Add(func() error {
-		m.conf.dispatcher = m.dispatcher
 		return m.conf.Watch(ctx)
 	}, func(err error) {
 		cancel()

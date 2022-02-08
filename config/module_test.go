@@ -45,7 +45,6 @@ func setup() *cobra.Command {
 				nil,
 			},
 		},
-		dispatcher: nil,
 	}
 	rootCmd := &cobra.Command{
 		Use: "root",
