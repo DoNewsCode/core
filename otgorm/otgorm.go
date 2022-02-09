@@ -18,7 +18,8 @@ func AddGormCallbacks(db *gorm.DB, tracer opentracing.Tracer) {
 	registerCallbacks(db, "query", callbacks)
 	registerCallbacks(db, "update", callbacks)
 	registerCallbacks(db, "delete", callbacks)
-	registerCallbacks(db, "row_query", callbacks)
+	registerCallbacks(db, "row", callbacks)
+	registerCallbacks(db, "raw", callbacks)
 }
 
 type callbacks struct {
@@ -29,16 +30,18 @@ func newCallbacks(tracer opentracing.Tracer) *callbacks {
 	return &callbacks{tracer}
 }
 
-func (c *callbacks) beforeCreate(scope *gorm.DB)   { c.before(scope) }
-func (c *callbacks) afterCreate(scope *gorm.DB)    { c.after(scope, "INSERT") }
-func (c *callbacks) beforeQuery(scope *gorm.DB)    { c.before(scope) }
-func (c *callbacks) afterQuery(scope *gorm.DB)     { c.after(scope, "SELECT") }
-func (c *callbacks) beforeUpdate(scope *gorm.DB)   { c.before(scope) }
-func (c *callbacks) afterUpdate(scope *gorm.DB)    { c.after(scope, "UPDATE") }
-func (c *callbacks) beforeDelete(scope *gorm.DB)   { c.before(scope) }
-func (c *callbacks) afterDelete(scope *gorm.DB)    { c.after(scope, "DELETE") }
-func (c *callbacks) beforeRowQuery(scope *gorm.DB) { c.before(scope) }
-func (c *callbacks) afterRowQuery(scope *gorm.DB)  { c.after(scope, "") }
+func (c *callbacks) beforeCreate(scope *gorm.DB) { c.before(scope) }
+func (c *callbacks) afterCreate(scope *gorm.DB)  { c.after(scope, "INSERT") }
+func (c *callbacks) beforeQuery(scope *gorm.DB)  { c.before(scope) }
+func (c *callbacks) afterQuery(scope *gorm.DB)   { c.after(scope, "SELECT") }
+func (c *callbacks) beforeUpdate(scope *gorm.DB) { c.before(scope) }
+func (c *callbacks) afterUpdate(scope *gorm.DB)  { c.after(scope, "UPDATE") }
+func (c *callbacks) beforeDelete(scope *gorm.DB) { c.before(scope) }
+func (c *callbacks) afterDelete(scope *gorm.DB)  { c.after(scope, "DELETE") }
+func (c *callbacks) beforeRow(scope *gorm.DB)    { c.before(scope) }
+func (c *callbacks) afterRow(scope *gorm.DB)     { c.after(scope, "") }
+func (c *callbacks) beforeRaw(scope *gorm.DB)    { c.before(scope) }
+func (c *callbacks) afterRaw(scope *gorm.DB)     { c.after(scope, "") }
 
 func (c *callbacks) before(db *gorm.DB) {
 	span, newCtx := opentracing.StartSpanFromContextWithTracer(db.Statement.Context, c.tracer, "sql")
@@ -48,13 +51,17 @@ func (c *callbacks) before(db *gorm.DB) {
 }
 
 func (c *callbacks) after(db *gorm.DB, operation string) {
+
 	spanInterface, ok := db.Get("span")
-	if !ok {
+	if !ok || spanInterface == nil {
 		return
 	}
 	span := spanInterface.(opentracing.Span)
 	if operation == "" {
 		operation = strings.ToUpper(strings.Split(db.Statement.SQL.String(), " ")[0])
+	}
+	if operation == "SELECT" {
+		fmt.Println("after")
 	}
 	if db.Error != nil {
 		ext.LogError(span, db.Error)
@@ -65,6 +72,7 @@ func (c *callbacks) after(db *gorm.DB, operation string) {
 	span.SetTag("db.err", db.Error != nil)
 	span.SetTag("db.count", db.Statement.RowsAffected)
 	span.Finish()
+	db.Set("span", nil)
 }
 
 func registerCallbacks(db *gorm.DB, name string, c *callbacks) {
@@ -85,8 +93,11 @@ func registerCallbacks(db *gorm.DB, name string, c *callbacks) {
 	case "delete":
 		db.Callback().Delete().Before(gormCallbackName).Register(beforeName, c.beforeDelete)
 		db.Callback().Delete().After(gormCallbackName).Register(afterName, c.afterDelete)
-	case "row_query":
-		db.Callback().Row().Before(gormCallbackName).Register(beforeName, c.beforeRowQuery)
-		db.Callback().Row().After(gormCallbackName).Register(afterName, c.afterRowQuery)
+	case "row":
+		db.Callback().Row().Before(gormCallbackName).Register(beforeName, c.beforeRow)
+		db.Callback().Row().After(gormCallbackName).Register(afterName, c.afterRow)
+	case "raw":
+		db.Callback().Raw().Before(gormCallbackName).Register(beforeName, c.beforeRaw)
+		db.Callback().Raw().After(gormCallbackName).Register(afterName, c.afterRaw)
 	}
 }
