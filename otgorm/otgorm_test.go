@@ -2,7 +2,6 @@ package otgorm
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -91,7 +90,6 @@ func TestHook_raw(t *testing.T) {
 
 	var models []mockModel
 	for rows.Next() {
-		fmt.Println("next")
 		var m mockModel
 		err = db.WithContext(ctx).ScanRows(rows, &m)
 		assert.NoError(t, err)

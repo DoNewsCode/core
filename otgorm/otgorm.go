@@ -53,15 +53,12 @@ func (c *callbacks) before(db *gorm.DB) {
 func (c *callbacks) after(db *gorm.DB, operation string) {
 
 	spanInterface, ok := db.Get("span")
-	if !ok || spanInterface == nil {
+	if !ok {
 		return
 	}
 	span := spanInterface.(opentracing.Span)
 	if operation == "" {
 		operation = strings.ToUpper(strings.Split(db.Statement.SQL.String(), " ")[0])
-	}
-	if operation == "SELECT" {
-		fmt.Println("after")
 	}
 	if db.Error != nil {
 		ext.LogError(span, db.Error)
@@ -72,7 +69,6 @@ func (c *callbacks) after(db *gorm.DB, operation string) {
 	span.SetTag("db.err", db.Error != nil)
 	span.SetTag("db.count", db.Statement.RowsAffected)
 	span.Finish()
-	db.Set("span", nil)
 }
 
 func registerCallbacks(db *gorm.DB, name string, c *callbacks) {
