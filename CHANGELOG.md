@@ -1,4 +1,12 @@
 
+<a name="v0.12.1"></a>
+## [v0.12.1](https://github.com/DoNewsCode/core/compare/v0.12.0...v0.12.1) (2022-02-09)
+
+### 🐛 Bug Fixes
+
+* **otgorm:** hooks ([#236](https://github.com/DoNewsCode/core/issues/236)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.12.0"></a>
 ## [v0.12.0](https://github.com/DoNewsCode/core/compare/v0.11.1...v0.12.0) (2022-01-20)
 
