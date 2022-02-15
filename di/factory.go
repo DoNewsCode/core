@@ -61,7 +61,6 @@ func (f *Factory[T]) Close() {
 		}
 		pair.Closer()
 		return true
-
 	})
 }
 
