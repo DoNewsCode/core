@@ -15,7 +15,7 @@ import (
 
 func Example() {
 	c := core.Default(
-		core.WithInline("http.addr", ":9999"),
+		core.WithInline("http.addr", ":9777"),
 		core.WithInline("log.level", "none"),
 	)
 	c.Provide(pool.Providers(pool.WithConcurrency(1)))
@@ -23,7 +23,7 @@ func Example() {
 	c.Invoke(func(p *pool.Pool, dispatcher lifecycle.HTTPServerStart) {
 		dispatcher.On(func(ctx context.Context, payload lifecycle.HTTPServerStartPayload) error {
 			go func() {
-				if _, err := http.Get("http://localhost:9999/"); err != nil {
+				if _, err := http.Get("http://localhost:9777/"); err != nil {
 					panic(err)
 				}
 			}()
