@@ -54,7 +54,7 @@ import (
 // NewPool returned func(contract.Dispatcher) *Pool
 func NewPool(options ...ProviderOptionFunc) *Pool {
 	pool := Pool{
-		ch:          make(chan job, 1),
+		ch:          make(chan job),
 		concurrency: 10,
 	}
 	for _, f := range options {
@@ -80,10 +80,6 @@ func (p *Pool) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	group.Add(func() error {
-		// Blocking channel to synchronization
-		defer func() {
-			p.ch <- job{}
-		}()
 		return p.Run(ctx)
 	}, func(err error) {
 		cancel()
