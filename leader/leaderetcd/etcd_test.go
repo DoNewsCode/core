@@ -41,22 +41,22 @@ func TestNewEtcdDriver(t *testing.T) {
 	go e1.Campaign(ctx)
 	assert.Eventually(t, func() bool {
 		return e1.Status().IsLeader()
-	}, time.Second, 10*time.Millisecond, "e1 should be leader")
+	}, 3*time.Second, 10*time.Millisecond, "e1 should be leader")
 
 	go e2.Campaign(ctx)
 
 	assert.Never(t, func() bool {
 		return e2.Status().IsLeader()
-	}, time.Second, 10*time.Millisecond, "e2 should not be leader")
+	}, 3*time.Second, 10*time.Millisecond, "e2 should not be leader")
 
 	e1.Resign(ctx)
 
 	assert.Eventually(t, func() bool {
 		return e2.Status().IsLeader()
-	}, time.Second, 10*time.Millisecond, "e2 should be leader")
+	}, 3*time.Second, 10*time.Millisecond, "e2 should be leader")
 	assert.Never(t, func() bool {
 		return e1.Status().IsLeader()
-	}, time.Second, 10*time.Millisecond, "e1 should not be leader")
+	}, 3*time.Second, 10*time.Millisecond, "e1 should not be leader")
 
 	e2.Resign(ctx)
 	cancel()
