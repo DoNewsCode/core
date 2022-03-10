@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/DoNewsCode/core/contract"
@@ -58,29 +59,31 @@ func NewRedisDriver(client redis.UniversalClient, keyer contract.Keyer, opts ...
 }
 
 // Campaign starts the leader election using redis. It will bock until this node becomes leader or the context is expired.
-func (r *RedisDriver) Campaign(ctx context.Context) error {
+func (r *RedisDriver) Campaign(ctx context.Context, status *atomic.Value) error {
+	defer status.Store(false)
 	for {
 		hostname, _ := os.Hostname()
 		ok, err := r.client.SetNX(ctx, r.keyer.Key(":", "leader"), hostname, r.expiration).Result()
 		if err != redis.Nil && err != nil {
 			return fmt.Errorf("error when running compaign: %w", err)
 		}
-		if ok {
-			var ctx context.Context
-			ctx, r.cancel = context.WithCancel(context.Background())
-			go func() {
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case <-time.After(1 * r.expiration / 4):
-						r.client.Expire(ctx, r.keyer.Key(":", "leader"), r.expiration).Result()
-					}
-				}
-			}()
-			return nil
+		if !ok {
+			time.Sleep(r.pollInterval)
+			continue
 		}
-		time.Sleep(r.pollInterval)
+		// The node is elected as leader
+		status.Store(true)
+
+		ctx, r.cancel = context.WithCancel(ctx)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(1 * r.expiration / 4):
+				r.client.Expire(ctx, r.keyer.Key(":", "leader"), r.expiration).Result()
+			}
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-package leaderetcd
+package leaderetcd_test
 
 import (
 	"context"
@@ -7,7 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/key"
+	"github.com/DoNewsCode/core/leader"
+	"github.com/DoNewsCode/core/leader/leaderetcd"
 
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
@@ -20,36 +23,41 @@ func TestNewEtcdDriver(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
+	dispatcher := &events.Event[*leader.Status]{}
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
 	client, err := clientv3.New(clientv3.Config{Endpoints: addrs, DialTimeout: 10 * time.Second, Context: ctx})
 	assert.NoError(t, err)
 	defer client.Close()
 
-	e1 := NewEtcdDriver(client, key.New("test"))
-	e2 := NewEtcdDriver(client, key.New("test"))
+	e1d := leaderetcd.NewEtcdDriver(client, key.New("test"))
+	e2d := leaderetcd.NewEtcdDriver(client, key.New("test"))
 
-	ch := make(chan *EtcdDriver)
+	e1 := leader.NewElection(dispatcher, e1d)
+	e2 := leader.NewElection(dispatcher, e2d)
 
-	go func() {
-		e1.Campaign(ctx)
-		ch <- e1
-	}()
-	go func() {
-		e2.Campaign(ctx)
-		ch <- e2
-	}()
-	e3 := <-ch
-	resp, err := e3.election.Leader(ctx)
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
 
-	e3.Resign(ctx)
+	go e1.Campaign(ctx)
+	assert.Eventually(t, func() bool {
+		return e1.Status().IsLeader()
+	}, time.Second, 10*time.Millisecond, "e1 should be leader")
 
-	e4 := <-ch
-	resp, err = e4.election.Leader(ctx)
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
+	go e2.Campaign(ctx)
 
-	assert.NotEqual(t, e3, e4)
-	e4.Resign(ctx)
+	assert.Never(t, func() bool {
+		return e2.Status().IsLeader()
+	}, time.Second, 10*time.Millisecond, "e2 should not be leader")
+
+	e1.Resign(ctx)
+
+	assert.Eventually(t, func() bool {
+		return e2.Status().IsLeader()
+	}, time.Second, 10*time.Millisecond, "e2 should be leader")
+	assert.Never(t, func() bool {
+		return e1.Status().IsLeader()
+	}, time.Second, 10*time.Millisecond, "e1 should not be leader")
+
+	e2.Resign(ctx)
+	cancel()
 }
