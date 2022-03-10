@@ -81,7 +81,9 @@ func (r *RedisDriver) Campaign(ctx context.Context, status *atomic.Value) error 
 			case <-ctx.Done():
 				return ctx.Err()
 			case <-time.After(1 * r.expiration / 4):
-				r.client.Expire(ctx, r.keyer.Key(":", "leader"), r.expiration).Result()
+				if err := r.client.Expire(ctx, r.keyer.Key(":", "leader"), r.expiration).Err(); err != nil {
+					return fmt.Errorf("renewing leader key: %w", err)
+				}
 			}
 		}
 	}
