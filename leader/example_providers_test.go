@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/DoNewsCode/core"
@@ -12,7 +13,7 @@ import (
 
 type AlwaysLeaderDriver struct{}
 
-func (a AlwaysLeaderDriver) Campaign(ctx context.Context) error {
+func (a AlwaysLeaderDriver) Campaign(ctx context.Context, status *atomic.Value) error {
 	return nil
 }
 
