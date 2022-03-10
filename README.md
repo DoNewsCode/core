@@ -227,5 +227,7 @@ Be sure to checkout the documentation section to learn more.
 - [Go Kit](https://github.com/DoNewsCode/core-kit) (if multiple transports)
 - [Kratos v2](https://github.com/go-kratos/kratos)
 
+## Thanks for JetBrains OS licenses
 
+<a href="https://www.jetbrains.com/?from=Donews/core" target="_blank"><img src="https://user-images.githubusercontent.com/1787798/69898077-4f4e3d00-138f-11ea-81f9-96fb7c49da89.png" width="150" align="middle"/></a>
 
