@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync/atomic"
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
@@ -32,7 +31,7 @@ func (m *mockMaker) Make(name string) (*clientv3.Client, error) {
 
 type mockDriver struct{}
 
-func (m mockDriver) Campaign(ctx context.Context, status *atomic.Value) error {
+func (m mockDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
 	panic("implement me")
 }
 

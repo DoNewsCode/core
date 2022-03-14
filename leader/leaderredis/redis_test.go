@@ -32,7 +32,9 @@ func TestCampaign(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	go driver.Campaign(ctx, status)
+	go driver.Campaign(ctx, func(b bool) {
+		status.Store(b)
+	})
 
 	assert.Eventually(t, func() bool {
 		return status.Load().(bool) == true

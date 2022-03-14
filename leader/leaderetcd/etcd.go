@@ -4,7 +4,6 @@ package leaderetcd
 import (
 	"context"
 	"os"
-	"sync/atomic"
 
 	"github.com/DoNewsCode/core/contract"
 
@@ -31,9 +30,8 @@ func NewEtcdDriver(client *clientv3.Client, keyer contract.Keyer) *EtcdDriver {
 }
 
 // Campaign starts the leader election using ETCD. It will bock until this node becomes leader or the context is expired.
-func (e *EtcdDriver) Campaign(ctx context.Context, status *atomic.Value) error {
-	defer status.Store(false)
-
+func (e *EtcdDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
+	defer toLeader(false)
 	var err error
 	e.session, err = concurrency.NewSession(e.client, concurrency.WithContext(ctx))
 	if err != nil {
@@ -45,7 +43,7 @@ func (e *EtcdDriver) Campaign(ctx context.Context, status *atomic.Value) error {
 		return err
 	}
 	// the node is elected as leader
-	status.Store(true)
+	toLeader(true)
 	<-e.session.Done()
 	return nil
 }

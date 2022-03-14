@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sync/atomic"
 	"time"
 
 	"github.com/DoNewsCode/core/contract"
@@ -59,8 +58,8 @@ func NewRedisDriver(client redis.UniversalClient, keyer contract.Keyer, opts ...
 }
 
 // Campaign starts the leader election using redis. It will bock until this node becomes leader or the context is expired.
-func (r *RedisDriver) Campaign(ctx context.Context, status *atomic.Value) error {
-	defer status.Store(false)
+func (r *RedisDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
+	defer toLeader(false)
 	for {
 		hostname, _ := os.Hostname()
 		ok, err := r.client.SetNX(ctx, r.keyer.Key(":", "leader"), hostname, r.expiration).Result()
@@ -72,7 +71,7 @@ func (r *RedisDriver) Campaign(ctx context.Context, status *atomic.Value) error 
 			continue
 		}
 		// The node is elected as leader
-		status.Store(true)
+		toLeader(true)
 
 		ctx, r.cancel = context.WithCancel(ctx)
 

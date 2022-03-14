@@ -12,8 +12,9 @@ var ErrNotALeader = errors.New("not a leader")
 
 // Driver models a external storage that can be used for leader election.
 type Driver interface {
-	// Campaign starts a leader election. It should block context canceled. The status must be updated with the campaign method.
-	Campaign(ctx context.Context, status *atomic.Value) error
+	// Campaign starts a leader election. It should block context canceled.
+	// The status must be updated with the campaign method.
+	Campaign(ctx context.Context, toLeader func(bool)) error
 	// Resign makes the current node a follower.
 	Resign(context.Context) error
 }
@@ -43,11 +44,16 @@ func NewElection(dispatcher Dispatcher, driver Driver) *Election {
 
 // Campaign starts a leader election. It will block until this node becomes a leader or context cancelled.
 func (e *Election) Campaign(ctx context.Context) error {
-	if err := e.driver.Campaign(ctx, e.status.isLeader); err != nil {
+	if err := e.driver.Campaign(ctx, func(status bool) {
+		// no change
+		if status == e.status.IsLeader() {
+			return
+		}
+		e.status.isLeader.Store(status)
+		e.dispatcher.Fire(ctx, e.status)
+	}); err != nil {
 		return fmt.Errorf("leader election failure: %w", err)
 	}
-	// trigger events
-	e.dispatcher.Fire(ctx, e.status)
 	return nil
 }
 
@@ -56,8 +62,6 @@ func (e *Election) Resign(ctx context.Context) error {
 	if !e.status.IsLeader() {
 		return ErrNotALeader
 	}
-	// trigger events
-	defer e.dispatcher.Fire(ctx, e.status)
 	return e.driver.Resign(ctx)
 }
 

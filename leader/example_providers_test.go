@@ -4,16 +4,19 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sync/atomic"
 	"time"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/leader"
 )
 
-type AlwaysLeaderDriver struct{}
+type AlwaysLeaderDriver struct {
+}
 
-func (a AlwaysLeaderDriver) Campaign(ctx context.Context, status *atomic.Value) error {
+func (a AlwaysLeaderDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
+	defer toLeader(false)
+	toLeader(true)
+	<-ctx.Done()
 	return nil
 }
 
