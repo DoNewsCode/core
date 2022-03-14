@@ -41,7 +41,8 @@ func TestElection(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	e1.Campaign(ctx)
+	go e1.Campaign(ctx)
+	<-time.After(time.Second)
 	assert.Equal(t, e1.status.IsLeader(), true)
 
 	go e2.Campaign(ctx)
