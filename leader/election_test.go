@@ -41,12 +41,12 @@ func TestElection(t *testing.T) {
 	e1 = Election{
 		dispatcher: dispatcher,
 		status:     &Status{isLeader: &atomic.Value{}},
-		driver:     leaderetcd.NewEtcdDriver(client, key.New("test")),
+		driver:     leaderetcd.NewEtcdDriver(client, key.New("el_test")),
 	}
 	e2 = Election{
 		dispatcher: dispatcher,
 		status:     &Status{isLeader: &atomic.Value{}},
-		driver:     leaderetcd.NewEtcdDriver(client, key.New("test")),
+		driver:     leaderetcd.NewEtcdDriver(client, key.New("el_test")),
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 

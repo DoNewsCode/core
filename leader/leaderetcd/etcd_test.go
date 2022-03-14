@@ -29,8 +29,8 @@ func TestNewEtcdDriver(t *testing.T) {
 	assert.NoError(t, err)
 	defer client.Close()
 
-	e1d := leaderetcd.NewEtcdDriver(client, key.New("test"))
-	e2d := leaderetcd.NewEtcdDriver(client, key.New("test"))
+	e1d := leaderetcd.NewEtcdDriver(client, key.New("etcd_test"))
+	e2d := leaderetcd.NewEtcdDriver(client, key.New("etcd_test"))
 
 	e1 := leader.NewElection(dispatcher, e1d)
 	e2 := leader.NewElection(dispatcher, e2d)
