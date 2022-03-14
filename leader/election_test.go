@@ -24,10 +24,11 @@ func TestElection(t *testing.T) {
 	addrs := strings.Split(os.Getenv("ETCD_ADDR"), ",")
 	dispatcher := Dispatcher(&events.Event[*Status]{})
 
-	var statusChangedRecords []bool
+	// confirm status changed event is dispatched
+	statusChangedEvent := Status{isLeader: &atomic.Value{}}
 	onLeaderChange := dispatcher.(StatusChanged)
 	onLeaderChange.On(func(ctx context.Context, status *Status) error {
-		statusChangedRecords = append(statusChangedRecords, status.IsLeader())
+		statusChangedEvent.isLeader.Store(status.IsLeader())
 		return nil
 	})
 
@@ -51,25 +52,25 @@ func TestElection(t *testing.T) {
 
 	go e1.Campaign(ctx)
 	<-time.After(time.Second)
-	assert.Equal(t, e1.status.IsLeader(), true)
+	assert.Equal(t, true, e1.status.IsLeader())
+	assert.Equal(t, true, statusChangedEvent.IsLeader())
 
 	go e2.Campaign(ctx)
 	<-time.After(time.Second)
 
-	assert.Equal(t, e1.status.IsLeader(), true)
-	assert.Equal(t, e2.status.IsLeader(), false)
+	assert.Equal(t, true, e1.status.IsLeader())
+	assert.Equal(t, false, e2.status.IsLeader())
 
 	e1.Resign(ctx)
 	time.Sleep(time.Second)
-	assert.Equal(t, e1.status.IsLeader(), false)
-	assert.Equal(t, e2.status.IsLeader(), true)
+	assert.Equal(t, false, e1.status.IsLeader())
+	assert.Equal(t, true, e2.status.IsLeader())
 
 	e2.Resign(ctx)
 	time.Sleep(time.Second)
-	assert.Equal(t, e1.status.IsLeader(), false)
-	assert.Equal(t, e2.status.IsLeader(), false)
+	assert.Equal(t, false, e1.status.IsLeader())
+	assert.Equal(t, false, e2.status.IsLeader())
+	assert.Equal(t, false, statusChangedEvent.IsLeader())
 
 	cancel()
-
-	assert.Equal(t, []bool{true, false, true, false}, statusChangedRecords)
 }
