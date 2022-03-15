@@ -48,7 +48,8 @@ func TestPool_contextValue(t *testing.T) {
 	p := NewPool(WithConcurrency(1))
 	key := struct{}{}
 	requestContext := context.WithValue(context.Background(), key, "foo")
-	go p.Go(requestContext, func(asyncContext context.Context) {
+	go p.Run(ctx)
+	p.Go(requestContext, func(asyncContext context.Context) {
 		if _, ok := asyncContext.Deadline(); ok {
 			t.Fatalf("asyncContext shouldn't have deadline set")
 		}
@@ -57,7 +58,6 @@ func TestPool_contextValue(t *testing.T) {
 			t.Fatalf("want foo, got %s", value)
 		}
 	})
-	p.Run(ctx)
 }
 
 func TestPool_ProvideRunGroup(t *testing.T) {
