@@ -121,6 +121,8 @@ type PersistenceConfig struct {
 // compensate the missing run(s) in the next schedule. Users should use
 // GetCurrentSchedule method to determine the targeted schedule of the current
 // run, instead of relying on time.Now.
+//
+// As a side effect, the job will only run once in a cluster.
 func WithPersistence(redis redis.UniversalClient, config PersistenceConfig) JobOption {
 	if config.LockTTL == 0 {
 		config.LockTTL = time.Minute
