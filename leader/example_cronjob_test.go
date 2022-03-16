@@ -3,11 +3,12 @@ package leader_test
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/leader"
 	"github.com/DoNewsCode/core/otetcd"
-	"os"
 
 	"github.com/robfig/cron/v3"
 )

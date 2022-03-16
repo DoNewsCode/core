@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/DoNewsCode/core/contract"
@@ -19,6 +20,7 @@ type RedisDriver struct {
 	expiration   time.Duration
 	pollInterval time.Duration
 	cancel       func()
+	lock         sync.Mutex
 	sha          string
 }
 
@@ -73,7 +75,9 @@ func (r *RedisDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
 		// The node is elected as leader
 		toLeader(true)
 
+		r.lock.Lock()
 		ctx, r.cancel = context.WithCancel(ctx)
+		r.lock.Unlock()
 
 		for {
 			select {
@@ -90,9 +94,11 @@ func (r *RedisDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
 
 // Resign gives up the leadership using redis. If the current node is not a leader, this is an no op.
 func (r *RedisDriver) Resign(ctx context.Context) error {
+	r.lock.Lock()
 	if r.cancel != nil {
 		r.cancel()
 	}
+	r.lock.Unlock()
 	hostname, _ := os.Hostname()
 	if r.sha == "" {
 		var err error
