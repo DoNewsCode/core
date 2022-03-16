@@ -57,26 +57,13 @@ func TestModule_ProvideCommand(t *testing.T) {
 			func(t *testing.T, maker Maker) {
 				client, _ := maker.Make("default")
 				client.Set(context.Background(), "foo", "bar", 0)
+				client.Set(context.Background(), "bar", "bar", 0)
 				time.Sleep(time.Second)
 			},
 			func(t *testing.T, maker Maker) {
 				client, _ := maker.Make("default")
 				results, _ := client.Keys(context.Background(), "*").Result()
 				assert.Len(t, results, 1)
-			},
-		},
-		{
-			"cleanup",
-			[]string{"redis", "cleanup", "1ms", "-p", "foo"},
-			func(t *testing.T, maker Maker) {
-				client, _ := maker.Make("default")
-				client.Set(context.Background(), "foo", "bar", 0)
-				time.Sleep(time.Second)
-			},
-			func(t *testing.T, maker Maker) {
-				client, _ := maker.Make("default")
-				results, _ := client.Keys(context.Background(), "*").Result()
-				assert.Empty(t, results)
 			},
 		},
 	}

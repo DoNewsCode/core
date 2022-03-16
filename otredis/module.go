@@ -28,7 +28,7 @@ func New(in ModuleIn) Module {
 	}
 }
 
-// ProvideCommand provides migration and seed command.
+// ProvideCommand provides redis commands.
 func (m Module) ProvideCommand(command *cobra.Command) {
 	cleanupCmd := NewCleanupCommand(m.maker, m.logger)
 	redisCmd := &cobra.Command{
