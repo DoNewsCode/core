@@ -35,8 +35,11 @@ func NewCleanupCommand(maker Maker, baseLogger log.Logger) *cobra.Command {
 	}
 
 	removeKeys := func(ctx context.Context, cursor *uint64, stats *stats, threshold time.Duration) error {
-		var keys []string
-		var err error
+		var (
+			keys     []string
+			err      error
+			idleTime time.Duration
+		)
 
 		logger.Info(fmt.Sprintf("scanning redis keys from cursor %d", *cursor))
 		if err := os.WriteFile(cursorPath, []byte(fmt.Sprintf("%d", *cursor)), os.ModePerm); err != nil {
@@ -53,10 +56,7 @@ func NewCleanupCommand(maker Maker, baseLogger log.Logger) *cobra.Command {
 		}
 		stats.scanned += uint64(len(keys))
 
-		var (
-			idleTime time.Duration
-			group    errgroup.Group
-		)
+		group, ctx := errgroup.WithContext(ctx)
 		for _, key := range keys {
 			key := key
 			group.Go(func() error {
