@@ -36,9 +36,8 @@ func NewCleanupCommand(maker Maker, baseLogger log.Logger) *cobra.Command {
 
 	removeKeys := func(ctx context.Context, cursor *uint64, stats *stats, threshold time.Duration) error {
 		var (
-			keys     []string
-			err      error
-			idleTime time.Duration
+			keys []string
+			err  error
 		)
 
 		logger.Info(fmt.Sprintf("scanning redis keys from cursor %d", *cursor))
@@ -60,7 +59,7 @@ func NewCleanupCommand(maker Maker, baseLogger log.Logger) *cobra.Command {
 		for _, key := range keys {
 			key := key
 			group.Go(func() error {
-				idleTime, err = redisClient.ObjectIdleTime(ctx, key).Result()
+				idleTime, _ := redisClient.ObjectIdleTime(ctx, key).Result()
 				if idleTime > threshold {
 					logger.Info(fmt.Sprintf("removing %s from redis as it is %s old", key, idleTime))
 					_, err := redisClient.Del(ctx, key).Result()
