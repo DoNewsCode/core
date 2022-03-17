@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -26,15 +27,24 @@ func TestCampaign(t *testing.T) {
 		client: client,
 		keyer:  key.New(),
 	}
-	driver.Campaign(context.Background())
+	status := &atomic.Value{}
+	status.Store(false)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	_, err := client.Get(context.Background(), "leader").Result()
-	assert.NoError(t, err)
+	go driver.Campaign(ctx, func(b bool) {
+		status.Store(b)
+	})
 
-	driver.Resign(context.Background())
+	assert.Eventually(t, func() bool {
+		return status.Load().(bool) == true
+	}, time.Second, 10*time.Millisecond, "campaign should have started and successfully become leader")
 
-	_, err = client.Get(context.Background(), "leader").Result()
-	assert.Error(t, err)
+	driver.Resign(ctx)
+
+	assert.Eventually(t, func() bool {
+		return status.Load().(bool) == false
+	}, time.Second, 10*time.Millisecond, "leader should have resigned")
 }
 
 func TestNewRedisDriver(t *testing.T) {
@@ -56,19 +66,28 @@ func TestElection(t *testing.T) {
 	e1 = leader.NewElection(dispatcher, driver)
 	e2 = leader.NewElection(dispatcher, driver)
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	e1.Campaign(ctx)
-	assert.Equal(t, e1.Status().IsLeader(), true)
+	go e1.Campaign(ctx)
+	assert.Eventually(t, func() bool {
+		return e1.Status().IsLeader()
+	}, time.Second, 10*time.Millisecond, "e1 should be leader")
+
 	go e2.Campaign(ctx)
-	<-time.After(2 * time.Second)
 
-	assert.Equal(t, true, e1.Status().IsLeader())
-	assert.Equal(t, false, e2.Status().IsLeader())
+	assert.Never(t, func() bool {
+		return e2.Status().IsLeader()
+	}, time.Second, 10*time.Millisecond, "e2 should not be leader")
 
 	e1.Resign(ctx)
-	time.Sleep(10 * time.Millisecond)
-	assert.Equal(t, false, e1.Status().IsLeader())
-	assert.Equal(t, true, e2.Status().IsLeader())
+
+	assert.Eventually(t, func() bool {
+		return e2.Status().IsLeader()
+	}, time.Second, 10*time.Millisecond, "e2 should be leader")
+	assert.Never(t, func() bool {
+		return e1.Status().IsLeader()
+	}, time.Second, 10*time.Millisecond, "e1 should not be leader")
+
 	e2.Resign(ctx)
 	cancel()
 }

@@ -30,9 +30,10 @@ func NewEtcdDriver(client *clientv3.Client, keyer contract.Keyer) *EtcdDriver {
 }
 
 // Campaign starts the leader election using ETCD. It will bock until this node becomes leader or the context is expired.
-func (e *EtcdDriver) Campaign(ctx context.Context) error {
+func (e *EtcdDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
+	defer toLeader(false)
 	var err error
-	e.session, err = concurrency.NewSession(e.client)
+	e.session, err = concurrency.NewSession(e.client, concurrency.WithContext(ctx))
 	if err != nil {
 		return err
 	}
@@ -41,6 +42,9 @@ func (e *EtcdDriver) Campaign(ctx context.Context) error {
 	if err := e.election.Campaign(ctx, hostname); err != nil {
 		return err
 	}
+	// the node is elected as leader
+	toLeader(true)
+	<-e.session.Done()
 	return nil
 }
 

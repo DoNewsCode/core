@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/DoNewsCode/core/contract"
@@ -19,6 +20,7 @@ type RedisDriver struct {
 	expiration   time.Duration
 	pollInterval time.Duration
 	cancel       func()
+	lock         sync.Mutex
 	sha          string
 }
 
@@ -58,37 +60,45 @@ func NewRedisDriver(client redis.UniversalClient, keyer contract.Keyer, opts ...
 }
 
 // Campaign starts the leader election using redis. It will bock until this node becomes leader or the context is expired.
-func (r *RedisDriver) Campaign(ctx context.Context) error {
+func (r *RedisDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
+	defer toLeader(false)
 	for {
 		hostname, _ := os.Hostname()
 		ok, err := r.client.SetNX(ctx, r.keyer.Key(":", "leader"), hostname, r.expiration).Result()
 		if err != redis.Nil && err != nil {
 			return fmt.Errorf("error when running compaign: %w", err)
 		}
-		if ok {
-			var ctx context.Context
-			ctx, r.cancel = context.WithCancel(context.Background())
-			go func() {
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case <-time.After(1 * r.expiration / 4):
-						r.client.Expire(ctx, r.keyer.Key(":", "leader"), r.expiration).Result()
-					}
-				}
-			}()
-			return nil
+		if !ok {
+			time.Sleep(r.pollInterval)
+			continue
 		}
-		time.Sleep(r.pollInterval)
+		// The node is elected as leader
+		toLeader(true)
+
+		r.lock.Lock()
+		ctx, r.cancel = context.WithCancel(ctx)
+		r.lock.Unlock()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(1 * r.expiration / 4):
+				if err := r.client.Expire(ctx, r.keyer.Key(":", "leader"), r.expiration).Err(); err != nil {
+					return fmt.Errorf("renewing leader key: %w", err)
+				}
+			}
+		}
 	}
 }
 
 // Resign gives up the leadership using redis. If the current node is not a leader, this is an no op.
 func (r *RedisDriver) Resign(ctx context.Context) error {
+	r.lock.Lock()
 	if r.cancel != nil {
 		r.cancel()
 	}
+	r.lock.Unlock()
 	hostname, _ := os.Hostname()
 	if r.sha == "" {
 		var err error

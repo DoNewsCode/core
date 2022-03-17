@@ -194,3 +194,7 @@ type HTTPProvider interface {
 - [Gin](https://github.com/DoNewsCode/core-gin) （如果仅限于 HTTP）
 - [Go Kit](https://github.com/DoNewsCode/core-kit) （如果有多个运输工具）
 - [kratos](https://github.com/go-kratos/kratos) (当前 v2 已经可以使用)
+
+## 感谢 JetBrains 开源证书支持
+
+<a href="https://www.jetbrains.com/?from=Donews/core" target="_blank"><img src="https://user-images.githubusercontent.com/1787798/69898077-4f4e3d00-138f-11ea-81f9-96fb7c49da89.png" width="150" align="middle"/></a>

@@ -94,7 +94,6 @@ func (m out) ProvideRunGroup(group *run.Group) {
 		if err != nil {
 			return err
 		}
-		<-ctx.Done()
 		return nil
 	}, func(err error) {
 		_ = m.Election.Resign(ctx)

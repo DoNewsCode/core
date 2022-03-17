@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/DoNewsCode/core/internal/stub"
+	"github.com/go-redis/redis/v8"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/go-kit/log"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -27,6 +30,36 @@ func (m mockParser) Parse(spec string) (cron.Schedule, error) {
 	return mockScheduler(func(now time.Time) time.Time {
 		return now.Add(time.Millisecond)
 	}), nil
+}
+
+func TestJobPersistence(t *testing.T) {
+	if os.Getenv("REDIS_ADDR") == "" {
+		t.Skip("set REDIS_ADDR to run TestModule_ProvideRunGroup")
+		return
+	}
+	addrs := strings.Split(os.Getenv("REDIS_ADDR"), ",")
+
+	client := redis.NewUniversalClient(&redis.UniversalOptions{
+		Addrs: addrs,
+	})
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	client.Set(ctx, "test:foo:next", time.Now().Round(time.Second).Format(time.RFC3339), 0)
+
+	c := New(Config{EnableSeconds: true})
+
+	var i int
+	c.Add("* * * * * *", func(ctx context.Context) error {
+		i++
+		return nil
+	}, WithPersistence(client, PersistenceConfig{KeyPrefix: "test"}), WithName("foo"))
+	c.Run(ctx)
+
+	assert.GreaterOrEqual(t, i, 2)
+	t.Log(i)
 }
 
 func TestJobOption(t *testing.T) {

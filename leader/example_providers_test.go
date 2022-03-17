@@ -10,9 +10,13 @@ import (
 	"github.com/DoNewsCode/core/leader"
 )
 
-type AlwaysLeaderDriver struct{}
+type AlwaysLeaderDriver struct {
+}
 
-func (a AlwaysLeaderDriver) Campaign(ctx context.Context) error {
+func (a AlwaysLeaderDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
+	defer toLeader(false)
+	toLeader(true)
+	<-ctx.Done()
 	return nil
 }
 

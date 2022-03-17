@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
-	
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/cron"
 	"github.com/DoNewsCode/core/di"
@@ -27,7 +27,11 @@ func (module *CronModule) ProvideCron(crontab *cron.Cron) {
 }
 
 func Example() {
-	c := core.Default(core.WithInline("log.level", "none"))
+	c := core.Default(
+		core.WithInline("log.level", "none"),
+		core.WithInline("http.disable", "true"),
+		core.WithInline("grpc.disable", "true"),
+	)
 	c.Provide(observability.Providers())
 	c.Provide(
 		di.Deps{func() *cron.Cron {
