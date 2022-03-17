@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -15,7 +16,6 @@ import (
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/log"
 	"github.com/spf13/cobra"
-	"golang.org/x/sync/errgroup"
 )
 
 // NewCleanupCommand creates a new command to clean up unused redis keys.
@@ -55,25 +55,20 @@ func NewCleanupCommand(maker Maker, baseLogger log.Logger) *cobra.Command {
 		}
 		stats.scanned += uint64(len(keys))
 
-		group, ctx := errgroup.WithContext(ctx)
+		var wg sync.WaitGroup
 		for _, key := range keys {
-			key := key
-			group.Go(func() error {
+			wg.Add(1)
+			go func(key string) {
 				idleTime, _ := redisClient.ObjectIdleTime(ctx, key).Result()
 				if idleTime > threshold {
 					logger.Info(fmt.Sprintf("removing %s from redis as it is %s old", key, idleTime))
-					_, err := redisClient.Del(ctx, key).Result()
-					if err != nil {
-						return err
-					}
+					redisClient.Del(ctx, key)
 					atomic.AddUint64(&stats.removed, 1)
 				}
-				return nil
-			})
+				wg.Done()
+			}(key)
 		}
-		if err := group.Wait(); err != nil {
-			return err
-		}
+		wg.Wait()
 		return nil
 	}
 
