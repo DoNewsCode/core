@@ -1,4 +1,12 @@
 
+<a name="v0.12.2"></a>
+## [v0.12.2](https://github.com/DoNewsCode/core/compare/v0.12.1...v0.12.2) (2022-03-17)
+
+### ✨ Features
+
+* **otredis:** add cleanup command to redis module ([#239](https://github.com/DoNewsCode/core/issues/239)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.12.1"></a>
 ## [v0.12.1](https://github.com/DoNewsCode/core/compare/v0.12.0...v0.12.1) (2022-02-09)
 
