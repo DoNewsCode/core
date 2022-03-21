@@ -23,6 +23,12 @@ func TestProvideDBFactory(t *testing.T) {
 		"default": map[string]interface{}{
 			"database": "sqlite",
 			"dsn":      ":memory:",
+			"pool": map[string]interface{}{
+				"maxOpenConns":    10,
+				"maxIdleConns":    10,
+				"connMaxIdleTime": int64(10),
+				"connMaxLifetime": int64(10),
+			},
 		},
 		"alternative": map[string]interface{}{
 			"database": "mysql",
