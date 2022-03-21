@@ -9,9 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
-	cron "github.com/DoNewsCode/core/cron"
-	"github.com/DoNewsCode/core/deprecated_cronopts"
+	"github.com/DoNewsCode/core/cron"
+	"github.com/DoNewsCode/core/cronopts"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/log"
@@ -56,12 +57,31 @@ func (s serveModule) ProvideCommand(command *cobra.Command) {
 type runGroupFunc func(ctx context.Context, logger logging.LevelLogger) (func() error, func(err error), error)
 
 func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (func() error, func(err error), error) {
-	if s.Config.Bool("http.disable") {
+	type httpConfig struct {
+		Disable           bool            `json:"disable" yaml:"disable"`
+		Addr              string          `json:"addr" yaml:"addr"`
+		ReadTimeout       config.Duration `json:"readTimeout" yaml:"readTimeout"`
+		ReadHeaderTimeout config.Duration `json:"readHeaderTimeout" yaml:"readHeaderTimeout"`
+		WriteTimeout      config.Duration `json:"writeTimeout" yaml:"writeTimeout"`
+		IdleTimeout       config.Duration `json:"idleTimeout" yaml:"idleTimeout"`
+		MaxHeaderBytes    int             `json:"maxHeaderBytes" yaml:"maxHeaderBytes"`
+	}
+
+	var conf httpConfig
+	s.Config.Unmarshal("http", &conf)
+
+	if conf.Disable {
 		return nil, nil, nil
 	}
 
 	if s.HTTPServer == nil {
-		s.HTTPServer = &http.Server{}
+		s.HTTPServer = &http.Server{
+			ReadTimeout:       conf.ReadTimeout.Duration,
+			ReadHeaderTimeout: conf.ReadHeaderTimeout.Duration,
+			WriteTimeout:      conf.WriteTimeout.Duration,
+			IdleTimeout:       conf.IdleTimeout.Duration,
+			MaxHeaderBytes:    conf.MaxHeaderBytes,
+		}
 	}
 	router := mux.NewRouter()
 	applyRouter(s.Container, router)
@@ -73,8 +93,7 @@ func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (fun
 	})
 
 	s.HTTPServer.Handler = router
-
-	httpAddr := s.Config.String("http.addr")
+	httpAddr := conf.Addr
 	ln, err := net.Listen("tcp", httpAddr)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed start http server")
