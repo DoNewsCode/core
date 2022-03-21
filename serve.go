@@ -12,6 +12,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/cron"
+	"github.com/DoNewsCode/core/deprecated_cronopts"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/go-kit/log"
