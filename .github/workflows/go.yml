@@ -70,15 +70,15 @@ jobs:
         options: --name minio-server
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         stable: false
         go-version: ${{ matrix.go-version }}
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       id: cache-go-mod
       with:
         path: ~/go/pkg/mod
@@ -97,7 +97,7 @@ jobs:
       run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
     - name: Upload coverage
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: coverage.txt
@@ -105,10 +105,10 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.41
+          version: v1.45.2
           args: --disable errcheck --timeout 5m0s
           only-new-issues: true
