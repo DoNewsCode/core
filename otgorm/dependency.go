@@ -66,6 +66,14 @@ type databaseConf struct {
 		TablePrefix   string `json:"tablePrefix" yaml:"tablePrefix"`
 		SingularTable bool   `json:"singularTable" yaml:"singularTable"`
 	} `json:"namingStrategy" yaml:"namingStrategy"`
+	Pool poolConf `json:"pool" yaml:"pool"`
+}
+
+type poolConf struct {
+	ConnMaxIdleTime config.Duration `json:"connMaxIdleTime" yaml:"connMaxIdleTime"`
+	ConnMaxLifeTime config.Duration `json:"connMaxLifeTime" yaml:"connMaxLifeTime"`
+	MaxIdleConns    int             `json:"maxIdleConns" yaml:"maxIdleConns"`
+	MaxOpenConns    int             `json:"maxOpenConns" yaml:"maxOpenConns"`
 }
 
 type metricsConf struct {
@@ -154,7 +162,7 @@ func provideGormConfig(l log.Logger, conf *databaseConf) *gorm.Config {
 // provideDialector and provideGormConfig. Gorm opens connection to database
 // while building *gorm.db. This means if the database is not available, the system
 // will fail when initializing dependencies.
-func provideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentracing.Tracer) (*gorm.DB, func(), error) {
+func provideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentracing.Tracer, conf poolConf) (*gorm.DB, func(), error) {
 	db, err := gorm.Open(dialector, config)
 
 	var nerr *net.OpError
@@ -166,6 +174,24 @@ func provideGormDB(dialector gorm.Dialector, config *gorm.Config, tracer opentra
 	if tracer != nil {
 		AddGormCallbacks(db, tracer)
 	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, nil, err
+	}
+	if !conf.ConnMaxIdleTime.IsZero() {
+		sqlDB.SetConnMaxIdleTime(conf.ConnMaxIdleTime.Duration)
+	}
+	if !conf.ConnMaxLifeTime.IsZero() {
+		sqlDB.SetConnMaxLifetime(conf.ConnMaxLifeTime.Duration)
+	}
+	if conf.MaxIdleConns > 0 {
+		sqlDB.SetMaxIdleConns(conf.MaxIdleConns)
+	}
+	if conf.MaxOpenConns > 0 {
+		sqlDB.SetMaxOpenConns(conf.MaxOpenConns)
+	}
+
 	return db, func() {
 		if sqlDb, err := db.DB(); err == nil {
 			sqlDb.Close()
@@ -204,7 +230,7 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			}
 			gormConfig := provideGormConfig(logger, &conf)
 			options.interceptor(name, gormConfig)
-			conn, cleanup, err = provideGormDB(dialector, gormConfig, factoryIn.Tracer)
+			conn, cleanup, err = provideGormDB(dialector, gormConfig, factoryIn.Tracer, conf.Pool)
 			if err != nil {
 				return pair, err
 			}
@@ -263,6 +289,12 @@ func provideConfig() configOut {
 							TablePrefix   string `json:"tablePrefix" yaml:"tablePrefix"`
 							SingularTable bool   `json:"singularTable" yaml:"singularTable"`
 						}{},
+						Pool: poolConf{
+							MaxIdleConns:    1,
+							MaxOpenConns:    10,
+							ConnMaxIdleTime: config.Duration{Duration: 5 * time.Minute},
+							ConnMaxLifeTime: config.Duration{Duration: 30 * time.Minute},
+						},
 					},
 				},
 				"gormMetrics": metricsConf{

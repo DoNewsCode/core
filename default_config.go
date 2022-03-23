@@ -25,6 +25,9 @@ env: local
 http:
   addr: :8080
   disable: false
+  readTimeout: 2s
+  writeTimeout: 10s
+  idleTimeout: 10s
 grpc:
   addr: :9090
   disable: false
