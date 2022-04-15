@@ -24,7 +24,7 @@ func TestModule_ProvideCommand(t *testing.T) {
 	c.ProvideEssentials()
 	c.Provide(di.Deps{
 		provideRedisFactory(&providersOption{}),
-		di.Bind(new(Factory), new(Maker)),
+		di.Bind(new(*Factory), new(Maker)),
 	})
 	c.AddModuleFunc(New)
 	rootCmd := cobra.Command{}
