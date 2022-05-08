@@ -9,7 +9,7 @@ jobs:
   build:
     strategy:
       matrix:
-        go-version: [1.18.x]
+        go-version: [ 1.18.x ]
     runs-on: ubuntu-latest
     services:
       redis:
@@ -70,45 +70,46 @@ jobs:
         options: --name minio-server
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        stable: false
-        go-version: ${{ matrix.go-version }}
-
-    - uses: actions/cache@v3
-      id: cache-go-mod
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('go.mod') }}
-        restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version }}
-
-    - name: Environment Variables from Dotenv
-      uses: c-py/action-dotenv-to-setenv@v3
-
-    - name: Build
-      if: steps.cache-go-mod.outputs.cache-hit != 'true'
-      run: go build -v ./...
-
-    - name: Test
-      run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
-
-    - name: Upload coverage
-      uses: codecov/codecov-action@v2
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: coverage.txt
-  lint:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           stable: false
+          go-version: ${{ matrix.go-version }}
+
+      - uses: actions/cache@v3
+        id: cache-go-mod
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}
+
+      - name: Environment Variables from Dotenv
+        uses: c-py/action-dotenv-to-setenv@v3
+
+      - name: Build
+        if: steps.cache-go-mod.outputs.cache-hit != 'true'
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: coverage.txt
+  lint:
+    strategy:
+      matrix:
+        go-version: [ 1.18.x ]
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
           go-version: ${{ matrix.go-version }}
       - uses: actions/checkout@v3
       - name: Lint
