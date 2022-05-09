@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"github.com/DoNewsCode/core/control/pool"
 	"github.com/DoNewsCode/core/cron"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/otgorm"
@@ -429,4 +430,22 @@ func newGaugeFrom(opts stdprometheus.GaugeOpts, labelNames []string, registerer 
 	cv := stdprometheus.NewGaugeVec(opts, labelNames)
 	registerer.MustRegister(cv)
 	return prometheus.NewGauge(cv)
+}
+
+// ProvidePoolMetrics returns a *pool.Counter that measures the info of pool.Pool.
+func ProvidePoolMetrics(in MetricsIn) *pool.Counter {
+	if in.Registerer == nil {
+		in.Registerer = stdprometheus.DefaultRegisterer
+	}
+	labels := []string{"pool_name"}
+	return pool.NewCounter(
+		newCounterFrom(stdprometheus.CounterOpts{
+			Name: "sync_job_count",
+			Help: "number of sync jobs",
+		}, labels, in.Registerer),
+		newCounterFrom(stdprometheus.CounterOpts{
+			Name: "async_job_count",
+			Help: "number of async jobs",
+		}, labels, in.Registerer),
+	)
 }

@@ -73,6 +73,7 @@ type job struct {
 type Pool struct {
 	ch          chan job
 	concurrency int
+	counter     *Counter
 }
 
 // ProvideRunGroup implements core.RunProvider
@@ -105,6 +106,7 @@ func (p *Pool) Go(requestContext context.Context, function func(asyncContext con
 	select {
 	case p.ch <- j:
 	default:
+		p.counter.IncSyncJob()
 		j.fn()
 	}
 }
@@ -119,6 +121,7 @@ func (p *Pool) Run(ctx context.Context) error {
 			for {
 				select {
 				case j := <-p.ch:
+					p.counter.IncAsyncJob()
 					j.fn()
 				case <-ctx.Done():
 					return

@@ -20,3 +20,10 @@ func WithConcurrency(concurrency int) ProviderOptionFunc {
 		pool.concurrency = concurrency
 	}
 }
+
+// WithCounter sets the counter for the pool.
+func WithCounter(counter *Counter) ProviderOptionFunc {
+	return func(pool *Pool) {
+		pool.counter = counter
+	}
+}
