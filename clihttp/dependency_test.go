@@ -8,6 +8,7 @@ import (
 	"github.com/DoNewsCode/core/clihttp"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/observability"
+
 	"github.com/stretchr/testify/assert"
 )
 

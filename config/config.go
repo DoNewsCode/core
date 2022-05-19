@@ -8,18 +8,19 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/contract"
-	"github.com/DoNewsCode/core/events"
+	"github.com/DoNewsCode/core/contract/lifecycle"
+
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/mitchellh/mapstructure"
 )
 
-// KoanfAdapter is a implementation of contract.Config based on Koanf (https://github.com/knadh/koanf).
+// KoanfAdapter is an implementation of contract.ConfigUnmarshaler based on Koanf (https://github.com/knadh/koanf).
 type KoanfAdapter struct {
 	layers     []ProviderSet
 	validators []Validator
 	watcher    contract.ConfigWatcher
-	dispatcher contract.Dispatcher
+	dispatcher lifecycle.ConfigReload
 	delimiter  string
 	rwlock     sync.RWMutex
 	K          *koanf.Koanf
@@ -58,7 +59,7 @@ func WithDelimiter(delimiter string) Option {
 }
 
 // WithDispatcher changes the default dispatcher of Koanf.
-func WithDispatcher(dispatcher contract.Dispatcher) Option {
+func WithDispatcher(dispatcher lifecycle.ConfigReload) Option {
 	return func(option *KoanfAdapter) {
 		option.dispatcher = dispatcher
 	}
@@ -112,7 +113,7 @@ func (k *KoanfAdapter) Reload() error {
 	k.rwlock.Unlock()
 
 	if k.dispatcher != nil {
-		k.dispatcher.Dispatch(context.Background(), events.OnReload, events.OnReloadPayload{NewConf: k})
+		k.dispatcher.Fire(context.Background(), k)
 	}
 
 	return nil
@@ -131,7 +132,7 @@ func (k *KoanfAdapter) Watch(ctx context.Context) error {
 
 // Unmarshal unmarshals a given key path into the given struct using the mapstructure lib.
 // If no path is specified, the whole map is unmarshalled. `koanf` is the struct field tag used to match field names.
-func (k *KoanfAdapter) Unmarshal(path string, o interface{}) error {
+func (k *KoanfAdapter) Unmarshal(path string, o any) error {
 	k.rwlock.RLock()
 	defer k.rwlock.RUnlock()
 
@@ -196,8 +197,8 @@ func (k *KoanfAdapter) Bool(s string) bool {
 	return k.K.Bool(s)
 }
 
-// Get returns the raw, uncast interface{} value of a given key path in the config map. If the key path does not exist, nil is returned.
-func (k *KoanfAdapter) Get(s string) interface{} {
+// Get returns the raw, uncast any value of a given key path in the config map. If the key path does not exist, nil is returned.
+func (k *KoanfAdapter) Get(s string) any {
 	k.rwlock.RLock()
 	defer k.rwlock.RUnlock()
 
@@ -222,9 +223,9 @@ func (k *KoanfAdapter) Duration(s string) time.Duration {
 
 // MapAdapter implements ConfigUnmarshaler and ConfigRouter.
 // It is primarily used for testing
-type MapAdapter map[string]interface{}
+type MapAdapter map[string]any
 
-func (m MapAdapter) Unmarshal(path string, o interface{}) (err error) {
+func (m MapAdapter) Unmarshal(path string, o any) (err error) {
 	k := koanf.New(".")
 	if err := k.Load(confmap.Provider(m, "."), nil); err != nil {
 		return err
@@ -245,14 +246,14 @@ func (m MapAdapter) Unmarshal(path string, o interface{}) (err error) {
 
 // Route implements contract.ConfigRouter
 func (m MapAdapter) Route(s string) contract.ConfigUnmarshaler {
-	var v interface{}
+	var v any
 	v = m
 	if s != "" {
 		v = m[s]
 	}
 
 	switch x := v.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		return MapAdapter(x)
 	case MapAdapter:
 		return x
@@ -262,10 +263,7 @@ func (m MapAdapter) Route(s string) contract.ConfigUnmarshaler {
 }
 
 func stringToConfigDurationHookFunc() mapstructure.DecodeHookFunc {
-	return func(
-		f reflect.Type,
-		t reflect.Type,
-		data interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, data any) (any, error) {
 		if t != reflect.TypeOf(Duration{}) {
 			return data, nil
 		}
@@ -291,7 +289,7 @@ type wrappedConfigAccessor struct {
 	unmarshaler contract.ConfigUnmarshaler
 }
 
-func (w wrappedConfigAccessor) Unmarshal(path string, o interface{}) error {
+func (w wrappedConfigAccessor) Unmarshal(path string, o any) error {
 	return w.unmarshaler.Unmarshal(path, o)
 }
 
@@ -319,8 +317,8 @@ func (w wrappedConfigAccessor) Bool(s string) bool {
 	return o
 }
 
-func (w wrappedConfigAccessor) Get(s string) interface{} {
-	var o interface{}
+func (w wrappedConfigAccessor) Get(s string) any {
+	var o any
 	w.unmarshaler.Unmarshal(s, &o)
 	return o
 }

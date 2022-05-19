@@ -33,7 +33,7 @@ func TestNewEnvFromConf(t *gotesting.T) {
 	t.Parallel()
 	for _, c := range cases {
 		t.Run(c.name, func(t *gotesting.T) {
-			env := NewEnvFromConf(MapAdapter(map[string]interface{}{
+			env := NewEnvFromConf(MapAdapter(map[string]any{
 				"env": c.env,
 			}))
 			assert.Equal(t, c.want, env)

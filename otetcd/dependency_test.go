@@ -7,8 +7,10 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
+
 	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/client/v3"
@@ -20,11 +22,11 @@ func TestEtcd(t *testing.T) {
 	c.Provide(Providers())
 	c.Invoke(func(
 		d1 Maker,
-		d2 Factory,
+		d2 *Factory,
 		d3 struct {
-			di.In
-			Cfg []config.ExportedConfig `group:"config"`
-		},
+		di.In
+		Cfg []config.ExportedConfig `group:"config"`
+	},
 		d4 *clientv3.Client,
 	) {
 		a := assert.New(t)
@@ -49,7 +51,7 @@ func TestProvideFactory(t *testing.T) {
 		{"no reload", false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			dispatcher := &events.SyncDispatcher{}
+			dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
 			out, cleanup := provideFactory(&providersOption{reloadable: c.reload})(factoryIn{
 				Conf: config.MapAdapter{"etcd": map[string]Option{
 					"default": {
@@ -63,13 +65,13 @@ func TestProvideFactory(t *testing.T) {
 				Tracer:     nil,
 				Dispatcher: dispatcher,
 			})
-			alt, err := out.Factory.Make("alternative")
+			alt, err := out.Make("alternative")
 			assert.NoError(t, err)
 			assert.NotNil(t, alt)
-			def, err := out.Factory.Make("default")
+			def, err := out.Make("default")
 			assert.NoError(t, err)
 			assert.NotNil(t, def)
-			assert.Equal(t, c.reload, dispatcher.ListenerCount(events.OnReload) == 1)
+			assert.Equal(t, c.reload, dispatcher.ListenerCount() == 1)
 			cleanup()
 		})
 	}

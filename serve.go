@@ -11,16 +11,16 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/cron"
-	"github.com/DoNewsCode/core/deprecated_cronopts"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
-	deprecatedcron "github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
@@ -28,14 +28,16 @@ import (
 type serveIn struct {
 	di.In
 
-	Dispatcher     contract.Dispatcher
-	Config         contract.ConfigAccessor
-	Logger         log.Logger
-	Container      contract.Container
-	HTTPServer     *http.Server         `optional:"true"`
-	GRPCServer     *grpc.Server         `optional:"true"`
-	DeprecatedCron *deprecatedcron.Cron `optional:"true"`
-	Cron           *cron.Cron           `optional:"true"`
+	Config             contract.ConfigAccessor
+	Logger             log.Logger
+	Container          contract.Container
+	HTTPServer         *http.Server                 `optional:"true"`
+	GRPCServer         *grpc.Server                 `optional:"true"`
+	HTTPServerStart    lifecycle.HTTPServerStart    `optional:"true"`
+	HTTPServerShutdown lifecycle.HTTPServerShutdown `optional:"true"`
+	GRPCServerStart    lifecycle.GRPCServerStart    `optional:"true"`
+	GRPCServerShutdown lifecycle.GRPCServerShutdown `optional:"true"`
+	Cron               *cron.Cron                   `optional:"true"`
 }
 
 func NewServeModule(in serveIn) serveModule {
@@ -100,15 +102,13 @@ func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (fun
 	}
 	return func() error {
 			logger.Infof("http service is listening at %s", ln.Addr())
-			s.Dispatcher.Dispatch(
+			s.HTTPServerStart.Fire(
 				ctx,
-				OnHTTPServerStart,
-				OnHTTPServerStartPayload{s.HTTPServer, ln},
+				lifecycle.HTTPServerStartPayload{HTTPServer: s.HTTPServer, Listener: ln},
 			)
-			defer s.Dispatcher.Dispatch(
+			defer s.HTTPServerShutdown.Fire(
 				ctx,
-				OnHTTPServerShutdown,
-				OnHTTPServerShutdownPayload{s.HTTPServer, ln},
+				lifecycle.HTTPServerShutdownPayload{HTTPServer: s.HTTPServer, Listener: ln},
 			)
 			return s.HTTPServer.Serve(ln)
 		}, func(err error) {
@@ -139,15 +139,13 @@ func (s serveIn) grpcServe(ctx context.Context, logger logging.LevelLogger) (fun
 	}
 	return func() error {
 			logger.Infof("gRPC service is listening at %s", ln.Addr())
-			s.Dispatcher.Dispatch(
+			s.GRPCServerStart.Fire(
 				ctx,
-				OnGRPCServerStart,
-				OnGRPCServerStartPayload{s.GRPCServer, ln},
+				lifecycle.GRPCServerStartPayload{GRPCServer: s.GRPCServer, Listener: ln},
 			)
-			defer s.Dispatcher.Dispatch(
+			defer s.GRPCServerShutdown.Fire(
 				ctx,
-				OnGRPCServerShutdown,
-				OnGRPCServerShutdownPayload{s.GRPCServer, ln},
+				lifecycle.GRPCServerShutdownPayload{GRPCServer: s.GRPCServer, Listener: ln},
 			)
 			return s.GRPCServer.Serve(ln)
 		}, func(err error) {
@@ -171,29 +169,6 @@ func (s serveIn) cronServe(ctx context.Context, logger logging.LevelLogger) (fun
 				return s.Cron.Run(ctx)
 			}, func(err error) {
 				cancel()
-			}, nil
-	}
-
-	return nil, nil, nil
-}
-
-func (s serveIn) cronServeDeprecated(ctx context.Context, logger logging.LevelLogger) (func() error, func(err error), error) {
-	if s.Config.Bool("cron.disable") {
-		return nil, nil, nil
-	}
-	if s.DeprecatedCron == nil {
-		logger := log.With(s.Logger, "tag", "cron")
-		s.DeprecatedCron = deprecatedcron.New(deprecatedcron.WithLogger(cronopts.CronLogAdapter{Logging: logger}))
-	}
-	applyDeprecatedCron(s.Container, s.DeprecatedCron)
-	if len(s.DeprecatedCron.Entries()) > 0 {
-		return func() error {
-				logger.Infof("cron runner started")
-				logger.Warn("Directly using github.com/robfig/cron/v3 is deprecated. Please migrate to github.com/DoNewsCode/core/cron")
-				s.DeprecatedCron.Run()
-				return nil
-			}, func(err error) {
-				<-s.DeprecatedCron.Stop().Done()
 			}, nil
 	}
 
@@ -233,12 +208,14 @@ func newServeCmd(s serveIn) *cobra.Command {
 				l.Debugf("load module: %T", m)
 			}
 
+			// Polyfill missing dependencies
+			setDefaultLifecycles(&s)
+
 			// Add serve and signalWatch
 			serves := []runGroupFunc{
 				s.httpServe,
 				s.grpcServe,
 				s.cronServe,
-				s.cronServeDeprecated,
 				s.signalWatch,
 			}
 
@@ -291,6 +268,14 @@ func applyRunGroup(ctn contract.Container, group *run.Group) {
 		if p, ok := modules[i].(RunProvider); ok {
 			p.ProvideRunGroup(group)
 		}
+		if p, ok := modules[i].(Runnable); ok {
+			ctx, cancel := context.WithCancel(context.Background())
+			group.Add(func() error {
+				return p.Run(ctx)
+			}, func(err error) {
+				cancel()
+			})
+		}
 	}
 }
 
@@ -303,11 +288,18 @@ func applyCron(ctn contract.Container, cron *cron.Cron) {
 	}
 }
 
-func applyDeprecatedCron(ctn contract.Container, crontab *deprecatedcron.Cron) {
-	modules := ctn.Modules()
-	for i := range modules {
-		if p, ok := modules[i].(DeprecatedCronProvider); ok {
-			p.ProvideCron(crontab)
-		}
+func setDefaultLifecycles(s *serveIn) {
+	defaultLifecycles := provideLifecycle()
+	if s.HTTPServerStart == nil {
+		s.HTTPServerStart = defaultLifecycles.HTTPServerStart
+	}
+	if s.HTTPServerShutdown == nil {
+		s.HTTPServerShutdown = defaultLifecycles.HTTPServerShutdown
+	}
+	if s.GRPCServerStart == nil {
+		s.GRPCServerStart = defaultLifecycles.GRPCServerStart
+	}
+	if s.GRPCServerShutdown == nil {
+		s.GRPCServerShutdown = defaultLifecycles.GRPCServerShutdown
 	}
 }

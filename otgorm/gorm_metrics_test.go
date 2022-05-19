@@ -2,14 +2,15 @@ package otgorm
 
 import (
 	"database/sql"
-	"github.com/DoNewsCode/core/internal/stub"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/internal/stub"
 	"github.com/DoNewsCode/core/otgorm/mocks"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +34,7 @@ func TestCollector(t *testing.T) {
 	c.Provide(Providers())
 	c.Provide(di.Deps{func() *Gauges { return g }})
 
-	c.Invoke(func(factory Factory, g *Gauges) {
+	c.Invoke(func(factory *Factory, g *Gauges) {
 		factory.Make("default")
 		c := newCollector(factory, g, time.Nanosecond)
 		c.collectConnectionStats()

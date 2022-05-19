@@ -9,7 +9,9 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-kit/log"
 	"github.com/oklog/run"
 	"github.com/opentracing/opentracing-go"
@@ -21,11 +23,11 @@ import (
 Providers returns a set of database related providers for package core. It includes
 the Maker, database configs and the default *gorm.DB instance.
 	Depends On:
-		contract.ConfigAccessor
+		contract.ConfigUnmarshaler
 		log.Logger
-		opentracing.Tracer    `optional:"true"`
-		Gauges `optional:"true"`
-		contract.Dispatcher `optional:"true"`
+		opentracing.Tracer     `optional:"true"`
+		*Gauges                `optional:"true"`
+		lifecycle.ConfigReload `optional:"true"`
 	Provide:
 		Maker
 		Factory
@@ -43,7 +45,7 @@ func Providers(opt ...ProvidersOptionFunc) di.Deps {
 		provideConfig,
 		provideDefaultDatabase,
 		provideDBFactory(&o),
-		di.Bind(new(Factory), new(Maker)),
+		di.Bind(new(*Factory), new(Maker)),
 	}
 }
 
@@ -82,11 +84,11 @@ type metricsConf struct {
 type factoryIn struct {
 	di.In
 
-	Conf       contract.ConfigUnmarshaler
-	Logger     log.Logger
-	Tracer     opentracing.Tracer  `optional:"true"`
-	Gauges     *Gauges             `optional:"true"`
-	Dispatcher contract.Dispatcher `optional:"true"`
+	Conf          contract.ConfigUnmarshaler
+	Logger        log.Logger
+	Tracer        opentracing.Tracer     `optional:"true"`
+	Gauges        *Gauges                `optional:"true"`
+	OnReloadEvent lifecycle.ConfigReload `optional:"true"`
 }
 
 // databaseOut is the result of provideDatabaseOut. *gorm.DB is not a interface
@@ -94,12 +96,12 @@ type factoryIn struct {
 type databaseOut struct {
 	di.Out
 
-	Factory   Factory
+	Factory   *Factory
 	Collector *collector
 }
 
 // Module implements di.Modular
-func (d databaseOut) Module() interface{} {
+func (d databaseOut) Module() any {
 	return d
 }
 
@@ -211,7 +213,7 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			options.interceptor = func(name string, conf *gorm.Config) {}
 		}
 
-		factory := di.NewFactory(func(name string) (di.Pair, error) {
+		factory := di.NewFactory[*gorm.DB](func(name string) (pair di.Pair[*gorm.DB], err error) {
 			var (
 				dialector gorm.Dialector
 				conf      databaseConf
@@ -220,38 +222,40 @@ func provideDBFactory(options *providersOption) func(p factoryIn) (databaseOut, 
 			)
 			factoryIn := factoryIn
 			if err := factoryIn.Conf.Unmarshal(fmt.Sprintf("gorm.%s", name), &conf); err != nil {
-				return di.Pair{}, fmt.Errorf("database configuration %s not valid: %w", name, err)
+				return pair, fmt.Errorf("database configuration %s not valid: %w", name, err)
 			}
-			dialector, err := provideDialector(&conf, options.drivers)
+			dialector, err = provideDialector(&conf, options.drivers)
 			if err != nil {
-				return di.Pair{}, err
+				return pair, err
 			}
 			gormConfig := provideGormConfig(logger, &conf)
 			options.interceptor(name, gormConfig)
 			conn, cleanup, err = provideGormDB(dialector, gormConfig, factoryIn.Tracer, conf.Pool)
 			if err != nil {
-				return di.Pair{}, err
+				return pair, err
 			}
-			return di.Pair{
+			return di.Pair[*gorm.DB]{
 				Conn:   conn,
 				Closer: cleanup,
 			}, err
 		})
-		dbFactory := Factory{factory}
-		if options.reloadable {
-			dbFactory.SubscribeReloadEventFrom(factoryIn.Dispatcher)
+		if options.reloadable && factoryIn.OnReloadEvent != nil {
+			factoryIn.OnReloadEvent.On(func(_ context.Context, _ contract.ConfigUnmarshaler) error {
+				factory.Close()
+				return nil
+			})
 		}
 
 		var collector *collector
 		if factoryIn.Gauges != nil {
 			var interval time.Duration = 15 * time.Second
 			factoryIn.Conf.Unmarshal("gormMetrics.interval", &interval)
-			collector = newCollector(dbFactory, factoryIn.Gauges, interval)
+			collector = newCollector(factory, factoryIn.Gauges, interval)
 		}
 		return databaseOut{
-			Factory:   dbFactory,
+			Factory:   factory,
 			Collector: collector,
-		}, dbFactory.Close, nil
+		}, factory.Close, nil
 	}
 }
 
@@ -266,7 +270,7 @@ func provideConfig() configOut {
 	exported := []config.ExportedConfig{
 		{
 			Owner: "otgorm",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"gorm": map[string]databaseConf{
 					"default": {
 						Database:                                 "mysql",

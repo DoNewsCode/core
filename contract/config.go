@@ -14,7 +14,7 @@ type ConfigRouter interface {
 // configuration from external system. If the configuration is hot reloaded,
 // ConfigUnmarshaler should fetch the latest info.
 type ConfigUnmarshaler interface {
-	Unmarshal(path string, o interface{}) error
+	Unmarshal(path string, o any) error
 }
 
 // ConfigAccessor builds upon the ConfigUnmarshaler and provides a richer set of
@@ -28,7 +28,7 @@ type ConfigAccessor interface {
 	Int(string) int
 	Strings(string) []string
 	Bool(string) bool
-	Get(string) interface{}
+	Get(string) any
 	Float64(string) float64
 	Duration(string) time.Duration
 }

@@ -218,7 +218,7 @@ That means dependencies for a type can be added to the graph both, before and af
 Speaking of the demand, `c.Invoke` can be used to instantiate dependencies.
 
 ```go
-func (c *C) Invoke(function interface{})
+func (c *C) Invoke(function any)
 ```
 
 Invoke runs the given function after instantiating its dependencies.

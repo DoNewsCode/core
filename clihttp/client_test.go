@@ -8,9 +8,8 @@ import (
 	"testing"
 
 	"github.com/opentracing/opentracing-go"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/opentracing/opentracing-go/mocktracer"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestClient_Do(t *testing.T) {

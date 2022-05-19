@@ -12,6 +12,6 @@ type ElasticLogAdapter struct {
 }
 
 // Printf implements elastic.Logger
-func (l ElasticLogAdapter) Printf(msg string, v ...interface{}) {
+func (l ElasticLogAdapter) Printf(msg string, v ...any) {
 	_ = l.Logging.Log("msg", fmt.Sprintf(msg, v...))
 }

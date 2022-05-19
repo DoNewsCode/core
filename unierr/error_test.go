@@ -43,7 +43,7 @@ func TestServerError_FromStatus(t *testing.T) {
 
 type testPrinter struct{}
 
-func (t testPrinter) Sprintf(msg string, val ...interface{}) string {
+func (t testPrinter) Sprintf(msg string, val ...any) string {
 	return strings.ToUpper(msg)
 }
 

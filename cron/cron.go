@@ -199,11 +199,11 @@ func (j *jobDescriptors) Swap(i, k int) {
 	(*j)[i], (*j)[k] = (*j)[k], (*j)[i]
 }
 
-func (j *jobDescriptors) Push(x interface{}) {
+func (j *jobDescriptors) Push(x any) {
 	*j = append(*j, x.(*JobDescriptor))
 }
 
-func (j *jobDescriptors) Pop() (v interface{}) {
+func (j *jobDescriptors) Pop() (v any) {
 	*j, v = (*j)[:j.Len()-1], (*j)[j.Len()-1]
 	return v
 }

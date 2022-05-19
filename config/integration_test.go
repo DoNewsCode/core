@@ -12,7 +12,7 @@ import (
 func provideConfig() configOut {
 	return configOut{
 		Config: []config.ExportedConfig{{
-			Validate: func(data map[string]interface{}) error {
+			Validate: func(data map[string]any) error {
 				return errors.New("bad config")
 			},
 		}},

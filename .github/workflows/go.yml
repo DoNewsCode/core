@@ -9,7 +9,7 @@ jobs:
   build:
     strategy:
       matrix:
-        go-version: [1.16.x,1.17.x]
+        go-version: [ 1.18.x ]
     runs-on: ubuntu-latest
     services:
       redis:
@@ -70,44 +70,51 @@ jobs:
         options: --name minio-server
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go-version }}
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          stable: false
+          go-version: ${{ matrix.go-version }}
 
-    - uses: actions/cache@v2
-      id: cache-go-mod
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('go.mod') }}
-        restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version }}
+      - uses: actions/cache@v3
+        id: cache-go-mod
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}
 
-    - name: Environment Variables from Dotenv
-      uses: c-py/action-dotenv-to-setenv@v3
+      - name: Environment Variables from Dotenv
+        uses: c-py/action-dotenv-to-setenv@v3
 
-    - name: Build
-      if: steps.cache-go-mod.outputs.cache-hit != 'true'
-      run: go build -v ./...
+      - name: Build
+        if: steps.cache-go-mod.outputs.cache-hit != 'true'
+        run: go build -v ./...
 
-    - name: Test
-      run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+      - name: Test
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
-    - name: Upload coverage
-      uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: coverage.txt
+      - name: Upload coverage
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: coverage.txt
   lint:
+    strategy:
+      matrix:
+        go-version: [ 1.18.x ]
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Lint
-        uses: golangci/golangci-lint-action@v2
+      - uses: actions/setup-go@v3
         with:
-          version: v1.41
+          go-version: ${{ matrix.go-version }}
+      - uses: actions/checkout@v3
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.45.2
           args: --disable errcheck --timeout 5m0s
           only-new-issues: true

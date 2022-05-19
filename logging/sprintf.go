@@ -4,7 +4,7 @@ import "fmt"
 
 type sprintf struct {
 	format string
-	args   []interface{}
+	args   []any
 }
 
 // String returns the formatted string value using fmt.Sprintf.
@@ -16,12 +16,12 @@ func (s sprintf) String() string {
 // writing to the output. This is more desirable than using fmt.Sprintf from the
 // caller's end because the cost of formatting can be avoided if the log is
 // filtered, for example, by log level.
-func Sprintf(format string, args ...interface{}) fmt.Stringer {
+func Sprintf(format string, args ...any) fmt.Stringer {
 	return sprintf{format: format, args: args}
 }
 
 type sprint struct {
-	args []interface{}
+	args []any
 }
 
 // String returns the formatted string value using fmt.Sprint.
@@ -33,6 +33,6 @@ func (s sprint) String() string {
 // writing to the output. This is more desirable than using fmt.Sprint from the
 // caller's end because the cost of formatting can be avoided if the log is
 // filtered, for example, by log level.
-func Sprint(args ...interface{}) fmt.Stringer {
+func Sprint(args ...any) fmt.Stringer {
 	return sprint{args: args}
 }

@@ -1,13 +1,11 @@
 package di
 
 import (
-	"context"
 	"errors"
 	"math/rand"
 	"testing"
 	"time"
 
-	"github.com/DoNewsCode/core/events"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,23 +13,23 @@ func TestFactory(t *testing.T) {
 	t.Parallel()
 	var closed []string
 
-	f := NewFactory(func(name string) (Pair, error) {
+	f := NewFactory[*string](func(name string) (Pair[*string], error) {
 		nameCopy := name
-		return Pair{
+		return Pair[*string]{
 			Conn: &nameCopy,
 			Closer: func() {
-				closed = append(closed, name)
+				closed = append(closed, nameCopy)
 			},
 		}, nil
 	})
 
 	foo, err := f.Make("foo")
 	assert.NoError(t, err)
-	assert.Equal(t, *(foo.(*string)), "foo")
+	assert.Equal(t, *foo, "foo")
 
 	bar, err := f.Make("bar")
 	assert.NoError(t, err)
-	assert.Equal(t, *(bar.(*string)), "bar")
+	assert.Equal(t, *bar, "bar")
 
 	bar2, err := f.Make("bar")
 	assert.NoError(t, err)
@@ -49,9 +47,9 @@ func TestFactory(t *testing.T) {
 func TestFactory_nilCloser(t *testing.T) {
 	t.Parallel()
 
-	f := NewFactory(func(name string) (Pair, error) {
+	f := NewFactory[*string](func(name string) (Pair[*string], error) {
 		nameCopy := name
-		return Pair{
+		return Pair[*string]{
 			Conn:   &nameCopy,
 			Closer: nil,
 		}, nil
@@ -67,8 +65,8 @@ func TestFactory_nilCloser(t *testing.T) {
 func TestFactory_malfunctionConstructor(t *testing.T) {
 	t.Parallel()
 
-	f := NewFactory(func(name string) (Pair, error) {
-		return Pair{}, errors.New("failed")
+	f := NewFactory[any](func(name string) (Pair[any], error) {
+		return Pair[any]{}, errors.New("failed")
 	})
 
 	_, err := f.Make("foo")
@@ -79,68 +77,30 @@ func TestFactory_Watch(t *testing.T) {
 	t.Parallel()
 
 	mockConf := "foo"
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	f := NewFactory(func(_ string) (Pair, error) {
-		return Pair{
-			Conn:   mockConf,
+	f := NewFactory[*string](func(_ string) (Pair[*string], error) {
+		return Pair[*string]{
+			Conn:   &mockConf,
 			Closer: func() {},
 		}, nil
 	})
-	dispatcher := events.SyncDispatcher{}
-	go func() {
-		f.SubscribeReloadEventFrom(&dispatcher)
-	}()
 
 	foo, err := f.Make("default")
 	assert.NoError(t, err)
-	assert.Equal(t, "foo", foo.(string))
+	assert.Equal(t, "foo", *foo)
 
 	mockConf = "bar"
+	f.Close()
 
 	foo, err = f.Make("default")
 	assert.NoError(t, err)
-	assert.Equal(t, "foo", foo.(string))
-
-	time.Sleep(3 * time.Second)
-	_ = dispatcher.Dispatch(ctx, events.OnReload, events.OnReloadPayload{})
-
-	time.Sleep(3 * time.Second)
-	foo, err = f.Make("default")
-	assert.NoError(t, err)
-	assert.Equal(t, "bar", foo.(string))
-}
-
-func TestFactory_SubscribeReloadEventFrom(t *testing.T) {
-	t.Parallel()
-
-	closed := make(chan struct{})
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	f := NewFactory(func(_ string) (Pair, error) {
-		return Pair{
-			Conn:   &struct{}{},
-			Closer: func() { close(closed) },
-		}, nil
-	})
-	dispatcher := events.SyncDispatcher{}
-	f.SubscribeReloadEventFrom(&dispatcher)
-
-	f.Make("default")
-	_ = dispatcher.Dispatch(ctx, events.OnReload, events.OnReloadPayload{})
-
-	select {
-	case <-closed:
-	case <-time.After(4 * time.Second):
-		t.Fatalf("foo should be closed by now")
-	}
+	assert.Equal(t, "bar", *foo)
 }
 
 func BenchmarkFactory_slowConn(b *testing.B) {
-	f := NewFactory(func(name string) (Pair, error) {
+	f := NewFactory[*string](func(name string) (Pair[*string], error) {
 		// Simulate a slow construction
 		time.Sleep(100 * time.Millisecond)
-		return Pair{
+		return Pair[*string]{
 			Conn:   &name,
 			Closer: func() {},
 		}, nil

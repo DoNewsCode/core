@@ -29,7 +29,7 @@ func (m MetricsModule) ProvideGRPC(server *grpc.Server) {
 
 // Metrics is a unary interceptor for grpc package. It records the request duration in a histogram.
 func Metrics(metrics *RequestDurationSeconds) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		start := time.Now()
 		metrics := metrics.Route(info.FullMethod)
 		defer func() {

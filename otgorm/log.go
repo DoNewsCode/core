@@ -21,17 +21,17 @@ func (g GormLogAdapter) LogMode(logLevel logger.LogLevel) logger.Interface {
 }
 
 // Info implements logger.Interface
-func (g GormLogAdapter) Info(ctx context.Context, s string, i ...interface{}) {
+func (g GormLogAdapter) Info(ctx context.Context, s string, i ...any) {
 	level.Info(g.Logging).Log("msg", fmt.Sprintf(s, i...))
 }
 
 // Warn implements logger.Interface
-func (g GormLogAdapter) Warn(ctx context.Context, s string, i ...interface{}) {
+func (g GormLogAdapter) Warn(ctx context.Context, s string, i ...any) {
 	level.Warn(g.Logging).Log("msg", fmt.Sprintf(s, i...))
 }
 
 // Error implements logger.Interface
-func (g GormLogAdapter) Error(ctx context.Context, s string, i ...interface{}) {
+func (g GormLogAdapter) Error(ctx context.Context, s string, i ...any) {
 	level.Error(g.Logging).Log("msg", fmt.Sprintf(s, i...))
 }
 

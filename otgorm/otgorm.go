@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"gorm.io/gorm"
 )

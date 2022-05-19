@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core"
+	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
-	"gorm.io/gorm"
 
-	"github.com/DoNewsCode/core/config"
 	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 func TestProvideDBFactory(t *testing.T) {
@@ -19,8 +20,8 @@ func TestProvideDBFactory(t *testing.T) {
 		t.Skip("set MYSQL_DSN to run TestProvideDBFactory")
 		return
 	}
-	gorms := map[string]interface{}{
-		"default": map[string]interface{}{
+	gorms := map[string]any{
+		"default": map[string]any{
 			"database": "sqlite",
 			"dsn":      ":memory:",
 			"pool": map[string]interface{}{
@@ -30,7 +31,7 @@ func TestProvideDBFactory(t *testing.T) {
 				"connMaxLifetime": "10s",
 			},
 		},
-		"alternative": map[string]interface{}{
+		"alternative": map[string]any{
 			"database": "mysql",
 			"dsn":      os.Getenv("MYSQL_DSN"),
 		},
@@ -39,12 +40,12 @@ func TestProvideDBFactory(t *testing.T) {
 	for driverName := range gorms {
 		for _, reloadable := range []bool{true, false} {
 			t.Run(driverName, func(t *testing.T) {
-				dispatcher := &events.SyncDispatcher{}
+				dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
 				out, cleanup, _ := provideDBFactory(&providersOption{reloadable: reloadable})(factoryIn{
-					Conf:       config.MapAdapter{"gorm": gorms},
-					Logger:     log.NewNopLogger(),
-					Tracer:     nil,
-					Dispatcher: dispatcher,
+					Conf:          config.MapAdapter{"gorm": gorms},
+					Logger:        log.NewNopLogger(),
+					Tracer:        nil,
+					OnReloadEvent: dispatcher,
 				})
 				defer cleanup()
 				db, err := out.Factory.Make(driverName)
@@ -53,9 +54,9 @@ func TestProvideDBFactory(t *testing.T) {
 				assert.Equal(
 					t,
 					reloadable,
-					dispatcher.ListenerCount(events.OnReload) == 1,
+					dispatcher.ListenerCount() == 1,
 					"unexpected dispatcher count %d when reload = %t",
-					dispatcher.ListenerCount(events.OnReload),
+					dispatcher.ListenerCount(),
 					reloadable,
 				)
 			})
@@ -69,7 +70,7 @@ func TestGorm(t *testing.T) {
 	c.Provide(Providers())
 	c.Invoke(func(
 		d1 Maker,
-		d2 Factory,
+		d2 *Factory,
 		d3 struct {
 			di.In
 			Cfg []config.ExportedConfig `group:"config"`

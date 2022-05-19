@@ -1,23 +1,18 @@
 package core
 
 import (
-	cron2 "github.com/DoNewsCode/core/cron"
+	"context"
+
+	"github.com/DoNewsCode/core/cron"
 	"github.com/gorilla/mux"
 	"github.com/oklog/run"
-	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
 
-// DeprecatedCronProvider provides cron jobs.
-// Deprecated: CronProvider is deprecated. Use CronProvider instead
-type DeprecatedCronProvider interface {
-	ProvideCron(crontab *cron.Cron)
-}
-
 // CronProvider provides cron jobs.
 type CronProvider interface {
-	ProvideCron(cron *cron2.Cron)
+	ProvideCron(cron *cron.Cron)
 }
 
 // CommandProvider provides cobra.Command.
@@ -44,4 +39,11 @@ type CloserProvider interface {
 // actions. For example, kafka consumer can be started here.
 type RunProvider interface {
 	ProvideRunGroup(group *run.Group)
+}
+
+// Runnable provides a runnable actor. The core will call Run in an exclusive
+// goroutine, so it is safe for Run to block the execution. Return only when run
+// completes. The received context.Context is canceled at shutdown.
+type Runnable interface {
+	Run(ctx context.Context) error
 }

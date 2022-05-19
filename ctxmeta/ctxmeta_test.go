@@ -11,7 +11,7 @@ func TestContextMeta_crud(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	metadata := New()
+	metadata := New[string, string]()
 	baggage, _ := metadata.Inject(ctx)
 
 	baggage.Set("foo", "bar")
@@ -19,17 +19,17 @@ func TestContextMeta_crud(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "bar", result)
 
-	result = baggage.Slice()
-	assert.ElementsMatch(t, []KeyVal{{Key: "foo", Val: "bar"}}, result)
+	slice := baggage.Slice()
+	assert.ElementsMatch(t, []KeyVal[string, string]{{Key: "foo", Val: "bar"}}, slice)
 
-	resultMap := baggage.Map()
-	assert.Equal(t, "bar", resultMap["foo"])
+	maps := baggage.Map()
+	assert.Equal(t, "bar", maps["foo"])
 
 	var s string
 	baggage.Unmarshal("foo", &s)
 	assert.Equal(t, "bar", s)
 
-	baggage.Update("foo", func(value interface{}) interface{} { return "baz" })
+	baggage.Update("foo", func(value string) string { return "baz" })
 	result, err = baggage.Get("foo")
 	assert.NoError(t, err)
 	assert.Equal(t, "baz", result)
@@ -43,7 +43,7 @@ func TestContextMeta_ErrNoBaggage(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	metadata := New()
+	metadata := New[string, string]()
 	baggage := metadata.GetBaggage(ctx)
 
 	err := baggage.Set("foo", "bar")
@@ -56,7 +56,7 @@ func TestContextMeta_ErrNoBaggage(t *testing.T) {
 	err = baggage.Unmarshal("foo", &s)
 	assert.ErrorIs(t, err, ErrNoBaggage)
 
-	err = baggage.Update("foo", func(value interface{}) interface{} { return "baz" })
+	err = baggage.Update("foo", func(value string) string { return "baz" })
 	assert.ErrorIs(t, err, ErrNoBaggage)
 
 	err = baggage.Delete("foo")
@@ -70,7 +70,7 @@ func TestContextMeta_ErrNotFound(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	metadata := New()
+	metadata := New[string, string]()
 	baggage, _ := metadata.Inject(ctx)
 
 	_, err := baggage.Get("foo")
@@ -80,7 +80,7 @@ func TestContextMeta_ErrNotFound(t *testing.T) {
 	err = baggage.Unmarshal("foo", &s)
 	assert.ErrorIs(t, err, ErrNotFound)
 
-	err = baggage.Update("foo", func(value interface{}) interface{} { return "baz" })
+	err = baggage.Update("foo", func(value string) string { return "baz" })
 	assert.ErrorIs(t, err, ErrNotFound)
 
 	err = baggage.Delete("foo")
@@ -91,7 +91,7 @@ func TestContextMeta_ErrIncompatibleType(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	metadata := New()
+	metadata := New[string, string]()
 	baggage, _ := metadata.Inject(ctx)
 
 	baggage.Set("foo", "bar")
@@ -106,19 +106,19 @@ func TestContextMeta_parallel(t *testing.T) {
 
 	cases := []struct {
 		name  string
-		meta  *MetadataSet
+		meta  *MetadataSet[string, any]
 		key   string
 		value string
 	}{
 		{
 			"first",
-			New(),
+			New[string, any](),
 			"foo",
 			"bar",
 		},
 		{
 			"second",
-			New(),
+			New[string, any](),
 			"foo",
 			"baz",
 		},

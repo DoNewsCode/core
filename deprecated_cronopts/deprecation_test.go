@@ -3,12 +3,14 @@ package cronopts_test
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/observability"
+
 	deprecatedcron "github.com/robfig/cron/v3"
-	"testing"
-	"time"
 )
 
 type CronModule struct{}

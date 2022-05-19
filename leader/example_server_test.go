@@ -8,10 +8,9 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core"
-	"github.com/DoNewsCode/core/contract"
-	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/leader"
 	"github.com/DoNewsCode/core/otetcd"
+
 	"github.com/gorilla/mux"
 )
 
@@ -37,12 +36,12 @@ func Example_server() {
 	c := core.Default(core.WithInline("log.level", "none"))
 	c.Provide(otetcd.Providers())
 	c.Provide(leader.Providers())
-	c.Invoke(func(dispatcher contract.Dispatcher) {
+	c.Invoke(func(statusChanged leader.StatusChanged) {
 		// This listener will be called twice. Once on becoming the leader and once on resigning the leader.
-		dispatcher.Subscribe(events.Listen(leader.OnStatusChanged, func(ctx context.Context, event interface{}) error {
-			fmt.Println(event.(leader.OnStatusChangedPayload).Status.IsLeader())
+		statusChanged.On(func(ctx context.Context, status *leader.Status) error {
+			fmt.Println(status.IsLeader())
 			return nil
-		}))
+		})
 	})
 	c.Invoke(func(sts *leader.Status) {
 		c.AddModule(ServerModule{Sts: sts})

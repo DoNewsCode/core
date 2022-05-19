@@ -4,11 +4,11 @@ package config
 // Each module is supposed to emit ExportedConfig into DI, and Package config should collect them.
 type ExportedConfig struct {
 	Owner    string
-	Data     map[string]interface{}
+	Data     map[string]any
 	Comment  string
 	Validate Validator
 }
 
 // Validator is a method to verify if config is valid. If it is not valid, the
 // returned error should contain a human readable description of why.
-type Validator func(data map[string]interface{}) error
+type Validator func(data map[string]any) error

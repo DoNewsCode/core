@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/DoNewsCode/core/contract"
+
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"

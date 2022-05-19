@@ -9,6 +9,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
 	mock_metrics "github.com/DoNewsCode/core/otgorm/mocks"
+
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +57,7 @@ func TestModule_ProvideCommand(t *testing.T) {
 	c.ProvideEssentials()
 	c.Provide(di.Deps{
 		provideDBFactory(&providersOption{}),
-		di.Bind(new(Factory), new(Maker)),
+		di.Bind(new(*Factory), new(Maker)),
 	})
 	c.AddModuleFunc(New)
 	mock := &Mock{}
@@ -102,7 +103,7 @@ func TestModule_ProvideRunGroup(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	withValues := []interface{}{
+	withValues := []any{
 		gomock.Eq("dbname"),
 		gomock.Eq("default"),
 		gomock.Eq("driver"),

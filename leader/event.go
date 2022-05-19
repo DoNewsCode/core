@@ -1,11 +1,8 @@
 package leader
 
-type event string
+import "context"
 
-// OnStatusChanged is an event that triggers when the leadership has transited. It's payload is OnStatusChangedPayload.
-const OnStatusChanged event = "onStatusChanged"
-
-// OnStatusChangedPayload is the payload of OnStatusChanged.
-type OnStatusChangedPayload struct {
-	Status *Status
+// StatusChanged is a channel for receiving StatusChanged events.
+type StatusChanged interface {
+	On(func(ctx context.Context, status *Status) error) (unsubscribe func())
 }

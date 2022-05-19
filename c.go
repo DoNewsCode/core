@@ -18,6 +18,7 @@ import (
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
+
 	"github.com/go-kit/log"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/file"
@@ -34,28 +35,24 @@ type C struct {
 	contract.ConfigAccessor
 	logging.LevelLogger
 	*container.Container
-	contract.Dispatcher
 	di         *dig.Container
 	baseLogger log.Logger
 }
 
 // ConfParser models a parser for configuration. For example, yaml.Parser.
 type ConfParser interface {
-	Unmarshal([]byte) (map[string]interface{}, error)
-	Marshal(map[string]interface{}) ([]byte, error)
+	Unmarshal([]byte) (map[string]any, error)
+	Marshal(map[string]any) ([]byte, error)
 }
 
 // ConfProvider models a configuration provider. For example, file.Provider.
 type ConfProvider interface {
 	ReadBytes() ([]byte, error)
-	Read() (map[string]interface{}, error)
+	Read() (map[string]any, error)
 }
 
 // ConfigProvider provides contract.ConfigAccessor to the core.
 type ConfigProvider func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigUnmarshaler
-
-// EventDispatcherProvider provides contract.Dispatcher to the core.
-type EventDispatcherProvider func(conf contract.ConfigUnmarshaler) contract.Dispatcher
 
 // DiProvider provides the *dig.Container to the core.
 type DiProvider func(conf contract.ConfigUnmarshaler) *dig.Container
@@ -74,12 +71,11 @@ type coreValues struct {
 	configStack   []config.ProviderSet
 	configWatcher contract.ConfigWatcher
 	// ConfProvider functions
-	configProvider          ConfigProvider
-	eventDispatcherProvider EventDispatcherProvider
-	diProvider              DiProvider
-	appNameProvider         AppNameProvider
-	envProvider             EnvProvider
-	loggerProvider          LoggerProvider
+	configProvider  ConfigProvider
+	diProvider      DiProvider
+	appNameProvider AppNameProvider
+	envProvider     EnvProvider
+	loggerProvider  LoggerProvider
 }
 
 // CoreOption is the option to modify core attribute.
@@ -93,8 +89,8 @@ func WithYamlFile(path string) (CoreOption, CoreOption) {
 }
 
 // WithInline is a CoreOption that creates a inline config in the configuration stack.
-func WithInline(key string, entry interface{}) CoreOption {
-	return WithConfigStack(confmap.Provider(map[string]interface{}{
+func WithInline(key string, entry any) CoreOption {
+	return WithConfigStack(confmap.Provider(map[string]any{
 		key: entry,
 	}, "."), nil)
 }
@@ -148,24 +144,16 @@ func SetDiProvider(provider DiProvider) CoreOption {
 	}
 }
 
-// SetEventDispatcherProvider is a CoreOption to replaces the default EventDispatcherProvider.
-func SetEventDispatcherProvider(provider EventDispatcherProvider) CoreOption {
-	return func(values *coreValues) {
-		values.eventDispatcherProvider = provider
-	}
-}
-
 // New creates a new bare-bones C.
 func New(opts ...CoreOption) *C {
 	values := coreValues{
-		configStack:             []config.ProviderSet{},
-		configWatcher:           nil,
-		configProvider:          ProvideConfig,
-		appNameProvider:         ProvideAppName,
-		envProvider:             ProvideEnv,
-		loggerProvider:          ProvideLogger,
-		diProvider:              ProvideDi,
-		eventDispatcherProvider: ProvideEventDispatcher,
+		configStack:     []config.ProviderSet{},
+		configWatcher:   nil,
+		configProvider:  ProvideConfig,
+		appNameProvider: ProvideAppName,
+		envProvider:     ProvideEnv,
+		loggerProvider:  ProvideLogger,
+		diProvider:      ProvideDi,
 	}
 	for _, f := range opts {
 		f(&values)
@@ -175,7 +163,6 @@ func New(opts ...CoreOption) *C {
 	appName := values.appNameProvider(conf)
 	logger := values.loggerProvider(conf, appName, env)
 	diContainer := values.diProvider(conf)
-	dispatcher := values.eventDispatcherProvider(conf)
 
 	c := C{
 		AppName:        appName,
@@ -183,7 +170,6 @@ func New(opts ...CoreOption) *C {
 		ConfigAccessor: config.WithAccessor(conf),
 		LevelLogger:    logging.WithLevel(logger),
 		Container:      &container.Container{},
-		Dispatcher:     dispatcher,
 		di:             diContainer,
 		baseLogger:     logger,
 	}
@@ -207,7 +193,7 @@ func Default(opts ...CoreOption) *C {
 // container. The semantics of injection follows the same rule of dig.Invoke.
 // Note that the module added in this way will not retain any original field
 // values, i.e. the module will only contain fields populated by DI container.
-func (c *C) AddModule(module interface{}) {
+func (c *C) AddModule(module any) {
 	t := reflect.TypeOf(module)
 	if t.Kind() == reflect.Ptr && dig.IsIn(t.Elem()) {
 		err := di.IntoPopulator(c.di).Populate(module)
@@ -252,7 +238,7 @@ func (c *C) Provide(deps di.Deps) {
 	}
 }
 
-func (c *C) provide(constructor interface{}) {
+func (c *C) provide(constructor any) {
 	var (
 		options        []dig.ProvideOption
 		shouldMakeFunc bool
@@ -342,7 +328,7 @@ func (c *C) ProvideEssentials() {
 		DIPopulator       contract.DIPopulator
 		Logger            log.Logger
 		LevelLogger       logging.LevelLogger
-		Dispatcher        contract.Dispatcher
+		Lifecycles        lifecycleOut
 		DefaultConfigs    []config.ExportedConfig `group:"config,flatten"`
 	}
 
@@ -355,8 +341,8 @@ func (c *C) ProvideEssentials() {
 			ConfigAccessor:    c.ConfigAccessor,
 			Logger:            c.baseLogger,
 			LevelLogger:       c.LevelLogger,
-			Dispatcher:        c.Dispatcher,
 			DIPopulator:       di.IntoPopulator(c.di),
+			Lifecycles:        provideLifecycle(),
 			DefaultConfigs:    provideDefaultConfig(),
 		}
 		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {
@@ -391,7 +377,7 @@ func (c *C) Shutdown() {
 
 // AddModuleFunc add the module after Invoking its constructor. Clean up
 // functions and errors are handled automatically.
-func (c *C) AddModuleFunc(constructor interface{}) {
+func (c *C) AddModuleFunc(constructor any) {
 	c.provide(constructor)
 	ftype := reflect.TypeOf(constructor)
 	targetTypes := make([]reflect.Type, 0)
@@ -439,7 +425,7 @@ func (c *C) ApplyRootCommand(command *cobra.Command) {
 //
 // It internally calls uber's dig library. Consult dig's documentation for
 // details. (https://pkg.go.dev/go.uber.org/dig)
-func (c *C) Invoke(function interface{}) {
+func (c *C) Invoke(function any) {
 	err := c.di.Invoke(function)
 	if err != nil {
 		panic(err)

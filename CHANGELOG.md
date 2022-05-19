@@ -465,3 +465,4 @@ the new otetcd configuration is not backward compatible.
 
 * **leader:** add leader election package. ([#56](https://github.com/DoNewsCode/core/issues/56)) (@[谷溪](guxi99@gmail.com))
 
+>>>>>>> origin/master

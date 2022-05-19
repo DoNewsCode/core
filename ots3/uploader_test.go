@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/key"
+
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/opentracing/opentracing-go"

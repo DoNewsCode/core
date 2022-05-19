@@ -1,12 +1,15 @@
 package otetcd
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-kit/log"
 	"github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
@@ -45,6 +48,7 @@ Providers returns a set of dependencies including the Maker, the default *client
 		log.Logger
 		contract.ConfigAccessor
 		opentracing.Tracer    `optional:"true"`
+		lifecycle.ConfigReload `optional:"true"`
 	Provide:
 		Maker
 		Factory
@@ -59,7 +63,7 @@ func Providers(opts ...ProvidersOptionFunc) di.Deps {
 		provideFactory(&option),
 		provideDefaultClient,
 		provideConfig,
-		di.Bind(new(Factory), new(Maker)),
+		di.Bind(new(*Factory), new(Maker)),
 	}
 }
 
@@ -74,22 +78,22 @@ type factoryIn struct {
 
 	Logger     log.Logger
 	Conf       contract.ConfigUnmarshaler
-	Tracer     opentracing.Tracer  `optional:"true"`
-	Dispatcher contract.Dispatcher `optional:"true"`
+	Tracer     opentracing.Tracer     `optional:"true"`
+	Dispatcher lifecycle.ConfigReload `optional:"true"`
 }
 
 // provideFactory creates Factory. It is a valid
 // dependency for package core.
-func provideFactory(option *providersOption) func(p factoryIn) (Factory, func()) {
+func provideFactory(option *providersOption) func(p factoryIn) (*Factory, func()) {
 	if option.interceptor == nil {
 		option.interceptor = func(name string, options *clientv3.Config) {}
 	}
 
-	return func(p factoryIn) (Factory, func()) {
-		factory := di.NewFactory(func(name string) (di.Pair, error) {
+	return func(p factoryIn) (*Factory, func()) {
+		factory := di.NewFactory[*clientv3.Client](func(name string) (pair di.Pair[*clientv3.Client], err error) {
 			var conf Option
 			if err := p.Conf.Unmarshal(fmt.Sprintf("etcd.%s", name), &conf); err != nil {
-				return di.Pair{}, fmt.Errorf("etcd configuration %s not valid: %w", name, err)
+				return pair, fmt.Errorf("etcd configuration %s not valid: %w", name, err)
 			}
 			if len(conf.Endpoints) == 0 {
 				conf.Endpoints = []string{"127.0.0.1:2379"}
@@ -120,18 +124,20 @@ func provideFactory(option *providersOption) func(p factoryIn) (Factory, func())
 			}
 			option.interceptor(name, &co)
 			client, _ := clientv3.New(co)
-			return di.Pair{
+			return di.Pair[*clientv3.Client]{
 				Conn: client,
 				Closer: func() {
 					_ = client.Close()
 				},
 			}, nil
 		})
-		etcdFactory := Factory{factory}
-		if option.reloadable {
-			etcdFactory.SubscribeReloadEventFrom(p.Dispatcher)
+		if option.reloadable && p.Dispatcher != nil {
+			p.Dispatcher.On(func(_ context.Context, _ contract.ConfigUnmarshaler) error {
+				factory.Close()
+				return nil
+			})
 		}
-		return etcdFactory, etcdFactory.Close
+		return factory, factory.Close
 	}
 }
 
@@ -150,7 +156,7 @@ func provideConfig() configOut {
 		Config: []config.ExportedConfig{
 			{
 				Owner: "otetcd",
-				Data: map[string]interface{}{
+				Data: map[string]any{
 					"etcd": map[string]Option{
 						"default": {
 							Endpoints:            []string{"127.0.0.1:2379"},

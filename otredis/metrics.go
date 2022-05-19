@@ -10,7 +10,7 @@ import (
 )
 
 type collector struct {
-	factory  Factory
+	factory  *Factory
 	gauges   *Gauges
 	interval time.Duration
 }
@@ -56,7 +56,7 @@ func (g *Gauges) Observe(stats *redis.PoolStats) {
 }
 
 // newCollector creates a new redis wrapper containing the name of the redis.
-func newCollector(factory Factory, gauges *Gauges, interval time.Duration) *collector {
+func newCollector(factory *Factory, gauges *Gauges, interval time.Duration) *collector {
 	return &collector{
 		factory:  factory,
 		gauges:   gauges,
@@ -67,7 +67,7 @@ func newCollector(factory Factory, gauges *Gauges, interval time.Duration) *coll
 // collectConnectionStats collects redis connections for Prometheus to scrape.
 func (d *collector) collectConnectionStats() {
 	for k, v := range d.factory.List() {
-		conn := v.Conn.(redis.UniversalClient)
+		conn := v.Conn
 		stats := conn.PoolStats()
 		d.gauges.DBName(k).Observe(stats)
 	}

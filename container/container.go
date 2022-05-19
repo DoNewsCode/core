@@ -11,7 +11,7 @@ var _ contract.Container = (*Container)(nil)
 
 // Container holds all modules registered.
 type Container struct {
-	modules []interface{}
+	modules []any
 }
 
 // Modules returns all modules in the container. This method is used to scan for
@@ -29,10 +29,10 @@ type Container struct {
 		}
 	})
 */
-func (c *Container) Modules() []interface{} {
+func (c *Container) Modules() []any {
 	return c.modules
 }
 
-func (c *Container) AddModule(module interface{}) {
+func (c *Container) AddModule(module any) {
 	c.modules = append(c.modules, module)
 }

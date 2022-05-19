@@ -14,7 +14,7 @@ type JaegerLogAdapter struct {
 }
 
 // Infof implements jaeger's logger
-func (l JaegerLogAdapter) Infof(msg string, args ...interface{}) {
+func (l JaegerLogAdapter) Infof(msg string, args ...any) {
 	level.Info(l.Logging).Log("msg", fmt.Sprintf(msg, args...))
 }
 

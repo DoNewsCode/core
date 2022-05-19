@@ -10,7 +10,7 @@ import (
 // OptionalProvider is used as the element in di.Deps, the options are applied to
 // the inner dig.Container automatically.
 type OptionalProvider struct {
-	Constructor interface{}
+	Constructor any
 	Options     []dig.ProvideOption
 }
 
@@ -18,7 +18,7 @@ type OptionalProvider struct {
 // Options to reduce vague debug message when constructor are made by
 // reflect.makeFunc. For example:
 //  LocationForPC(reflect.makeFunc(...), reflect.ValueOf(realConstructor).Pointer())
-func LocationForPC(constructor interface{}, pc uintptr) interface{} {
+func LocationForPC(constructor any, pc uintptr) any {
 	if op, ok := constructor.(OptionalProvider); ok {
 		op.Options = append(op.Options, dig.LocationForPC(pc))
 		return op
@@ -32,7 +32,7 @@ func LocationForPC(constructor interface{}, pc uintptr) interface{} {
 // As constructs the instance and bind it to another interface. As means to be used as an argument to graph.Provide.
 // For example:
 //  As(MyConstructor, new(MyAbstractInterface))
-func As(constructor interface{}, as interface{}) interface{} {
+func As(constructor any, as any) any {
 	if op, ok := constructor.(OptionalProvider); ok {
 		op.Options = append(op.Options, dig.As(as))
 		return op
@@ -46,7 +46,7 @@ func As(constructor interface{}, as interface{}) interface{} {
 // Name constructs a named instance. Name means to be used as an argument to graph.Provide.
 // For example:
 //  Name(MyConstructor, "foo")
-func Name(constructor interface{}, name string) interface{} {
+func Name(constructor any, name string) any {
 	if op, ok := constructor.(OptionalProvider); ok {
 		op.Options = append(op.Options, dig.Name(name))
 		return op
@@ -61,7 +61,7 @@ func Name(constructor interface{}, name string) interface{} {
 // interfaces. The arguments should be a ptr to the binding types, rather than
 // the types themselves. For example:
 //  Bind(new(MyConcreteStruct), new(MyAbstractInterface))
-func Bind(from interface{}, to interface{}) interface{} {
+func Bind(from any, to any) any {
 	fromTypes := []reflect.Type{reflect.TypeOf(from).Elem()}
 	toTypes := []reflect.Type{reflect.TypeOf(to).Elem()}
 	fnType := reflect.FuncOf(fromTypes, toTypes, false /* variadic */)

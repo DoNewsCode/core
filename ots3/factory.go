@@ -8,15 +8,4 @@ type Maker interface {
 }
 
 // Factory can be used to connect to multiple s3 servers.
-type Factory struct {
-	*di.Factory
-}
-
-// Make creates a s3 manager under the given name.
-func (s Factory) Make(name string) (*Manager, error) {
-	client, err := s.Factory.Make(name)
-	if err != nil {
-		return nil, err
-	}
-	return client.(*Manager), nil
-}
+type Factory = di.Factory[*Manager]

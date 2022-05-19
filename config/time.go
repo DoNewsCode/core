@@ -20,7 +20,7 @@ func (d Duration) IsZero() bool {
 }
 
 // MarshalYAML implements yaml.Marshaler
-func (d Duration) MarshalYAML() (interface{}, error) {
+func (d Duration) MarshalYAML() (any, error) {
 	return d.String(), nil
 }
 
@@ -39,7 +39,7 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}

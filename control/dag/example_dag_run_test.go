@@ -3,9 +3,9 @@ package dag_test
 import (
 	"context"
 	"fmt"
+	"github.com/DoNewsCode/core/control/dag"
 
 	"github.com/DoNewsCode/core/ctxmeta"
-	"github.com/DoNewsCode/core/dag"
 )
 
 // This example shows how to pass results to the next vertex or the dag caller.

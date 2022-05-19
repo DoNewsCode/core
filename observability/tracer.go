@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/DoNewsCode/core/contract"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"

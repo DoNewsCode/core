@@ -14,9 +14,9 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/DoNewsCode/core/observability"
+
 	"github.com/go-kit/log"
 	"github.com/oklog/run"
-	deprecatedcron "github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -62,16 +62,6 @@ func TestServeIn_signalWatch(t *testing.T) {
 	})
 }
 
-type OldCronModule struct {
-	CanRun uint32
-}
-
-func (module *OldCronModule) ProvideCron(crontab *deprecatedcron.Cron) {
-	crontab.AddFunc("* * * * * *", func() {
-		atomic.StoreUint32(&module.CanRun, 1)
-	})
-}
-
 type NewCronModule struct {
 	CanRun uint32
 }
@@ -83,25 +73,46 @@ func (module *NewCronModule) ProvideCron(crontab *cron.Cron) {
 	})
 }
 
-func TestServeIn_cron_deprecation(t *testing.T) {
-	c := Default(WithInline("grpc.disable", true), WithInline("http.disable", true))
+func TestServeIn_cron(t *testing.T) {
+	c := Default(
+		WithInline("grpc.disable", true),
+		WithInline("http.disable", true),
+		WithInline("log.level", "none"),
+	)
 	c.Provide(observability.Providers())
 	c.Provide(
-		di.Deps{func() *deprecatedcron.Cron {
-			return deprecatedcron.New(deprecatedcron.WithSeconds())
-		}, func() *cron.Cron {
+		di.Deps{func() *cron.Cron {
 			return cron.New(cron.Config{EnableSeconds: true})
 		}},
 	)
 
-	mOld := OldCronModule{}
-	mNew := NewCronModule{}
-	c.AddModule(&mOld)
-	c.AddModule(&mNew)
+	m := NewCronModule{}
+	c.AddModule(&m)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	c.Serve(ctx)
-	assert.True(t, mOld.CanRun == 1)
-	assert.True(t, mNew.CanRun == 1)
+	assert.True(t, m.CanRun == 1)
+}
+
+type SimpleRunModule struct {
+	RunCount uint32
+}
+
+func (s *SimpleRunModule) Run(ctx context.Context) error {
+	atomic.AddUint32(&s.RunCount, 1)
+	return nil
+}
+
+func TestSimpleRun(t *testing.T) {
+	c := Default(
+		WithInline("grpc.disable", true),
+		WithInline("http.disable", true),
+		WithInline("cron.disable", true),
+		WithInline("log.level", "none"),
+	)
+	m := SimpleRunModule{}
+	c.AddModule(&m)
+	c.Serve(context.Background())
+	assert.Equal(t, uint32(1), m.RunCount)
 }

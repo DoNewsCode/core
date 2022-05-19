@@ -6,6 +6,7 @@ import (
 
 	"github.com/DoNewsCode/core/ctxmeta"
 	"github.com/DoNewsCode/core/logging"
+
 	"github.com/go-kit/log/level"
 )
 
@@ -28,7 +29,7 @@ func ExampleWithLevel() {
 	levelLogger := logging.WithLevel(logger)
 	levelLogger.Info("hello")
 	// Output:
-	// {"caller":"example_test.go:29","level":"info","msg":"hello"}
+	// {"caller":"example_test.go:30","level":"info","msg":"hello"}
 }
 
 func Example_sprintf() {

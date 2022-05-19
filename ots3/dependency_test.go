@@ -5,14 +5,16 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
+
 	"github.com/stretchr/testify/assert"
 )
 
 type Populator struct{}
 
-func (p Populator) Populate(target interface{}) error { return nil }
+func (p Populator) Populate(target any) error { return nil }
 
 func TestNewUploadManagerFactory(t *testing.T) {
 	s3out := provideFactory(&providersOption{})(factoryIn{
@@ -22,16 +24,16 @@ func TestNewUploadManagerFactory(t *testing.T) {
 		}},
 		Populator: Populator{},
 	})
-	def, err := s3out.Factory.Make("default")
+	def, err := s3out.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
-	alt, err := s3out.Factory.Make("alternative")
+	alt, err := s3out.Make("alternative")
 	assert.NoError(t, err)
 	assert.NotNil(t, alt)
 }
 
 func TestNewUploadManagerFactory_customOption(t *testing.T) {
-	dispatcher := &events.SyncDispatcher{}
+	dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
 	var called bool
 	s3out := provideFactory(&providersOption{ctor: func(args ManagerArgs) (*Manager, error) {
 		called = true
@@ -44,11 +46,11 @@ func TestNewUploadManagerFactory_customOption(t *testing.T) {
 		Populator:  Populator{},
 		Dispatcher: dispatcher,
 	})
-	def, err := s3out.Factory.Make("default")
+	def, err := s3out.Make("default")
 	assert.NoError(t, err)
 	assert.NotNil(t, def)
 	assert.True(t, called)
-	assert.Equal(t, 1, dispatcher.ListenerCount(events.OnReload))
+	assert.Equal(t, 1, dispatcher.ListenerCount())
 }
 
 type exportedConfig struct {

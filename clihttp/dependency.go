@@ -5,6 +5,7 @@ import (
 
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/opentracing/opentracing-go"
 )
 

@@ -8,16 +8,16 @@ type Logger = log.Logger
 // LevelLogger is plaintext logger with level.
 type LevelLogger interface {
 	Logger
-	Debug(args ...interface{})
-	Info(args ...interface{})
-	Warn(args ...interface{})
-	Err(args ...interface{})
-	Debugf(template string, args ...interface{})
-	Infof(template string, args ...interface{})
-	Warnf(template string, args ...interface{})
-	Errf(template string, args ...interface{})
-	Debugw(msg string, fields ...interface{})
-	Infow(msg string, fields ...interface{})
-	Warnw(msg string, fields ...interface{})
-	Errw(msg string, fields ...interface{})
+	Debug(args ...any)
+	Info(args ...any)
+	Warn(args ...any)
+	Err(args ...any)
+	Debugf(template string, args ...any)
+	Infof(template string, args ...any)
+	Warnf(template string, args ...any)
+	Errf(template string, args ...any)
+	Debugw(msg string, fields ...any)
+	Infow(msg string, fields ...any)
+	Warnw(msg string, fields ...any)
+	Errw(msg string, fields ...any)
 }

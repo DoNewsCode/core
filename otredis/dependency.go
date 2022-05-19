@@ -7,7 +7,9 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/go-redis/redis/v8"
@@ -40,7 +42,7 @@ func Providers(opts ...ProvidersOptionFunc) di.Deps {
 		provideRedisFactory(&option),
 		provideDefaultClient,
 		provideConfig,
-		di.Bind(new(Factory), new(Maker)),
+		di.Bind(new(*Factory), new(Maker)),
 	}
 }
 
@@ -53,19 +55,19 @@ type factoryIn struct {
 	Interceptor RedisConfigurationInterceptor `optional:"true"`
 	Tracer      opentracing.Tracer            `optional:"true"`
 	Gauges      *Gauges                       `optional:"true"`
-	Dispatcher  contract.Dispatcher           `optional:"true"`
+	Dispatcher  lifecycle.ConfigReload        `optional:"true"`
 }
 
 // factoryOut is the result of provideRedisFactory.
 type factoryOut struct {
 	di.Out
 
-	Factory   Factory
+	Factory   *Factory
 	Collector *collector
 }
 
 // Module implements di.Module
-func (m factoryOut) Module() interface{} {
+func (m factoryOut) Module() any {
 	return m
 }
 
@@ -99,13 +101,13 @@ func provideRedisFactory(option *providersOption) func(p factoryIn) (factoryOut,
 		option.interceptor = func(name string, opts *redis.UniversalOptions) {}
 	}
 	return func(p factoryIn) (factoryOut, func()) {
-		factory := di.NewFactory(func(name string) (di.Pair, error) {
+		factory := di.NewFactory[redis.UniversalClient](func(name string) (pair di.Pair[redis.UniversalClient], err error) {
 			var (
 				base RedisUniversalOptions
 				full redis.UniversalOptions
 			)
 			if err := p.Conf.Unmarshal(fmt.Sprintf("redis.%s", name), &base); err != nil {
-				return di.Pair{}, fmt.Errorf("redis configuration %s not valid: %w", name, err)
+				return pair, fmt.Errorf("redis configuration %s not valid: %w", name, err)
 			}
 			if len(base.Addrs) == 0 {
 				base = RedisUniversalOptions{
@@ -151,29 +153,31 @@ func provideRedisFactory(option *providersOption) func(p factoryIn) (factoryOut,
 					},
 				)
 			}
-			return di.Pair{
+			return di.Pair[redis.UniversalClient]{
 				Conn: client,
 				Closer: func() {
 					_ = client.Close()
 				},
 			}, nil
 		})
-		redisFactory := Factory{factory}
-		if option.reloadable {
-			redisFactory.SubscribeReloadEventFrom(p.Dispatcher)
+		if option.reloadable && p.Dispatcher != nil {
+			p.Dispatcher.On(func(ctx context.Context, Config contract.ConfigUnmarshaler) error {
+				factory.Close()
+				return nil
+			})
 		}
 		var collector *collector
 		if p.Gauges != nil {
 			var interval time.Duration = 15 * time.Second
 			p.Conf.Unmarshal("redisMetrics.interval", &interval)
-			collector = newCollector(redisFactory, p.Gauges, interval)
+			collector = newCollector(factory, p.Gauges, interval)
 		}
 		redisOut := factoryOut{
-			Factory:   redisFactory,
+			Factory:   factory,
 			Collector: collector,
 		}
 
-		return redisOut, redisFactory.Close
+		return redisOut, factory.Close
 	}
 }
 
@@ -196,7 +200,7 @@ func provideConfig() configOut {
 	configs := []config.ExportedConfig{
 		{
 			Owner: "otredis",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"redis": map[string]RedisUniversalOptions{
 					"default": {
 						Addrs: []string{"127.0.0.1:6379"},

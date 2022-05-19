@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/DoNewsCode/core/contract"
+
 	"go.uber.org/dig"
 )
 
@@ -28,7 +29,7 @@ type defaultPopulator struct {
 // for further testing.
 //
 // Mostly copied from uber/fx. License: https://github.com/uber-go/fx/blob/master/LICENSE
-func (d *defaultPopulator) Populate(target interface{}) error {
+func (d *defaultPopulator) Populate(target any) error {
 	invokeErr := func(err error) error {
 		return d.invoker.Invoke(func() error {
 			return err

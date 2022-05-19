@@ -53,8 +53,8 @@ func WithIndent(indent string) Option {
 	}
 }
 
-// Marshal serialize the interface{} to []byte
-func (c Codec) Marshal(v interface{}) ([]byte, error) {
+// Marshal serialize the v to []byte
+func (c Codec) Marshal(v any) ([]byte, error) {
 	if m, ok := v.(proto.Message); ok {
 		return c.marshalOptions.Marshal(m)
 	}
@@ -64,8 +64,8 @@ func (c Codec) Marshal(v interface{}) ([]byte, error) {
 	return json.Marshal(v)
 }
 
-// Unmarshal deserialize the []byte to interface{}
-func (c Codec) Unmarshal(data []byte, v interface{}) error {
+// Unmarshal deserialize the []byte to v
+func (c Codec) Unmarshal(data []byte, v any) error {
 	rv := reflect.ValueOf(v)
 	for rv.Kind() == reflect.Ptr {
 		if rv.IsNil() {

@@ -7,8 +7,11 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
+	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/logging"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -108,9 +111,23 @@ func ProvideDi(conf contract.ConfigUnmarshaler) *dig.Container {
 	return dig.New()
 }
 
-// ProvideEventDispatcher is the default EventDispatcherProvider for package Core.
-func ProvideEventDispatcher(conf contract.ConfigUnmarshaler) contract.Dispatcher {
-	return &events.SyncDispatcher{}
+type lifecycleOut struct {
+	di.Out
+	lifecycle.ConfigReload
+	lifecycle.HTTPServerStart
+	lifecycle.HTTPServerShutdown
+	lifecycle.GRPCServerStart
+	lifecycle.GRPCServerShutdown
+}
+
+func provideLifecycle() lifecycleOut {
+	return lifecycleOut{
+		ConfigReload:       &events.Event[contract.ConfigUnmarshaler]{},
+		HTTPServerStart:    &events.Event[lifecycle.HTTPServerStartPayload]{},
+		HTTPServerShutdown: &events.Event[lifecycle.HTTPServerShutdownPayload]{},
+		GRPCServerStart:    &events.Event[lifecycle.GRPCServerStartPayload]{},
+		GRPCServerShutdown: &events.Event[lifecycle.GRPCServerShutdownPayload]{},
+	}
 }
 
 // provideDefaultConfig exports config for "name", "version", "env", "http", "grpc".
@@ -118,11 +135,11 @@ func provideDefaultConfig() []config.ExportedConfig {
 	return []config.ExportedConfig{
 		{
 			Owner: "core",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"name": "app",
 			},
 			Comment: "The name of the application",
-			Validate: func(data map[string]interface{}) error {
+			Validate: func(data map[string]any) error {
 				_, err := getString(data, "name")
 				if err != nil {
 					return fmt.Errorf("the name field is not valid: %w", err)
@@ -132,11 +149,11 @@ func provideDefaultConfig() []config.ExportedConfig {
 		},
 		{
 			Owner: "core",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"env": "local",
 			},
 			Comment: "The environment of the application, one of production, development, staging, testing or local",
-			Validate: func(data map[string]interface{}) error {
+			Validate: func(data map[string]any) error {
 				str, err := getString(data, "env")
 				if err != nil {
 					return fmt.Errorf("the env field is not valid: %w", err)
@@ -150,14 +167,14 @@ func provideDefaultConfig() []config.ExportedConfig {
 		},
 		{
 			Owner: "core",
-			Data: map[string]interface{}{
-				"http": map[string]interface{}{
+			Data: map[string]any{
+				"http": map[string]any{
 					"addr":    ":8080",
 					"disable": false,
 				},
 			},
 			Comment: "The http address",
-			Validate: func(data map[string]interface{}) error {
+			Validate: func(data map[string]any) error {
 				disable, err := getBool(data, "http", "disable")
 				if err != nil {
 					return fmt.Errorf("the http.disable field is not valid: %w", err)
@@ -177,14 +194,14 @@ func provideDefaultConfig() []config.ExportedConfig {
 		},
 		{
 			Owner: "core",
-			Data: map[string]interface{}{
-				"grpc": map[string]interface{}{
+			Data: map[string]any{
+				"grpc": map[string]any{
 					"addr":    ":9090",
 					"disable": false,
 				},
 			},
 			Comment: "The gRPC address",
-			Validate: func(data map[string]interface{}) error {
+			Validate: func(data map[string]any) error {
 				disable, err := getBool(data, "grpc", "disable")
 				if err != nil {
 					return fmt.Errorf("the grpc.disable field is not valid: %w", err)
@@ -204,13 +221,13 @@ func provideDefaultConfig() []config.ExportedConfig {
 		},
 		{
 			Owner: "core",
-			Data: map[string]interface{}{
-				"cron": map[string]interface{}{
+			Data: map[string]any{
+				"cron": map[string]any{
 					"disable": false,
 				},
 			},
 			Comment: "The cron job runner",
-			Validate: func(data map[string]interface{}) error {
+			Validate: func(data map[string]any) error {
 				_, err := getBool(data, "cron", "disable")
 				if err != nil {
 					return fmt.Errorf("the cron.disable field is not valid: %w", err)
@@ -220,11 +237,11 @@ func provideDefaultConfig() []config.ExportedConfig {
 		},
 		{
 			Owner: "core",
-			Data: map[string]interface{}{
-				"log": map[string]interface{}{"level": "debug", "format": "logfmt"},
+			Data: map[string]any{
+				"log": map[string]any{"level": "debug", "format": "logfmt"},
 			},
 			Comment: "The global logging level and format",
-			Validate: func(data map[string]interface{}) error {
+			Validate: func(data map[string]any) error {
 				lvl, err := getString(data, "log", "level")
 				if err != nil {
 					return fmt.Errorf("the log.level field is not valid: %w", err)

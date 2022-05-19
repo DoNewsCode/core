@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/DoNewsCode/core/logging"
+
 	"github.com/go-kit/log"
 	"golang.org/x/sync/errgroup"
 )

@@ -12,12 +12,12 @@ import (
 // Codec is a Codec implementation with yaml.
 type Codec struct{}
 
-// Marshal serialize the interface{} to []byte
-func (Codec) Marshal(v interface{}) ([]byte, error) {
+// Marshal serialize the v to []byte
+func (Codec) Marshal(v any) ([]byte, error) {
 	return yaml.Marshal(v)
 }
 
-// Unmarshal deserialize the []byte to interface{}
-func (Codec) Unmarshal(data []byte, v interface{}) error {
+// Unmarshal deserialize the []byte to v
+func (Codec) Unmarshal(data []byte, v any) error {
 	return yaml.Unmarshal(data, v)
 }

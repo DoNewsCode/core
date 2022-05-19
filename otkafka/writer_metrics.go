@@ -8,7 +8,7 @@ import (
 )
 
 type writerCollector struct {
-	factory  WriterFactory
+	factory  *WriterFactory
 	stats    *WriterStats
 	interval time.Duration
 }
@@ -98,7 +98,7 @@ func (w *WriterStats) Observe(stats kafka.WriterStats) *WriterStats {
 }
 
 // newCollector creates a new kafka writer wrapper containing the name of the reader.
-func newWriterCollector(factory WriterFactory, stats *WriterStats, interval time.Duration) *writerCollector {
+func newWriterCollector(factory *WriterFactory, stats *WriterStats, interval time.Duration) *writerCollector {
 	return &writerCollector{
 		factory:  factory,
 		stats:    stats,
@@ -109,7 +109,7 @@ func newWriterCollector(factory WriterFactory, stats *WriterStats, interval time
 // collectConnectionStats collects kafka writer info for Prometheus to scrape.
 func (d *writerCollector) collectConnectionStats() {
 	for k, v := range d.factory.List() {
-		writer := v.Conn.(*kafka.Writer)
+		writer := v.Conn
 		stats := writer.Stats()
 		d.stats.Writer(k).Observe(stats)
 	}

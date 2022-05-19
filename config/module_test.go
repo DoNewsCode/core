@@ -8,7 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
+
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/oklog/run"
 	"github.com/pkg/errors"
@@ -23,11 +25,11 @@ func setup() *cobra.Command {
 		exportedConfigs: []ExportedConfig{
 			{
 				"foo",
-				map[string]interface{}{
+				map[string]any{
 					"foo": "bar",
 				},
 				"A mock config",
-				func(data map[string]interface{}) error {
+				func(data map[string]any) error {
 					if _, ok := data["foo"]; !ok {
 						return errors.New("bad config")
 					}
@@ -36,14 +38,13 @@ func setup() *cobra.Command {
 			},
 			{
 				"baz",
-				map[string]interface{}{
+				map[string]any{
 					"baz": "qux",
 				},
 				"Other mock config",
 				nil,
 			},
 		},
-		dispatcher: nil,
 	}
 	rootCmd := &cobra.Command{
 		Use: "root",
@@ -172,14 +173,14 @@ func TestModule_Watch(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		dispatcher := &events.SyncDispatcher{}
-		dispatcher.Subscribe(events.Listen(events.OnReload, func(ctx context.Context, event interface{}) error {
-			data := event.(events.OnReloadPayload).NewConf.(*KoanfAdapter)
+		dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
+		dispatcher.On(func(ctx context.Context, event contract.ConfigUnmarshaler) error {
+			data := event.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil
-		}))
-		conf, _ := NewConfig(WithDispatcher(dispatcher), WithProviderLayer(confmap.Provider(map[string]interface{}{"foo": "bar"}, "."), nil))
+		})
+		conf, _ := NewConfig(WithDispatcher(dispatcher), WithProviderLayer(confmap.Provider(map[string]any{"foo": "bar"}, "."), nil))
 		conf.Watch(ctx)
 	})
 
@@ -187,18 +188,21 @@ func TestModule_Watch(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		dispatcher := &events.SyncDispatcher{}
-		dispatcher.Subscribe(events.Listen(events.OnReload, func(ctx context.Context, event interface{}) error {
-			data := event.(events.OnReloadPayload).NewConf.(*KoanfAdapter)
+		dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
+		dispatcher.On(func(ctx context.Context, event contract.ConfigUnmarshaler) error {
+			data := event.(*KoanfAdapter)
 			assert.Equal(t, "bar", data.String("foo"))
 			cancel()
 			return nil
-		}))
+		})
 
-		conf, _ := NewConfig(WithProviderLayer(confmap.Provider(map[string]interface{}{"foo": "bar"}, "."), nil), WithWatcher(&MockWatcher{}))
+		conf, _ := NewConfig(
+			WithDispatcher(dispatcher),
+			WithProviderLayer(confmap.Provider(map[string]any{"foo": "bar"}, "."), nil),
+			WithWatcher(&MockWatcher{}),
+		)
 		module, _ := New(ConfigIn{
-			Conf:       conf,
-			Dispatcher: dispatcher,
+			Conf: conf,
 		})
 		var g run.Group
 		g.Add(func() error {

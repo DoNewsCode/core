@@ -205,7 +205,7 @@ c.Provide(di.Deps{
 说到需求，`c.Invoke`可以用来实例化依赖关系。
 
 ```go
-func (c *C) Invoke(function interface{})
+func (c *C) Invoke(function any)
 ```
 
 在实例化依赖项后，`Invoke`运行给定的函数。

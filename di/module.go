@@ -8,9 +8,9 @@ package di
 // then there is no need to use this mechanism.
 type Modular interface {
 	// Module returns a core module
-	Module() interface{}
+	Module() any
 }
 
 // Deps is a set of providers grouped together. This is used by core.Provide
 // method to identify provider sets.
-type Deps []interface{}
+type Deps []any

@@ -1,12 +1,15 @@
 package otes
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
+	"github.com/DoNewsCode/core/contract/lifecycle"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/olivere/elastic/v7"
@@ -39,7 +42,7 @@ func Providers(opts ...ProvidersOptionFunc) di.Deps {
 		provideEsFactory(&options),
 		provideDefaultClient,
 		provideConfig,
-		di.Bind(new(Factory), new(Maker)),
+		di.Bind(new(*Factory), new(Maker)),
 	}
 }
 
@@ -53,25 +56,25 @@ type factoryIn struct {
 
 	Logger     log.Logger
 	Conf       contract.ConfigUnmarshaler
-	Dispatcher contract.Dispatcher `optional:"true"`
+	Dispatcher lifecycle.ConfigReload `optional:"true"`
 	Populator  contract.DIPopulator
 }
 
 // Provide creates Factory and *elastic.Client. It is a valid dependency for
 // package core.
-func provideEsFactory(option *providersOption) func(p factoryIn) (Factory, func()) {
+func provideEsFactory(option *providersOption) func(p factoryIn) (*Factory, func()) {
 	if option.interceptor == nil {
 		option.interceptor = func(name string, opt *Config) {}
 	}
 	if option.clientConstructor == nil {
 		option.clientConstructor = newClient
 	}
-	return func(p factoryIn) (Factory, func()) {
-		factory := di.NewFactory(func(name string) (di.Pair, error) {
+	return func(p factoryIn) (*Factory, func()) {
+		factory := di.NewFactory[*elastic.Client](func(name string) (pair di.Pair[*elastic.Client], err error) {
 			var conf Config
 			if err := p.Conf.Unmarshal(fmt.Sprintf("es.%s", name), &conf); err != nil {
 				if name != "default" {
-					return di.Pair{}, fmt.Errorf("elastic configuration %s not valid: %w", name, err)
+					return pair, fmt.Errorf("elastic configuration %s not valid: %w", name, err)
 				}
 				conf.URL = []string{"http://127.0.0.1:9200"}
 			}
@@ -84,21 +87,23 @@ func provideEsFactory(option *providersOption) func(p factoryIn) (Factory, func(
 				Populator: p.Populator,
 			})
 			if err != nil {
-				return di.Pair{}, err
+				return pair, err
 			}
 
-			return di.Pair{
+			return di.Pair[*elastic.Client]{
 				Conn: client,
 				Closer: func() {
 					client.Stop()
 				},
 			}, nil
 		})
-		f := Factory{factory}
-		if option.reloadable {
-			f.SubscribeReloadEventFrom(p.Dispatcher)
+		if option.reloadable && p.Dispatcher != nil {
+			p.Dispatcher.On(func(ctx context.Context, Config contract.ConfigUnmarshaler) error {
+				factory.Close()
+				return nil
+			})
 		}
-		return f, f.Close
+		return factory, factory.Close
 	}
 }
 
@@ -172,7 +177,7 @@ func provideConfig() configOut {
 	configs := []config.ExportedConfig{
 		{
 			Owner: "otes",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"es": map[string]Config{
 					"default": {
 						URL:    []string{"http://127.0.0.1:9200"},

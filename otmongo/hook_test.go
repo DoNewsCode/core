@@ -7,6 +7,7 @@ import (
 
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"

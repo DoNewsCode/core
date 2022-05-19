@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/events"
+
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
 )
@@ -22,7 +24,7 @@ func TestNewMongoFactory(t *testing.T) {
 			"not reload", false,
 		},
 	} {
-		dispatcher := &events.SyncDispatcher{}
+		dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
 		factory, cleanup := provideMongoFactory(&providersOption{
 			reloadable: c.reloadable,
 		})(factoryIn{
@@ -47,7 +49,7 @@ func TestNewMongoFactory(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, alt)
 		assert.NotNil(t, cleanup)
-		assert.Equal(t, c.reloadable, dispatcher.ListenerCount(events.OnReload) == 1)
+		assert.Equal(t, c.reloadable, dispatcher.ListenerCount() == 1)
 		cleanup()
 	}
 }

@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/events"
+
 	"github.com/go-kit/log"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
@@ -25,12 +27,12 @@ func TestProvideReaderFactory(t *testing.T) {
 	}
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideReaderFactory(factoryIn{
-		Conf: config.MapAdapter{"kafka.reader": map[string]interface{}{
-			"default": map[string]interface{}{
+		Conf: config.MapAdapter{"kafka.reader": map[string]any{
+			"default": map[string]any{
 				"brokers": addrs,
 				"topic":   "Test",
 			},
-			"alternative": map[string]interface{}{
+			"alternative": map[string]any{
 				"brokers": addrs,
 				"topic":   "Test",
 			},
@@ -54,12 +56,12 @@ func TestProvideWriterFactory(t *testing.T) {
 	addrs := strings.Split(os.Getenv("KAFKA_ADDR"), ",")
 	factory, cleanup := provideWriterFactory(factoryIn{
 		In: di.In{},
-		Conf: config.MapAdapter{"kafka.writer": map[string]interface{}{
-			"default": map[string]interface{}{
+		Conf: config.MapAdapter{"kafka.writer": map[string]any{
+			"default": map[string]any{
 				"brokers": addrs,
 				"topic":   "Test",
 			},
-			"alternative": map[string]interface{}{
+			"alternative": map[string]any{
 				"brokers": addrs,
 				"topic":   "Test",
 			},
@@ -84,7 +86,7 @@ func TestProvideKafka(t *testing.T) {
 		{"not reload", false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			dispatcher := &events.SyncDispatcher{}
+			dispatcher := &events.Event[contract.ConfigUnmarshaler]{}
 			Out, cleanupReader, cleanupWriter, err := provideKafkaFactory(&providersOption{
 				readerReloadable: c.reloadable,
 				writerReloadable: c.reloadable,
@@ -109,7 +111,7 @@ func TestProvideKafka(t *testing.T) {
 			alt, err := Out.WriterFactory.Make("alternative")
 			assert.NoError(t, err)
 			assert.NotNil(t, alt)
-			assert.Equal(t, c.reloadable, dispatcher.ListenerCount(events.OnReload) == 2)
+			assert.Equal(t, c.reloadable, dispatcher.ListenerCount() == 1)
 			cleanupReader()
 			cleanupWriter()
 		})

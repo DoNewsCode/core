@@ -7,14 +7,16 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core"
-	"github.com/DoNewsCode/core/contract"
-	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/leader"
 )
 
-type AlwaysLeaderDriver struct{}
+type AlwaysLeaderDriver struct {
+}
 
-func (a AlwaysLeaderDriver) Campaign(ctx context.Context) error {
+func (a AlwaysLeaderDriver) Campaign(ctx context.Context, toLeader func(bool)) error {
+	defer toLeader(false)
+	toLeader(true)
+	<-ctx.Done()
 	return nil
 }
 
@@ -30,12 +32,12 @@ func Example_providers() {
 	c := core.Default(core.WithInline("log.level", "none"))
 	c.Provide(leader.Providers(leader.WithDriver(AlwaysLeaderDriver{})))
 
-	c.Invoke(func(dispatcher contract.Dispatcher, sts *leader.Status) {
-		dispatcher.Subscribe(events.Listen(leader.OnStatusChanged, func(ctx context.Context, event interface{}) error {
+	c.Invoke(func(statusChanged leader.StatusChanged) {
+		statusChanged.On(func(ctx context.Context, status *leader.Status) error {
 			// Becomes true when campaign succeeds and becomes false when resign
-			fmt.Println(event.(leader.OnStatusChangedPayload).Status.IsLeader())
+			fmt.Println(status.IsLeader())
 			return nil
-		}))
+		})
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)

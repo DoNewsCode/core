@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"github.com/DoNewsCode/core/control/pool"
 	"os"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/DoNewsCode/core/otgorm"
 	"github.com/DoNewsCode/core/otkafka"
 	"github.com/DoNewsCode/core/otredis"
+
 	"github.com/go-kit/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -197,6 +199,15 @@ func TestProvideKafkaMetrics(t *testing.T) {
 		rs.FetchBytes.Min.With(withValues...).Set(float64(stats.FetchBytes.Min))
 		rs.FetchBytes.Max.With(withValues...).Set(float64(stats.FetchBytes.Max))
 		rs.FetchBytes.Avg.With(withValues...).Set(float64(stats.FetchBytes.Avg))
+	})
+}
+
+func TestProvidePoolMetrics(t *testing.T) {
+	c := core.New()
+	c.ProvideEssentials()
+	c.Provide(Providers())
+	c.Invoke(func(metrics *pool.Counter) {
+		metrics.PoolName("test").IncAsyncJob()
 	})
 }
 

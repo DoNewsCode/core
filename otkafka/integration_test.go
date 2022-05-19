@@ -13,6 +13,7 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
 	mock_metrics "github.com/DoNewsCode/core/otkafka/mocks"
+
 	"github.com/golang/mock/gomock"
 	knoaf_json "github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/file"
@@ -137,7 +138,7 @@ func TestFactoryOut_ProvideRunGroup(t *testing.T) {
 		}
 	}})
 	c.Provide(Providers())
-	c.Invoke(func(reader ReaderFactory, writer WriterFactory) {})
+	c.Invoke(func(reader *ReaderFactory, writer *WriterFactory) {})
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	c.Serve(ctx)
@@ -260,12 +261,12 @@ func TestCollector(t *testing.T) {
 	}})
 	c.Provide(Providers())
 
-	c.Invoke(func(rf ReaderFactory, s *ReaderStats) {
+	c.Invoke(func(rf *ReaderFactory, s *ReaderStats) {
 		rc := newReaderCollector(rf, s, time.Nanosecond)
 		rc.collectConnectionStats()
 	})
 
-	c.Invoke(func(wf WriterFactory, s *WriterStats) {
+	c.Invoke(func(wf *WriterFactory, s *WriterStats) {
 		wc := newWriterCollector(wf, s, time.Nanosecond)
 		wc.collectConnectionStats()
 	})
@@ -302,7 +303,7 @@ func TestModule_hotReload(t *testing.T) {
 	cw.ch = make(chan struct{})
 	cw.afterReload = make(chan struct{})
 
-	conf := map[string]interface{}{
+	conf := map[string]any{
 		"http": map[string]bool{
 			"disable": true,
 		},
@@ -312,15 +313,15 @@ func TestModule_hotReload(t *testing.T) {
 		"cron": map[string]bool{
 			"disable": true,
 		},
-		"kafka": map[string]interface{}{
-			"reader": map[string]interface{}{
-				"default": map[string]interface{}{
+		"kafka": map[string]any{
+			"reader": map[string]any{
+				"default": map[string]any{
 					"brokers": addrs,
 					"topic":   "foo",
 				},
 			},
-			"writer": map[string]interface{}{
-				"default": map[string]interface{}{
+			"writer": map[string]any{
+				"default": map[string]any{
 					"brokers": addrs,
 					"topic":   "foo",
 				},
@@ -347,45 +348,45 @@ func TestModule_hotReload(t *testing.T) {
 	go group.Run()
 
 	// Test initial value
-	c.Invoke(func(f ReaderFactory) {
+	c.Invoke(func(f *ReaderFactory) {
 		reader, err := f.Make("default")
 		assert.NoError(t, err)
 		assert.Equal(t, "foo", reader.Config().Topic)
 	})
-	c.Invoke(func(f WriterFactory) {
+	c.Invoke(func(f *WriterFactory) {
 		writer, err := f.Make("default")
 		assert.NoError(t, err)
 		assert.Equal(t, "foo", writer.Topic)
 	})
 
-	// Reload config
-	conf["kafka"].(map[string]interface{})["writer"].(map[string]interface{})["default"].(map[string]interface{})["topic"] = "bar"
-	conf["kafka"].(map[string]interface{})["reader"].(map[string]interface{})["default"].(map[string]interface{})["topic"] = "bar"
+	// Close config
+	conf["kafka"].(map[string]any)["writer"].(map[string]any)["default"].(map[string]any)["topic"] = "bar"
+	conf["kafka"].(map[string]any)["reader"].(map[string]any)["default"].(map[string]any)["topic"] = "bar"
 	overwriteFile(path, conf)
 	cw.ch <- struct{}{}
 	<-cw.afterReload
 
 	// Test reloaded values
-	c.Invoke(func(f ReaderFactory) {
+	c.Invoke(func(f *ReaderFactory) {
 		reader, err := f.Make("default")
 		assert.NoError(t, err)
 		assert.Equal(t, "bar", reader.Config().Topic)
 	})
-	c.Invoke(func(f WriterFactory) {
+	c.Invoke(func(f *WriterFactory) {
 		writer, err := f.Make("default")
 		assert.NoError(t, err)
 		assert.Equal(t, "bar", writer.Topic)
 	})
 }
 
-func createFile(content map[string]interface{}) string {
+func createFile(content map[string]any) string {
 	f, _ := ioutil.TempFile("", "*")
 	data, _ := json.Marshal(content)
 	ioutil.WriteFile(f.Name(), data, os.ModePerm)
 	return f.Name()
 }
 
-func overwriteFile(path string, content map[string]interface{}) {
+func overwriteFile(path string, content map[string]any) {
 	data, _ := json.Marshal(content)
 	ioutil.WriteFile(path, data, os.ModePerm)
 }

@@ -21,7 +21,7 @@ type testMessage struct {
 
 func TestJSON_Marshal(t *testing.T) {
 	tests := []struct {
-		input   interface{}
+		input   any
 		expect  string
 		options []Option
 	}{
@@ -64,7 +64,7 @@ func TestJSON_Unmarshal(t *testing.T) {
 	p := &testMessage{}
 	tests := []struct {
 		input  string
-		expect interface{}
+		expect any
 	}{
 		{
 			input:  `{"a":"","b":"","c":""}`,

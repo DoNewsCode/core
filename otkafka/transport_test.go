@@ -8,6 +8,7 @@ import (
 
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/di"
+
 	"github.com/go-kit/log"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -27,8 +28,8 @@ func TestTransport_RoundTrip(t *testing.T) {
 	factory, cleanup := provideWriterFactory(factoryIn{
 		Tracer: tracer,
 		In:     di.In{},
-		Conf: config.MapAdapter{"kafka.writer": map[string]interface{}{
-			"default": map[string]interface{}{
+		Conf: config.MapAdapter{"kafka.writer": map[string]any{
+			"default": map[string]any{
 				"brokers": addrs,
 				"topic":   "Test",
 			},

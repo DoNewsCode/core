@@ -7,9 +7,11 @@ import (
 	"github.com/DoNewsCode/core/config"
 	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
+	"github.com/DoNewsCode/core/events"
 	"github.com/DoNewsCode/core/key"
 	"github.com/DoNewsCode/core/leader/leaderetcd"
 	"github.com/DoNewsCode/core/otetcd"
+
 	"github.com/oklog/run"
 )
 
@@ -20,8 +22,9 @@ Providers returns a set of dependency providers for *Election and *Status.
 		contract.Dispatcher
 		contract.DIPopulator
 	Provides:
-		Election *Election
-		Status   *Status
+		*Election
+		*Status
+		StatusChanged
 */
 func Providers(opt ...ProvidersOptionFunc) di.Deps {
 	option := &providersOption{
@@ -31,31 +34,37 @@ func Providers(opt ...ProvidersOptionFunc) di.Deps {
 	for _, f := range opt {
 		f(option)
 	}
-	return di.Deps{provide(option), provideConfig}
+	return di.Deps{
+		provide(option),
+		provideConfig,
+		di.Bind(new(*events.Event[*Status]), new(StatusChanged)),
+	}
 }
 
 type in struct {
 	di.In
 
-	Config     contract.ConfigUnmarshaler
-	Dispatcher contract.Dispatcher
-	Populator  contract.DIPopulator
+	Config    contract.ConfigUnmarshaler
+	Populator contract.DIPopulator
 }
 
 type out struct {
 	di.Out
 
-	Election *Election
-	Status   *Status
+	Election   *Election
+	Status     *Status
+	Dispatcher *events.Event[*Status]
 }
 
 func provide(option *providersOption) func(in in) (out, error) {
 	return func(in in) (out, error) {
+		dispatcher := &events.Event[*Status]{}
 		if option.driver != nil {
-			e := NewElection(in.Dispatcher, option.driver)
+			e := NewElection(dispatcher, option.driver)
 			return out{
-				Election: e,
-				Status:   e.status,
+				Election:   e,
+				Status:     e.status,
+				Dispatcher: dispatcher,
 			}, nil
 		}
 
@@ -70,13 +79,13 @@ func provide(option *providersOption) func(in in) (out, error) {
 			return out{}, fmt.Errorf("unable to contruct driver: %w", err)
 		}
 
-		e := NewElection(in.Dispatcher, driver)
-		return out{Election: e, Status: e.status}, nil
+		e := NewElection(dispatcher, driver)
+		return out{Election: e, Status: e.status, Dispatcher: dispatcher}, nil
 	}
 }
 
 // Module marks out as a module.
-func (m out) Module() interface{} { return m }
+func (m out) Module() any { return m }
 
 func (m out) ProvideRunGroup(group *run.Group) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -85,7 +94,6 @@ func (m out) ProvideRunGroup(group *run.Group) {
 		if err != nil {
 			return err
 		}
-		<-ctx.Done()
 		return nil
 	}, func(err error) {
 		_ = m.Election.Resign(ctx)
@@ -149,8 +157,8 @@ func provideConfig() configOut {
 	return configOut{Config: []config.ExportedConfig{
 		{
 			Owner: "leader",
-			Data: map[string]interface{}{
-				"leader": map[string]interface{}{
+			Data: map[string]any{
+				"leader": map[string]any{
 					"etcdName": "default",
 				},
 			},

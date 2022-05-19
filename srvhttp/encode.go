@@ -41,7 +41,7 @@ func NewResponseEncoder(w http.ResponseWriter) *ResponseEncoder {
 // Encode serialize response and error to the corresponding json format and write then to the output buffer.
 //
 // See ResponseEncoder for details.
-func (s *ResponseEncoder) Encode(response interface{}, err error) {
+func (s *ResponseEncoder) Encode(response any, err error) {
 	if err != nil {
 		s.EncodeError(err)
 		return
@@ -56,11 +56,11 @@ func (s *ResponseEncoder) EncodeError(err error) {
 
 // EncodeResponse encodes an response value.
 // If the response is not a StatusCoder, the http.StatusInternalServerError will be used.
-func (s *ResponseEncoder) EncodeResponse(response interface{}) {
+func (s *ResponseEncoder) EncodeResponse(response any) {
 	encode(s.w, response, http.StatusOK)
 }
 
-func encode(w http.ResponseWriter, any interface{}, code int) {
+func encode(w http.ResponseWriter, any any, code int) {
 	const contentType = "application/json; charset=utf-8"
 	w.Header().Set("Content-Type", contentType)
 

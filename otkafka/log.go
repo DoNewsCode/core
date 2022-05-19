@@ -12,6 +12,6 @@ type KafkaLogAdapter struct {
 }
 
 // Printf implements kafka log interface.
-func (k KafkaLogAdapter) Printf(s string, i ...interface{}) {
+func (k KafkaLogAdapter) Printf(s string, i ...any) {
 	k.Logging.Log("msg", fmt.Sprintf(s, i...))
 }

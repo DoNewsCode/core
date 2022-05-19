@@ -21,7 +21,7 @@ func (a asyncContext) Err() error {
 	return nil
 }
 
-func (a asyncContext) Value(key interface{}) interface{} {
+func (a asyncContext) Value(key any) any {
 	return a.ctx.Value(key)
 }
 

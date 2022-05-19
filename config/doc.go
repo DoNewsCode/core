@@ -26,9 +26,9 @@
 //    Int(string) int
 //    Strings(string) []string
 //    Bool(string) bool
-//    Get(string) interface{}
+//    Get(string) any
 //    Float64(string) float64
-//    Unmarshal(path string, o interface{}) error
+//    Unmarshal(path string, o any) error
 //  }
 //
 // Package config uses koanf (https://github.com/knadh/koanf) to achieve many of its features. The configuration stack
