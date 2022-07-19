@@ -214,14 +214,6 @@ func (j *jobDescriptors) Pop() (v any) {
 	return v
 }
 
-func min(t1 time.Time, t2 time.Time) time.Time {
-	if t1.Before(t2) {
-		return t1
-	}
-	return t2
-
-}
-
 // JobID is the identifier of jobs.
 type JobID int
 
