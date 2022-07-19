@@ -16,4 +16,6 @@ type Config struct {
 	GlobalOptions []JobOption
 	// EnableSeconds is whether to enable seconds in the cron expression.
 	EnableSeconds bool
+	// NowFunc Allows the user to mock the current time.
+	NowFunc func() time.Time
 }

@@ -23,6 +23,7 @@ type Cron struct {
 	location         *time.Location
 	nextID           int
 	quitWaiter       sync.WaitGroup
+	nowFunc          func() time.Time
 }
 
 // New returns a new Cron instance.
@@ -34,6 +35,7 @@ func New(config Config) *Cron {
 		globalMiddleware: config.GlobalOptions,
 		location:         config.Location,
 		nextID:           1,
+		nowFunc:          config.NowFunc,
 	}
 	if config.Parser == nil {
 		if config.EnableSeconds {
@@ -173,6 +175,9 @@ func (c *Cron) Run(ctx context.Context) error {
 }
 
 func (c *Cron) now() time.Time {
+	if c.nowFunc != nil {
+		return c.nowFunc()
+	}
 	return time.Now().In(c.location)
 }
 
