@@ -144,7 +144,7 @@ func (c *Cron) Run(ctx context.Context) error {
 		timer := time.NewTimer(gap)
 
 		select {
-		case now := <-timer.C:
+		case now = <-timer.C:
 			c.lock.L.Lock()
 			for {
 				descriptor := heap.Pop(&c.jobDescriptors).(*JobDescriptor)
@@ -162,6 +162,10 @@ func (c *Cron) Run(ctx context.Context) error {
 					defer c.quitWaiter.Done()
 					descriptor.Run(innerCtx)
 				}()
+
+				if c.jobDescriptors[0].next.After(now) || c.jobDescriptors[0].next.IsZero() {
+					break
+				}
 			}
 			c.lock.L.Unlock()
 		case <-ctx.Done():
