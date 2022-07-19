@@ -144,12 +144,9 @@ func (c *Cron) Run(ctx context.Context) error {
 		timer := time.NewTimer(gap)
 
 		select {
-		case now = <-timer.C:
+		case now := <-timer.C:
 			c.lock.L.Lock()
 			for {
-				if c.jobDescriptors[0].next.After(now) || c.jobDescriptors[0].next.IsZero() {
-					break
-				}
 				descriptor := heap.Pop(&c.jobDescriptors).(*JobDescriptor)
 
 				descriptor.prev = descriptor.next
@@ -211,6 +208,14 @@ func (j *jobDescriptors) Push(x any) {
 func (j *jobDescriptors) Pop() (v any) {
 	*j, v = (*j)[:j.Len()-1], (*j)[j.Len()-1]
 	return v
+}
+
+func min(t1 time.Time, t2 time.Time) time.Time {
+	if t1.Before(t2) {
+		return t1
+	}
+	return t2
+
 }
 
 // JobID is the identifier of jobs.
