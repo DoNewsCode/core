@@ -100,6 +100,7 @@ func TestCron_nowFunc(t *testing.T) {
 
 	fakeNow, _ := time.ParseInLocation("2006-01-02 15:04:05", "2029-01-01 00:00:00", time.Local)
 	c := New(Config{NowFunc: MockStartTimeFunc(fakeNow.Add(-10 * time.Millisecond))})
+
 	ch := make(chan struct{})
 	c.Add("0 0 * * *", func(ctx context.Context) error {
 		ch <- struct{}{}
