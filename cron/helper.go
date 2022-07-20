@@ -31,3 +31,12 @@ func GetNextSchedule(ctx context.Context) time.Time {
 	}
 	return time.Time{}
 }
+
+// MockStartTime allows the user to mock the current time at the beginning of the cron job.
+// This is useful for testing.
+func MockStartTime(t time.Time) func() time.Time {
+	diff := t.Sub(time.Now())
+	return func() time.Time {
+		return time.Now().Add(diff)
+	}
+}
