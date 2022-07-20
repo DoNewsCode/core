@@ -99,8 +99,7 @@ func TestCron_nowFunc(t *testing.T) {
 	defer cancel()
 
 	fakeNow, _ := time.ParseInLocation("2006-01-02 15:04:05", "2029-01-01 00:00:00", time.Local)
-	c := New(Config{NowFunc: MockStartTimeFunc(fakeNow.Add(-time.Millisecond))})
-	go c.Run(ctx)
+	c := New(Config{NowFunc: MockStartTimeFunc(fakeNow.Add(-10 * time.Millisecond))})
 
 	ch := make(chan struct{})
 	c.Add("0 0 * * *", func(ctx context.Context) error {
@@ -108,9 +107,11 @@ func TestCron_nowFunc(t *testing.T) {
 		close(ch)
 		return nil
 	})
+
+	go c.Run(ctx)
 	select {
 	case <-ch:
-	case <-time.After(2 * time.Millisecond):
+	case <-ctx.Done():
 		t.Fatal("timeout")
 	}
 }
