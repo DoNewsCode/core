@@ -144,12 +144,10 @@ func (c *Cron) Run(ctx context.Context) error {
 		timer := time.NewTimer(gap)
 
 		select {
-		case now = <-timer.C:
+		case <-timer.C:
+			now = c.now()
 			c.lock.L.Lock()
 			for {
-				if c.jobDescriptors[0].next.After(now) || c.jobDescriptors[0].next.IsZero() {
-					break
-				}
 				descriptor := heap.Pop(&c.jobDescriptors).(*JobDescriptor)
 
 				descriptor.prev = descriptor.next
@@ -165,6 +163,10 @@ func (c *Cron) Run(ctx context.Context) error {
 					defer c.quitWaiter.Done()
 					descriptor.Run(innerCtx)
 				}()
+
+				if c.jobDescriptors[0].next.After(now) || c.jobDescriptors[0].next.IsZero() {
+					break
+				}
 			}
 			c.lock.L.Unlock()
 		case <-ctx.Done():
