@@ -15,7 +15,6 @@ import (
 	"github.com/DoNewsCode/core/cron"
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
-
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/gorilla/mux"
@@ -32,6 +31,7 @@ type serveIn struct {
 	Logger             log.Logger
 	Container          contract.Container
 	HTTPServer         *http.Server                 `optional:"true"`
+	HTTPRouter         *mux.Router                  `optional:"true"`
 	GRPCServer         *grpc.Server                 `optional:"true"`
 	HTTPServerStart    lifecycle.HTTPServerStart    `optional:"true"`
 	HTTPServerShutdown lifecycle.HTTPServerShutdown `optional:"true"`
@@ -85,16 +85,18 @@ func (s serveIn) httpServe(ctx context.Context, logger logging.LevelLogger) (fun
 			MaxHeaderBytes:    conf.MaxHeaderBytes,
 		}
 	}
-	router := mux.NewRouter()
-	applyRouter(s.Container, router)
+	if s.HTTPRouter == nil {
+		s.HTTPRouter = mux.NewRouter()
+	}
+	applyRouter(s.Container, s.HTTPRouter)
 
-	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	s.HTTPRouter.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		tpl, _ := route.GetPathTemplate()
 		level.Debug(logger).Log("tag", "http", "path", tpl)
 		return nil
 	})
 
-	s.HTTPServer.Handler = router
+	s.HTTPServer.Handler = s.HTTPRouter
 	httpAddr := conf.Addr
 	ln, err := net.Listen("tcp", httpAddr)
 	if err != nil {
