@@ -127,7 +127,9 @@ func TestServeIn_inject_HTTPRouter(t *testing.T) {
 	}
 	defer resp.Body.Close()
 	bs, err := ioutil.ReadAll(resp.Body)
-
+	if err != nil {
+		t.Fatal(err)
+	}
 	assert.True(t, string(bs) == "test")
 }
 
