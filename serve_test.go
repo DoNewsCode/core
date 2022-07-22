@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"runtime"
 	"sync/atomic"
@@ -14,6 +16,7 @@ import (
 	"github.com/DoNewsCode/core/di"
 	"github.com/DoNewsCode/core/logging"
 	"github.com/DoNewsCode/core/observability"
+	"github.com/gorilla/mux"
 
 	"github.com/go-kit/log"
 	"github.com/oklog/run"
@@ -93,6 +96,41 @@ func TestServeIn_cron(t *testing.T) {
 
 	c.Serve(ctx)
 	assert.True(t, m.CanRun == 1)
+}
+
+func TestServeIn_inject_HTTPRouter(t *testing.T) {
+	c := Default(
+		WithInline("grpc.disable", true),
+		WithInline("cron.disable", true),
+		WithInline("http.addr", ":8080"),
+		WithInline("log.level", "none"),
+	)
+	c.Provide(
+		di.Deps{func() *mux.Router {
+			r := mux.NewRouter()
+			r.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("test"))
+			}))
+			return r
+		}},
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	go c.Serve(ctx)
+
+	time.Sleep(time.Second)
+
+	resp, err := http.Get("http://localhost:8080/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	bs, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.True(t, string(bs) == "test")
 }
 
 type SimpleRunModule struct {
