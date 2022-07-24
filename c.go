@@ -51,6 +51,9 @@ type ConfProvider interface {
 	Read() (map[string]any, error)
 }
 
+// ServeFn is an identifier in DI container that represents the function to be called by core.Serve.
+type ServeFn func(ctx context.Context) error
+
 // ConfigProvider provides contract.ConfigAccessor to the core.
 type ConfigProvider func(configStack []config.ProviderSet, configWatcher contract.ConfigWatcher) contract.ConfigUnmarshaler
 
@@ -358,7 +361,15 @@ func (c *C) ProvideEssentials() {
 // Serve runs the serve command bundled in the core.
 // For larger projects, consider use full-featured ServeModule instead of calling serve directly.
 func (c *C) Serve(ctx context.Context) error {
-	return c.di.Invoke(func(in serveIn) error {
+	type serveFn struct {
+		di.In
+
+		ServeFn ServeFn `optional:"true"`
+	}
+	return c.di.Invoke(func(fn serveFn, in serveIn) error {
+		if fn.ServeFn != nil {
+			return fn.ServeFn(ctx)
+		}
 		cmd := newServeCmd(in)
 		return cmd.ExecuteContext(ctx)
 	})

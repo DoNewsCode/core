@@ -66,6 +66,23 @@ func TestC_Serve(t *testing.T) {
 	assert.Equal(t, int32(4), atomic.LoadInt32(&called))
 }
 
+func TestC_ServeReplace(t *testing.T) {
+	var called int32
+	c := Default()
+	c.Provide(di.Deps{func() ServeFn {
+		return func(ctx context.Context) error {
+			atomic.AddInt32(&called, 1)
+			return nil
+		}
+	}})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	e := c.Serve(ctx)
+	assert.NoError(t, e)
+	assert.Equal(t, int32(1), atomic.LoadInt32(&called))
+}
+
 func TestC_ServeDisable(t *testing.T) {
 	var called int32
 	c := New(
