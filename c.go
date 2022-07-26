@@ -444,7 +444,7 @@ func (c *C) Invoke(function any) {
 }
 
 // Modules returns every Module registered in the core container,
-func (c *C) Modules() []interface{} {
+func (c *C) Modules() []any {
 	return c.container.Modules()
 }
 
