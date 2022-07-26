@@ -10,6 +10,7 @@ import (
 	"github.com/DoNewsCode/core"
 	"github.com/DoNewsCode/core/codec/yaml"
 	"github.com/DoNewsCode/core/config/remote/etcd"
+	"github.com/DoNewsCode/core/contract"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
@@ -33,7 +34,9 @@ func Example() {
 
 	c := core.New(etcd.WithKey(cfg, key, yaml.Codec{}))
 	c.ProvideEssentials()
-	fmt.Println(c.String("name"))
+	c.Invoke(func(accessor contract.ConfigAccessor) {
+		fmt.Println(accessor.String("name"))
+	})
 
 	// Output:
 	// etcd
