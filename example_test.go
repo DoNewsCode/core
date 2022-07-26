@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core"
+	"github.com/DoNewsCode/core/config"
+	"github.com/DoNewsCode/core/contract"
 	"github.com/DoNewsCode/core/di"
 
 	"github.com/go-kit/log"
@@ -130,4 +132,26 @@ func ExampleC_stack() {
 		})
 	}))
 	c.Serve(context.Background())
+}
+
+func ExampleC_decorate() {
+	c := core.Default(core.WithInline("log.level", "none"), core.WithInline("env", "development"))
+
+	type MyClient struct {
+		env contract.Env
+	}
+	provideMyClient := func(env2 contract.Env) MyClient {
+		return MyClient{env: env2}
+	}
+	c.Provide(di.Deps{provideMyClient})
+	c.Decorate(func(_ contract.Env) contract.Env {
+		return config.NewEnv("testing")
+	})
+
+	var m MyClient
+	c.Populate(&m)
+	fmt.Println(m.env)
+
+	// Output:
+	// testing
 }

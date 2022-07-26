@@ -448,6 +448,23 @@ func (c *C) Modules() []any {
 	return c.container.Modules()
 }
 
+// Decorate provides a decorator for a type that has already been provided in the Container.
+// See the documentation for uber's dig library for details.
+func (c *C) Decorate(function any) {
+	err := c.di.Decorate(function)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Populate populates the given addr with the dependencies of the dereferenced type.
+func (c *C) Populate(Addr any) {
+	err := di.IntoPopulator(c.di).Populate(Addr)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func isCleanup(v reflect.Type) bool {
 	if v.Kind() == reflect.Func && v.NumIn() == 0 && v.NumOut() == 0 {
 		return true
