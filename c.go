@@ -30,11 +30,11 @@ import (
 // dependencies. C means to be used in the boostrap phase of the application.
 // Do not pass C into services and use it as a service locator.
 type C struct {
-	AppName contract.AppName
-	Env     contract.Env
-	contract.ConfigAccessor
-	logging.LevelLogger
-	*container.Container
+	appName    contract.AppName
+	env        contract.Env
+	conf       contract.ConfigAccessor
+	logger     logging.LevelLogger
+	container  *container.Container
 	di         *dig.Container
 	baseLogger log.Logger
 }
@@ -168,13 +168,13 @@ func New(opts ...CoreOption) *C {
 	diContainer := values.diProvider(conf)
 
 	c := C{
-		AppName:        appName,
-		Env:            env,
-		ConfigAccessor: config.WithAccessor(conf),
-		LevelLogger:    logging.WithLevel(logger),
-		Container:      &container.Container{},
-		di:             diContainer,
-		baseLogger:     logger,
+		appName:    appName,
+		env:        env,
+		conf:       config.WithAccessor(conf),
+		logger:     logging.WithLevel(logger),
+		container:  &container.Container{},
+		di:         diContainer,
+		baseLogger: logger,
 	}
 	return &c
 }
@@ -203,7 +203,7 @@ func (c *C) AddModule(module any) {
 		if err != nil {
 			panic(err)
 		}
-		c.Container.AddModule(module)
+		c.container.AddModule(module)
 		return
 	}
 	if dig.IsIn(t) {
@@ -212,10 +212,10 @@ func (c *C) AddModule(module any) {
 		if err != nil {
 			panic(err)
 		}
-		c.Container.AddModule(copy.Elem().Interface())
+		c.container.AddModule(copy.Elem().Interface())
 		return
 	}
-	c.Container.AddModule(module)
+	c.container.AddModule(module)
 }
 
 // Provide adds dependencies provider to the core. Note the dependency provider
@@ -337,21 +337,21 @@ func (c *C) ProvideEssentials() {
 
 	c.provide(func() coreDependencies {
 		coreDependencies := coreDependencies{
-			Env:               c.Env,
-			AppName:           c.AppName,
-			Container:         c.Container,
-			ConfigUnmarshaler: c.ConfigAccessor,
-			ConfigAccessor:    c.ConfigAccessor,
+			Env:               c.env,
+			AppName:           c.appName,
+			Container:         c.container,
+			ConfigUnmarshaler: c.conf,
+			ConfigAccessor:    c.conf,
 			Logger:            c.baseLogger,
-			LevelLogger:       c.LevelLogger,
+			LevelLogger:       c.logger,
 			DIPopulator:       di.IntoPopulator(c.di),
 			Lifecycles:        provideLifecycle(),
 			DefaultConfigs:    provideDefaultConfig(),
 		}
-		if cc, ok := c.ConfigAccessor.(contract.ConfigRouter); ok {
+		if cc, ok := c.conf.(contract.ConfigRouter); ok {
 			coreDependencies.ConfigRouter = cc
 		}
-		if cc, ok := c.ConfigAccessor.(contract.ConfigWatcher); ok {
+		if cc, ok := c.conf.(contract.ConfigWatcher); ok {
 			coreDependencies.ConfigWatcher = cc
 		}
 		return coreDependencies
@@ -438,6 +438,28 @@ func (c *C) ApplyRootCommand(command *cobra.Command) {
 // details. (https://pkg.go.dev/go.uber.org/dig)
 func (c *C) Invoke(function any) {
 	err := c.di.Invoke(function)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Modules returns every Module registered in the core container,
+func (c *C) Modules() []any {
+	return c.container.Modules()
+}
+
+// Decorate provides a decorator for a type that has already been provided in the Container.
+// See the documentation for uber's dig library for details.
+func (c *C) Decorate(function any) {
+	err := c.di.Decorate(function)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Populate populates the given addr with the dependencies of the dereferenced type.
+func (c *C) Populate(Addr any) {
+	err := di.IntoPopulator(c.di).Populate(Addr)
 	if err != nil {
 		panic(err)
 	}
