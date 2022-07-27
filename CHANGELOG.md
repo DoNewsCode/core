@@ -1,4 +1,45 @@
 
+<a name="v0.13.0-beta3"></a>
+## [v0.13.0-beta3](https://github.com/DoNewsCode/core/compare/v0.13.1-beta1...v0.13.0-beta3) (2022-07-26)
+
+### ♻️ Code Refactoring
+
+* make all fields of core private and add decorate/populate ([#248](https://github.com/DoNewsCode/core/issues/248)) (@[谷溪](guxi99@gmail.com))
+
+### ✨ Features
+
+* Allows to replace core.Serve ([#246](https://github.com/DoNewsCode/core/issues/246)) (@[谷溪](guxi99@gmail.com))
+* **serve:** inject HTTPRouter ([#245](https://github.com/DoNewsCode/core/issues/245)) (@[rock G](35254251+GGXXLL@users.noreply.github.com))
+
+### 🐛 Bug Fixes
+
+* **cron:** add MockStartTimeFunc helper ([#243](https://github.com/DoNewsCode/core/issues/243)) (@[谷溪](guxi99@gmail.com))
+
+
+<a name="v0.13.1-beta1"></a>
+## [v0.13.1-beta1](https://github.com/DoNewsCode/core/compare/v0.13.0-beta2...v0.13.1-beta1) (2022-07-19)
+
+
+<a name="v0.13.0-beta2"></a>
+## [v0.13.0-beta2](https://github.com/DoNewsCode/core/compare/v0.13.0-beta1...v0.13.0-beta2) (2022-07-19)
+
+### ✨ Features
+
+* export NowFunc config to help tests ([#242](https://github.com/DoNewsCode/core/issues/242)) (@[谷溪](guxi99@gmail.com))
+
+
+<a name="v0.13.0-beta1"></a>
+## [v0.13.0-beta1](https://github.com/DoNewsCode/core/compare/v0.12.3...v0.13.0-beta1) (2022-05-19)
+
+
+<a name="v0.12.3"></a>
+## [v0.12.3](https://github.com/DoNewsCode/core/compare/v0.12.2...v0.12.3) (2022-03-23)
+
+### 🐛 Bug Fixes
+
+* export some useful configuration ([#240](https://github.com/DoNewsCode/core/issues/240)) (@[谷溪](guxi99@gmail.com))
+
+
 <a name="v0.12.2"></a>
 ## [v0.12.2](https://github.com/DoNewsCode/core/compare/v0.12.1...v0.12.2) (2022-03-17)
 
@@ -465,4 +506,3 @@ the new otetcd configuration is not backward compatible.
 
 * **leader:** add leader election package. ([#56](https://github.com/DoNewsCode/core/issues/56)) (@[谷溪](guxi99@gmail.com))
 
->>>>>>> origin/master
