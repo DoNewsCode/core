@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/DoNewsCode/core/contract"
 )
@@ -46,7 +47,8 @@ var ErrNotFound = errors.New("key not found")
 // context, and set or get metadata. At the end of the request, all metadata
 // collected will be available from any point in the callstack.
 type Baggage[K comparable, V any] struct {
-	ch chan []KeyVal[K, V]
+	keyvals []KeyVal[K, V]
+	mu      sync.Mutex
 }
 
 // Unmarshal get the value at given path, and store it into the target variable. Target must
@@ -81,10 +83,10 @@ func (b *Baggage[K, V]) Get(key K) (value V, err error) {
 		return value, ErrNoBaggage
 	}
 
-	s := <-b.ch
-	defer func() { b.ch <- s }()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
-	for _, kv := range s {
+	for _, kv := range b.keyvals {
 		if kv.Key == key {
 			return kv.Val, nil
 		}
@@ -100,18 +102,19 @@ func (b *Baggage[K, V]) Set(key K, value V) (err error) {
 		return ErrNoBaggage
 	}
 
-	s := <-b.ch
-	defer func() { b.ch <- s }()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
+	s := b.keyvals
 	for i := range s {
 		if s[i].Key == key {
 			s[i].Val = value
-			s = append(s[:i], append(s[i+1:], s[i])...)
+			b.keyvals = append(s[:i], append(s[i+1:], s[i])...)
 			return nil
 		}
 	}
 
-	s = append(s, KeyVal[K, V]{key, value})
+	b.keyvals = append(s, KeyVal[K, V]{key, value})
 
 	return nil
 }
@@ -124,9 +127,10 @@ func (b *Baggage[K, V]) Update(key K, callback func(value V) V) (err error) {
 		return ErrNoBaggage
 	}
 
-	s := <-b.ch
-	defer func() { b.ch <- s }()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
+	s := b.keyvals
 	for i := range s {
 		if s[i].Key == key {
 			s[i].Val = callback(s[i].Val)
@@ -144,12 +148,14 @@ func (b *Baggage[K, V]) Delete(key K) (err error) {
 	if b == nil {
 		return ErrNoBaggage
 	}
-	s := <-b.ch
-	defer func() { b.ch <- s }()
 
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	s := b.keyvals
 	for i := range s {
 		if s[i].Key == key {
-			s = append(s[:i], s[i+1:]...)
+			b.keyvals = append(s[:i], s[i+1:]...)
 			return nil
 		}
 	}
@@ -162,11 +168,11 @@ func (b *Baggage[K, V]) Slice() []KeyVal[K, V] {
 	if b == nil {
 		return nil
 	}
-	s := <-b.ch
-	defer func() { b.ch <- s }()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
-	r := make([]KeyVal[K, V], len(s))
-	copy(r, s)
+	r := make([]KeyVal[K, V], len(b.keyvals))
+	copy(r, b.keyvals)
 	return r
 }
 
@@ -176,11 +182,11 @@ func (b *Baggage[K, V]) Map() map[K]V {
 		return nil
 	}
 
-	s := <-b.ch
-	defer func() { b.ch <- s }()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
-	mp := make(map[K]V, len(s))
-	for _, kv := range s {
+	mp := make(map[K]V, len(b.keyvals))
+	for _, kv := range b.keyvals {
 		mp[kv.Key] = kv.Val
 	}
 	return mp
@@ -207,9 +213,7 @@ func New[K comparable, V any]() *MetadataSet[K, V] {
 // context for all further operations. The returned Baggage can be queried at any
 // point for metadata collected over the life of the context.
 func (m *MetadataSet[K, V]) Inject(ctx context.Context) (*Baggage[K, V], context.Context) {
-	c := make(chan []KeyVal[K, V], 1)
-	c <- make([]KeyVal[K, V], 0, 32)
-	d := &Baggage[K, V]{ch: c}
+	d := &Baggage[K, V]{}
 	return d, context.WithValue(ctx, m.key, d)
 }
 
