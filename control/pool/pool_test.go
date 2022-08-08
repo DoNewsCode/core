@@ -5,44 +5,66 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oklog/run"
+	"github.com/DoNewsCode/core/config"
 )
 
 func TestPool_Go(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
-	p := NewPool(WithConcurrency(1))
-	go p.Run(ctx)
-	time.Sleep(time.Millisecond)
+
+	f, _, _ := providePoolFactory()(factoryIn{
+		Conf: config.MapAdapter{},
+	})
+	go f.Factory.run(ctx)
+
+	p, _ := f.Factory.Make("default")
 	p.Go(context.Background(), func(asyncContext context.Context) {
 		cancel()
 	})
 
 }
 
-func TestPool_FallbackToSyncMode(t *testing.T) {
+func TestPool_CapLimit(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	p := NewPool(WithConcurrency(1))
-	go p.Run(ctx)
-	time.Sleep(time.Millisecond)
+	f, _, _ := providePoolFactory()(factoryIn{Conf: config.MapAdapter{
+		"pool": map[string]any{
+			"default": map[string]any{
+				"cap":     1,
+				"timeout": "1s",
+			},
+		},
+	}})
+	go f.Factory.run(ctx)
+
+	p, _ := f.Factory.Make("default")
 
 	ts := time.Now()
 	var executed = make(chan struct{})
 
-	// saturate the pool
+	// job1
 	p.Go(ctx, func(asyncContext context.Context) {
 		time.Sleep(time.Second)
 	})
-	// fallback to sync mode
+	if p.WorkerCount() != 1 {
+		t.Fatal("worker count should be 1")
+	}
+	// job2
 	p.Go(ctx, func(asyncContext context.Context) {
 		close(executed)
 	})
+	if p.WorkerCount() != 2 {
+		t.Fatal("worker count should be 2")
+	}
 	<-executed
 	// job channel not be blocked, so the interval should be less than 1 second
 	if time.Since(ts) >= time.Second {
 		t.Fatal("timeout: sync mode should be used")
+	}
+	time.Sleep(time.Second)
+	if p.WorkerCount() != 1 {
+		t.Fatal("worker should be recycle")
 	}
 }
 
@@ -50,10 +72,10 @@ func TestPool_contextValue(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	f, _, _ := providePoolFactory()(factoryIn{Conf: config.MapAdapter{}})
+	go f.Factory.run(ctx)
 
-	p := NewPool(WithConcurrency(1))
-	go p.Run(ctx)
-	time.Sleep(time.Millisecond)
+	p, _ := f.Factory.Make("default")
 
 	key := struct{}{}
 	requestContext := context.WithValue(context.Background(), key, "foo")
@@ -68,13 +90,4 @@ func TestPool_contextValue(t *testing.T) {
 		}
 		cancel()
 	})
-}
-
-func TestPool_ProvideRunGroup(t *testing.T) {
-	t.Parallel()
-	p := NewPool(WithConcurrency(1))
-	var group run.Group
-	group.Add(func() error { return nil }, func(err error) {})
-	p.ProvideRunGroup(&group)
-	group.Run()
 }
