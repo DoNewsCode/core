@@ -44,9 +44,6 @@ package pool
 
 import (
 	"context"
-	"sync"
-	"sync/atomic"
-	"time"
 
 	"github.com/DoNewsCode/core/ctxmeta"
 )
@@ -59,16 +56,9 @@ type job struct {
 // web servers. See the package documentation about its advantage over creating a
 // goroutine directly.
 type Pool struct {
-	ch          chan job
-	counter     *Counter
-	jobCount    int32
-	workerCount int32
-
-	wg *sync.WaitGroup
-
-	cap         int32
-	concurrency int32
-	timeout     time.Duration
+	counter         *Counter
+	ch              chan job
+	incJobCountFunc func()
 }
 
 // Go dispatchers a job to the async worker pool. requestContext is the context
@@ -77,83 +67,20 @@ type Pool struct {
 // nothing to do with the request. If the pool has reached max concurrency, the job will
 // be executed in the current goroutine. In other word, the job will be executed synchronously.
 func (p *Pool) Go(requestContext context.Context, function func(asyncContext context.Context)) {
-	p.incJobCount()
-	p.loadWorker()
 	j := job{
 		fn: func() {
 			function(ctxmeta.WithoutCancel(requestContext))
 		},
 	}
-	p.ch <- j
-}
-
-func (p *Pool) WorkerCount() int32 {
-	return atomic.LoadInt32(&p.workerCount)
-}
-
-func (p *Pool) incJobCount() {
-	atomic.AddInt32(&p.jobCount, 1)
-}
-
-func (p *Pool) decJobCount() {
-	atomic.AddInt32(&p.jobCount, -1)
-}
-
-func (p *Pool) incWorkerCount() {
-	atomic.AddInt32(&p.workerCount, 1)
-}
-
-func (p *Pool) decWorkerCount() {
-	atomic.AddInt32(&p.workerCount, -1)
-}
-
-func (p *Pool) needIncWorker() int32 {
-	// at least one worker keepalive
-	if p.WorkerCount() == 0 {
-		return 1
+	if p.incJobCountFunc != nil {
+		p.incJobCountFunc()
 	}
 
-	if concurrency, jobCount := atomic.LoadInt32(&p.concurrency), atomic.LoadInt32(&p.jobCount); (concurrency == 0 || p.WorkerCount() < concurrency) && jobCount >= p.cap {
-		// calculate the number of workers to be added
-		return jobCount/p.cap - p.WorkerCount()
+	select {
+	case p.ch <- j:
+		p.counter.IncAsyncJob()
+	default:
+		p.counter.IncSyncJob()
+		j.fn()
 	}
-	return 0
-}
-
-func (p *Pool) loadWorker() {
-	v := p.needIncWorker()
-	if v == 0 {
-		return
-	}
-
-	for i := 0; i < int(v); i++ {
-		p.wg.Add(1)
-		p.incWorkerCount()
-
-		go func() {
-			timer := time.NewTimer(p.timeout)
-			defer func() {
-				p.decWorkerCount()
-				timer.Stop()
-				p.wg.Done()
-			}()
-			for {
-				select {
-				case j := <-p.ch:
-					p.counter.IncAsyncJob()
-					timer.Reset(p.timeout)
-					j.fn()
-					p.decJobCount()
-				case <-timer.C:
-					if p.WorkerCount() > 1 && atomic.LoadInt32(&p.jobCount)/p.cap-p.WorkerCount() < 0 {
-						return
-					}
-					timer.Reset(p.timeout)
-				}
-			}
-
-		}()
-	}
-
-	return
 }

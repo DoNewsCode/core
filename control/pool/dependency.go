@@ -1,8 +1,7 @@
 package pool
 
 import (
-	"fmt"
-	"sync"
+	"context"
 	"time"
 
 	"github.com/DoNewsCode/core/config"
@@ -45,32 +44,19 @@ type out struct {
 }
 
 func providePoolFactory() func(p factoryIn) (out, func(), error) {
-	var wg = &sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+	var worker = &worker{
+		ch:            make(chan job),
+		incWorkerChan: make(chan int32),
+		cap:           10,
+		timeout:       10 * time.Minute,
+	}
 	return func(factoryIn factoryIn) (out, func(), error) {
 		factory := di.NewFactory[*Pool](func(name string) (pair di.Pair[*Pool], err error) {
-			var (
-				conf poolConfig
-			)
-			if err := factoryIn.Conf.Unmarshal(fmt.Sprintf("pool.%s", name), &conf); err != nil {
-				if name != "default" {
-					return pair, fmt.Errorf("pool configuration %s not valid: %w", name, err)
-				}
-			}
+
 			pool := &Pool{
-				cap:         10,
-				concurrency: 1000,
-				ch:          make(chan job),
-				wg:          wg,
-				timeout:     10 * time.Minute,
-			}
-			if conf.Cap > 0 {
-				pool.cap = conf.Cap
-			}
-			if conf.Concurrency > 0 {
-				pool.concurrency = conf.Concurrency
-			}
-			if !conf.Timeout.IsZero() {
-				pool.timeout = conf.Timeout.Duration
+				ch:              worker.ch,
+				incJobCountFunc: worker.incJobCount,
 			}
 
 			return di.Pair[*Pool]{
@@ -78,12 +64,25 @@ func providePoolFactory() func(p factoryIn) (out, func(), error) {
 				Closer: nil,
 			}, err
 		})
-
+		var (
+			conf poolConfig
+		)
+		_ = factoryIn.Conf.Unmarshal("pool", &conf)
+		if conf.Cap > 0 {
+			worker.cap = conf.Cap
+		}
+		if conf.Concurrency > 0 {
+			worker.concurrency = conf.Concurrency
+		}
+		if !conf.Timeout.IsZero() {
+			worker.timeout = conf.Timeout.Duration
+		}
+		worker.run(ctx)
 		return out{
-			Factory: &Factory{
-				factory: factory,
-				wg:      wg,
-			},
-		}, factory.Close, nil
+				Factory: factory,
+			}, func() {
+				cancel()
+				factory.Close()
+			}, nil
 	}
 }
