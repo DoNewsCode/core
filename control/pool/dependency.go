@@ -28,6 +28,7 @@ type factoryIn struct {
 
 	Conf          contract.ConfigUnmarshaler
 	OnReloadEvent lifecycle.ConfigReload `optional:"true"`
+	Counter       *Counter               `optional:"true"`
 }
 
 type poolConfig struct {
@@ -57,6 +58,9 @@ func providePoolFactory() func(p factoryIn) (out, func(), error) {
 			pool := &Pool{
 				ch:              worker.ch,
 				incJobCountFunc: worker.incJobCount,
+			}
+			if factoryIn.Counter != nil {
+				pool.counter = factoryIn.Counter.PoolName(name)
 			}
 
 			return di.Pair[*Pool]{

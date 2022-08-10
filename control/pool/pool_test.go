@@ -2,7 +2,6 @@ package pool
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -18,7 +17,6 @@ func TestPool_Go(t *testing.T) {
 	time.Sleep(time.Millisecond)
 	p, _ := f.Factory.Make("default")
 	p.Go(context.Background(), func(asyncContext context.Context) {
-		fmt.Println("123")
 	})
 
 	cancel()
