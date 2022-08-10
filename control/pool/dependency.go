@@ -32,9 +32,15 @@ type factoryIn struct {
 }
 
 type poolConfig struct {
-	Cap         int32           `yaml:"cap" json:"cap"`
-	Concurrency int32           `yaml:"concurrency" json:"concurrency"`
-	Timeout     config.Duration `yaml:"timeout" json:"timeout"`
+	// Cap is the maximum number of tasks. If it exceeds the maximum number, new workers will be added automatically.
+	// Default is 10.
+	Cap int32 `yaml:"cap" json:"cap"`
+	// Concurrency limits the maximum number of workers.
+	// Default is 1000.
+	Concurrency int32 `yaml:"concurrency" json:"concurrency"`
+	// IdleTimeout idle workers will be recycled after this duration.
+	// Default is 10 minutes.
+	IdleTimeout config.Duration `yaml:"idle_timeout" json:"idle_timeout"`
 }
 
 // out
@@ -78,8 +84,8 @@ func providePoolFactory() func(p factoryIn) (out, func(), error) {
 		if conf.Concurrency > 0 {
 			worker.concurrency = conf.Concurrency
 		}
-		if !conf.Timeout.IsZero() {
-			worker.timeout = conf.Timeout.Duration
+		if !conf.IdleTimeout.IsZero() {
+			worker.timeout = conf.IdleTimeout.Duration
 		}
 		worker.run(ctx)
 		return out{
