@@ -1,7 +1,6 @@
 package observability
 
 import (
-	"github.com/DoNewsCode/core/control/pool"
 	"os"
 	"strings"
 	"testing"
@@ -199,15 +198,6 @@ func TestProvideKafkaMetrics(t *testing.T) {
 		rs.FetchBytes.Min.With(withValues...).Set(float64(stats.FetchBytes.Min))
 		rs.FetchBytes.Max.With(withValues...).Set(float64(stats.FetchBytes.Max))
 		rs.FetchBytes.Avg.With(withValues...).Set(float64(stats.FetchBytes.Avg))
-	})
-}
-
-func TestProvidePoolMetrics(t *testing.T) {
-	c := core.New()
-	c.ProvideEssentials()
-	c.Provide(Providers())
-	c.Invoke(func(metrics *pool.Counter) {
-		metrics.PoolName("test").IncAsyncJob()
 	})
 }
 

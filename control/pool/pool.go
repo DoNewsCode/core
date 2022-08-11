@@ -44,52 +44,25 @@ package pool
 
 import (
 	"context"
-	"sync"
 
 	"github.com/DoNewsCode/core/ctxmeta"
-
-	"github.com/oklog/run"
 )
 
-// NewPool returned func(contract.Dispatcher) *Pool
-func NewPool(options ...ProviderOptionFunc) *Pool {
+// NewPool returns *Pool
+func NewPool(manager *Manager, cap int) *Pool {
 	pool := Pool{
-		ch:          make(chan job),
-		concurrency: 10,
-	}
-	for _, f := range options {
-		f(&pool)
+		manager:     manager,
+		concurrency: make(chan struct{}, cap),
 	}
 	return &pool
-}
-
-type job struct {
-	fn func()
 }
 
 // Pool is an async worker pool. It can be used to dispatch the async jobs from
 // web servers. See the package documentation about its advantage over creating a
 // goroutine directly.
 type Pool struct {
-	ch          chan job
-	concurrency int
-	counter     *Counter
-}
-
-// ProvideRunGroup implements core.RunProvider
-func (p *Pool) ProvideRunGroup(group *run.Group) {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	group.Add(func() error {
-		return p.Run(ctx)
-	}, func(err error) {
-		cancel()
-	})
-}
-
-// Module implements di.Modular
-func (p *Pool) Module() interface{} {
-	return p
+	manager     *Manager
+	concurrency chan struct{}
 }
 
 // Go dispatchers a job to the async worker pool. requestContext is the context
@@ -98,37 +71,26 @@ func (p *Pool) Module() interface{} {
 // nothing to do with the request. If the pool has reached max concurrency, the job will
 // be executed in the current goroutine. In other word, the job will be executed synchronously.
 func (p *Pool) Go(requestContext context.Context, function func(asyncContext context.Context)) {
-	j := job{
-		fn: func() {
-			function(ctxmeta.WithoutCancel(requestContext))
-		},
+	p.concurrency <- struct{}{}
+	worker := p.manager.Get()
+	fn := func() {
+		defer func() {
+			p.manager.Release(worker)
+			<-p.concurrency
+		}()
+		function(ctxmeta.WithoutCancel(requestContext))
 	}
+
 	select {
-	case p.ch <- j:
-	default:
-		p.counter.IncSyncJob()
-		j.fn()
+	case worker.jobCh <- fn:
+	case <-worker.stopCh: // only executed if manager.Run is cancelled
+		fn()
 	}
 }
 
-// Run starts the async worker pool and block until it finishes.
-func (p *Pool) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
-	for i := 0; i < p.concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for {
-				select {
-				case j := <-p.ch:
-					p.counter.IncAsyncJob()
-					j.fn()
-				case <-ctx.Done():
-					return
-				}
-			}
-		}()
+// Wait waits for all the async jobs to finish.
+func (p *Pool) Wait() {
+	for i := 0; i < cap(p.concurrency); i++ {
+		p.concurrency <- struct{}{}
 	}
-	wg.Wait()
-	return nil
 }
