@@ -44,8 +44,6 @@ package pool
 
 import (
 	"context"
-
-	"github.com/DoNewsCode/core/ctxmeta"
 )
 
 // NewPool returns *Pool
@@ -72,20 +70,12 @@ type Pool struct {
 // be executed in the current goroutine. In other word, the job will be executed synchronously.
 func (p *Pool) Go(requestContext context.Context, function func(asyncContext context.Context)) {
 	p.concurrency <- struct{}{}
-	worker := p.manager.Get()
-	fn := func() {
+	p.manager.Go(requestContext, func(ctx context.Context) {
 		defer func() {
-			p.manager.Release(worker)
 			<-p.concurrency
 		}()
-		function(ctxmeta.WithoutCancel(requestContext))
-	}
-
-	select {
-	case worker.jobCh <- fn:
-	case <-worker.stopCh: // only executed if manager.Run is cancelled
-		fn()
-	}
+		function(ctx)
+	})
 }
 
 // Wait waits for all the async jobs to finish.

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/DoNewsCode/core/ctxmeta"
-	"github.com/oklog/run"
 )
 
 // Manager manages a pool of workers.
@@ -94,14 +93,4 @@ func (m *Manager) Run(ctx context.Context) error {
 // Module implements the di.Modular interface.
 func (m *Manager) Module() interface{} {
 	return m
-}
-
-// ProvideRunGroup implements the contract.RunProvider interface.
-func (m *Manager) ProvideRunGroup(g *run.Group) {
-	ctx, cancel := context.WithCancel(context.Background())
-	g.Add(func() error {
-		return m.Run(ctx)
-	}, func(err error) {
-		cancel()
-	})
 }
