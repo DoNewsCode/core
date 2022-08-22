@@ -22,6 +22,7 @@ func NewManager() *Manager {
 		workers:          make(chan *Worker, 1000),
 		startWorkerCh:    make(chan *Worker),
 		managerStoppedCh: make(chan struct{}),
+		maxDuration:      10 * time.Minute,
 	}
 }
 
@@ -45,7 +46,7 @@ func (m *Manager) Get() *Worker {
 // discard the worker. If the worker has surpassed the max duration, discard and
 // managerStoppedCh the worker.
 func (m *Manager) Release(w *Worker) {
-	if time.Now().Sub(w.startTime) > m.maxDuration {
+	if time.Since(w.startTime) > m.maxDuration {
 		w.Stop()
 		return
 	}
