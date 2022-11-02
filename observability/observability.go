@@ -31,7 +31,6 @@ func Providers() di.Deps {
 		ProvideKafkaWriterMetrics,
 		ProvideCronJobMetrics,
 		provideConfig,
-		ProvidePoolMetrics,
 	}
 }
 

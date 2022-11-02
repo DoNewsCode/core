@@ -16,10 +16,6 @@
 * **cron:** add MockStartTimeFunc helper ([#243](https://github.com/DoNewsCode/core/issues/243)) (@[谷溪](guxi99@gmail.com))
 
 
-<a name="v0.13.1-beta1"></a>
-## [v0.13.1-beta1](https://github.com/DoNewsCode/core/compare/v0.13.0-beta2...v0.13.1-beta1) (2022-07-19)
-
-
 <a name="v0.13.0-beta2"></a>
 ## [v0.13.0-beta2](https://github.com/DoNewsCode/core/compare/v0.13.0-beta1...v0.13.0-beta2) (2022-07-19)
 
