@@ -10,4 +10,6 @@ type Config struct {
 	Replicas    int      `json:"replicas" yaml:"replicas"`
 	Sniff       *bool    `json:"sniff" yaml:"sniff"`
 	Healthcheck *bool    `json:"healthcheck" yaml:"healthcheck"`
+	// DebugLogLimitSize limit the explosive output of debug-level logs, default unlimited
+	DebugLogLimitSize int `json:"debugLogLimitSize" yaml:"debugLogLimitSize"`
 }

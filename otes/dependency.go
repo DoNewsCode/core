@@ -148,9 +148,9 @@ func newClient(args ClientArgs) (*elastic.Client, error) {
 	options = append(options,
 		elastic.SetURL(args.Conf.URL...),
 		elastic.SetBasicAuth(args.Conf.Username, args.Conf.Password),
-		elastic.SetInfoLog(ElasticLogAdapter{level.Info(logger)}),
-		elastic.SetErrorLog(ElasticLogAdapter{level.Error(logger)}),
-		elastic.SetTraceLog(ElasticLogAdapter{level.Debug(logger)}),
+		elastic.SetInfoLog(ElasticLogAdapter{Logging: level.Info(logger)}),
+		elastic.SetErrorLog(ElasticLogAdapter{Logging: level.Error(logger)}),
+		elastic.SetTraceLog(ElasticLogAdapter{Logging: level.Debug(logger), LimitSize: args.Conf.DebugLogLimitSize}),
 	)
 	client, err := elastic.NewClient(options...)
 	if err != nil {
